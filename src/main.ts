@@ -3,9 +3,10 @@ import * as vscode from 'vscode';
 import { checkLatestVersion } from './update/updater.js';
 import { getLogger, patchConsole, setLogLevel } from './util/extension-logger.js';
 import { EdgePanelProvider } from './vscode-ui/extensionPanel.js';
+import { LOG_LEVEL_DEFAULT } from './config/const.js';
 
 export async function activate(context: vscode.ExtensionContext) {
-  setLogLevel('debug');
+  setLogLevel(LOG_LEVEL_DEFAULT);
   patchConsole();
 
   const log = getLogger('main');
@@ -37,7 +38,6 @@ export async function activate(context: vscode.ExtensionContext) {
     if (!isFromThisExtension(e)) return;
     const g = getLogger('global');
     g.error('unhandledRejection', e as any);
-    // 일부 Promise rejection은 Error가 아닐 수 있음
     const msg = (e as any)?.message ?? String(e);
     vscode.window.showErrorMessage(`unhandledRejection: ${msg}`);
   };
@@ -45,7 +45,6 @@ export async function activate(context: vscode.ExtensionContext) {
   process.on('uncaughtException', onUncaught);
   process.on('unhandledRejection', onUnhandled);
 
-  // deactivate에서 해제되도록 subscriptions에 disposable 등록
   context.subscriptions.push({
     dispose: () => {
       process.off('uncaughtException', onUncaught);
@@ -83,5 +82,4 @@ export async function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
   const log = getLogger('main');
   log.info('deactivate()');
-  // 위에서 context.subscriptions에 넣은 dispose가 호출되며 process.off 처리됨
 }

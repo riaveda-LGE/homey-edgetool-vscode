@@ -1,4 +1,10 @@
 import * as vscode from 'vscode';
+import {
+  LOG_CHANNEL_NAME,
+  LOG_IGNORE_KEYWORDS,
+  LOG_MAX_BUFFER,
+  LOG_FLUSH_INTERVAL_MS,
+} from '../config/const.js';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Sink = (line: string) => void;
@@ -10,15 +16,9 @@ const LEVEL_ORDER: Record<LogLevel, number> = {
   error: 40,
 };
 
-const MAX_BUFFER = 500;
-const FLUSH_INTERVAL_MS = 80;
-
-// Copilot 등 외부 확장 로그를 무시할 키워드
-const IGNORE_KEYWORDS = ['copilot-chat', 'copilot', 'undici', 'typescript-language-features'];
-
 class ExtensionLoggerCore {
   private level: LogLevel = 'debug';
-  private channel = vscode.window.createOutputChannel('Homey EdgeTool');
+  private channel = vscode.window.createOutputChannel(LOG_CHANNEL_NAME);
   private sinks = new Set<Sink>();
   private buffer: string[] = [];
 
@@ -44,7 +44,7 @@ class ExtensionLoggerCore {
   addSink(sink: Sink) {
     this.sinks.add(sink);
     if (this.buffer.length) {
-      const start = Math.max(0, this.buffer.length - MAX_BUFFER);
+      const start = Math.max(0, this.buffer.length - LOG_MAX_BUFFER);
       for (let i = start; i < this.buffer.length; i++) sink(this.buffer[i]);
     }
   }
@@ -57,8 +57,8 @@ class ExtensionLoggerCore {
     const emit = (lvl: LogLevel, args: any[]) => this._emit(lvl, scope, args);
     return {
       debug: (...a: any[]) => emit('debug', a),
-      info: (...a: any[]) => emit('info', a),
-      warn: (...a: any[]) => emit('warn', a),
+      info:  (...a: any[]) => emit('info', a),
+      warn:  (...a: any[]) => emit('warn', a),
       error: (...a: any[]) => emit('error', a),
     };
   }
@@ -77,7 +77,7 @@ class ExtensionLoggerCore {
 
     const shouldIgnore = (args: any[]) => {
       const joined = args.map(String).join(' ');
-      return IGNORE_KEYWORDS.some((kw) => joined.includes(kw));
+      return LOG_IGNORE_KEYWORDS.some((kw) => joined.includes(kw));
     };
 
     console.log = (...a: any[]) => {
@@ -129,19 +129,12 @@ class ExtensionLoggerCore {
       })
       .join(' ');
 
-    // 레벨 약어 변환
     const shortLevel =
-      level === 'debug'
-        ? 'D'
-        : level === 'info'
-          ? 'I'
-          : level === 'warn'
-            ? 'W'
-            : level === 'error'
-              ? 'E'
-              : '?';
+      level === 'debug' ? 'D' :
+      level === 'info'  ? 'I' :
+      level === 'warn'  ? 'W' :
+      level === 'error' ? 'E' : '?';
 
-    // 최종 로그 문자열
     const line = `[${ts}] [${shortLevel}] [${scope}] ${body}`;
 
     // 1) VSCode Output Channel
@@ -149,7 +142,9 @@ class ExtensionLoggerCore {
 
     // 2) 메모리 버퍼
     this.buffer.push(line);
-    if (this.buffer.length > MAX_BUFFER) this.buffer.splice(0, this.buffer.length - MAX_BUFFER);
+    if (this.buffer.length > LOG_MAX_BUFFER) {
+      this.buffer.splice(0, this.buffer.length - LOG_MAX_BUFFER);
+    }
 
     // 3) 웹뷰 싱크
     if (this.sinks.size) {
@@ -171,7 +166,7 @@ class ExtensionLoggerCore {
         clearTimeout(this.flushTimer);
         this.flushTimer = null;
       }
-    }, FLUSH_INTERVAL_MS);
+    }, LOG_FLUSH_INTERVAL_MS);
   }
 
   /** ✅ 버퍼 읽기 (복원용) */
@@ -183,27 +178,13 @@ class ExtensionLoggerCore {
 const core = new ExtensionLoggerCore();
 
 /** 외부 공개 API */
-export function setLogLevel(level: LogLevel) {
-  core.setLevel(level);
-}
-export function getLogLevel() {
-  return core.getLevel();
-}
-export function getLogger(scope: string) {
-  return core.getLogger(scope);
-}
-export function addLogSink(sink: Sink) {
-  core.addSink(sink);
-}
-export function removeLogSink(sink: Sink) {
-  core.removeSink(sink);
-}
-export function patchConsole() {
-  core.patchConsole();
-}
-export function unpatchConsole() {
-  core.unpatchConsole();
-}
+export function setLogLevel(level: LogLevel) { core.setLevel(level); }
+export function getLogLevel() { return core.getLevel(); }
+export function getLogger(scope: string) { return core.getLogger(scope); }
+export function addLogSink(sink: Sink) { core.addSink(sink); }
+export function removeLogSink(sink: Sink) { core.removeSink(sink); }
+export function patchConsole() { core.patchConsole(); }
+export function unpatchConsole() { core.unpatchConsole(); }
 
 /** ✅ 버퍼 로그 가져오기 (웹뷰 초기화 시 복원용) */
 export function getBufferedLogs(): string[] {

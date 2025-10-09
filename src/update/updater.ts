@@ -5,16 +5,13 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import { getLogger } from '../util/extension-logger.js';
+import {
+  LATEST_JSON_URL,
+  FETCH_JSON_TIMEOUT_MS,
+  FETCH_BUFFER_TIMEOUT_MS,
+} from '../config/const.js';
 
 const log = getLogger('updater');
-
-/** GitHub 리포 정보 */
-const GH_OWNER = 'riaveda-LGE';
-const GH_REPO  = 'homey-edgetool-vscode';
-
-/** latest 릴리스의 latest.json 고정 URL (토큰 불필요) */
-const LATEST_JSON_URL =
-  `https://github.com/${GH_OWNER}/${GH_REPO}/releases/latest/download/latest.json`;
 
 type LatestJson = {
   id?: string;
@@ -36,7 +33,7 @@ function isNewerVersion(latest: string, current: string): boolean {
 }
 
 /** 네트워크 유틸 */
-async function fetchJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
+async function fetchJson<T>(url: string, timeoutMs = FETCH_JSON_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -51,7 +48,7 @@ async function fetchJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
   }
 }
 
-async function fetchBuffer(url: string, timeoutMs = 60_000): Promise<Buffer> {
+async function fetchBuffer(url: string, timeoutMs = FETCH_BUFFER_TIMEOUT_MS): Promise<Buffer> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -71,10 +68,6 @@ function calcSha256(buffer: Buffer): string {
 
 /**
  * 최신 릴리스의 latest.json을 읽어 업데이트 유무/다운로드 URL/해시 반환
- * - latest.json 예시:
- *   { "id":"lge.homey-edgetool", "version":"0.0.3",
- *     "url":"https://github.com/<owner>/<repo>/releases/download/v0.0.3/<basename>-0.0.3.vsix",
- *     "sha256":"..." }
  */
 export async function checkLatestVersion(
   currentVersion: string,
@@ -91,7 +84,6 @@ export async function checkLatestVersion(
       `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0,8)+'…' : '(none)'}`
     );
 
-    // 새 버전인데 url이 없으면 제공 불가로 간주
     if (hasUpdate && !url) {
       log.warn(`latest.json has newer version ${latest} but missing url`);
       return { hasUpdate: false, latest, url: undefined, sha256: undefined };
@@ -106,7 +98,6 @@ export async function checkLatestVersion(
 
 /**
  * VSIX 다운로드 및 설치
- * - expectedSha가 전달되면 SHA-256 무결성 검증 후 설치
  */
 export async function downloadAndInstall(
   url: string,
@@ -122,7 +113,6 @@ export async function downloadAndInstall(
     progressCallback('[update] 최신 버전 다운로드 중...');
     const buf = await fetchBuffer(url);
 
-    // 무결성 검증 (옵션)
     if (expectedSha) {
       const actual = calcSha256(buf);
       if (actual !== expectedSha.toLowerCase()) {

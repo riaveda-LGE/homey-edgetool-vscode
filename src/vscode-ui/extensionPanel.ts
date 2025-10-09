@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 import { downloadAndInstall } from '../update/updater.js';
 import { addLogSink, getBufferedLogs, getLogger, removeLogSink } from '../util/extension-logger.js';
+import { PANEL_VIEW_TYPE, READY_MARKER } from '../config/const.js';
 
 interface EdgePanelState {
   version: string;
@@ -15,7 +16,7 @@ interface EdgePanelState {
 }
 
 export class EdgePanelProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'edgePanel';
+  public static readonly viewType = PANEL_VIEW_TYPE;
   private _view?: vscode.WebviewView;
   private _sink?: (line: string) => void;
   private log = getLogger('edgePanel');
@@ -24,7 +25,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly _extensionUri: vscode.Uri,
     version: string,
-    // ✅ sha256 포함해서 받기
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
   ) {
     this._state = {
@@ -32,7 +32,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       updateAvailable: !!latestInfo?.hasUpdate,
       latestVersion: latestInfo?.latest,
       updateUrl: latestInfo?.url,
-      latestSha: latestInfo?.sha256,   // ✅ 저장
+      latestSha: latestInfo?.sha256,
       lastCheckTime: new Date().toISOString(),
       logs: getBufferedLogs(),
     };
@@ -63,21 +63,19 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           const text = String(msg.text ?? '').trim();
           this.log.info(`edge> ${text} (verbose=${!!msg.verbose})`);
         } else if (msg?.command === 'ready') {
-          // ✅ 항상 최신 버퍼로 초기화
           this._state.logs = getBufferedLogs();
           webviewView.webview.postMessage({ type: 'initState', state: this._state });
           webviewView.webview.postMessage({
             type: 'setUpdateVisible',
             visible: !!(this._state.updateAvailable && this._state.updateUrl),
           });
-          this.appendLog('%READY% Ready. Type a command after "edge>" and hit Enter.');
+          this.appendLog(`${READY_MARKER} Ready. Type a command after "edge>" and hit Enter.`);
         } else if (msg?.command === 'versionUpdate') {
           if (!this._state.updateUrl) {
             this.appendLog('[update] 최신 버전 URL이 없습니다.');
             return;
           }
           this.appendLog('[update] 업데이트를 시작합니다...');
-          // ✅ sha 전달
           await downloadAndInstall(
             this._state.updateUrl,
             (line) => this.appendLog(line),
