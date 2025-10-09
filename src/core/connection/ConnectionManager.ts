@@ -1,4 +1,5 @@
-import { getLogger } from '../../util/extension-logger.js';
+// === src/core/connection/ConnectionManager.ts ===
+import { getLogger } from '../logging/extension-logger.js';
 
 export type HostConfig =
   | { id: string; type: 'ssh'; host: string; port?: number; user: string; keyPath?: string; password?: string }

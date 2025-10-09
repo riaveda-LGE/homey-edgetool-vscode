@@ -1,4 +1,5 @@
-import { getLogger } from '../../util/extension-logger.js';
+// === src/core/transfer/FileTransferService.ts ===
+import { getLogger } from '../logging/extension-logger.js';
 
 export class FileTransferService {
   private log = getLogger('FileTransfer');

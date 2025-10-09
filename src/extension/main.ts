@@ -1,7 +1,8 @@
+// === src/extension/main.ts ===
 import * as vscode from 'vscode';
 
-import { checkLatestVersion } from '../update/updater.js';
-import { getLogger, patchConsole, setLogLevel } from '../util/extension-logger.js';
+import { checkLatestVersion } from './update/updater.js';
+import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
 import { EdgePanelProvider } from './panels/extensionPanel.js';
 import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
 
@@ -12,7 +13,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const log = getLogger('main');
   log.info('activate() start');
 
-  // --- our-error detector: 스택에 우리 확장 경로가 포함될 때만 true ---
+  // --- our-error detector ---
   const extRoot = context.extensionUri.fsPath.replace(/\\/g, '/');
   const isFromThisExtension = (err: unknown): boolean => {
     try {
@@ -25,7 +26,6 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   };
 
-  // --- 전역 예외 리스너 (우리 코드에서 터진 것만 로깅/알림) ---
   const onUncaught = (e: unknown) => {
     if (!isFromThisExtension(e)) return;
     const g = getLogger('global');
@@ -33,7 +33,6 @@ export async function activate(context: vscode.ExtensionContext) {
     const msg = (e as Error)?.message ?? String(e);
     vscode.window.showErrorMessage(`uncaughtException: ${msg}`);
   };
-
   const onUnhandled = (e: unknown) => {
     if (!isFromThisExtension(e)) return;
     const g = getLogger('global');
@@ -44,13 +43,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
   process.on('uncaughtException', onUncaught);
   process.on('unhandledRejection', onUnhandled);
-
-  context.subscriptions.push({
-    dispose: () => {
-      process.off('uncaughtException', onUncaught);
-      process.off('unhandledRejection', onUnhandled);
-    },
-  });
+  context.subscriptions.push({ dispose: () => {
+    process.off('uncaughtException', onUncaught);
+    process.off('unhandledRejection', onUnhandled);
+  }});
 
   try {
     const version = String((context.extension as any).packageJSON?.version ?? '0.0.0');
@@ -61,9 +57,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
     context.subscriptions.push(disp);
 
-    log.info(
-      `registerWebviewViewProvider OK, viewType=${EdgePanelProvider.viewType}, version=${version}`,
-    );
+    log.info(`registerWebviewViewProvider OK, viewType=${EdgePanelProvider.viewType}, version=${version}`);
   } catch (e) {
     log.error('registerWebviewViewProvider failed', e as any);
     vscode.window.showErrorMessage('EdgePanel register failed: ' + (e as Error).message);

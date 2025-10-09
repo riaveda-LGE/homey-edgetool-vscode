@@ -40,7 +40,7 @@
     if (line.includes('[E]')) {
       div.style.color = '#ff6b6b';
     } else if (line.includes('%READY%')) {
-      div.style.color = '#98fb98';     // 밝은 민트
+      div.style.color = '#98fb98';
       div.style.fontWeight = 'bold';
       div.style.fontStyle = 'italic';
       line = line.replace('%READY%', '').trimStart();
@@ -51,7 +51,6 @@
     logsEl.scrollTop = logsEl.scrollHeight;
   }
 
-  // 초기화될 때 기존 DOM 삭제 후 버퍼로 복원
   function resetLogs(lines) {
     logsEl.innerHTML = '';
     if (Array.isArray(lines)) {

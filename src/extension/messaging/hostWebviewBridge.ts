@@ -1,6 +1,7 @@
+// === src/extension/messaging/hostWebviewBridge.ts ===
 import * as vscode from 'vscode';
 import { H2W, W2H } from './messageTypes.js';
-import { getLogger } from '../../util/extension-logger.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
@@ -58,7 +59,6 @@ export class HostWebviewBridge {
     if (c) { c.abort(); this.pendings.delete(abortKey); }
   }
 
-  // -- private helpers --
   private api(): BridgeAPI {
     return {
       send: (m) => this.send(m),
@@ -73,7 +73,6 @@ export class HostWebviewBridge {
     if (raw.v !== 1 || typeof raw.type !== 'string') return null;
     if (typeof raw.payload !== 'object') return null;
     return raw as W2H;
-    // 필요 시 더 강한 검증 추가 가능
   }
 
   private warnUnknown(type: string) {

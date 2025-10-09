@@ -1,10 +1,11 @@
+// === src/core/logging/extension-logger.ts ===
 import * as vscode from 'vscode';
 import {
   LOG_CHANNEL_NAME,
   LOG_IGNORE_KEYWORDS,
   LOG_MAX_BUFFER,
   LOG_FLUSH_INTERVAL_MS,
-} from '../shared/const.js';
+} from '../../shared/const.js';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Sink = (line: string) => void;
@@ -36,7 +37,6 @@ class ExtensionLoggerCore {
   setLevel(level: LogLevel) {
     this.level = level;
   }
-
   getLevel() {
     return this.level;
   }
@@ -48,7 +48,6 @@ class ExtensionLoggerCore {
       for (let i = start; i < this.buffer.length; i++) sink(this.buffer[i]);
     }
   }
-
   removeSink(sink: Sink) {
     this.sinks.delete(sink);
   }
@@ -177,7 +176,6 @@ class ExtensionLoggerCore {
 
 const core = new ExtensionLoggerCore();
 
-/** 외부 공개 API */
 export function setLogLevel(level: LogLevel) { core.setLevel(level); }
 export function getLogLevel() { return core.getLevel(); }
 export function getLogger(scope: string) { return core.getLogger(scope); }
@@ -185,8 +183,4 @@ export function addLogSink(sink: Sink) { core.addSink(sink); }
 export function removeLogSink(sink: Sink) { core.removeSink(sink); }
 export function patchConsole() { core.patchConsole(); }
 export function unpatchConsole() { core.unpatchConsole(); }
-
-/** ✅ 버퍼 로그 가져오기 (웹뷰 초기화 시 복원용) */
-export function getBufferedLogs(): string[] {
-  return core.getBuffer();
-}
+export function getBufferedLogs(): string[] { return core.getBuffer(); }

@@ -1,15 +1,15 @@
-// src/update/updater.ts
+// === src/extension/update/updater.ts ===
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
-import { getLogger } from '../util/extension-logger.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
 import {
   LATEST_JSON_URL,
   FETCH_JSON_TIMEOUT_MS,
   FETCH_BUFFER_TIMEOUT_MS,
-} from '../config/const.js';
+} from '../../shared/const.js';
 
 const log = getLogger('updater');
 
@@ -20,7 +20,6 @@ type LatestJson = {
   sha256?: string;
 };
 
-/** semver 유사 비교: latest > current ? */
 function isNewerVersion(latest: string, current: string): boolean {
   const a = latest.split('.').map(n => parseInt(n || '0', 10));
   const b = current.split('.').map(n => parseInt(n || '0', 10));
@@ -32,13 +31,12 @@ function isNewerVersion(latest: string, current: string): boolean {
   return false;
 }
 
-/** 네트워크 유틸 */
 async function fetchJson<T>(url: string, timeoutMs = FETCH_JSON_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
@@ -61,14 +59,10 @@ async function fetchBuffer(url: string, timeoutMs = FETCH_BUFFER_TIMEOUT_MS): Pr
   }
 }
 
-/** SHA-256 계산 */
 function calcSha256(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
-/**
- * 최신 릴리스의 latest.json을 읽어 업데이트 유무/다운로드 URL/해시 반환
- */
 export async function checkLatestVersion(
   currentVersion: string,
 ): Promise<{ hasUpdate: boolean; latest?: string; url?: string; sha256?: string }> {
@@ -81,7 +75,7 @@ export async function checkLatestVersion(
 
     const hasUpdate = !!latest && isNewerVersion(latest, currentVersion);
     log.info(
-      `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0,8)+'…' : '(none)'}`
+      `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`
     );
 
     if (hasUpdate && !url) {
@@ -96,9 +90,6 @@ export async function checkLatestVersion(
   }
 }
 
-/**
- * VSIX 다운로드 및 설치
- */
 export async function downloadAndInstall(
   url: string,
   progressCallback: (line: string) => void,

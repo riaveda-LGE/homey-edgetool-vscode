@@ -18,7 +18,7 @@
     "vscode": "^1.85.0"
   },
   "categories": ["Other"],
-  "main": "./dist/main.js",
+  "main": "./dist/extension/main.js",
   "activationEvents": [
     "onCommand:homeyEdgetool.hello",
     "onCommand:homeyEdgetool.updateNow",
@@ -31,7 +31,7 @@
     ],
     "viewsContainers": {
       "activitybar": [
-        { "id": "homey-edge", "title": "Homey Edge", "icon": "resources/edge-icon.svg" }
+        { "id": "homey-edge", "title": "Homey Edge", "icon": "media/resources/edge-icon.svg" }
       ]
     },
     "views": {

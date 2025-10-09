@@ -1,4 +1,5 @@
-import { getLogger } from '../../util/extension-logger.js';
+// === src/core/sessions/LogSessionManager.ts ===
+import { getLogger } from '../logging/extension-logger.js';
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
 
