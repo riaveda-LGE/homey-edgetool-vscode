@@ -9,6 +9,7 @@ interface EdgePanelState {
   updateAvailable: boolean;
   latestVersion?: string;
   updateUrl?: string;
+  latestSha?: string;         // ✅ 추가: 최신 VSIX sha256
   lastCheckTime?: string;
   logs?: string[];
 }
@@ -23,13 +24,15 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly _extensionUri: vscode.Uri,
     version: string,
-    latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string },
+    // ✅ sha256 포함해서 받기
+    latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
   ) {
     this._state = {
       version,
       updateAvailable: !!latestInfo?.hasUpdate,
       latestVersion: latestInfo?.latest,
       updateUrl: latestInfo?.url,
+      latestSha: latestInfo?.sha256,   // ✅ 저장
       lastCheckTime: new Date().toISOString(),
       logs: getBufferedLogs(),
     };
@@ -44,7 +47,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
     const mediaRoot = vscode.Uri.joinPath(this._extensionUri, 'media', 'edge-panel');
 
-    // ✅ 컨텍스트 유지 옵션 추가 (WebviewView에서도 동작; TS 타입 경고 시 as any)
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this._extensionUri],
@@ -75,7 +77,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             return;
           }
           this.appendLog('[update] 업데이트를 시작합니다...');
-          await downloadAndInstall(this._state.updateUrl, (line) => this.appendLog(line));
+          // ✅ sha 전달
+          await downloadAndInstall(
+            this._state.updateUrl,
+            (line) => this.appendLog(line),
+            this._state.latestSha,
+          );
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
@@ -84,7 +91,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    // ✅ 가시성 변화마다 버퍼 재주입 (ready 레이스/컨텍스트 손실 대비)
+    // ✅ 가시성 변화마다 버퍼 재주입
     webviewView.onDidChangeVisibility(() => {
       if (!webviewView.visible) return;
       try {
@@ -130,6 +137,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 function getNonce() {
   let text = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.charCodeAt(0) % chars.length));
   return text;
 }
