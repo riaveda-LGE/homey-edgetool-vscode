@@ -51,6 +51,7 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format:prettier": "prettier --write \"{src,scripts,media}/**/*.{ts,tsx,js,jsx,css,html,json,md}\"",
     "format": "npm run lint:fix && npm run format:prettier",
+    "perf:merge": "node dist/scripts/perf/run-merge-bench.js",
     "vscode:prepublish": "tsc -p .",
     "build": "tsc -p .",
     "deploy": "npm run build && npx vsce package",

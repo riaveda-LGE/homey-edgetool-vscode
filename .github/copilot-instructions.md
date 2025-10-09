@@ -217,3 +217,174 @@ export async function doWork() {
   }
 }
 ```
+
+## 프로젝트 트리
+homey-edgetool/
+├─ src/
+│  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
+│  │  ├─ main.ts                          # activate/deactivate, 초기 부트스트랩
+│  │  ├─ commands/
+│  │  │  ├─ registerCommands.ts           # 모든 명령 등록/해제
+│  │  │  └─ commandHandlers.ts            # help/h, connect_info, homey-logging 등 라우팅
+│  │  ├─ panels/
+│  │  │  ├─ EdgePanelProvider.ts          # (현 extensionPanel.ts) 상태/업데이트/edge> 콘솔
+│  │  │  └─ LogViewEditorProvider.ts      # Custom Editor + Webview (homey-logging)
+│  │  ├─ messaging/
+│  │  │  ├─ hostWebviewBridge.ts          # Webview ↔ Extension message bridge
+│  │  │  └─ messageTypes.ts               # 공용 메시지 타입(웹/호스트 공용 import)
+│  │  └─ updater/
+│  │     └─ updater.ts                    # checkLatestVersion(), downloadAndInstall()
+│  │
+│  ├─ core/                               # 핵심 비즈니스 로직(런타임 독립)
+│  │  ├─ logging/
+│  │  │  ├─ extension-logger.ts           # (현 util/extension-logger.ts) OutputChannel + sink
+│  │  │  └─ perf.ts                       # perfNow(), withPerf(), heap snapshot hook(추가 예정)
+│  │  ├─ logs/
+│  │  │  ├─ HybridLogBuffer.ts            # 4-버퍼 하이브리드(실시간/뷰포트/검색/스필)
+│  │  │  ├─ LogFileIntegration.ts         # k-way 병합(시간 역/정), 타임존 보정, 청크 처리
+│  │  │  ├─ LogFileStorage.ts             # JSONL/압축/범위 조회, 인덱스(선택)
+│  │  │  ├─ LogSearch.ts                  # contains/regex/time-range/pagination
+│  │  │  └─ types.ts                      # LogEntry/ViewportRange/Source 등 타입
+│  │  ├─ connection/
+│  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 타입(ssh|adb 중 1개), run/stream/shell
+│  │  │  └─ ExecRunner.ts                 # spawn 표준화(PS/sh), timeout/cancel/stdio 라우팅
+│  │  ├─ transfer/
+│  │  │  └─ FileTransferService.ts        # tar/base64 over SSH (업/다운로드) — SCP 미의존
+│  │  ├─ sessions/
+│  │  │  └─ LogSessionManager.ts          # 실시간/파일병합 세션, HybridLogBuffer 브릿지
+│  │  └─ config/
+│  │     └─ schema.ts                     # 사용자 설정 스키마(버퍼/타임아웃/경로/필터)
+│  │
+│  ├─ adapters/                           # 외부 종속 계층
+│  │  ├─ ssh/
+│  │  │  └─ sshClient.ts                  # ssh 명령 래퍼(포트/키/옵션), 표준입출력 파이프
+│  │  ├─ adb/
+│  │  │  └─ adbClient.ts                  # adb shell / tail -f 래퍼
+│  │  └─ fs/
+│  │     └─ nodeFs.ts                     # fs streams/readline, gzip, tmp 파일 유틸
+│  │
+│  ├─ shared/
+│  │  ├─ const.ts                         # (현 config/const.ts) EXT IDs, URLs, LOG, READY_MARKER
+│  │  ├─ types.ts                         # Result/Failure/Progress 등 공용 타입
+│  │  ├─ errors.ts                        # 에러 분류/래핑(권한/도구없음/경로/네트워크/타임아웃)
+│  │  └─ utils.ts                         # 공통 유틸(타임존/경로/문자열/세이프 JSON)
+│  │
+│  └─ ui/                                 # Webview 리소스(번들 대상)
+│     ├─ log-viewer/
+│     │  ├─ index.html                    # 로그 뷰어 웹뷰 (Custom Editor)
+│     │  ├─ styles.css
+│     │  ├─ app.ts                        # 부트스트랩, EventBus, 상태
+│     │  ├─ services/
+│     │  │  └─ ws.ts                      # postMessage 래퍼, 배치 큐/재연결
+│     │  ├─ modules/
+│     │  │  ├─ LogViewer.ts              # 가상 스크롤, 배치 렌더, 통계/하이라이트
+│     │  │  ├─ SearchManager.ts
+│     │  │  ├─ FilterManager.ts
+│     │  │  ├─ HighlightManager.ts
+│     │  │  ├─ BookmarkManager.ts
+│     │  │  └─ TooltipManager.ts
+│     │  └─ protocol.ts                   # messageTypes.ts와 동일 타입(공용 import 권장)
+│     └─ edge-panel/
+│        ├─ index.html                    # (현 media/edge-panel/index.html)
+│        ├─ panel.css                     # (현 media/edge-panel/panel.css)
+│        └─ panel.ts                      # (현 panel.js → TS화)
+│
+├─ media/                                 # (점진 이관) 아이콘/정적자원
+│  └─ resources/edge-icon.svg
+├─ scripts/
+│  └─ perf/
+│     ├─ run-merge-bench.ts               # LogFileIntegration 벤치(추가 예정)
+│     └─ stream-simulator.ts              # 실시간 스트림 시뮬레이터(추가 예정)
+├─ package.json
+├─ tsconfig.json
+├─ webpack.config.js or esbuild.mjs       # Webview 번들링(권장)
+└─ README.md / CHANGELOG.md / LICENSE
+
+## 모듈 간단 설명
+extension/
+
+main.ts: 확장 진입점. 로거 초기화, 전역 예외 후킹, 업데이트 확인, EdgePanel 등록.
+
+commands/
+
+registerCommands.ts: vscode.commands.registerCommand들의 모음.
+
+commandHandlers.ts: help/h, connect_info/ci, connect_change/cc, homey-logging 등 사용자 UX 명령 라우팅. (EdgePanel edge> 입력과도 재활용 가능)
+
+panels/
+
+EdgePanelProvider.ts: (기존 extensionPanel.ts) 업데이트 버튼/리로드/로그 스트림 표시. edge> 입력 → 명령 라우팅.
+
+LogViewEditorProvider.ts: Custom Editor + Webview로 homey-logging 전용 뷰어(실시간/파일병합 UI).
+
+messaging/
+
+messageTypes.ts: Host/Webview가 공유하는 Envelope 기반 메시지 타입(버전·상관관계·취소 키 지원).
+
+hostWebviewBridge.ts: Host쪽 메시지 브리지(검증/라우팅/배치 전송/에러 표준화/취소 전파).
+
+updater/
+
+updater.ts: (현 구현 유지) latest.json 확인 → VSIX 다운로드/설치/무결성 검증.
+
+core/
+
+logging/
+
+extension-logger.ts: (현 구현 유지) OutputChannel + sink + 버퍼/flush.
+
+perf.ts: withPerf(fn), GC/heap snapshot hook 등 성능 계측 유틸(추가 예정).
+
+logs/
+
+HybridLogBuffer.ts: 4-버퍼(실시간/뷰포트×2/검색/스필) + 메트릭 제공.
+
+LogFileIntegration.ts: k-way 병합 스트리밍, 타임존 보정, 청크 처리, 역순/정순 옵션.
+
+LogFileStorage.ts: JSONL 저장/읽기, 범위 조회, gzip(선택), 중복 제거.
+
+LogSearch.ts: contains/regex/time-range/pagination 검색.
+
+types.ts: LogEntry, ViewportRange, InputSource 등.
+
+connection/
+
+ConnectionManager.ts: 호스트별 연결 타입 고정(ssh|adb 중 1개, 주로 ssh). run/stream/shell 수명주기.
+
+ExecRunner.ts: 로컬 spawn 표준화(Windows: PowerShell / POSIX: /bin/sh), timeout/cancel/stdio 라우팅.
+
+transfer/
+
+FileTransferService.ts: tar/base64 파이프로 업/다운로드(SCP 미의존), 단계별 타임아웃/취소/에러 카테고리.
+
+sessions/
+
+LogSessionManager.ts: 실시간 스트림/파일 병합 세션을 관리, HybridLogBuffer로 공급, 브리지 콜백(onBatch/onMetrics) 호출.
+
+config/
+
+schema.ts: 호스트 설정(ssh|adb), 버퍼 크기, 청크 크기, 타임아웃, 필터/하이라이트 규칙 등.
+
+adapters/
+
+ssh/sshClient.ts: ssh 바이너리 래퍼. 키/포트/옵션 구성, run/stream 구현.
+
+adb/adbClient.ts: adb shell, tail -f 래퍼. (ADB 채택 호스트에서만 사용)
+
+fs/nodeFs.ts: 파일 스트림/라인리더/gzip/tar 호출 유틸, tmp 디렉토리 핸들링.
+
+shared/
+
+const.ts: (현 config/const.ts) 확장 ID/뷰/로깅 상수/LATEST_JSON_URL 등.
+
+types.ts: 공용 Result<T,E>, Progress, ErrorCategory 등.
+
+errors.ts: 에러 분류와 메시지 표준화(연결/권한/도구없음/경로/네트워크/타임아웃).
+
+utils.ts: 타임존/경로 정규화/문자열/세이프 JSON 유틸.
+
+ui/
+
+log-viewer/: Custom Editor용 Webview. 가상 스크롤, 배치 렌더, 검색/필터/하이라이트/북마크.
+
+edge-panel/: (현 media/edge-panel/* → TS로 이관) 업데이트/진행률/간단 로그 콘솔.

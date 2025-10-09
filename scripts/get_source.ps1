@@ -2,7 +2,7 @@ if (Test-Path "source.tmp") {
     Remove-Item "source.tmp"
 }
 
-$folders = @("src", "media")
+$folders = @("src", "media", "scripts")
 $output = ""
 
 foreach ($folder in $folders) {
@@ -20,6 +20,13 @@ foreach ($folder in $folders) {
 if (Test-Path "package.json") {
     $output += "=== package.json ===`n"
     $content = Get-Content -Path "package.json" -Raw
+    $output += $content + "`n`n"
+}
+
+# Add tsconfig.json
+if (Test-Path "tsconfig.json") {
+    $output += "=== tsconfig.json ===`n"
+    $content = Get-Content -Path "tsconfig.json" -Raw
     $output += $content + "`n`n"
 }
 
