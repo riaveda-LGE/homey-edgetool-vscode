@@ -39,6 +39,7 @@ body {
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 13px;
 }
 .btn:active { transform: translateY(1px); }
 
