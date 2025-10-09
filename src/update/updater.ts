@@ -1,34 +1,92 @@
+// src/update/updater.ts
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
 import { getLogger } from '../util/extension-logger.js';
 
 const log = getLogger('updater');
 
+/** GitHub 리포 정보 */
+const GH_OWNER = 'riaveda-LGE';
+const GH_REPO  = 'homey-edgetool-vscode';
+
+/** latest 릴리스의 latest.json 고정 URL (토큰 불필요) */
+const LATEST_JSON_URL =
+  `https://github.com/${GH_OWNER}/${GH_REPO}/releases/latest/download/latest.json`;
+
+type LatestJson = {
+  id?: string;
+  version?: string;
+  url?: string;     // VSIX 다운로드 URL (releases/download/v<ver>/<file>.vsix)
+  sha256?: string;
+};
+
+/** semver 유사 비교: latest > current ? */
+function isNewerVersion(latest: string, current: string): boolean {
+  const a = latest.split('.').map(n => parseInt(n || '0', 10));
+  const b = current.split('.').map(n => parseInt(n || '0', 10));
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const diff = (a[i] || 0) - (b[i] || 0);
+    if (diff > 0) return true;
+    if (diff < 0) return false;
+  }
+  return false;
+}
+
+/** 네트워크 유틸 */
+async function fetchJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function fetchBuffer(url: string, timeoutMs = 60_000): Promise<Buffer> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    const arr = await res.arrayBuffer();
+    return Buffer.from(arr);
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * 최신 릴리스의 latest.json을 읽어 업데이트 유무/다운로드 URL 반환
+ * - latest.json 예시:
+ *   { "id":"lge.homey-edgetool", "version":"0.0.3",
+ *     "url":"https://github.com/<owner>/<repo>/releases/download/v0.0.3/<basename>-0.0.3.vsix",
+ *     "sha256":"..." }
+ */
 export async function checkLatestVersion(
   currentVersion: string,
 ): Promise<{ hasUpdate: boolean; latest?: string; url?: string }> {
-  const serverUrl = 'http://localhost:8080/latest.json';
-
   try {
-    const res = await fetch(serverUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await fetchJson<LatestJson>(LATEST_JSON_URL);
 
     const latest = String(data.version ?? '').trim();
-    // latest.json이 vsixUrl을 쓸 수도 있으니 폴백 지원
-    const url = String(data.url ?? data.vsixUrl ?? '').trim();
+    const url = String(data.url ?? '').trim();
 
     const hasUpdate = !!latest && isNewerVersion(latest, currentVersion);
     log.info(
-      `checkLatestVersion: current=${currentVersion}, latest=${latest}, hasUpdate=${hasUpdate}, url=${url || '(none)'}`,
+      `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}`
     );
 
-    // 새 버전인데 url이 없으면 업데이트 제공 불가로 간주
+    // 새 버전인데 url이 없으면 제공 불가로 간주
     if (hasUpdate && !url) {
-      log.warn(`latest.json has newer version ${latest} but missing url/vsixUrl`);
+      log.warn(`latest.json has newer version ${latest} but missing url`);
       return { hasUpdate: false, latest, url: undefined };
     }
 
@@ -39,17 +97,6 @@ export async function checkLatestVersion(
   }
 }
 
-function isNewerVersion(latest: string, current: string): boolean {
-  const a = latest.split('.').map(Number);
-  const b = current.split('.').map(Number);
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    const diff = (a[i] || 0) - (b[i] || 0);
-    if (diff > 0) return true;
-    if (diff < 0) return false;
-  }
-  return false;
-}
-
 export async function downloadAndInstall(url: string, progressCallback: (line: string) => void) {
   try {
     if (!url) {
@@ -58,16 +105,12 @@ export async function downloadAndInstall(url: string, progressCallback: (line: s
     }
 
     progressCallback('[update] 최신 버전 다운로드 중...');
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`다운로드 실패: HTTP ${res.status}`);
+    const buf = await fetchBuffer(url);
 
-    // ✅ __dirname 대신 OS 임시 폴더 사용
     const tmpDir = path.join(os.tmpdir(), 'homey-edgetool');
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
     const filePath = path.join(tmpDir, 'latest.vsix');
-
-    const buf = Buffer.from(await res.arrayBuffer());
     fs.writeFileSync(filePath, buf);
 
     progressCallback(`[update] 다운로드 완료: ${filePath}`);

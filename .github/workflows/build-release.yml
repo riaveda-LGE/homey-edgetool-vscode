@@ -1,10 +1,11 @@
+# .github/workflows/build-release.yml
 name: Release (manual)
 
 on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write  # 태그 푸시/릴리스 생성에 필요
+  contents: write
 
 env:
   OUTPUT_DIR: dist
@@ -31,7 +32,6 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      # 필요하면 deploy를 사용 (VSIX 산출)
       - name: Build (npm run deploy)
         run: npm run deploy
 
@@ -42,7 +42,6 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
-      # 태그가 없으면 v<version> 태그 생성 & 푸시
       - name: Ensure tag v<version> exists (create & push if missing)
         env:
           VERSION: ${{ steps.ver.outputs.VERSION }}
@@ -126,5 +125,6 @@ jobs:
           files: |
             ${{ env.COLLECT_DIR }}/${{ steps.collect.outputs.VSIX_NAME }}
             ${{ env.COLLECT_DIR }}/latest.json
+        # GITHUB_TOKEN은 GitHub가 자동 주입. 별도 개인 토큰 불필요(공개 리포).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
