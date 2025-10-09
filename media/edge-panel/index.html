@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src %CSP_SOURCE% https: data:;
+               style-src 'unsafe-inline' %CSP_SOURCE%;
+               script-src 'nonce-%NONCE%';"
+    />
+    <link rel="stylesheet" href="%CSS_URI%" />
+    <title>Homey Edge Console</title>
+  </head>
+  <body>
+    <section id="controls" aria-label="controls">
+      <h3 style="margin: 0 0 8px 0">Control Panel</h3>
+      <div id="controlsContent">
+        <div class="row">
+          <!-- 기본은 숨김 -->
+          <button class="btn" id="btnVersionUpdate" style="display: none">버전 업데이트</button>
+          <button class="btn" id="btnReloadWindow" style="display: none">
+            Developer: Reload Window
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="logs" aria-label="logs"></section>
+
+    <section id="cmdbar" aria-label="edge command">
+      <span id="prompt">edge&gt;</span>
+      <input id="input" type="text" autocomplete="off" spellcheck="false" />
+      <!-- ⏎ 아이콘 포함: Enter 버튼 -->
+      <button id="runBtn" title="Enter" aria-label="Enter">
+        Enter <span class="icon-enter">⏎</span>
+      </button>
+    </section>
+
+    <script nonce="%NONCE%" src="%JS_URI%"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+# 빌드 산출물
+dist/**
+out/**
+build/**
+
+# 외부 의존성
+node_modules/**
+
+# 레거시 코드
+legacy/**
+
+# 패키지 관리용
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

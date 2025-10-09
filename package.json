@@ -1,0 +1,78 @@
+{
+  "name": "homey-edgetool",
+  "type": "module",
+  "displayName": "Homey EdgeTool",
+  "publisher": "lge",
+  "version": "0.0.1",
+  "description": "Edge console for Homey Edge Tool",
+  "repository": {
+    "type": "git",
+    "url": "http://mod.lge.com/hub/riaveda.lim/homey-edgetool-vscode.git"
+  },
+  "bugs": {
+    "url": "http://mod.lge.com/hub/riaveda.lim/homey-edgetool-vscode.git/issues"
+  },
+  "homepage": "http://mod.lge.com/hub/riaveda.lim/homey-edgetool-vscode.git#readme",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "main": "./dist/main.js",
+  "activationEvents": [
+    "onCommand:homeyEdgetool.hello",
+    "onCommand:homeyEdgetool.updateNow",
+    "onView:edgePanel"
+  ],
+  "contributes": {
+    "commands": [
+      { "command": "homeyEdgetool.hello", "title": "Homey EdgeTool: Hello" },
+      { "command": "homeyEdgetool.updateNow", "title": "Homey EdgeTool: Update Now" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "homey-edge", "title": "Homey Edge", "icon": "resources/edge-icon.svg" }
+      ]
+    },
+    "views": {
+      "homey-edge": [
+        {
+          "id": "edgePanel",
+          "name": "Edge Console",
+          "type": "webview",
+          "retainContextWhenHidden": true
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "format:prettier": "prettier --write \"{src,scripts,media}/**/*.{ts,tsx,js,jsx,css,html,json,md}\"",
+    "format": "npm run lint:fix && npm run format:prettier",
+    "vscode:prepublish": "tsc -p .",
+    "build": "tsc -p .",
+    "deploy": "npm run build && npx vsce package",
+    "test": "node scripts/test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.46.0"
+  },
+  "files": [
+    "dist/**",
+    "media/**",
+    "resources/**",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ]
+}

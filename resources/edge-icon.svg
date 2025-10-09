@@ -1,0 +1,13 @@
+<!-- resources/edge-icon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+     viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+     aria-label="Homey Edge">
+  <!-- 바깥 라인 (살짝 둥근 사각) -->
+  <rect x="3.5" y="3.5" width="17" height="17" rx="3" ry="3"/>
+  <!-- 가운데 'E' 모양 -->
+  <line x1="7" y1="6.5" x2="7" y2="17.5"/>
+  <line x1="7" y1="6.5" x2="17" y2="6.5"/>
+  <line x1="7" y1="12"  x2="15" y2="12"/>
+  <line x1="7" y1="17.5" x2="17" y2="17.5"/>
+</svg>
