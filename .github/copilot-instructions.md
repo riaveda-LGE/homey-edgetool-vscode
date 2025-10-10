@@ -219,6 +219,7 @@ export async function doWork() {
 ```
 
 ## 프로젝트 트리
+```
 homey-edgetool/
 ├─ src/
 │  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
@@ -299,6 +300,7 @@ homey-edgetool/
 ├─ tsconfig.json
 ├─ webpack.config.js or esbuild.mjs       # Webview 번들링(권장)
 └─ README.md / CHANGELOG.md / LICENSE
+```
 
 ## 모듈 간단 설명
 extension/
