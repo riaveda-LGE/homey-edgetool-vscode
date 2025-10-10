@@ -7,8 +7,8 @@
 
 ## 1) 빌드·패키징·배포
 
-- [ ] **P0** `files` 기반 패키징 검증 (README/CHANGELOG 없으므로 제외 유지)  
-- [ ] **P0** VSCE 최신 유지 (`@vscode/vsce`) 및 `npm run deploy` 통합  
+- [☑] **P0** `files` 기반 패키징 검증 (README/CHANGELOG 없으므로 제외 유지)  
+- [☑] **P0** VSCE 최신 유지 (`@vscode/vsce`) 및 `npm run deploy` 통합  
 - [ ] **P1** CI 빌드 파이프라인 (Windows + Linux)  
 - [ ] **P1** 프리릴리즈 채널/태그/릴리즈 전략 수립 (`latest.json` 자동 갱신)  
 - [ ] **P2** 무결성 검증 강화 (sha256 외 PGP 서명 등)
@@ -17,8 +17,8 @@
 
 ## 2) 업데이트 시스템
 
-- [ ] **P0** Node 20 런타임 보장 (문서화 + 체크)  
-- [ ] **P0** 실패/회귀 처리: VSIX 설치 실패 시 롤백 안내  
+- [☑] **P0** Node 20 런타임 보장 (문서화 + 체크)  
+- [☑] **P0** 실패/회귀 처리: VSIX 설치 실패 시 롤백 안내  
 - [ ] **P1** 네트워크 예외 상세화 (타임아웃/SSL/DNS 구분)  
 - [ ] **P1** `latest.json` 스키마 검증  
 - [ ] **P2** 프록시/사내망 설정 지원
@@ -28,7 +28,7 @@
 ## 3) 실행·연결 계층
 
 ### ExecRunner
-- [ ] **P0** SIGTERM 후 SIGKILL 폴백 처리  
+- [☑] **P0** SIGTERM 후 SIGKILL 폴백 처리  
 - [ ] **P1** stdout/stderr 로그 파일 옵션  
 - [ ] **P1** 환경변수/작업디렉토리 보안 필터
 
