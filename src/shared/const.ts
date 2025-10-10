@@ -8,7 +8,6 @@ export const EXTENSION_ID = `${EXTENSION_PUBLISHER}.${EXTENSION_NAME}` as const;
 export const ACTIVITY_CONTAINER_ID = 'homey-edge' as const;
 export const PANEL_VIEW_TYPE = 'edgePanel' as const;
 
-export const COMMAND_HELLO = 'homeyEdgetool.hello' as const;
 export const COMMAND_UPDATE_NOW = 'homeyEdgetool.updateNow' as const;
 
 // Logger

@@ -22,17 +22,9 @@
   ],
   "main": "./dist/extension/main.js",
   "activationEvents": [
-    "onCommand:homeyEdgetool.hello",
-    "onCommand:homeyEdgetool.updateNow",
-    "onCommand:homeyEdgetool.changeWorkspace",
     "onView:edgePanel"
   ],
   "contributes": {
-    "commands": [
-      { "command": "homeyEdgetool.hello", "title": "Homey EdgeTool: Hello" },
-      { "command": "homeyEdgetool.updateNow", "title": "Homey EdgeTool: Update Now" },
-      { "command": "homeyEdgetool.changeWorkspace", "title": "Homey EdgeTool: Change Workspace…" }
-    ],
     "viewsContainers": {
       "activitybar": [
         { "id": "homey-edge", "title": "Homey Edge", "icon": "media/resources/edge-icon.svg" }

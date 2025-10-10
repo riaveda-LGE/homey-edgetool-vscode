@@ -78,14 +78,6 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage('EdgePanel register failed: ' + (e as Error).message);
   }
 
-  // 데모 커맨드(임시)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('homeyEdgetool.hello', () => {
-      getLogger('main').debug('hello clicked');
-      vscode.window.showInformationMessage('Homey EdgeTool activated (hello)');
-    }),
-  );
-
   log.info('activate() end');
 }
 
