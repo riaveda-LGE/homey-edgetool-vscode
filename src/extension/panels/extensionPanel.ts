@@ -6,9 +6,14 @@ import { downloadAndInstall } from '../update/updater.js';
 import { addLogSink, getBufferedLogs, getLogger, removeLogSink } from '../../core/logging/extension-logger.js';
 import { PANEL_VIEW_TYPE, READY_MARKER } from '../../shared/const.js';
 
-// 세션/브리지 스텁
 import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
+
+// 콘솔 명령 라우팅
+import { runConsoleCommand } from '../commands/registerCommands.js';
+
+// 워크스페이스 정보 조회 (UI 책임)
+import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 
 interface EdgePanelState {
   version: string;
@@ -32,6 +37,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   private _currentAbort?: AbortController;
 
   constructor(
+    private readonly _context: vscode.ExtensionContext,
     private readonly _extensionUri: vscode.Uri,
     version: string,
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
@@ -54,12 +60,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
-    // 보안상 필요한 dist 폴더만 허용
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [
-        vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel'),
-      ],
+      localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel')],
       ...({ retainContextWhenHidden: true } as any),
     };
 
@@ -77,6 +80,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           const text = String(msg.text ?? '').trim();
           this.log.info(`edge> ${text}`);
 
+          // 데모: homey-logging (기존 유지)
           if (text === 'homey-logging') {
             this._session?.stopAll();
             this._currentAbort?.abort();
@@ -86,7 +90,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
             this._session.startRealtimeSession({
               signal: this._currentAbort.signal,
-              onBatch: (logs, total, seq) => {
+              onBatch: (logs) => {
                 for (const l of logs) this.appendLog(`[LOG][${l.type}] ${l.text}`);
               },
               onMetrics: (m) => {
@@ -94,10 +98,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
               },
             });
             this.appendLog('[info] realtime logging session started (stub)');
-
           } else if (text.startsWith('homey-logging --dir ')) {
             const dir = text.replace('homey-logging --dir', '').trim();
-            if (!dir) { this.appendLog('[error] directory path required'); return; }
+            if (!dir) {
+              this.appendLog('[error] directory path required');
+              return;
+            }
 
             this._session?.stopAll();
             this._currentAbort?.abort();
@@ -108,7 +114,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             this._session.startFileMergeSession({
               dir,
               signal: this._currentAbort.signal,
-              onBatch: (logs, total, seq) => {
+              onBatch: (logs) => {
                 for (const l of logs) this.appendLog(`[MERGE][${l.type}] ${l.text}`);
               },
               onMetrics: (m) => {
@@ -116,17 +122,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
               },
             });
             this.appendLog(`[info] file-merge logging session started (dir=${dir}, stub)`);
-
           } else if (text === 'homey-logging --stop') {
             this._session?.stopAll();
             this._currentAbort?.abort();
             this.appendLog('[info] logging session stopped');
-
           } else {
-            this.log.info(`edge> passthrough: ${text}`);
+            // 나머지 콘솔 명령: 통합 라우터 호출 (context 전달)
+            await runConsoleCommand(text, (s) => this.appendLog(s), this._context);
           }
-
         } else if (msg?.command === 'ready') {
+          // 초기 상태 렌더링
           this._state.logs = getBufferedLogs();
           webviewView.webview.postMessage({ type: 'initState', state: this._state });
           webviewView.webview.postMessage({
@@ -135,18 +140,31 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           });
           this.appendLog(`${READY_MARKER} Ready. Type a command after "edge>" and hit Enter.`);
 
+          // ➜ 패널 준비 완료 시점에 현재 워크스페이스 정보 출력
+          try {
+            const ws = await resolveWorkspaceInfo(this._context);
+            if (ws.source === 'user') {
+              this.appendLog(`[info] workspace (사용자 지정): base=${ws.baseDirFsPath}`);
+              this.appendLog(`[info] -> 실제 사용 경로: ${ws.wsDirFsPath}`);
+            } else {
+              this.appendLog(`[info] workspace (기본): 확장전용폴더를 사용합니다`);
+              this.appendLog(`[info] base=${ws.baseDirFsPath}`);
+              this.appendLog(`[info] -> 실제 사용 경로: ${ws.wsDirFsPath}`);
+            }
+          } catch (e: any) {
+            this.appendLog(`[error] workspace 정보 조회 실패: ${e?.message || String(e)}`);
+          }
         } else if (msg?.command === 'versionUpdate') {
           if (!this._state.updateUrl) {
             this.appendLog('[update] 최신 버전 URL이 없습니다.');
             return;
           }
-          this.appendLog('[update] 업데이트를 시작합니다...');
+          this.appendLog('[update] 업데이트를 시작합니다..');
           await downloadAndInstall(
             this._state.updateUrl,
             (line) => this.appendLog(line),
             this._state.latestSha,
           );
-
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
@@ -184,7 +202,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlFromFiles(webview: vscode.Webview): string {
-    // dist/ui/edge-panel 에 복사된 정적 리소스를 사용
     const root = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
     const htmlPath = vscode.Uri.joinPath(root, 'index.html');
     const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'panel.css'));

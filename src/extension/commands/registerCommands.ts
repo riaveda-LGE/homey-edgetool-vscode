@@ -7,7 +7,7 @@ import { createCommandHandlers } from './commandHandlers.js';
 const log = getLogger('commands');
 
 export function registerCommands(context: vscode.ExtensionContext) {
-  const handlers = createCommandHandlers();
+  const handlers = createCommandHandlers(undefined, context);
 
   const d1 = vscode.commands.registerCommand(COMMAND_HELLO, async () => {
     log.debug('hello');
@@ -18,11 +18,20 @@ export function registerCommands(context: vscode.ExtensionContext) {
     await handlers.updateNow();
   });
 
-  context.subscriptions.push(d1, d2);
+  // 커맨드 팔레트에서 직접 워크스페이스 변경
+  const d3 = vscode.commands.registerCommand('homeyEdgetool.changeWorkspace', async () => {
+    await handlers.changeWorkspace('');
+  });
+
+  context.subscriptions.push(d1, d2, d3);
 }
 
-// (선택) EdgePanel에서 edge> 입력을 여기에 위임하고 싶다면 이 헬퍼 사용
-export async function runConsoleCommand(line: string, appendLog?: (s: string) => void) {
-  const handlers = createCommandHandlers(appendLog);
+// EdgePanel에서 콘솔 명령 실행 시 사용
+export async function runConsoleCommand(
+  line: string,
+  appendLog?: (s: string) => void,
+  context?: vscode.ExtensionContext,
+) {
+  const handlers = createCommandHandlers(appendLog, context);
   await handlers.route(line);
 }

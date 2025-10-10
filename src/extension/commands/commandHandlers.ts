@@ -4,9 +4,15 @@ import { getLogger } from '../../core/logging/extension-logger.js';
 import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
 import { READY_MARKER } from '../../shared/const.js';
 
+// 사용자 구성 저장소
+import {
+  changeWorkspaceBaseDir,
+  resolveWorkspaceInfo,
+} from '../../core/config/userdata.js';
+
 const log = getLogger('cmd');
 
-export function createCommandHandlers(appendLog?: (s: string) => void) {
+export function createCommandHandlers(appendLog?: (s: string) => void, context?: vscode.ExtensionContext) {
   const say = (s: string) => {
     log.info(s);
     appendLog?.(s);
@@ -32,6 +38,8 @@ export function createCommandHandlers(appendLog?: (s: string) => void) {
           return this.hostCommand(rest.join(' '));
         case 'git':
           return this.gitPassthrough(rest);
+        case 'change_workspace':
+          return this.changeWorkspace(rest.join(' '));
         default:
           say(`[info] unknown command: ${raw}`);
       }
@@ -45,12 +53,13 @@ export function createCommandHandlers(appendLog?: (s: string) => void) {
   homey-logging --dir <path>
   connect_info | connect_change
   host <cmd>
-  git pull|push ...`);
+  git pull|push ...
+  change_workspace [<절대경로>]`);
     },
 
     async loggingStart() {
       say('[info] start realtime logging (stub)');
-      // 실제 구현은 LogSessionManager 사용
+      // TODO: LogSessionManager 연동
     },
 
     async loggingMerge(dir: string) {
@@ -81,7 +90,8 @@ export function createCommandHandlers(appendLog?: (s: string) => void) {
 
     async updateNow() {
       try {
-        const version = vscode.extensions.getExtension('lge.homey-edgetool')?.packageJSON?.version ?? '0.0.0';
+        const version =
+          vscode.extensions.getExtension('lge.homey-edgetool')?.packageJSON?.version ?? '0.0.0';
         const latest = await checkLatestVersion(String(version));
         if (!latest.hasUpdate || !latest.url) {
           vscode.window.showInformationMessage('No update available.');
@@ -93,6 +103,43 @@ export function createCommandHandlers(appendLog?: (s: string) => void) {
         log.error('updateNow failed', e as any);
         vscode.window.showErrorMessage('Update failed: ' + (e as Error).message);
       }
+    },
+
+    async changeWorkspace(arg: string) {
+      if (!context) return say('[error] internal: no extension context');
+      let base = arg?.trim();
+
+      if (!base) {
+        base =
+          (await vscode.window.showInputBox({
+            title:
+              '새 Workspace 베이스 절대 경로 입력 (해당 경로 아래에 workspace/가 생성됩니다)',
+            placeHolder: '예) D:\\homey-data   또는   /Users/me/homey-data',
+            validateInput: (v) =>
+              v && v.length > 1 ? undefined : '경로를 입력하세요',
+          })) || '';
+      }
+      if (!base) return say('[info] change_workspace 취소됨');
+
+      try {
+        const info = await changeWorkspaceBaseDir(context, base);
+        say(`[info] workspace (사용자 지정) base=${info.baseDirFsPath}`);
+        say(`[info] -> 실제 사용 경로: ${info.wsDirFsPath}`);
+      } catch (e: any) {
+        say(`[error] change_workspace 실패: ${e?.message || String(e)}`);
+      }
+    },
+
+    // (옵션) 현재 상태 확인용: 필요 시 help에 노출하고 쓰면 됨
+    async showWorkspace() {
+      if (!context) return say('[error] internal: no extension context');
+      const info = await resolveWorkspaceInfo(context);
+      if (info.source === 'user') {
+        say(`[info] workspace (사용자 지정) base=${info.baseDirFsPath}`);
+      } else {
+        say(`[info] workspace (기본) base=${info.baseDirFsPath} (확장전용폴더)`);
+      }
+      say(`[info] -> 실제 사용 경로: ${info.wsDirFsPath}`);
     },
   };
 }
