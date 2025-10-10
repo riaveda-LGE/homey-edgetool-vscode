@@ -8,34 +8,33 @@
                style-src 'unsafe-inline' %CSP_SOURCE%;
                script-src 'nonce-%NONCE%';"
     />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="%CSS_URI%" />
     <title>Homey Edge Console</title>
   </head>
   <body>
+    <!-- 1) 상단 컨트롤 -->
     <section id="controls" aria-label="controls">
       <h3 style="margin: 0 0 8px 0">Control Panel</h3>
       <div id="controlsContent">
         <div class="row">
-          <!-- 기본은 숨김 -->
           <button class="btn" id="btnVersionUpdate" style="display: none">버전 업데이트</button>
-          <button class="btn" id="btnReloadWindow" style="display: none">
-            Developer: Reload Window
-          </button>
+          <button class="btn" id="btnReloadWindow" style="display: none">Developer: Reload Window</button>
         </div>
       </div>
     </section>
 
+    <!-- 2) 로그 영역 -->
     <section id="logs" aria-label="logs"></section>
 
+    <!-- 3) 커맨드 입력줄 -->
     <section id="cmdbar" aria-label="edge command">
       <span id="prompt">edge&gt;</span>
       <input id="input" type="text" autocomplete="off" spellcheck="false" />
-      <!-- ⏎ 아이콘 포함: Enter 버튼 -->
-      <button id="runBtn" title="Enter" aria-label="Enter">
-        Enter
-      </button>
+      <button id="runBtn" title="Enter" aria-label="Enter">Enter</button>
     </section>
 
+    <noscript>이 패널은 JavaScript가 필요합니다.</noscript>
     <script nonce="%NONCE%" src="%JS_URI%"></script>
   </body>
 </html>

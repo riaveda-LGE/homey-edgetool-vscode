@@ -111,7 +111,7 @@ export async function downloadAndInstall(
       }
       progressCallback('[update] 무결성 검증 완료 (SHA-256 일치).');
     } else {
-      progressCallback('[update] 참고: sha256이 없어 무결성 검증을 건너뜁니다.');
+      progressCallback('[update] 참고: sha256이 없어 무결성 검증을 생략합니다.');
     }
 
     const tmpDir = path.join(os.tmpdir(), 'homey-edgetool');
@@ -130,9 +130,7 @@ export async function downloadAndInstall(
 
     progressCallback('[update] 설치가 완료되었습니다.');
     progressCallback('[update] "Developer: Reload Window" 버튼을 눌러주세요.');
-    progressCallback(
-      '[update] 또는 Ctrl + Shift + P 를 누르고 "Developer: Reload Window" 를 실행하세요.',
-    );
+    progressCallback('[update] 또는 Ctrl + Shift + P → "Developer: Reload Window" 실행.');
   } catch (err) {
     log.error('downloadAndInstall failed', err);
     progressCallback(`[update] 업데이트 실패: ${(err as Error).message}`);

@@ -1,21 +1,23 @@
+// === src/ui/edge-panel/panel.ts ===
+// 전역 선언 제거: d.ts에서 이미 선언됨
+
 (function () {
   const vscode = acquireVsCodeApi();
 
-  const controlsEl = document.getElementById('controls');
-  const controlsContentEl = document.getElementById('controlsContent');
-  const btnVersionUpdate = document.getElementById('btnVersionUpdate');
-  const btnReloadWindow = document.getElementById('btnReloadWindow');
-  const logsEl = document.getElementById('logs');
-  const inputEl = document.getElementById('input');
-  const runBtn = document.getElementById('runBtn');
+  const controlsEl = document.getElementById('controls') as HTMLElement;
+  const controlsContentEl = document.getElementById('controlsContent') as HTMLElement;
+  const btnVersionUpdate = document.getElementById('btnVersionUpdate') as HTMLButtonElement | null;
+  const btnReloadWindow = document.getElementById('btnReloadWindow') as HTMLButtonElement | null;
+  const logsEl = document.getElementById('logs') as HTMLElement;
+  const inputEl = document.getElementById('input') as HTMLInputElement;
+  const runBtn = document.getElementById('runBtn') as HTMLButtonElement;
 
-  // 보수적으로 HTML 라벨을 보장 (캐시/핫리로드 대비)
   if (runBtn) runBtn.innerHTML = 'Enter';
 
   function updateControlsVisibility() {
     if (!controlsContentEl) return;
     const visibleControls = Array.from(
-      controlsContentEl.querySelectorAll(
+      controlsContentEl.querySelectorAll<HTMLElement>(
         'button, input, select, textarea, [data-control], .control',
       ),
     ).some((el) => {
@@ -26,14 +28,15 @@
   }
 
   controlsContentEl.addEventListener('click', (e) => {
-    if (e.target.closest('#btnVersionUpdate')) {
+    const t = e.target as HTMLElement;
+    if (t.closest('#btnVersionUpdate')) {
       vscode.postMessage({ command: 'versionUpdate' });
-    } else if (e.target.closest('#btnReloadWindow')) {
+    } else if (t.closest('#btnReloadWindow')) {
       vscode.postMessage({ command: 'reloadWindow' });
     }
   });
 
-  function appendLog(line) {
+  function appendLog(line: string) {
     const div = document.createElement('div');
     div.className = 'log-line';
 
@@ -51,7 +54,7 @@
     logsEl.scrollTop = logsEl.scrollHeight;
   }
 
-  function resetLogs(lines) {
+  function resetLogs(lines?: string[]) {
     logsEl.innerHTML = '';
     if (Array.isArray(lines)) {
       for (const l of lines) appendLog(l);
@@ -67,7 +70,6 @@
         if (btnVersionUpdate) btnVersionUpdate.style.display = visible ? '' : 'none';
         if (btnReloadWindow) btnReloadWindow.style.display = visible ? '' : 'none';
         updateControlsVisibility();
-
         resetLogs(logs);
         break;
       }
@@ -81,21 +83,18 @@
       case 'appendLog':
         if (typeof msg.text === 'string') appendLog(msg.text);
         break;
-      default:
-        break;
     }
   });
 
   function runCommand() {
     const text = (inputEl.value || '').trim();
     if (!text) return;
-    appendLog(`edge> ${text}`); // 에코
+    appendLog(`edge> ${text}`);
     vscode.postMessage({ command: 'run', text, verbose: false });
     inputEl.value = '';
     inputEl.focus();
   }
 
-  // Enter 키 → 실행 + 버튼 '눌림' 효과
   inputEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       runBtn.classList.add('pressed');
@@ -109,7 +108,6 @@
   if (btnReloadWindow) btnReloadWindow.style.display = 'none';
   updateControlsVisibility();
 
-  // 핸드셰이크
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => vscode.postMessage({ command: 'ready' }));
   } else {

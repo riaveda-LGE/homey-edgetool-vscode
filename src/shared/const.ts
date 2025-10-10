@@ -1,7 +1,6 @@
-// 공통 상수 모음 (Node/VSCode 확장 런타임에서 사용)
-// 빌드 후 dist/config/const.js 로 출력됩니다.
+// 공용 상수 모음 (Node/VSCode 런타임 모두에서 사용)
 
-// ── Extension 식별자/뷰/커맨드
+// Extension 식별자
 export const EXTENSION_PUBLISHER = 'lge' as const;
 export const EXTENSION_NAME = 'homey-edgetool' as const;
 export const EXTENSION_ID = `${EXTENSION_PUBLISHER}.${EXTENSION_NAME}` as const;
@@ -12,7 +11,7 @@ export const PANEL_VIEW_TYPE = 'edgePanel' as const;
 export const COMMAND_HELLO = 'homeyEdgetool.hello' as const;
 export const COMMAND_UPDATE_NOW = 'homeyEdgetool.updateNow' as const;
 
-// ── Logger
+// Logger
 export const LOG_CHANNEL_NAME = 'Homey EdgeTool' as const;
 export const LOG_LEVEL_DEFAULT = 'debug' as const; // 'debug' | 'info' | 'warn' | 'error'
 export const LOG_MAX_BUFFER = 500;
@@ -24,7 +23,7 @@ export const LOG_IGNORE_KEYWORDS = [
   'typescript-language-features',
 ] as const;
 
-// ── Updater / GitHub
+// Updater / GitHub
 export const GH_OWNER = 'riaveda-LGE' as const;
 export const GH_REPO = 'homey-edgetool-vscode' as const;
 export const LATEST_JSON_URL = `https://github.com/${GH_OWNER}/${GH_REPO}/releases/latest/download/latest.json`;
@@ -32,5 +31,5 @@ export const LATEST_JSON_URL = `https://github.com/${GH_OWNER}/${GH_REPO}/releas
 export const FETCH_JSON_TIMEOUT_MS = 12_000;
 export const FETCH_BUFFER_TIMEOUT_MS = 60_000;
 
-// ── Webview/Panel
+// Webview/Panel
 export const READY_MARKER = '%READY%' as const;

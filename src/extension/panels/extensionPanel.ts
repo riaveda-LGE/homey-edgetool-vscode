@@ -54,16 +54,17 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
-    const mediaRoot = vscode.Uri.joinPath(this._extensionUri, 'media', 'edge-panel');
-
+    // 보안상 필요한 dist 폴더만 허용
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri],
+      localResourceRoots: [
+        vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel'),
+      ],
       ...({ retainContextWhenHidden: true } as any),
     };
 
     webviewView.title = `Edge Console - v${this._state.version}`;
-    webviewView.webview.html = this._getHtmlFromFiles(webviewView.webview, mediaRoot);
+    webviewView.webview.html = this._getHtmlFromFiles(webviewView.webview);
 
     try {
       this._bridge = new HostWebviewBridge(webviewView);
@@ -182,10 +183,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): string {
-    const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
-    const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.css'));
-    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.js'));
+  private _getHtmlFromFiles(webview: vscode.Webview): string {
+    // dist/ui/edge-panel 에 복사된 정적 리소스를 사용
+    const root = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
+    const htmlPath = vscode.Uri.joinPath(root, 'index.html');
+    const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'panel.css'));
+    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'panel.js'));
 
     const nonce = getNonce();
     const cspSource = webview.cspSource;
@@ -204,6 +207,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 function getNonce() {
   let text = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.charCodeAt(0) % chars.length));
+  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
   return text;
 }

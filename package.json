@@ -52,8 +52,8 @@
     "format:prettier": "prettier --write \"{src,scripts,media}/**/*.{ts,tsx,js,jsx,css,html,json,md}\"",
     "format": "npm run lint:fix && npm run format:prettier",
     "perf:merge": "node dist/scripts/perf/run-merge-bench.js",
-    "vscode:prepublish": "tsc -p .",
-    "build": "tsc -p .",
+    "vscode:prepublish": "tsc -p . && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/ui/edge-panel','dist/ui/edge-panel');copy('src/ui/log-viewer','dist/ui/log-viewer');\"",
+    "build": "tsc -p . && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/ui/edge-panel','dist/ui/edge-panel');copy('src/ui/log-viewer','dist/ui/log-viewer');\"",
     "deploy": "npm run build && npx vsce package",
     "test": "node scripts/test.js"
   },
