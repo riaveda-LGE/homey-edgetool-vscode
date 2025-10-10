@@ -1,6 +1,6 @@
 // === src/extension/messaging/hostWebviewBridge.ts ===
 import * as vscode from 'vscode';
-import { H2W, W2H } from './messageTypes.js';
+import type { H2W, W2H } from './messageTypes.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
