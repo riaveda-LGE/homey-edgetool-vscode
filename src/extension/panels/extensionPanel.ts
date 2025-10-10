@@ -12,6 +12,16 @@ import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { PANEL_VIEW_TYPE, READY_MARKER } from '../../shared/const.js';
 import type { LogEntry } from '../messaging/messageTypes.js';
 import { downloadAndInstall } from '../update/updater.js';
+import type { HostConfig } from '../../core/connection/ConnectionManager.js';
+import { runConsoleCommand } from '../commands/registerCommands.js';
+
+// 🔸 device list 저장/조회 유틸
+import {
+  readDeviceList,
+  addDevice,
+  updateDeviceById,
+  type DeviceEntry,
+} from '../../core/config/userdata.js';
 
 interface EdgePanelState {
   version: string;
@@ -36,8 +46,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   // 커스텀 로그 뷰어 패널 핸들
   private _logPanel?: vscode.WebviewPanel;
 
+  // 🔹 저장/불러오기에 필요한 VS Code context (device list 연동용)
   constructor(
     private readonly _extensionUri: vscode.Uri,
+    private readonly _context: vscode.ExtensionContext,
     version: string,
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
   ) {
@@ -92,12 +104,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         if (msg?.command === 'run') {
           const text = String(msg.text ?? '').trim();
           this.log.info(`edge> ${text}`);
-
-          if (text === 'homey-logging') {
-            await this.handleHomeyLoggingCommand();
-            return;
-          }
-          this.log.info(`edge> passthrough: ${text}`);
+          // ✅ 모든 입력을 라우터로 전달
+          await runConsoleCommand(text, (s) => this.appendLog(s), this._context);
+          return;
         } else if (msg?.command === 'ready') {
           this._state.logs = getBufferedLogs();
           webviewView.webview.postMessage({ type: 'initState', state: this._state });
@@ -155,8 +164,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  // homey-logging 처리
-  private async handleHomeyLoggingCommand() {
+  // 🔹 public: 커맨드에서 호출할 수 있게
+  public async handleHomeyLoggingCommand() {
     const pick = await vscode.window.showQuickPick(
       [
         { label: '실시간 로그 모드', value: 'realtime' },
@@ -169,18 +178,51 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     const viewer = await this.openLogViewerPanel();
 
     if (pick.value === 'realtime') {
-      viewer.webview.postMessage({
-        v: 1,
-        type: 'logs.batch',
-        payload: {
-          logs: [
-            {
-              id: Date.now(),
-              ts: Date.now(),
-              text: '기기가 연결되어 있지 않습니다. (실시간 로그 모드)',
-            },
-          ],
-          seq: 1,
+      // 🔹 기존 세션/취소 신호 정리
+      this._session?.stopAll();
+      this._currentAbort?.abort();
+
+      // 🔹 연결 정보 선택/추가 → HostConfig (device list 연동)
+      const conn = await this.pickConnection();
+      if (!conn) {
+        // 사용자가 취소한 경우
+        viewer.webview.postMessage({
+          v: 1,
+          type: 'logs.batch',
+          payload: {
+            logs: [
+              {
+                id: Date.now(),
+                ts: Date.now(),
+                text: '실시간 로그가 취소되었습니다. (연결 정보가 제공되지 않음)',
+              },
+            ],
+            seq: 1,
+          },
+        });
+        return;
+      }
+
+      // 🔹 세션 시작
+      this._session = new LogSessionManager(conn);
+      this._currentAbort = new AbortController();
+
+      let seq = 0;
+      await this._session.startRealtimeSession({
+        signal: this._currentAbort.signal,
+        onBatch: (logs: LogEntry[]) => {
+          viewer.webview.postMessage({
+            v: 1,
+            type: 'logs.batch',
+            payload: { logs, seq: ++seq },
+          });
+        },
+        onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
+          viewer.webview.postMessage({
+            v: 1,
+            type: 'metrics.update',
+            payload: m,
+          });
         },
       });
       return;
@@ -222,6 +264,141 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         },
       });
     }
+  }
+
+  // 🔸 SSH/ADB 선택 + 최근 연결 + 새 연결 추가 → HostConfig
+  private async pickConnection(): Promise<HostConfig | undefined> {
+    // 1) 저장된 장치 목록 불러오기
+    const list = await readDeviceList(this._context);
+
+    // 2) QuickPick 아이템 구성
+    const deviceItems = list.map((d) => {
+      const label =
+        d.type === 'ssh'
+          ? `SSH  ${d.host ?? ''}${d.port ? ':' + d.port : ''}${(d as any).user ? ` (${(d as any).user})` : ''}`
+          : `ADB  ${(d as any).serial ?? d.id ?? ''}`;
+      const desc = d.name || d.id || '';
+      return {
+        label,
+        description: desc,
+        detail: d.type === 'ssh' ? `${d.host ?? ''} ${(d as any).user ?? ''}` : `${(d as any).serial ?? ''}`,
+        device: d,
+        alwaysShow: true,
+      } as vscode.QuickPickItem & { device: DeviceEntry };
+    });
+
+    const addItems: (vscode.QuickPickItem & { __action: 'add-ssh' | 'add-adb' })[] = [
+      { label: '➕ 새 연결 추가 (SSH)', description: 'host/user/port 입력', __action: 'add-ssh' },
+      { label: '➕ 새 연결 추가 (ADB)', description: 'serial 입력', __action: 'add-adb' },
+    ];
+
+    const pick = await vscode.window.showQuickPick(
+      [...deviceItems, ...addItems],
+      {
+        placeHolder:
+          deviceItems.length > 0
+            ? '최근 연결을 선택하거나, 새 연결을 추가하세요'
+            : '저장된 연결이 없습니다. 새 연결을 추가하세요',
+        matchOnDescription: true,
+        matchOnDetail: true,
+      },
+    );
+    if (!pick) return;
+
+    // 3) 기존 저장된 디바이스 선택 시 → HostConfig 변환 후 반환
+    if ((pick as any).device) {
+      const d = (pick as any).device as DeviceEntry;
+      return deviceEntryToHostConfig(d);
+    }
+
+    // 4) 새 연결 추가 플로우
+    if ((pick as any).__action === 'add-ssh') {
+      const host = await vscode.window.showInputBox({
+        prompt: 'SSH Host (예: 192.168.0.10)',
+        placeHolder: '호스트/IP',
+        ignoreFocusOut: true,
+        validateInput: (v) => (!v ? '필수 입력' : undefined),
+      });
+      if (!host) return;
+
+      const user = await vscode.window.showInputBox({
+        prompt: 'SSH User (예: root)',
+        placeHolder: '사용자',
+        ignoreFocusOut: true,
+        validateInput: (v) => (!v ? '필수 입력' : undefined),
+      });
+      if (!user) return;
+
+      const portStr = await vscode.window.showInputBox({
+        prompt: 'SSH Port (엔터로 기본 22)',
+        placeHolder: '22',
+        ignoreFocusOut: true,
+      });
+      const port = portStr && /^\d+$/.test(portStr) ? parseInt(portStr, 10) : undefined;
+
+      const friendly = await vscode.window.showInputBox({
+        prompt: '표시 이름(선택)',
+        placeHolder: '예: 거실-Homey SSH',
+        ignoreFocusOut: true,
+      });
+
+      // 저장용 엔트리 구성
+      const id = `${host}:${port ?? 22}`;
+      const entry: DeviceEntry = {
+        id,
+        type: 'ssh',
+        name: friendly?.trim() || id,
+        host,
+        port,
+        user,
+      };
+
+      // 이미 같은 id가 있으면 업데이트, 없으면 추가
+      const exist = list.find((x) => (x.id ?? '') === id);
+      if (exist) {
+        await updateDeviceById(this._context, id, entry);
+      } else {
+        await addDevice(this._context, entry);
+      }
+
+      // HostConfig 로 반환
+      return { id, type: 'ssh', host, port, user } as HostConfig;
+    }
+
+    if ((pick as any).__action === 'add-adb') {
+      const serial = await vscode.window.showInputBox({
+        prompt: 'ADB Serial (adb devices 에 보이는 시리얼)',
+        placeHolder: 'device-serial',
+        ignoreFocusOut: true,
+        validateInput: (v) => (!v ? '필수 입력' : undefined),
+      });
+      if (!serial) return;
+
+      const friendly = await vscode.window.showInputBox({
+        prompt: '표시 이름(선택)',
+        placeHolder: '예: 작업실-Homey ADB',
+        ignoreFocusOut: true,
+      });
+
+      const id = serial;
+      const entry: DeviceEntry = {
+        id,
+        type: 'adb',
+        name: friendly?.trim() || id,
+        serial,
+      };
+
+      const exist = list.find((x) => (x.id ?? '') === id);
+      if (exist) {
+        await updateDeviceById(this._context, id, entry);
+      } else {
+        await addDevice(this._context, entry);
+      }
+
+      return { id, type: 'adb', serial } as HostConfig;
+    }
+
+    return;
   }
 
   // 커스텀 로그 뷰어 열기/재사용
@@ -279,9 +456,39 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
 }
 
+export function registerEdgePanelCommands(
+  context: vscode.ExtensionContext,
+  provider: EdgePanelProvider,
+) {
+  // 외부에서 실행할 수 있는 명령: homey-logging 진입점
+  const d = vscode.commands.registerCommand('homeyEdgetool.openHomeyLogging', async () => {
+    await provider.handleHomeyLoggingCommand();
+  });
+  context.subscriptions.push(d);
+}
+
 function getNonce() {
   let text = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
   return text;
+}
+
+function deviceEntryToHostConfig(d: DeviceEntry): HostConfig {
+  if (d.type === 'ssh') {
+    const id = d.id ?? `${d.host ?? ''}:${d.port ?? 22}`;
+    return {
+      id,
+      type: 'ssh',
+      host: String(d.host ?? ''),
+      port: typeof d.port === 'number' ? d.port : undefined,
+      user: String((d as any).user ?? 'root'),
+    };
+  }
+  // adb
+  return {
+    id: d.id ?? String((d as any).serial ?? ''),
+    type: 'adb',
+    serial: String((d as any).serial ?? d.id ?? ''),
+  };
 }

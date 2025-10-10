@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { resolveWorkspaceInfo } from '../core/config/userdata.js';
 import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
 import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
-import { EdgePanelProvider } from './panels/extensionPanel.js';
+import { EdgePanelProvider, registerEdgePanelCommands } from './panels/extensionPanel.js';
 import { checkLatestVersion } from './update/updater.js';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -61,10 +61,13 @@ export async function activate(context: vscode.ExtensionContext) {
     const latestInfo = await checkLatestVersion(version);
     log.info(`latestInfo: ${JSON.stringify(latestInfo)}`);
 
-    // ✅ constructor 시그니처에 맞게 수정 (context 제거)
-    const provider = new EdgePanelProvider(context.extensionUri, version, latestInfo);
+    // ✅ constructor 시그니처: (extensionUri, context, version, latestInfo)
+    const provider = new EdgePanelProvider(context.extensionUri, context, version, latestInfo);
     const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
     context.subscriptions.push(disp);
+
+    // ✅ homey-logging을 외부 커맨드로 노출
+    registerEdgePanelCommands(context, provider);
 
     log.info(
       `registerWebviewViewProvider OK, viewType=${EdgePanelProvider.viewType}, version=${version}`,

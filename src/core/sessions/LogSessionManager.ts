@@ -1,7 +1,8 @@
-// === src/core/sessions/LogSessionManager.ts ===
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
+import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
+import { mergeDirectory } from '../logs/LogFileIntegration.js';
 
 export type SessionCallbacks = {
   onBatch: (logs: LogEntry[], total?: number, seq?: number) => void;
@@ -12,63 +13,75 @@ export class LogSessionManager {
   private log = getLogger('LogSessionManager');
   private hb = new HybridLogBuffer();
   private seq = 0;
+  private rtAbort?: AbortController;
 
-  /** 스텁: 실시간 스트림 시작 (지금은 가짜 로그 생성) */
-  async startRealtimeSession(opts: { signal?: AbortSignal } & SessionCallbacks) {
-    this.log.info('startRealtimeSession(stub)');
+  constructor(private conn?: HostConfig) {}
 
-    const timer = setInterval(() => {
-      const entry: LogEntry = {
-        id: Date.now(),
-        ts: Date.now(),
-        level: 'I',
-        type: 'system',
-        source: 'stub-realtime',
-        text: `stub realtime log ${new Date().toISOString()}`,
-      };
-      this.hb.add(entry);
-      opts.onBatch([entry], undefined, ++this.seq);
+  async startRealtimeSession(opts: { signal?: AbortSignal; filter?: string } & SessionCallbacks) {
+    this.log.info('startRealtimeSession');
+    if (!this.conn) throw new Error('No connection configured');
 
-      // 메트릭 예시
-      opts.onMetrics?.({
-        buffer: this.hb.getMetrics(),
-        mem: { rss: process.memoryUsage().rss, heapUsed: process.memoryUsage().heapUsed },
-      });
-    }, 500);
+    const cm = new ConnectionManager(this.conn);
+    await cm.connect();
 
-    opts.signal?.addEventListener('abort', () => clearInterval(timer));
+    this.rtAbort = new AbortController();
+    if (opts.signal) opts.signal.addEventListener('abort', () => this.rtAbort?.abort());
+
+    const filter = (s: string) => {
+      const f = opts.filter?.trim();
+      return !f || s.toLowerCase().includes(f.toLowerCase());
+    };
+
+    // 커맨드 선택
+    const cmd =
+      this.conn.type === 'adb'
+        ? `logcat -v time`
+        : `sh -lc 'journalctl -f -o short-iso -n 0 -u "homey*" 2>/dev/null || docker ps --format "{{.Names}}" | awk "/homey/{print}" | xargs -r -n1 docker logs -f --since 0s'`;
+
+    await cm.stream(
+      cmd,
+      (line) => {
+        if (!filter(line)) return;
+        const e: LogEntry = {
+          id: Date.now(),
+          ts: Date.now(),
+          level: 'I',
+          type: 'system',
+          source: this.conn!.type,
+          text: line,
+        };
+        this.hb.add(e);
+        opts.onBatch([e], undefined, ++this.seq);
+        opts.onMetrics?.({
+          buffer: this.hb.getMetrics(),
+          mem: { rss: process.memoryUsage().rss, heapUsed: process.memoryUsage().heapUsed },
+        });
+      },
+      this.rtAbort.signal,
+    );
   }
 
-  /** 스텁: 파일 병합 세션 (지금은 더미 배치 몇 번) */
   async startFileMergeSession(opts: { dir: string; signal?: AbortSignal } & SessionCallbacks) {
-    this.log.info(`startFileMergeSession(stub) dir=${opts.dir}`);
-    let cancelled = false;
-    opts.signal?.addEventListener('abort', () => {
-      cancelled = true;
-    });
-
-    for (let i = 0; i < 5; i++) {
-      if (cancelled) break;
-      const batch: LogEntry[] = Array.from({ length: 10 }).map((_, k) => ({
-        id: Date.now() + k,
-        ts: Date.now(),
-        level: 'I',
-        type: 'homey',
-        source: `stub-file:${opts.dir}`,
-        text: `merged log #${i}-${k}`,
-      }));
-      this.hb.addBatch(batch);
-      opts.onBatch(batch, undefined, ++this.seq);
-      await new Promise((r) => setTimeout(r, 250));
-    }
-    opts.onMetrics?.({
-      buffer: this.hb.getMetrics(),
-      mem: { rss: process.memoryUsage().rss, heapUsed: process.memoryUsage().heapUsed },
+    this.log.info(`startFileMergeSession dir=${opts.dir}`);
+    let seq = 0;
+    await mergeDirectory({
+      dir: opts.dir,
+      reverse: false,
+      signal: opts.signal,
+      batchSize: 200,
+      onBatch: (logs) => {
+        this.hb.addBatch(logs);
+        opts.onBatch(logs, undefined, ++seq);
+        opts.onMetrics?.({
+          buffer: this.hb.getMetrics(),
+          mem: { rss: process.memoryUsage().rss, heapUsed: process.memoryUsage().heapUsed },
+        });
+      },
     });
   }
 
   stopAll() {
-    // 실제 구현 시: 세션별 AbortController/자원 해제
-    this.log.info('stopAll(stub)');
+    this.log.info('stopAll');
+    this.rtAbort?.abort();
   }
 }

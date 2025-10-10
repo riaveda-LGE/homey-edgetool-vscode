@@ -28,9 +28,9 @@ export function createCommandHandlers(
         case 'h':
           return this.help();
         case 'homey-logging': {
-          if (rest[0] === '--stop') return this.loggingStop();
-          if (rest[0] === '--dir') return this.loggingMerge(rest.slice(1).join(' ').trim());
-          return this.loggingStart();
+          // ✅ EdgePanel의 공개 커맨드로 위임 (UI에서 모드 선택 + 세션 시작)
+          await vscode.commands.executeCommand('homeyEdgetool.openHomeyLogging');
+          return;
         }
         case 'connect_info':
           return this.connectInfo();
@@ -51,8 +51,6 @@ export function createCommandHandlers(
       say(`${READY_MARKER} Commands:
   help | h
   homey-logging
-  homey-logging --stop
-  homey-logging --dir <path>
   connect_info | connect_change
   host <cmd>
   git pull|push ...
@@ -61,7 +59,6 @@ export function createCommandHandlers(
 
     async loggingStart() {
       say('[info] start realtime logging (stub)');
-      // TODO: LogSessionManager 연동
     },
 
     async loggingMerge(dir: string) {
