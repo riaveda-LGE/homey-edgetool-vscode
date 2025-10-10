@@ -390,3 +390,101 @@ ui/
 log-viewer/: Custom Editor용 Webview. 가상 스크롤, 배치 렌더, 검색/필터/하이라이트/북마크.
 
 edge-panel/: (현 media/edge-panel/* → TS로 이관) 업데이트/진행률/간단 로그 콘솔.
+
+
+# 🧭 VS Code Extension 입력 처리 가이드
+
+> 이 문서는 **사용자 입력 UX를 통일**하고,  
+> `showInputBox`의 포커스 손실 문제를 해결하기 위한 기준을 설명합니다.  
+> 모든 입력(텍스트, 폴더 선택, 멀티스텝 등)은 일관된 유틸 모듈을 사용해 처리합니다.
+
+---
+
+## 📁 경로 관련 입력
+
+### ✅ 원칙
+- 경로(폴더·파일) 입력은 **직접 타이핑 대신 네이티브 선택창**을 사용합니다.
+- `showOpenDialog()`는 OS 기본 탐색기를 사용하므로  
+  **포커스를 잃어도 닫히지 않고**, 오타 입력을 방지할 수 있습니다.
+
+### ✅ 사용 예시
+```ts
+import { pickFolder, pickFile } from '../ui/input.js';
+
+// 폴더 선택
+const folder = await pickFolder({
+  title: '새 Workspace 베이스 폴더 선택 (하위에 workspace/가 생성됩니다)',
+});
+if (folder) {
+  console.log('Selected folder:', folder.fsPath);
+}
+
+// 파일 선택
+const file = await pickFile({
+  title: '환경설정 파일 선택',
+  filters: { JSON: ['json'], YAML: ['yaml', 'yml'] },
+});
+if (file) {
+  console.log('Selected file:', file.fsPath);
+}
+```
+
+## 🧩 여러 단계 입력 (QuickInput Wizard)
+
+### ✅ 원칙
+- 사용자가 여러 값을 순차적으로 입력해야 하는 경우 **QuickInput Wizard 패턴(`multiStep`)**을 사용합니다.  
+- 각 단계는 포커스를 잃어도 유지되며, 한 번에 복합 입력 시나리오를 처리할 수 있습니다.
+
+### ✅ 사용 예시
+```ts
+import { multiStep, promptText, pickFile } from '../ui/input.js';
+
+type SshState = { host?: string; user?: string; key?: vscode.Uri };
+const state: SshState = {};
+
+await multiStep<SshState>([
+  async (s) => { s.host = await promptText({ title: 'SSH Host', placeHolder: 'example.com' }); },
+  async (s) => { s.user = await promptText({ title: 'SSH User', placeHolder: 'root' }); },
+  async (s) => { s.key  = await pickFile({ title: 'SSH Private Key', filters: { 'Key files': ['pem','key'] } }); },
+], state);
+
+console.log('Result:', state);
+```
+
+## ✍️ 일반 입력 (텍스트 / 숫자 / 비밀번호 등)
+
+### ✅ 원칙
+- 모든 일반 입력은 `extension/ui/input.ts` 모듈의 유틸 함수를 사용합니다.  
+- 내부적으로 `ignoreFocusOut: true`가 기본 적용되어  
+  **탐색기 포커스를 옮겨도 입력창이 닫히지 않습니다.**
+
+---
+
+### ✅ 사용 예시
+```ts
+import { promptText, promptNumber, promptSecret, confirm } from '../ui/input.js';
+
+// 텍스트 입력
+const name = await promptText({
+  title: '디바이스 이름 입력',
+  placeHolder: '예) homey-edge-01',
+});
+
+// 숫자 입력
+const retry = await promptNumber({
+  title: '재시도 횟수',
+  min: 1,
+  max: 10,
+});
+
+// 비밀번호 입력
+const token = await promptSecret({
+  title: 'Access Token 입력',
+  placeHolder: '토큰은 숨김 처리됩니다',
+});
+
+// 확인 대화상자
+if (await confirm('새 설정을 저장하시겠습니까?')) {
+  console.log('User confirmed');
+}
+```

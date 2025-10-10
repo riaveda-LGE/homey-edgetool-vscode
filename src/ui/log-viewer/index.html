@@ -1,21 +1,36 @@
 <!-- === src/ui/log-viewer/index.html === -->
 <!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="utf-8"/>
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none';
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none';
                  style-src 'unsafe-inline' %CSP_SOURCE%;
-                 script-src 'nonce-%NONCE%';"/>
-  <title>Homey Log Viewer</title>
-  <style>
-    body{margin:0;background:#0b0b0b;color:#eaeaea;font:12px/1.4 ui-monospace,Consolas,monospace}
-    #log{white-space:pre-wrap;padding:8px}
-  </style>
-</head>
-<body>
-  <div id="log">loading...</div>
-  <script nonce="%NONCE%">const vscode = acquireVsCodeApi();</script>
-  <script nonce="%NONCE%" src="./app.js"></script>
-</body>
+                 script-src 'nonce-%NONCE%';"
+    />
+    <title>Homey Log Viewer</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0b0b0b;
+        color: #eaeaea;
+        font:
+          12px/1.4 ui-monospace,
+          Consolas,
+          monospace;
+      }
+      #log {
+        white-space: pre-wrap;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="log">loading...</div>
+    <script nonce="%NONCE%">
+      const vscode = acquireVsCodeApi();
+    </script>
+    <script nonce="%NONCE%" src="./app.js"></script>
+  </body>
 </html>

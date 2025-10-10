@@ -25,6 +25,7 @@ export default [
       "@typescript-eslint/no-explicit-any": "off", // 필요하면 끄기
       "no-empty": "off",
       "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-unused-vars": "off",
     },
   },
 

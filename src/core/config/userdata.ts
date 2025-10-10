@@ -1,6 +1,6 @@
 // === src/core/config/userdata.ts ===
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 export type Json = any;
 
@@ -28,10 +28,10 @@ const FILE_DEVICES = 'connect_device_list.json';
 const DIR_WORKSPACE = 'workspace';
 
 export type UserdataPaths = {
-  storageDir: vscode.Uri;           // 확장 전용 폴더 (globalStorage)
-  configJson: vscode.Uri;           // <storageDir>/config.json
-  deviceListJson: vscode.Uri;       // <storageDir>/connect_device_list.json
-  defaultWorkspaceDir: vscode.Uri;  // <storageDir>/workspace
+  storageDir: vscode.Uri; // 확장 전용 폴더 (globalStorage)
+  configJson: vscode.Uri; // <storageDir>/config.json
+  deviceListJson: vscode.Uri; // <storageDir>/connect_device_list.json
+  defaultWorkspaceDir: vscode.Uri; // <storageDir>/workspace
 };
 
 export function getUserdataPaths(ctx: vscode.ExtensionContext): UserdataPaths {
@@ -118,7 +118,9 @@ export async function resolveWorkspaceInfo(ctx: vscode.ExtensionContext): Promis
 }
 
 /** 이전 API 유지: 실제 workspace 디렉터리 URI만 필요할 때 */
-export async function resolveAndEnsureWorkspaceDir(ctx: vscode.ExtensionContext): Promise<vscode.Uri> {
+export async function resolveAndEnsureWorkspaceDir(
+  ctx: vscode.ExtensionContext,
+): Promise<vscode.Uri> {
   const info = await resolveWorkspaceInfo(ctx);
   return info.wsDirUri;
 }
@@ -157,7 +159,10 @@ export async function readDeviceList(ctx: vscode.ExtensionContext): Promise<Devi
 }
 
 /** 장치 목록 통째로 덮어쓰기 */
-export async function writeDeviceList(ctx: vscode.ExtensionContext, list: DeviceListFile): Promise<void> {
+export async function writeDeviceList(
+  ctx: vscode.ExtensionContext,
+  list: DeviceListFile,
+): Promise<void> {
   const { storageDir, deviceListJson } = getUserdataPaths(ctx);
   await ensureDir(storageDir);
   await writeJson(deviceListJson, Array.isArray(list) ? list : []);
@@ -173,14 +178,18 @@ export async function addDevice(ctx: vscode.ExtensionContext, entry: DeviceEntry
 /** id 일치 항목 제거 */
 export async function removeDeviceById(ctx: vscode.ExtensionContext, id: string): Promise<void> {
   const list = await readDeviceList(ctx);
-  const filtered = list.filter(d => (d.id ?? '') !== id);
+  const filtered = list.filter((d) => (d.id ?? '') !== id);
   await writeDeviceList(ctx, filtered);
 }
 
 /** id 일치 항목 업데이트(없으면 무시) */
-export async function updateDeviceById(ctx: vscode.ExtensionContext, id: string, patch: Partial<DeviceEntry>): Promise<void> {
+export async function updateDeviceById(
+  ctx: vscode.ExtensionContext,
+  id: string,
+  patch: Partial<DeviceEntry>,
+): Promise<void> {
   const list = await readDeviceList(ctx);
-  const idx = list.findIndex(d => (d.id ?? '') === id);
+  const idx = list.findIndex((d) => (d.id ?? '') === id);
   if (idx >= 0) {
     list[idx] = { ...list[idx], ...patch };
     await writeDeviceList(ctx, list);

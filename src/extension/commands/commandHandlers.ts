@@ -1,18 +1,18 @@
 // === src/extension/commands/commandHandlers.ts ===
 import * as vscode from 'vscode';
-import { getLogger } from '../../core/logging/extension-logger.js';
-import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
-import { READY_MARKER } from '../../shared/const.js';
 
 // 사용자 구성 저장소
-import {
-  changeWorkspaceBaseDir,
-  resolveWorkspaceInfo,
-} from '../../core/config/userdata.js';
+import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
+import { READY_MARKER } from '../../shared/const.js';
+import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
 
 const log = getLogger('cmd');
 
-export function createCommandHandlers(appendLog?: (s: string) => void, context?: vscode.ExtensionContext) {
+export function createCommandHandlers(
+  appendLog?: (s: string) => void,
+  context?: vscode.ExtensionContext,
+) {
   const say = (s: string) => {
     log.info(s);
     appendLog?.(s);
@@ -20,7 +20,9 @@ export function createCommandHandlers(appendLog?: (s: string) => void, context?:
 
   return {
     async route(raw: string) {
-      const [cmd, ...rest] = String(raw || '').trim().split(/\s+/);
+      const [cmd, ...rest] = String(raw || '')
+        .trim()
+        .split(/\s+/);
       switch (cmd) {
         case 'help':
         case 'h':
@@ -107,24 +109,71 @@ export function createCommandHandlers(appendLog?: (s: string) => void, context?:
 
     async changeWorkspace(arg: string) {
       if (!context) return say('[error] internal: no extension context');
+
+      // 1) 사용자가 인자로 경로를 직접 줬으면 그걸 사용
       let base = arg?.trim();
 
+      // 2) 인자가 없으면 액션 버튼 제공
       if (!base) {
-        base =
-          (await vscode.window.showInputBox({
-            title:
-              '새 Workspace 베이스 절대 경로 입력 (해당 경로 아래에 workspace/가 생성됩니다)',
-            placeHolder: '예) D:\\homey-data   또는   /Users/me/homey-data',
-            validateInput: (v) =>
-              v && v.length > 1 ? undefined : '경로를 입력하세요',
-          })) || '';
-      }
-      if (!base) return say('[info] change_workspace 취소됨');
+        // 현재 워크스페이스 안내 & 바로 열기
+        const info = await resolveWorkspaceInfo(context);
+        const currentBase = info.baseDirFsPath;
+        const currentWs = info.wsDirFsPath;
 
+        const pick = await vscode.window.showInformationMessage(
+          `현재 Workspace\n- base: ${currentBase}\n- 실제 사용: ${currentWs}`,
+          { modal: false, detail: 'Browse를 눌러 새 베이스 폴더를 선택할 수 있어요.' },
+          'Browse…',
+          'Open current',
+          'Cancel',
+        );
+
+        if (pick === 'Open current') {
+          try {
+            await vscode.commands.executeCommand('revealFileInOS', info.wsDirUri);
+          } catch {
+            // 일부 플랫폼에서 reveal이 폴더에선 동작 안 할 때가 있어요 → openExternal로 폴백
+            await vscode.env.openExternal(info.wsDirUri);
+          }
+          // 다시 버튼 보여주기보단 종료
+          return;
+        }
+        if (pick === 'Cancel' || !pick) {
+          return say('[info] change_workspace cancelled');
+        }
+
+        // 3) 폴더 브라우저 (네이티브, 포커스 잃어도 안 사라짐)
+        const sel = await vscode.window.showOpenDialog({
+          canSelectFiles: false,
+          canSelectFolders: true,
+          canSelectMany: false,
+          openLabel: 'Select folder',
+          title: '새 Workspace 베이스 폴더 선택 (그 하위에 workspace/가 생성됩니다)',
+          defaultUri: info.baseDirUri, // 현재 베이스를 기본 위치로
+        });
+        if (!sel || !sel[0]) return say('[info] change_workspace cancelled');
+        base = sel[0].fsPath;
+      }
+
+      // 4) 변경 적용
       try {
-        const info = await changeWorkspaceBaseDir(context, base);
-        say(`[info] workspace (사용자 지정) base=${info.baseDirFsPath}`);
-        say(`[info] -> 실제 사용 경로: ${info.wsDirFsPath}`);
+        const updated = await changeWorkspaceBaseDir(context, base);
+        say(`[info] workspace (사용자 지정) base=${updated.baseDirFsPath}`);
+        say(`[info] -> 실제 사용 경로: ${updated.wsDirFsPath}`);
+
+        // 선택 직후 곧바로 열어보기(선택 사항)
+        const openNow = await vscode.window.showInformationMessage(
+          '새 Workspace가 설정되었습니다. 바로 열어볼까요?',
+          'Open folder',
+          'No',
+        );
+        if (openNow === 'Open folder') {
+          try {
+            await vscode.commands.executeCommand('revealFileInOS', updated.wsDirUri);
+          } catch {
+            await vscode.env.openExternal(updated.wsDirUri);
+          }
+        }
       } catch (e: any) {
         say(`[error] change_workspace 실패: ${e?.message || String(e)}`);
       }

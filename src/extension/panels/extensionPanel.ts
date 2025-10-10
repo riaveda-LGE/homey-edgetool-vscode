@@ -2,18 +2,20 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 
-import { downloadAndInstall } from '../update/updater.js';
-import { addLogSink, getBufferedLogs, getLogger, removeLogSink } from '../../core/logging/extension-logger.js';
-import { PANEL_VIEW_TYPE, READY_MARKER } from '../../shared/const.js';
-
-import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
-import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
-
-// 콘솔 명령 라우팅
-import { runConsoleCommand } from '../commands/registerCommands.js';
-
 // 워크스페이스 정보 조회 (UI 책임)
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
+import {
+  addLogSink,
+  getBufferedLogs,
+  getLogger,
+  removeLogSink,
+} from '../../core/logging/extension-logger.js';
+import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
+import { PANEL_VIEW_TYPE, READY_MARKER } from '../../shared/const.js';
+// 콘솔 명령 라우팅
+import { runConsoleCommand } from '../commands/registerCommands.js';
+import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
+import { downloadAndInstall } from '../update/updater.js';
 
 interface EdgePanelState {
   version: string;

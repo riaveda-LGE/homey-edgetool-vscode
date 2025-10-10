@@ -3,9 +3,13 @@ import { runCommandLine } from '../../core/connection/ExecRunner.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 
 export type SshOptions = {
-  host: string; port?: number; user?: string;
-  keyPath?: string; password?: string;
-  timeoutMs?: number; signal?: AbortSignal;
+  host: string;
+  port?: number;
+  user?: string;
+  keyPath?: string;
+  password?: string;
+  timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 const log = getLogger('ssh');
@@ -13,8 +17,8 @@ const log = getLogger('ssh');
 function buildSshPrefix(opts: SshOptions): string {
   const host = `${opts.user ? `${opts.user}@` : ''}${opts.host}`;
   const port = opts.port ? `-p ${opts.port}` : '';
-  const key  = opts.keyPath ? `-i "${opts.keyPath}"` : '';
-  const opt  = '-o StrictHostKeyChecking=no -o BatchMode=yes';
+  const key = opts.keyPath ? `-i "${opts.keyPath}"` : '';
+  const opt = '-o StrictHostKeyChecking=no -o BatchMode=yes';
   return `ssh ${port} ${key} ${opt} ${host}`;
 }
 

@@ -1,14 +1,15 @@
 // === src/extension/update/updater.ts ===
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import {
-  LATEST_JSON_URL,
-  FETCH_JSON_TIMEOUT_MS,
   FETCH_BUFFER_TIMEOUT_MS,
+  FETCH_JSON_TIMEOUT_MS,
+  LATEST_JSON_URL,
 } from '../../shared/const.js';
 
 const log = getLogger('updater');
@@ -16,13 +17,13 @@ const log = getLogger('updater');
 type LatestJson = {
   id?: string;
   version?: string;
-  url?: string;     // VSIX 다운로드 URL (releases/download/v<ver>/<file>.vsix)
+  url?: string; // VSIX 다운로드 URL (releases/download/v<ver>/<file>.vsix)
   sha256?: string;
 };
 
 function isNewerVersion(latest: string, current: string): boolean {
-  const a = latest.split('.').map(n => parseInt(n || '0', 10));
-  const b = current.split('.').map(n => parseInt(n || '0', 10));
+  const a = latest.split('.').map((n) => parseInt(n || '0', 10));
+  const b = current.split('.').map((n) => parseInt(n || '0', 10));
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     const diff = (a[i] || 0) - (b[i] || 0);
     if (diff > 0) return true;
@@ -75,7 +76,7 @@ export async function checkLatestVersion(
 
     const hasUpdate = !!latest && isNewerVersion(latest, currentVersion);
     log.info(
-      `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`
+      `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`,
     );
 
     if (hasUpdate && !url) {

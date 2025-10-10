@@ -23,9 +23,9 @@
  * ============================================================
  */
 
-import { performance } from 'node:perf_hooks';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { performance } from 'node:perf_hooks';
 
 import { mergeDirectory } from '../../core/logs/LogFileIntegration.js';
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
@@ -72,14 +72,16 @@ type RunStats = {
   entries: number;
   batches: number;
   chars: number;
-  throughputEPS: number;  // entries / sec
+  throughputEPS: number; // entries / sec
 };
 
-function mb(n: number) { return Math.round((n / (1024 * 1024)) * 100) / 100; }
+function mb(n: number) {
+  return Math.round((n / (1024 * 1024)) * 100) / 100;
+}
 
 async function runOnce(cfg: RunConfig): Promise<RunStats> {
   // GC 노이즈 최소화 (node --expose-gc 로 실행 권장)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const g: any = globalThis as any;
   if (typeof g.gc === 'function') g.gc();
 
@@ -127,7 +129,7 @@ async function runOnce(cfg: RunConfig): Promise<RunStats> {
 
 function summarize(all: RunStats[]) {
   const avg = <K extends keyof RunStats>(k: K) =>
-    Math.round(all.reduce((s, r) => s + (r[k] as number), 0) / all.length * 100) / 100;
+    Math.round((all.reduce((s, r) => s + (r[k] as number), 0) / all.length) * 100) / 100;
 
   return {
     samples: all.length,
@@ -166,7 +168,7 @@ async function main() {
   console.log(`warmup    : ${warmup}`);
   console.log(`batchSize : ${batchSize}`);
   console.log(`reverse   : ${reverse}`);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const g: any = globalThis as any;
   console.log(`gc available: ${typeof g.gc === 'function' ? 'yes (--expose-gc)' : 'no'}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -182,13 +184,15 @@ async function main() {
     const r = await runOnce({ dir, runs, warmup, batchSize, reverse });
     results.push(r);
     console.log(
-      `#${i + 1}: ${r.ms} ms | ${r.throughputEPS} eps | cpu u/s: ${r.cpuUserMs}/${r.cpuSysMs} ms | rssΔ: ${r.rssDeltaMB} MB | heapΔ: ${r.heapDeltaMB} MB | entries: ${r.entries} | batches: ${r.batches}`
+      `#${i + 1}: ${r.ms} ms | ${r.throughputEPS} eps | cpu u/s: ${r.cpuUserMs}/${r.cpuSysMs} ms | rssΔ: ${r.rssDeltaMB} MB | heapΔ: ${r.heapDeltaMB} MB | entries: ${r.entries} | batches: ${r.batches}`,
     );
   }
 
   const sum = summarize(results);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`Avg: ${sum.avgMs} ms, ${sum.avgEPS} eps, CPU u/s ${sum.avgCPUUserMs}/${sum.avgCPUSysMs} ms, RSSΔ ${sum.avgRssDeltaMB} MB, HeapΔ ${sum.avgHeapDeltaMB} MB`);
+  console.log(
+    `Avg: ${sum.avgMs} ms, ${sum.avgEPS} eps, CPU u/s ${sum.avgCPUUserMs}/${sum.avgCPUSysMs} ms, RSSΔ ${sum.avgRssDeltaMB} MB, HeapΔ ${sum.avgHeapDeltaMB} MB`,
+  );
   console.log(`Total entries: ${sum.totalEntries}, batches: ${sum.totalBatches}`);
 
   // 결과 파일 기록
@@ -197,8 +201,12 @@ async function main() {
   const outPath = path.join(outDir, `merge_${Date.now()}.json`);
   fs.writeFileSync(
     outPath,
-    JSON.stringify({ cfg: { dir, runs, warmup, batchSize, reverse }, results, summary: sum }, null, 2),
-    'utf8'
+    JSON.stringify(
+      { cfg: { dir, runs, warmup, batchSize, reverse }, results, summary: sum },
+      null,
+      2,
+    ),
+    'utf8',
   );
   console.log(`✔ 결과 저장: ${outPath}`);
 }

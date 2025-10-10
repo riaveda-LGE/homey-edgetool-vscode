@@ -10,7 +10,11 @@ export enum ErrorCategory {
 }
 
 export class XError extends Error {
-  constructor(public category: ErrorCategory, message: string, public detail?: any) {
+  constructor(
+    public category: ErrorCategory,
+    message: string,
+    public detail?: any,
+  ) {
     super(message);
     this.name = `XError/${category}`;
   }

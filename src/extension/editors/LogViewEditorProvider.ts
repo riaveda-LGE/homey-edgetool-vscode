@@ -1,5 +1,6 @@
 // === src/extension/editors/LogViewEditorProvider.ts ===
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { PANEL_VIEW_TYPE } from '../../shared/const.js';
 
@@ -19,9 +20,7 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
     // dist/ui/log-viewer 리소스만 허용
     webviewPanel.webview.options = {
       enableScripts: true,
-      localResourceRoots: [
-        vscode.Uri.joinPath(this._extUri, 'dist', 'ui', 'log-viewer'),
-      ],
+      localResourceRoots: [vscode.Uri.joinPath(this._extUri, 'dist', 'ui', 'log-viewer')],
       ...({ retainContextWhenHidden: true } as any),
     };
 

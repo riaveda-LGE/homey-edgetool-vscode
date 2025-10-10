@@ -25,18 +25,19 @@
  *   살아있으면 → SIGKILL/Taskkill ← 강제 종료
  */
 
-import { spawn, execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
+
 import { getLogger } from '../logging/extension-logger.js';
 
 export type ExecOptions = {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
-  timeoutMs?: number;          // 전체 타임아웃
-  signal?: AbortSignal;        // 외부 AbortController
+  timeoutMs?: number; // 전체 타임아웃
+  signal?: AbortSignal; // 외부 AbortController
   onStdout?: (buf: Buffer) => void;
   onStderr?: (buf: Buffer) => void;
   shell?: 'powershell' | 'sh';
-  killGraceMs?: number;        // ⬅️ SIGTERM 후 강제 종료까지 기다릴 유예(기본 1500ms)
+  killGraceMs?: number; // ⬅️ SIGTERM 후 강제 종료까지 기다릴 유예(기본 1500ms)
 };
 
 const log = getLogger('ExecRunner');
@@ -65,8 +66,14 @@ export function runCommandLine(
     let termGraceTimer: NodeJS.Timeout | undefined;
 
     const cleanup = () => {
-      if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = undefined; }
-      if (termGraceTimer) { clearTimeout(termGraceTimer); termGraceTimer = undefined; }
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = undefined;
+      }
+      if (termGraceTimer) {
+        clearTimeout(termGraceTimer);
+        termGraceTimer = undefined;
+      }
       opts.signal?.removeEventListener('abort', onAbort);
     };
 

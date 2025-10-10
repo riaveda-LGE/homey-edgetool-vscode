@@ -1,5 +1,6 @@
 // === src/extension/commands/registerCommands.ts ===
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { COMMAND_HELLO, COMMAND_UPDATE_NOW } from '../../shared/const.js';
 import { createCommandHandlers } from './commandHandlers.js';

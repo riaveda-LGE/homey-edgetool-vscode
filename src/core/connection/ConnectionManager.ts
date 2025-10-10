@@ -2,7 +2,15 @@
 import { getLogger } from '../logging/extension-logger.js';
 
 export type HostConfig =
-  | { id: string; type: 'ssh'; host: string; port?: number; user: string; keyPath?: string; password?: string }
+  | {
+      id: string;
+      type: 'ssh';
+      host: string;
+      port?: number;
+      user: string;
+      keyPath?: string;
+      password?: string;
+    }
   | { id: string; type: 'adb'; serial?: string };
 
 export class ConnectionManager {
@@ -15,5 +23,7 @@ export class ConnectionManager {
     this.log.info(`run (stub): ${cmd} ${args.join(' ')}`);
     return { code: 0, stdout: 'stub-stdout', stderr: '' };
   }
-  dispose() { this.log.info('dispose (stub)'); }
+  dispose() {
+    this.log.info('dispose (stub)');
+  }
 }

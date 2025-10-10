@@ -1,10 +1,11 @@
 // === src/core/logging/extension-logger.ts ===
 import * as vscode from 'vscode';
+
 import {
   LOG_CHANNEL_NAME,
+  LOG_FLUSH_INTERVAL_MS,
   LOG_IGNORE_KEYWORDS,
   LOG_MAX_BUFFER,
-  LOG_FLUSH_INTERVAL_MS,
 } from '../../shared/const.js';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -56,8 +57,8 @@ class ExtensionLoggerCore {
     const emit = (lvl: LogLevel, args: any[]) => this._emit(lvl, scope, args);
     return {
       debug: (...a: any[]) => emit('debug', a),
-      info:  (...a: any[]) => emit('info', a),
-      warn:  (...a: any[]) => emit('warn', a),
+      info: (...a: any[]) => emit('info', a),
+      warn: (...a: any[]) => emit('warn', a),
       error: (...a: any[]) => emit('error', a),
     };
   }
@@ -129,10 +130,15 @@ class ExtensionLoggerCore {
       .join(' ');
 
     const shortLevel =
-      level === 'debug' ? 'D' :
-      level === 'info'  ? 'I' :
-      level === 'warn'  ? 'W' :
-      level === 'error' ? 'E' : '?';
+      level === 'debug'
+        ? 'D'
+        : level === 'info'
+          ? 'I'
+          : level === 'warn'
+            ? 'W'
+            : level === 'error'
+              ? 'E'
+              : '?';
 
     const line = `[${ts}] [${shortLevel}] [${scope}] ${body}`;
 
@@ -176,11 +182,27 @@ class ExtensionLoggerCore {
 
 const core = new ExtensionLoggerCore();
 
-export function setLogLevel(level: LogLevel) { core.setLevel(level); }
-export function getLogLevel() { return core.getLevel(); }
-export function getLogger(scope: string) { return core.getLogger(scope); }
-export function addLogSink(sink: Sink) { core.addSink(sink); }
-export function removeLogSink(sink: Sink) { core.removeSink(sink); }
-export function patchConsole() { core.patchConsole(); }
-export function unpatchConsole() { core.unpatchConsole(); }
-export function getBufferedLogs(): string[] { return core.getBuffer(); }
+export function setLogLevel(level: LogLevel) {
+  core.setLevel(level);
+}
+export function getLogLevel() {
+  return core.getLevel();
+}
+export function getLogger(scope: string) {
+  return core.getLogger(scope);
+}
+export function addLogSink(sink: Sink) {
+  core.addSink(sink);
+}
+export function removeLogSink(sink: Sink) {
+  core.removeSink(sink);
+}
+export function patchConsole() {
+  core.patchConsole();
+}
+export function unpatchConsole() {
+  core.unpatchConsole();
+}
+export function getBufferedLogs(): string[] {
+  return core.getBuffer();
+}

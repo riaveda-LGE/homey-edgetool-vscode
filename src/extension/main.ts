@@ -1,13 +1,12 @@
 // === src/extension/main.ts ===
 import * as vscode from 'vscode';
 
-import { checkLatestVersion } from './update/updater.js';
-import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
-import { EdgePanelProvider } from './panels/extensionPanel.js';
-import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
-
 // 사용자 구성 저장소
 import { resolveWorkspaceInfo } from '../core/config/userdata.js';
+import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
+import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
+import { EdgePanelProvider } from './panels/extensionPanel.js';
+import { checkLatestVersion } from './update/updater.js';
 
 export async function activate(context: vscode.ExtensionContext) {
   setLogLevel(LOG_LEVEL_DEFAULT);

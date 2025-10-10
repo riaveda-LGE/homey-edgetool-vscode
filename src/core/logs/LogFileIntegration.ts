@@ -1,8 +1,9 @@
 // === src/core/logs/LogFileIntegration.ts ===
 import { createReadStream } from 'fs';
 import * as readline from 'readline';
-import { getLogger } from '../logging/extension-logger.js';
+
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import { getLogger } from '../logging/extension-logger.js';
 
 const log = getLogger('LogFileIntegration');
 

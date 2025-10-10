@@ -1,11 +1,11 @@
 // === src/core/sessions/LogSessionManager.ts ===
-import { getLogger } from '../logging/extension-logger.js';
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import { getLogger } from '../logging/extension-logger.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
 
 export type SessionCallbacks = {
   onBatch: (logs: LogEntry[], total?: number, seq?: number) => void;
-  onMetrics?: (m: { buffer: any; mem: { rss:number; heapUsed:number }}) => void;
+  onMetrics?: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => void;
 };
 
 export class LogSessionManager {
@@ -43,12 +43,14 @@ export class LogSessionManager {
   async startFileMergeSession(opts: { dir: string; signal?: AbortSignal } & SessionCallbacks) {
     this.log.info(`startFileMergeSession(stub) dir=${opts.dir}`);
     let cancelled = false;
-    opts.signal?.addEventListener('abort', () => { cancelled = true; });
+    opts.signal?.addEventListener('abort', () => {
+      cancelled = true;
+    });
 
-    for (let i=0;i<5;i++){
+    for (let i = 0; i < 5; i++) {
       if (cancelled) break;
-      const batch: LogEntry[] = Array.from({length: 10}).map((_,k) => ({
-        id: Date.now()+k,
+      const batch: LogEntry[] = Array.from({ length: 10 }).map((_, k) => ({
+        id: Date.now() + k,
         ts: Date.now(),
         level: 'I',
         type: 'homey',
@@ -57,7 +59,7 @@ export class LogSessionManager {
       }));
       this.hb.addBatch(batch);
       opts.onBatch(batch, undefined, ++this.seq);
-      await new Promise(r => setTimeout(r, 250));
+      await new Promise((r) => setTimeout(r, 250));
     }
     opts.onMetrics?.({
       buffer: this.hb.getMetrics(),

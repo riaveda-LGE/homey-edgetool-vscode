@@ -1,7 +1,8 @@
 // === src/extension/messaging/hostWebviewBridge.ts ===
 import * as vscode from 'vscode';
-import type { H2W, W2H } from './messageTypes.js';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
+import type { H2W, W2H } from './messageTypes.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
@@ -36,7 +37,7 @@ export class HostWebviewBridge {
     this.host.webview.postMessage(msg);
   }
 
-  request<T extends H2W>(msg: Omit<T,'id'>): Promise<unknown> {
+  request<T extends H2W>(msg: Omit<T, 'id'>): Promise<unknown> {
     const id = `req_${Date.now()}_${++this.seq}`;
     return new Promise((resolve) => {
       const disp = this.on('ack' as any, (ack: any) => {
@@ -56,14 +57,17 @@ export class HostWebviewBridge {
 
   abort(abortKey: string) {
     const c = this.pendings.get(abortKey);
-    if (c) { c.abort(); this.pendings.delete(abortKey); }
+    if (c) {
+      c.abort();
+      this.pendings.delete(abortKey);
+    }
   }
 
   private api(): BridgeAPI {
     return {
       send: (m) => this.send(m),
       request: (m) => this.request(m),
-      registerAbort: (k,c) => this.registerAbort(k,c),
+      registerAbort: (k, c) => this.registerAbort(k, c),
       abort: (k) => this.abort(k),
     };
   }
@@ -82,13 +86,13 @@ export class HostWebviewBridge {
   private sendError(e: unknown, inReplyTo?: string) {
     const message = e instanceof Error ? e.message : String(e);
     const detail = e instanceof Error ? e.stack : e;
-    this.send({ v:1, type:'error', payload:{ code:'HOST_ERROR', message, detail, inReplyTo }});
+    this.send({ v: 1, type: 'error', payload: { code: 'HOST_ERROR', message, detail, inReplyTo } });
   }
 }
 
 export type BridgeAPI = {
   send: <T extends H2W>(msg: T) => void;
-  request: <T extends H2W>(msg: Omit<T,'id'>) => Promise<unknown>;
+  request: <T extends H2W>(msg: Omit<T, 'id'>) => Promise<unknown>;
   registerAbort: (abortKey: string, controller: AbortController) => void;
   abort: (abortKey: string) => void;
 };

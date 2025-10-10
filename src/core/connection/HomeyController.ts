@@ -7,9 +7,19 @@ const log = getLogger('HomeyController');
 export class HomeyController {
   constructor(private cfg: HostConfig) {}
 
-  async mount() { log.info('[stub] homey-mount'); }
-  async unmount() { log.info('[stub] homey-unmount'); }
-  async restart() { log.info('[stub] homey-restart'); }
-  async gitPull(path?: string) { log.info('[stub] git pull', path || ''); }
-  async gitPush(path?: string) { log.info('[stub] git push', path || ''); }
+  async mount() {
+    log.info('[stub] homey-mount');
+  }
+  async unmount() {
+    log.info('[stub] homey-unmount');
+  }
+  async restart() {
+    log.info('[stub] homey-restart');
+  }
+  async gitPull(path?: string) {
+    log.info('[stub] git pull', path || '');
+  }
+  async gitPush(path?: string) {
+    log.info('[stub] git push', path || '');
+  }
 }
