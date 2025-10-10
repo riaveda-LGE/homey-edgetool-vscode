@@ -168,34 +168,104 @@
 
 ---
 
-### 8. 예시 폴더 구조
+### 8. 현재 폴더 구조
 
 ```
-extension/
-  src/
-    core/
-      ConnectionManager.ts
-      HomeyController.ts
-      FileTransferService.ts
-      ExecRunner.ts
-      LogSessionManager.ts
-    editors/
-      LogViewEditorProvider.ts
-    panel/
-      EdgePanelProvider.ts
-  webview/
-    index.html
-    app/Application.ts
-    core/EventBus.ts
-    core/ModuleLoader.ts
-    core/AppState.ts
-    services/WebSocketService.ts
-    ui/LogViewer.ts
-    ui/SearchManager.ts
-    ui/FilterManager.ts
-    ui/HighlightManager.ts
-    ui/BookmarkManager.ts
-    ui/TooltipManager.ts
+homey-edgetool/
+├── .git/                                # Git 저장소 메타데이터
+├── .github/
+│   ├── copilot-instructions.md          # Copilot 지침 및 프로젝트 가이드
+│   └── workflows/
+│       ├── build-release.yml            # 빌드 및 릴리스 워크플로우
+│       └── ci.yml                       # CI 워크플로우 (테스트 & 빌드)
+├── doc/
+│   ├── development-notes.md             # 개발 노트
+│   ├── file-integration.md              # 파일 통합 문서
+│   └── todo.md                          # 할 일 목록
+├── media/
+│   └── resources/
+│       └── edge-icon.svg                # 확장 아이콘
+├── scripts/
+│   ├── get_source.ps1                   # 소스 코드 수집 스크립트
+│   ├── perf/
+│   │   └── run-merge-bench.ts           # 성능 벤치마크 스크립트
+│   └── test.js                          # 테스트 스크립트
+├── src/
+│   ├── adapters/                        # 외부 종속 계층 (ADB/SSH 클라이언트)
+│   │   ├── adb/
+│   │   │   └── adbClient.ts             # ADB 명령 래퍼
+│   │   ├── readme.md                    # 어댑터 설명
+│   │   └── ssh/
+│   │       └── sshClient.ts             # SSH 명령 래퍼
+│   ├── core/                            # 핵심 비즈니스 로직 (런타임 독립)
+│   │   ├── config/
+│   │   │   ├── schema.ts                # 사용자 설정 스키마
+│   │   │   └── userdata.ts              # 사용자 데이터 관리
+│   │   ├── connection/
+│   │   │   ├── ConnectionManager.ts     # 호스트 연결 관리 (SSH/ADB)
+│   │   │   ├── ExecRunner.ts            # 프로세스 실행 표준화
+│   │   │   └── HomeyController.ts       # Homey 기기 제어
+│   │   ├── logging/
+│   │   │   ├── extension-logger.ts      # 로깅 시스템 (OutputChannel + 싱크)
+│   │   │   └── perf.ts                  # 성능 측정 유틸
+│   │   ├── logs/
+│   │   │   ├── HybridLogBuffer.ts       # 4-버퍼 하이브리드 로그 버퍼
+│   │   │   ├── LogFileIntegration.ts    # 로그 파일 병합 (시간 역순)
+│   │   │   ├── LogFileStorage.ts        # 로그 파일 저장/로드
+│   │   │   └── LogSearch.ts             # 로그 검색 기능
+│   │   ├── readme.md                    # 코어 모듈 설명
+│   │   ├── sessions/
+│   │   │   └── LogSessionManager.ts     # 로그 세션 관리
+│   │   └── transfer/
+│   │       └── FileTransferService.ts   # 파일 전송 (tar/base64 over SSH)
+│   ├── extension/                       # VS Code 확장 전용 코드
+│   │   ├── commands/
+│   │   │   ├── commandHandlers.ts       # 명령 라우팅 (help, connect 등)
+│   │   │   └── registerCommands.ts      # 명령 등록/해제
+│   │   ├── editors/
+│   │   │   └── LogViewEditorProvider.ts # Custom Editor + Webview
+│   │   ├── main.ts                      # 확장 진입점 (activate/deactivate)
+│   │   ├── messaging/
+│   │   │   ├── hostWebviewBridge.ts     # Webview ↔ Extension 메시징
+│   │   │   └── messageTypes.ts          # 공용 메시지 타입
+│   │   ├── panels/
+│   │   │   └── extensionPanel.ts        # Extension Panel 제공자
+│   │   ├── readme.md                    # 확장 모듈 설명
+│   │   ├── ui/
+│   │   │   └── input.ts                 # 입력 유틸 (QuickInput 등)
+│   │   └── update/
+│   │       └── updater.ts               # 버전 업데이트 로직
+│   ├── shared/                          # 공용 유틸리티 (런타임 독립)
+│   │   ├── const.ts                     # 상수 정의
+│   │   ├── errors.ts                    # 에러 분류/래핑
+│   │   ├── types.ts                     # 공용 타입
+│   │   └── utils.ts                     # 공용 유틸 함수
+│   ├── types/                           # 타입 정의
+│   │   └── vscode-webview.d.ts          # Webview 타입 확장
+│   └── ui/                              # Webview 리소스 (번들 대상)
+│       ├── edge-panel/
+│       │   ├── index.html               # Edge Panel HTML
+│       │   ├── panel.css                # Edge Panel 스타일
+│       │   └── panel.ts                 # Edge Panel 로직
+│       ├── log-viewer/
+│       │   ├── app.ts                   # Log Viewer 앱 부트스트랩
+│       │   ├── index.html               # Log Viewer HTML
+│       │   ├── modules/
+│       │   │   └── LogViewer.ts         # 로그 표시 모듈
+│       │   ├── protocol.ts              # 메시징 프로토콜
+│       │   └── services/
+│       │       └── ws.ts                # WebSocket 서비스
+│       └── readme.md                    # UI 모듈 설명
+├── .gitattributes                       # Git 속성 설정
+├── .gitignore                           # Git 무시 파일 목록
+├── .prettierignore                      # Prettier 무시 파일
+├── .prettierrc                          # Prettier 설정
+├── eslint.config.js                     # ESLint 설정
+├── LICENSE                              # 라이선스 파일
+├── package-lock.json                    # 패키지 잠금 파일
+├── package.json                         # 프로젝트 메타데이터 및 스크립트
+├── source.tmp                           # 임시 소스 수집 파일
+└── tsconfig.json                        # TypeScript 설정
 ```
 
 ## 로깅 사용 예시
