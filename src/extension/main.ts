@@ -1,7 +1,7 @@
 // === src/extension/main.ts ===
 import * as vscode from 'vscode';
 
-// 사용자 구성 저장소
+// 사용자 저장 구성 요소
 import { resolveWorkspaceInfo } from '../core/config/userdata.js';
 import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
 import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
@@ -53,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   try {
-    // 1) 워크스페이스 디렉터리 “보장”(생성까지)만 수행 — UI 출력은 하지 않음
+    // 1) 워크스페이스 디렉토리 준비(없으면 생성 → UI 출력엔 영향 없음)
     await resolveWorkspaceInfo(context);
 
     // 2) 버전/업데이트 체크 및 패널 등록
@@ -61,7 +61,8 @@ export async function activate(context: vscode.ExtensionContext) {
     const latestInfo = await checkLatestVersion(version);
     log.info(`latestInfo: ${JSON.stringify(latestInfo)}`);
 
-    const provider = new EdgePanelProvider(context, context.extensionUri, version, latestInfo);
+    // ✅ constructor 시그니처에 맞게 수정 (context 제거)
+    const provider = new EdgePanelProvider(context.extensionUri, version, latestInfo);
     const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
     context.subscriptions.push(disp);
 
@@ -74,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage('EdgePanel register failed: ' + (e as Error).message);
   }
 
-  // 예시 명령(기존)
+  // 데모 커맨드(임시)
   context.subscriptions.push(
     vscode.commands.registerCommand('homeyEdgetool.hello', () => {
       getLogger('main').debug('hello clicked');

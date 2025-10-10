@@ -2,8 +2,6 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 
-// 워크스페이스 정보 조회 (UI 책임)
-import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import {
   addLogSink,
   getBufferedLogs,
@@ -12,9 +10,7 @@ import {
 } from '../../core/logging/extension-logger.js';
 import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { PANEL_VIEW_TYPE, READY_MARKER } from '../../shared/const.js';
-// 콘솔 명령 라우팅
-import { runConsoleCommand } from '../commands/registerCommands.js';
-import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
+import type { LogEntry } from '../messaging/messageTypes.js';
 import { downloadAndInstall } from '../update/updater.js';
 
 interface EdgePanelState {
@@ -35,11 +31,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   private _state: EdgePanelState;
 
   private _session?: LogSessionManager;
-  private _bridge?: HostWebviewBridge;
   private _currentAbort?: AbortController;
 
+  // 커스텀 로그 뷰어 패널 핸들
+  private _logPanel?: vscode.WebviewPanel;
+
   constructor(
-    private readonly _context: vscode.ExtensionContext,
     private readonly _extensionUri: vscode.Uri,
     version: string,
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
@@ -62,78 +59,46 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
+    // 🔧 빌드 산출물 경로로 교체
+    const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
+
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel')],
+      // 🔧 웹뷰가 읽을 수 있는 로컬 리소스 루트 지정
+      localResourceRoots: [uiRoot],
       ...({ retainContextWhenHidden: true } as any),
     };
 
     webviewView.title = `Edge Console - v${this._state.version}`;
-    webviewView.webview.html = this._getHtmlFromFiles(webviewView.webview);
 
     try {
-      this._bridge = new HostWebviewBridge(webviewView);
-      this._bridge.start();
-    } catch {}
+      webviewView.webview.html = this._getHtmlFromFiles(webviewView.webview, uiRoot);
+    } catch (e: any) {
+      const msg = `Failed to load panel HTML: ${e?.message || e}`;
+      this.log.error(msg);
+      vscode.window.showErrorMessage(msg);
+      // 최소한의 에러 페이지
+      webviewView.webview.html = `<html><body style="color:#ddd;background:#1e1e1e;font-family:ui-monospace,Consolas,monospace;padding:12px">
+        <h3>Edge Console</h3>
+        <pre>${msg}</pre>
+      </body></html>`;
+      // 더 진행해도 의미 없으니 리턴
+      return;
+    }
 
+    // webview → extension
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
         if (msg?.command === 'run') {
           const text = String(msg.text ?? '').trim();
           this.log.info(`edge> ${text}`);
 
-          // 데모: homey-logging (기존 유지)
           if (text === 'homey-logging') {
-            this._session?.stopAll();
-            this._currentAbort?.abort();
-
-            this._session = new LogSessionManager();
-            this._currentAbort = new AbortController();
-
-            this._session.startRealtimeSession({
-              signal: this._currentAbort.signal,
-              onBatch: (logs) => {
-                for (const l of logs) this.appendLog(`[LOG][${l.type}] ${l.text}`);
-              },
-              onMetrics: (m) => {
-                this.appendLog(`[metrics] ${JSON.stringify(m.buffer)}`);
-              },
-            });
-            this.appendLog('[info] realtime logging session started (stub)');
-          } else if (text.startsWith('homey-logging --dir ')) {
-            const dir = text.replace('homey-logging --dir', '').trim();
-            if (!dir) {
-              this.appendLog('[error] directory path required');
-              return;
-            }
-
-            this._session?.stopAll();
-            this._currentAbort?.abort();
-
-            this._session = new LogSessionManager();
-            this._currentAbort = new AbortController();
-
-            this._session.startFileMergeSession({
-              dir,
-              signal: this._currentAbort.signal,
-              onBatch: (logs) => {
-                for (const l of logs) this.appendLog(`[MERGE][${l.type}] ${l.text}`);
-              },
-              onMetrics: (m) => {
-                this.appendLog(`[metrics] ${JSON.stringify(m.buffer)}`);
-              },
-            });
-            this.appendLog(`[info] file-merge logging session started (dir=${dir}, stub)`);
-          } else if (text === 'homey-logging --stop') {
-            this._session?.stopAll();
-            this._currentAbort?.abort();
-            this.appendLog('[info] logging session stopped');
-          } else {
-            // 나머지 콘솔 명령: 통합 라우터 호출 (context 전달)
-            await runConsoleCommand(text, (s) => this.appendLog(s), this._context);
+            await this.handleHomeyLoggingCommand();
+            return;
           }
+          this.log.info(`edge> passthrough: ${text}`);
         } else if (msg?.command === 'ready') {
-          // 초기 상태 렌더링
           this._state.logs = getBufferedLogs();
           webviewView.webview.postMessage({ type: 'initState', state: this._state });
           webviewView.webview.postMessage({
@@ -141,27 +106,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             visible: !!(this._state.updateAvailable && this._state.updateUrl),
           });
           this.appendLog(`${READY_MARKER} Ready. Type a command after "edge>" and hit Enter.`);
-
-          // ➜ 패널 준비 완료 시점에 현재 워크스페이스 정보 출력
-          try {
-            const ws = await resolveWorkspaceInfo(this._context);
-            if (ws.source === 'user') {
-              this.appendLog(`[info] workspace (사용자 지정): base=${ws.baseDirFsPath}`);
-              this.appendLog(`[info] -> 실제 사용 경로: ${ws.wsDirFsPath}`);
-            } else {
-              this.appendLog(`[info] workspace (기본): 확장전용폴더를 사용합니다`);
-              this.appendLog(`[info] base=${ws.baseDirFsPath}`);
-              this.appendLog(`[info] -> 실제 사용 경로: ${ws.wsDirFsPath}`);
-            }
-          } catch (e: any) {
-            this.appendLog(`[error] workspace 정보 조회 실패: ${e?.message || String(e)}`);
-          }
         } else if (msg?.command === 'versionUpdate') {
           if (!this._state.updateUrl) {
             this.appendLog('[update] 최신 버전 URL이 없습니다.');
             return;
           }
-          this.appendLog('[update] 업데이트를 시작합니다..');
+          this.appendLog('[update] 업데이트를 시작합니다...');
           await downloadAndInstall(
             this._state.updateUrl,
             (line) => this.appendLog(line),
@@ -171,10 +121,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
       } catch (e) {
-        this.log.error('onDidReceiveMessage error', e);
+        this.log.error('onDidReceiveMessage error', e as any);
       }
     });
 
+    // 가시성 변화마다 버퍼 재주입
     webviewView.onDidChangeVisibility(() => {
       if (!webviewView.visible) return;
       try {
@@ -183,6 +134,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       } catch {}
     });
 
+    // OutputChannel → EdgePanel
     this._sink = (line: string) => {
       try {
         webviewView.webview.postMessage({ type: 'appendLog', text: line });
@@ -203,11 +155,115 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private _getHtmlFromFiles(webview: vscode.Webview): string {
-    const root = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
-    const htmlPath = vscode.Uri.joinPath(root, 'index.html');
-    const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'panel.css'));
-    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'panel.js'));
+  // homey-logging 처리
+  private async handleHomeyLoggingCommand() {
+    const pick = await vscode.window.showQuickPick(
+      [
+        { label: '실시간 로그 모드', value: 'realtime' },
+        { label: '파일 병합 모드', value: 'filemerge' },
+      ],
+      { placeHolder: 'Homey Logging 모드를 선택하세요' },
+    );
+    if (!pick) return;
+
+    const viewer = await this.openLogViewerPanel();
+
+    if (pick.value === 'realtime') {
+      viewer.webview.postMessage({
+        v: 1,
+        type: 'logs.batch',
+        payload: {
+          logs: [
+            {
+              id: Date.now(),
+              ts: Date.now(),
+              text: '기기가 연결되어 있지 않습니다. (실시간 로그 모드)',
+            },
+          ],
+          seq: 1,
+        },
+      });
+      return;
+    }
+
+    if (pick.value === 'filemerge') {
+      const dirPick = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: '로그 폴더 선택',
+      });
+      if (!dirPick || dirPick.length === 0) return;
+      const dir = dirPick[0].fsPath;
+
+      this._session?.stopAll();
+      this._currentAbort?.abort();
+
+      this._session = new LogSessionManager();
+      this._currentAbort = new AbortController();
+
+      let seq = 0;
+      await this._session.startFileMergeSession({
+        dir,
+        signal: this._currentAbort.signal,
+        onBatch: (logs: LogEntry[], total?: number) => {
+          viewer.webview.postMessage({
+            v: 1,
+            type: 'logs.batch',
+            payload: { logs, total, seq: ++seq },
+          });
+        },
+        onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
+          viewer.webview.postMessage({
+            v: 1,
+            type: 'metrics.update',
+            payload: m,
+          });
+        },
+      });
+    }
+  }
+
+  // 커스텀 로그 뷰어 열기/재사용
+  private async openLogViewerPanel(): Promise<vscode.WebviewPanel> {
+    if (this._logPanel) {
+      try {
+        this._logPanel.reveal(vscode.ViewColumn.Active);
+        return this._logPanel;
+      } catch {
+        this._logPanel = undefined;
+      }
+    }
+
+    const panel = vscode.window.createWebviewPanel(
+      'homeyLogViewer',
+      'Homey Log Viewer',
+      vscode.ViewColumn.Active,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'log-viewer')],
+      },
+    );
+
+    const mediaRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'log-viewer');
+    const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
+    let html = (await vscode.workspace.fs.readFile(htmlPath)).toString();
+    html = html.replace(/%NONCE%/g, getNonce()).replace(/%CSP_SOURCE%/g, panel.webview.cspSource);
+    panel.webview.html = html;
+
+    panel.onDidDispose(() => {
+      this._logPanel = undefined;
+    });
+
+    this._logPanel = panel;
+    return panel;
+  }
+
+  private _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): string {
+    const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
+    const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.css'));
+    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.js'));
 
     const nonce = getNonce();
     const cspSource = webview.cspSource;
