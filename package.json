@@ -17,7 +17,9 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "main": "./dist/extension/main.js",
   "activationEvents": [
     "onCommand:homeyEdgetool.hello",
@@ -26,12 +28,22 @@
   ],
   "contributes": {
     "commands": [
-      { "command": "homeyEdgetool.hello", "title": "Homey EdgeTool: Hello" },
-      { "command": "homeyEdgetool.updateNow", "title": "Homey EdgeTool: Update Now" }
+      {
+        "command": "homeyEdgetool.hello",
+        "title": "Homey EdgeTool: Hello"
+      },
+      {
+        "command": "homeyEdgetool.updateNow",
+        "title": "Homey EdgeTool: Update Now"
+      }
     ],
     "viewsContainers": {
       "activitybar": [
-        { "id": "homey-edge", "title": "Homey Edge", "icon": "media/resources/edge-icon.svg" }
+        {
+          "id": "homey-edge",
+          "title": "Homey Edge",
+          "icon": "media/resources/edge-icon.svg"
+        }
       ]
     },
     "views": {
@@ -54,12 +66,13 @@
     "perf:merge": "node dist/scripts/perf/run-merge-bench.js",
     "vscode:prepublish": "tsc -p . && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/ui/edge-panel','dist/ui/edge-panel');copy('src/ui/log-viewer','dist/ui/log-viewer');\"",
     "build": "tsc -p . && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/ui/edge-panel','dist/ui/edge-panel');copy('src/ui/log-viewer','dist/ui/log-viewer');\"",
-    "deploy": "npm run build && npx vsce package",
+    "deploy": "npm run build && vsce package",
     "test": "node scripts/test.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.6.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^3.6.2",
@@ -70,10 +83,7 @@
   "files": [
     "dist/**",
     "media/**",
-    "resources/**",
     "package.json",
-    "README.md",
-    "CHANGELOG.md",
     "LICENSE"
   ]
 }

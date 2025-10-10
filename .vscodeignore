@@ -1,6 +1,0 @@
-.vscode/
-dist/**/*.map
-node_modules/**/*.map
-**/*.test.*
-.gitignore
-legacy/
