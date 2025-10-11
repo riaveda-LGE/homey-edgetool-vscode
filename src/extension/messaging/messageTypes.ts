@@ -36,6 +36,7 @@ export type H2W =
 // Webview → Host
 export type W2H =
   | Envelope<'ui.ready', EmptyPayload>
+  | Envelope<'ui.log', { level: 'debug' | 'info' | 'warn' | 'error'; text: string; source?: string }>
   | Envelope<'logging.startRealtime', { filter?: string; files?: string[] }>
   | Envelope<'logging.startFileMerge', { dir: string; types?: string[]; reverse?: boolean }>
   | Envelope<'logging.stop', EmptyPayload>

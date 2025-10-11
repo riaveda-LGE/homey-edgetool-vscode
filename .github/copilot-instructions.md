@@ -273,7 +273,7 @@ homey-edgetool/
 
 ```typescript
 // src/feature/something.ts
-import { getLogger } from '../util/extension-logger';
+import { getLogger } from '../../core/logging/extension-logger.js';
 
 const log = getLogger('feature:something');
 
@@ -298,7 +298,7 @@ homey-edgetool/
 │  │  │  ├─ registerCommands.ts           # 모든 명령 등록/해제
 │  │  │  └─ commandHandlers.ts            # help/h, connect_info, homey-logging 등 라우팅
 │  │  ├─ panels/
-│  │  │  ├─ EdgePanelProvider.ts          # (현 extensionPanel.ts) 상태/업데이트/edge> 콘솔
+│  │  │  └─ extensionPanel.ts             # Extension Panel 제공자
 │  │  │  └─ LogViewEditorProvider.ts      # Custom Editor + Webview (homey-logging)
 │  │  ├─ messaging/
 │  │  │  ├─ hostWebviewBridge.ts          # Webview ↔ Extension message bridge
@@ -331,8 +331,6 @@ homey-edgetool/
 │  │  │  └─ sshClient.ts                  # ssh 명령 래퍼(포트/키/옵션), 표준입출력 파이프
 │  │  ├─ adb/
 │  │  │  └─ adbClient.ts                  # adb shell / tail -f 래퍼
-│  │  └─ fs/
-│  │     └─ nodeFs.ts                     # fs streams/readline, gzip, tmp 파일 유틸
 │  │
 │  ├─ shared/
 │  │  ├─ const.ts                         # (현 config/const.ts) EXT IDs, URLs, LOG, READY_MARKER
@@ -343,17 +341,11 @@ homey-edgetool/
 │  └─ ui/                                 # Webview 리소스(번들 대상)
 │     ├─ log-viewer/
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰 (Custom Editor)
-│     │  ├─ styles.css
 │     │  ├─ app.ts                        # 부트스트랩, EventBus, 상태
 │     │  ├─ services/
 │     │  │  └─ ws.ts                      # postMessage 래퍼, 배치 큐/재연결
 │     │  ├─ modules/
-│     │  │  ├─ LogViewer.ts              # 가상 스크롤, 배치 렌더, 통계/하이라이트
-│     │  │  ├─ SearchManager.ts
-│     │  │  ├─ FilterManager.ts
-│     │  │  ├─ HighlightManager.ts
-│     │  │  ├─ BookmarkManager.ts
-│     │  │  └─ TooltipManager.ts
+│     │  │  └─ LogViewer.ts               # 가상 스크롤, 배치 렌더, 통계/하이라이트
 │     │  └─ protocol.ts                   # messageTypes.ts와 동일 타입(공용 import 권장)
 │     └─ edge-panel/
 │        ├─ index.html                    # (현 media/edge-panel/index.html)
@@ -364,11 +356,10 @@ homey-edgetool/
 │  └─ resources/edge-icon.svg
 ├─ scripts/
 │  └─ perf/
-│     ├─ run-merge-bench.ts               # LogFileIntegration 벤치(추가 예정)
-│     └─ stream-simulator.ts              # 실시간 스트림 시뮬레이터(추가 예정)
+│     └─ run-merge-bench.ts               # LogFileIntegration 벤치(추가 예정)
 ├─ package.json
 ├─ tsconfig.json
-├─ webpack.config.js or esbuild.mjs       # Webview 번들링(권장)
+├─ TypeScript 컴파일 (tsc)                # Webview 리소스 복사 포함
 └─ README.md / CHANGELOG.md / LICENSE
 ```
 
@@ -385,7 +376,7 @@ commandHandlers.ts: help/h, connect_info/ci, connect_change/cc, homey-logging �
 
 panels/
 
-EdgePanelProvider.ts: (기존 extensionPanel.ts) 업데이트 버튼/리로드/로그 스트림 표시. edge> 입력 → 명령 라우팅.
+extensionPanel.ts: (기존 extensionPanel.ts) 업데이트 버튼/리로드/로그 스트림 표시. edge> 입력 → 명령 라우팅.
 
 LogViewEditorProvider.ts: Custom Editor + Webview로 homey-logging 전용 뷰어(실시간/파일병합 UI).
 
@@ -442,8 +433,6 @@ adapters/
 ssh/sshClient.ts: ssh 바이너리 래퍼. 키/포트/옵션 구성, run/stream 구현.
 
 adb/adbClient.ts: adb shell, tail -f 래퍼. (ADB 채택 호스트에서만 사용)
-
-fs/nodeFs.ts: 파일 스트림/라인리더/gzip/tar 호출 유틸, tmp 디렉토리 핸들링.
 
 shared/
 

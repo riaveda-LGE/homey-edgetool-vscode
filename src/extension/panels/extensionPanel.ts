@@ -94,7 +94,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         <h3>Edge Console</h3>
         <pre>${msg}</pre>
       </body></html>`;
-      // 더 진행해도 의미 없으니 리턴
       return;
     }
 
@@ -106,6 +105,14 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this.log.info(`edge> ${text}`);
           // ✅ 모든 입력을 라우터로 전달
           await runConsoleCommand(text, (s) => this.appendLog(s), this._context);
+          return;
+        } else if (msg?.type === 'ui.log' && msg?.v === 1) {
+          // ✅ EdgePanel Webview에서 올라오는 UI 로그 수신
+          const lvl = String(msg.payload?.level ?? 'info') as 'debug'|'info'|'warn'|'error';
+          const text = String(msg.payload?.text ?? '');
+          const src = String(msg.payload?.source ?? 'ui.edgePanel');
+          const lg = getLogger(src);
+          (lg[lvl] ?? lg.info).call(lg, text);
           return;
         } else if (msg?.command === 'ready') {
           this._state.logs = getBufferedLogs();
@@ -178,14 +185,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     const viewer = await this.openLogViewerPanel();
 
     if (pick.value === 'realtime') {
-      // 🔹 기존 세션/취소 신호 정리
       this._session?.stopAll();
       this._currentAbort?.abort();
 
-      // 🔹 연결 정보 선택/추가 → HostConfig (device list 연동)
       const conn = await this.pickConnection();
       if (!conn) {
-        // 사용자가 취소한 경우
         viewer.webview.postMessage({
           v: 1,
           type: 'logs.batch',
@@ -203,7 +207,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         return;
       }
 
-      // 🔹 세션 시작
       this._session = new LogSessionManager(conn);
       this._currentAbort = new AbortController();
 
@@ -268,10 +271,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   // 🔸 SSH/ADB 선택 + 최근 연결 + 새 연결 추가 → HostConfig
   private async pickConnection(): Promise<HostConfig | undefined> {
-    // 1) 저장된 장치 목록 불러오기
     const list = await readDeviceList(this._context);
 
-    // 2) QuickPick 아이템 구성
     const deviceItems = list.map((d) => {
       const label =
         d.type === 'ssh'
@@ -305,13 +306,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     );
     if (!pick) return;
 
-    // 3) 기존 저장된 디바이스 선택 시 → HostConfig 변환 후 반환
     if ((pick as any).device) {
       const d = (pick as any).device as DeviceEntry;
       return deviceEntryToHostConfig(d);
     }
 
-    // 4) 새 연결 추가 플로우
     if ((pick as any).__action === 'add-ssh') {
       const host = await vscode.window.showInputBox({
         prompt: 'SSH Host (예: 192.168.0.10)',
@@ -342,7 +341,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         ignoreFocusOut: true,
       });
 
-      // 저장용 엔트리 구성
       const id = `${host}:${port ?? 22}`;
       const entry: DeviceEntry = {
         id,
@@ -353,7 +351,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         user,
       };
 
-      // 이미 같은 id가 있으면 업데이트, 없으면 추가
       const exist = list.find((x) => (x.id ?? '') === id);
       if (exist) {
         await updateDeviceById(this._context, id, entry);
@@ -361,7 +358,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         await addDevice(this._context, entry);
       }
 
-      // HostConfig 로 반환
       return { id, type: 'ssh', host, port, user } as HostConfig;
     }
 
@@ -429,6 +425,17 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     html = html.replace(/%NONCE%/g, getNonce()).replace(/%CSP_SOURCE%/g, panel.webview.cspSource);
     panel.webview.html = html;
 
+    // ✅ Log Viewer Webview에서도 ui.log 수신 처리
+    panel.webview.onDidReceiveMessage((msg) => {
+      if (msg?.v === 1 && msg?.type === 'ui.log') {
+        const lvl = String(msg.payload?.level ?? 'info') as 'debug'|'info'|'warn'|'error';
+        const text = String(msg.payload?.text ?? '');
+        const src = String(msg.payload?.source ?? 'ui.logViewer');
+        const lg = getLogger(src);
+        (lg[lvl] ?? lg.info).call(lg, text);
+      }
+    });
+
     panel.onDidDispose(() => {
       this._logPanel = undefined;
     });
@@ -460,7 +467,6 @@ export function registerEdgePanelCommands(
   context: vscode.ExtensionContext,
   provider: EdgePanelProvider,
 ) {
-  // 외부에서 실행할 수 있는 명령: homey-logging 진입점
   const d = vscode.commands.registerCommand('homeyEdgetool.openHomeyLogging', async () => {
     await provider.handleHomeyLoggingCommand();
   });
@@ -485,7 +491,6 @@ function deviceEntryToHostConfig(d: DeviceEntry): HostConfig {
       user: String((d as any).user ?? 'root'),
     };
   }
-  // adb
   return {
     id: d.id ?? String((d as any).serial ?? ''),
     type: 'adb',
