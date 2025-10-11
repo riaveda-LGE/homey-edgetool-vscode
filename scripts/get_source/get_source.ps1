@@ -10,39 +10,22 @@ $lines = $content -split "`n"
 $output = ""
 $processedFiles = @{}
 
-# Search in specific directories to avoid large folders like node_modules
-$searchPaths = @("src", "scripts", ".github")
-
 foreach ($line in $lines) {
     $line = $line.Trim()
-    if ($line -eq "" -or $line.EndsWith("/")) { continue }
+    if ($line -eq "") { continue }
 
-    $filename = $line
+    $filePath = $line
 
-    foreach ($searchPath in $searchPaths) {
-        if (Test-Path $searchPath) {
-            $matchingFiles = Get-ChildItem -Path $searchPath -Recurse -File | Where-Object { $_.Name -eq $filename }
+    if (Test-Path $filePath) {
+        if ($processedFiles.ContainsKey($filePath)) { continue }
 
-            foreach ($file in $matchingFiles) {
-                $fullPath = $file.FullName
-                if ($processedFiles.ContainsKey($fullPath)) { continue }
+        $processedFiles[$filePath] = $true
 
-                $processedFiles[$fullPath] = $true
-
-                $output += "$fullPath`n"
-                $fileContent = Get-Content -Path $fullPath -Raw
-                $output += $fileContent + "`n`n"
-            }
-        }
-    }
-
-    # Also check root level files
-    $rootFile = Join-Path "." $filename
-    if ((Test-Path $rootFile) -and -not $processedFiles.ContainsKey($rootFile)) {
-        $processedFiles[$rootFile] = $true
-        $output += "$rootFile`n"
-        $fileContent = Get-Content -Path $rootFile -Raw
+        $output += "$filePath`n"
+        $fileContent = Get-Content -Path $filePath -Raw
         $output += $fileContent + "`n`n"
+    } else {
+        Write-Host "File not found: $filePath"
     }
 }
 

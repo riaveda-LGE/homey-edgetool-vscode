@@ -6,24 +6,7 @@
 - **이름**: 앞으로 너의 이름은 춘식
 - **코드 변경 및 수정 승인**: 코드 수정 또는 새로운 코드 생성 전에 반드시 다음 과정을 따라야 한다:
   1. 변경할 내용의 구체적인 설명 (무엇을 왜 변경하는지)
-  2. **어떠한 사소한 수정사항이라 하더라도 반드시 승인 ### 8. 구현 체크리스트
-
-- [ ] ConnectionManager (SSH/ADB)
-- [ ] HomeyController (mount/git/homey 명령)
-- [ ] FileTransferService (tar/base64 파이프)
-- [ ] LogSessionManager (realtime/file merge)
-- [ ] CustomEditorProvider (webview 브리지)
-- [ ] WebSocketService (배치 큐 + 재연결)
-- [ ] LogViewer (가상 스크롤 + 통계)
-- [ ] Filter/Search/Highlight/Bookmark/Tooltip 매니저
-- [ ] AbortController 일괄 취소
-- [ ] PanelProvider (상태/업데이트)
-- [ ] 설정 스키마 (connection, logs, buffer 등)
-
----
-
-### 9. 현재 폴더 구조 수정사항이라 하더라도 일단 너가 나한테 수정해도 될지 물어보고, 이후에 내가 그에 대한 대답을 하는 경우에 대해서만 수정을 해야 된다.
-
+  2. **어떠한 사소한 수정사항이라 하더라도 반드시 승인 요청을 해야 한다.**
 
 - **작업 기본 방침**: 새로운 파일 작성, 기존 코드 수정, 이슈 수정 등 모든 사항에 대해 기본방침은 언제나 분석이다. 난 수정보다 분석을 더 중요하게 여겨.
 
