@@ -29,6 +29,7 @@ import {
   buildButtonContext,
   findButtonById,
   type ButtonDef,
+  type SectionDef,
 } from '../commands/edgepanel.buttons.js';
 
 interface EdgePanelState {
@@ -218,6 +219,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     if (name === 'updateNow') {
       await this._handleUpdateNow();
       return;
+    } else if (name === 'openHelp') {
+      const content = this._buildHelpMarkdown(); // ✅ 동적 본문 생성
+      const doc = await vscode.workspace.openTextDocument({ language: 'markdown', content });
+      await vscode.commands.executeCommand('markdown.showPreview', doc.uri);
+      return;
     }
     this.appendLog(`[warn] no handler registered: ${name}`);
   }
@@ -233,6 +239,63 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       (line) => this.appendLog(line),
       this._state.latestSha,
     );
+  }
+
+  // === Help 마크다운 생성기 ===
+  private _buildHelpMarkdown(): string {
+    const ctx = buildButtonContext({
+      updateAvailable: this._state.updateAvailable,
+      updateUrl: this._state.updateUrl,
+    });
+
+    const lines: string[] = [];
+    const ts = new Date().toLocaleString();
+
+    lines.push(`# Homey Edge – Control Panel Help`);
+    lines.push('');
+    lines.push(`- **Version**: ${this._state.version}`);
+    if (this._state.latestVersion) lines.push(`- **Latest**: ${this._state.latestVersion}`);
+    lines.push(`- **Generated**: ${ts}`);
+    lines.push('');
+    lines.push(`> 이 도움말은 버튼 정의서(SSOT)를 바탕으로 자동 생성됩니다.`);
+    lines.push('');
+
+    for (const section of this._buttonSections as SectionDef[]) {
+      const items = section.items.filter(b => !b.when || b.when(ctx));
+      if (items.length === 0) continue;
+
+      lines.push(`## ${section.title}`);
+      lines.push('');
+      lines.push(`| 버튼 | 설명 | 실행 |`);
+      lines.push(`| --- | --- | --- |`);
+
+      for (const b of items) {
+        const label = escapeMD(b.label);
+        const desc  = escapeMD(b.desc || '');
+        const exec  = renderOp(b);
+        lines.push(`| ${label} | ${desc} | ${exec} |`);
+      }
+      lines.push('');
+    }
+
+    function renderOp(b: ButtonDef): string {
+      const op = b.op as any;
+      switch (op.kind) {
+        case 'line':    return `\`${escapeMD(op.line)}\``;
+        case 'vscode':  return `VSCode: \`${escapeMD(op.command)}\``;
+        case 'post':    return `UI Event: \`${escapeMD(op.event)}\``;
+        case 'handler': return `Handler: \`${escapeMD(op.name)}\``;
+        default:        return '';
+      }
+    }
+
+    function escapeMD(s: string): string {
+      return String(s)
+        .replace(/\|/g, '\\|')
+        .replace(/`/g, '\\`');
+    }
+
+    return lines.join('\n');
   }
 
   // Public: open Homey Logging viewer

@@ -124,7 +124,7 @@ export function getSections(): SectionDef[] {
       id: 'help',
       title: '도움말',
       items: [
-        { id: 'cmd.help', label: 'help', op: { kind: 'line', line: 'help' } },
+        { id: 'cmd.help', label: 'help', op: { kind: 'handler', name: 'openHelp' } }
       ],
     },
   ];
