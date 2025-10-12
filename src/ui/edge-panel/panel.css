@@ -4,64 +4,95 @@
   --console-bg: #0b0b0b;
   --console-fg: #b9f6ca;
   --border: #3c3c3c;
-  --accent: #0e639c; /* VS Code 기본 파란 액센트 */
+  --accent: #0e639c;
+
+  /* 레이아웃 변수 */
+  --splitter-h: 6px;
+  --cmd-h: 40px;
+  --ctrl-h: 40vh; /* 드래그로 변경, 최대 50vh로 제한됨 */
 }
 
-* {
-  box-sizing: border-box;
-}
-html,
-body {
-  height: 100%;
-}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
   margin: 0;
   background: var(--bg);
   color: #ddd;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
 }
 
-/* 1) 상단: 컨트롤 패널 */
+/* 루트 레이아웃 */
+#root { height: 100vh; }
+#root.mode-debug {
+  display: grid;
+  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr var(--cmd-h);
+}
+#root.mode-normal {
+  display: grid;
+  grid-template-rows: 1fr; /* Control만 전체 화면 */
+}
+#root.mode-normal #splitter,
+#root.mode-normal #logs,
+#root.mode-normal #cmdbar { display: none; }
+
+/* Control */
 #controls {
-  flex: 0 0 auto;
+  overflow: auto;            /* 내용은 wrap + 스크롤 */
   padding: 12px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
-#controls.hidden {
-  display: none;
-}
-
-.row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.lbl {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.lbl { display: flex; align-items: center; gap: 6px; }
 .btn {
+  display: inline-flex; /* 내용 기준 너비 */
+  white-space: nowrap;  /* 버튼 라벨 줄바꿈 방지 */
   background: var(--accent);
-  color: white;
+  color: #fff;
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
 }
-.btn:active {
-  transform: translateY(1px);
+.btn:active { transform: translateY(1px); }
+
+/* ✅ 섹션 카드(Grid) */
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.section-card {
+  background: #2a2a2b;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.section-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #c6c6c6;
+  font-weight: 700;
+}
+.section-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-/* 2) 가운데: 로그 */
+/* Splitter */
+#splitter {
+  cursor: row-resize;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid #000;
+}
+#splitter:focus-visible { outline: 2px solid #7df9ff; outline-offset: -2px; }
+
+/* Log */
 #logs {
-  flex: 1 1 auto;
   background: var(--console-bg);
   color: var(--console-fg);
   padding: 10px;
@@ -71,23 +102,22 @@ body {
   border-bottom: 1px solid var(--border);
   font-size: 12px;
   line-height: 1.35;
+  min-height: 0; /* grid overflow 방지 */
 }
 
-/* 3) 하단: 한 줄 명령 입력 */
+/* Command (1줄 고정) */
 #cmdbar {
-  flex: 0 0 auto;
+  height: var(--cmd-h);
+  line-height: var(--cmd-h);
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 0 10px;
   background: #000;
   color: #ccc;
   border-top: 1px solid #111;
 }
-#prompt {
-  color: #7dd3fc;
-  user-select: none;
-}
+#prompt { color: #7dd3fc; user-select: none; }
 #input {
   flex: 1;
   background: transparent;
@@ -95,44 +125,24 @@ body {
   border: none;
   outline: none;
   font: inherit;
-  padding: 4px 2px;
+  height: calc(var(--cmd-h) - 10px);
 }
 
-/* ⏎ Enter 버튼 - 테마 액센트 사용 */
+/* Enter 버튼 */
 #runBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: var(--accent);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.08);
   padding: 6px 12px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition:
-    transform 0.05s ease,
-    filter 0.15s ease,
-    box-shadow 0.15s ease;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.05s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.25);
 }
-#runBtn:hover {
-  filter: brightness(1.08);
-}
-#runBtn:active,
-#runBtn.pressed {
-  transform: translateY(1px);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-#runBtn:focus-visible {
-  outline: 2px solid #7df9ff;
-  outline-offset: 2px;
-}
-
-.icon-enter {
-  font-weight: 700;
-  opacity: 0.95;
-  transform: translateY(-0.5px);
-}
+#runBtn:hover { filter: brightness(1.08); }
+#runBtn:active, #runBtn.pressed { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
+#runBtn:focus-visible { outline: 2px solid #7df9ff; outline-offset: 2px; }

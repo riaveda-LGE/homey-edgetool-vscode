@@ -15,13 +15,21 @@ import { downloadAndInstall } from '../update/updater.js';
 import type { HostConfig } from '../../core/connection/ConnectionManager.js';
 import { runConsoleCommand } from '../commands/registerCommands.js';
 
-// 🔸 device list 저장/조회 유틸
 import {
   readDeviceList,
   addDevice,
   updateDeviceById,
   type DeviceEntry,
 } from '../../core/config/userdata.js';
+
+// ✅ 신규: 버튼 정의서(SSOT)
+import {
+  getSections,
+  toSectionDTO,
+  buildButtonContext,
+  findButtonById,
+  type ButtonDef,
+} from '../commands/edgepanel.buttons.js';
 
 interface EdgePanelState {
   version: string;
@@ -43,10 +51,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   private _session?: LogSessionManager;
   private _currentAbort?: AbortController;
 
-  // 커스텀 로그 뷰어 패널 핸들
   private _logPanel?: vscode.WebviewPanel;
 
-  // 🔹 저장/불러오기에 필요한 VS Code context (device list 연동용)
+  // ✅ 버튼 섹션(정의서) 캐시
+  private _buttonSections = getSections();
+
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
@@ -71,16 +80,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
-    // 🔧 빌드 산출물 경로로 교체
     const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
 
     webviewView.webview.options = {
       enableScripts: true,
-      // 🔧 웹뷰가 읽을 수 있는 로컬 리소스 루트 지정
+      ...( { retainContextWhenHidden: true } as any ),
       localResourceRoots: [uiRoot],
-      ...({ retainContextWhenHidden: true } as any),
     };
-
     webviewView.title = `Edge Console - v${this._state.version}`;
 
     try {
@@ -89,7 +95,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       const msg = `Failed to load panel HTML: ${e?.message || e}`;
       this.log.error(msg);
       vscode.window.showErrorMessage(msg);
-      // 최소한의 에러 페이지
       webviewView.webview.html = `<html><body style="color:#ddd;background:#1e1e1e;font-family:ui-monospace,Consolas,monospace;padding:12px">
         <h3>Edge Console</h3>
         <pre>${msg}</pre>
@@ -97,17 +102,15 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    // webview → extension
+    // Webview -> Extension
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
         if (msg?.command === 'run') {
           const text = String(msg.text ?? '').trim();
           this.log.info(`edge> ${text}`);
-          // ✅ 모든 입력을 라우터로 전달
           await runConsoleCommand(text, (s) => this.appendLog(s), this._context);
           return;
         } else if (msg?.type === 'ui.log' && msg?.v === 1) {
-          // ✅ EdgePanel Webview에서 올라오는 UI 로그 수신
           const lvl = String(msg.payload?.level ?? 'info') as 'debug'|'info'|'warn'|'error';
           const text = String(msg.payload?.text ?? '');
           const src = String(msg.payload?.source ?? 'ui.edgePanel');
@@ -121,36 +124,35 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             type: 'setUpdateVisible',
             visible: !!(this._state.updateAvailable && this._state.updateUrl),
           });
+
+          // ✅ 버튼 섹션(카드) DTO 전송
+          this._sendButtonSections();
+
           this.appendLog(`${READY_MARKER} Ready. Type a command after "edge>" and hit Enter.`);
         } else if (msg?.command === 'versionUpdate') {
-          if (!this._state.updateUrl) {
-            this.appendLog('[update] 최신 버전 URL이 없습니다.');
-            return;
-          }
-          this.appendLog('[update] 업데이트를 시작합니다...');
-          await downloadAndInstall(
-            this._state.updateUrl,
-            (line) => this.appendLog(line),
-            this._state.latestSha,
-          );
+          // (기존 상단 버튼 경로)
+          await this._handleUpdateNow();
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
+        } else if (msg?.type === 'button.click' && typeof msg.id === 'string') {
+          await this._dispatchButton(msg.id);
         }
       } catch (e) {
         this.log.error('onDidReceiveMessage error', e as any);
       }
     });
 
-    // 가시성 변화마다 버퍼 재주입
     webviewView.onDidChangeVisibility(() => {
       if (!webviewView.visible) return;
       try {
         const state = { ...this._state, logs: getBufferedLogs() };
         webviewView.webview.postMessage({ type: 'initState', state });
+        // ✅ 다시 표시될 때도 버튼 섹션 재전송
+        this._sendButtonSections();
       } catch {}
     });
 
-    // OutputChannel → EdgePanel
+    // OutputChannel -> EdgePanel
     this._sink = (line: string) => {
       try {
         webviewView.webview.postMessage({ type: 'appendLog', text: line });
@@ -161,17 +163,79 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     webviewView.onDidDispose(() => {
       if (this._sink) removeLogSink(this._sink);
       this._sink = undefined;
-
       this._session?.stopAll();
       this._currentAbort?.abort();
       this._session = undefined;
       this._currentAbort = undefined;
-
       this._view = undefined;
     });
   }
 
-  // 🔹 public: 커맨드에서 호출할 수 있게
+  // ----- 버튼 섹션 전송 -----
+  private _sendButtonSections() {
+    if (!this._view) return;
+    const ctx = buildButtonContext({
+      updateAvailable: this._state.updateAvailable,
+      updateUrl: this._state.updateUrl,
+    });
+    const dto = toSectionDTO(this._buttonSections, ctx);
+    this._view.webview.postMessage({ type: 'buttons.set', sections: dto });
+  }
+
+  // ----- 버튼 디스패처 -----
+  private async _dispatchButton(id: string) {
+    const def = findButtonById(this._buttonSections, id);
+    if (!def) {
+      this.appendLog(`[warn] unknown button id: ${id}`);
+      return;
+    }
+    await this._runOp(def);
+  }
+
+  private async _runOp(def: ButtonDef) {
+    const op = def.op;
+    try {
+      switch (op.kind) {
+        case 'line':
+          await runConsoleCommand(op.line, (s) => this.appendLog(s), this._context);
+          break;
+        case 'vscode':
+          await vscode.commands.executeCommand(op.command, ...(op.args ?? []));
+          break;
+        case 'post':
+          this._view?.webview.postMessage({ type: op.event, payload: op.payload });
+          break;
+        case 'handler':
+          await this._runHandler(op.name);
+          break;
+      }
+    } catch (e: any) {
+      this.appendLog(`[error] button "${def.label}" failed: ${e?.message || String(e)}`);
+    }
+  }
+
+  private async _runHandler(name: string) {
+    if (name === 'updateNow') {
+      await this._handleUpdateNow();
+      return;
+    }
+    this.appendLog(`[warn] no handler registered: ${name}`);
+  }
+
+  private async _handleUpdateNow() {
+    if (!this._state.updateUrl) {
+      this.appendLog('[update] 최신 버전 URL이 없습니다.');
+      return;
+    }
+    this.appendLog('[update] 업데이트를 시작합니다…');
+    await downloadAndInstall(
+      this._state.updateUrl,
+      (line) => this.appendLog(line),
+      this._state.latestSha,
+    );
+  }
+
+  // Public: open Homey Logging viewer
   public async handleHomeyLoggingCommand() {
     const pick = await vscode.window.showQuickPick(
       [
@@ -195,11 +259,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           type: 'logs.batch',
           payload: {
             logs: [
-              {
-                id: Date.now(),
-                ts: Date.now(),
-                text: '실시간 로그가 취소되었습니다. (연결 정보가 제공되지 않음)',
-              },
+              { id: Date.now(), ts: Date.now(), text: '실시간 로그를 시작할 수 없습니다 (연결 정보 없음).' },
             ],
             seq: 1,
           },
@@ -221,11 +281,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           });
         },
         onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
-          viewer.webview.postMessage({
-            v: 1,
-            type: 'metrics.update',
-            payload: m,
-          });
+          viewer.webview.postMessage({ v: 1, type: 'metrics.update', payload: m });
         },
       });
       return;
@@ -259,17 +315,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           });
         },
         onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
-          viewer.webview.postMessage({
-            v: 1,
-            type: 'metrics.update',
-            payload: m,
-          });
+          viewer.webview.postMessage({ v: 1, type: 'metrics.update', payload: m });
         },
       });
     }
   }
 
-  // 🔸 SSH/ADB 선택 + 최근 연결 + 새 연결 추가 → HostConfig
   private async pickConnection(): Promise<HostConfig | undefined> {
     const list = await readDeviceList(this._context);
 
@@ -289,17 +340,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
 
     const addItems: (vscode.QuickPickItem & { __action: 'add-ssh' | 'add-adb' })[] = [
-      { label: '➕ 새 연결 추가 (SSH)', description: 'host/user/port 입력', __action: 'add-ssh' },
-      { label: '➕ 새 연결 추가 (ADB)', description: 'serial 입력', __action: 'add-adb' },
+      { label: '새 연결 추가 (SSH)', description: 'host/user/port 입력', __action: 'add-ssh' },
+      { label: '새 연결 추가 (ADB)', description: 'serial 입력', __action: 'add-adb' },
     ];
 
     const pick = await vscode.window.showQuickPick(
       [...deviceItems, ...addItems],
       {
-        placeHolder:
-          deviceItems.length > 0
-            ? '최근 연결을 선택하거나, 새 연결을 추가하세요'
-            : '저장된 연결이 없습니다. 새 연결을 추가하세요',
+        placeHolder: deviceItems.length > 0
+          ? '최근 연결을 선택하거나, 새 연결을 추가하세요'
+          : '저장된 연결이 없습니다. 새 연결을 추가하세요',
         matchOnDescription: true,
         matchOnDetail: true,
       },
@@ -329,7 +379,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       if (!user) return;
 
       const portStr = await vscode.window.showInputBox({
-        prompt: 'SSH Port (엔터로 기본 22)',
+        prompt: 'SSH Port (기본 22)',
         placeHolder: '22',
         ignoreFocusOut: true,
       });
@@ -337,33 +387,23 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
       const friendly = await vscode.window.showInputBox({
         prompt: '표시 이름(선택)',
-        placeHolder: '예: 거실-Homey SSH',
+        placeHolder: '예: 사무실-Homey SSH',
         ignoreFocusOut: true,
       });
 
       const id = `${host}:${port ?? 22}`;
-      const entry: DeviceEntry = {
-        id,
-        type: 'ssh',
-        name: friendly?.trim() || id,
-        host,
-        port,
-        user,
-      };
+      const entry: DeviceEntry = { id, type: 'ssh', name: friendly?.trim() || id, host, port, user };
 
       const exist = list.find((x) => (x.id ?? '') === id);
-      if (exist) {
-        await updateDeviceById(this._context, id, entry);
-      } else {
-        await addDevice(this._context, entry);
-      }
+      if (exist) await updateDeviceById(this._context, id, entry);
+      else await addDevice(this._context, entry);
 
       return { id, type: 'ssh', host, port, user } as HostConfig;
     }
 
     if ((pick as any).__action === 'add-adb') {
       const serial = await vscode.window.showInputBox({
-        prompt: 'ADB Serial (adb devices 에 보이는 시리얼)',
+        prompt: 'ADB Serial (adb devices 로 확인 가능)',
         placeHolder: 'device-serial',
         ignoreFocusOut: true,
         validateInput: (v) => (!v ? '필수 입력' : undefined),
@@ -372,24 +412,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
       const friendly = await vscode.window.showInputBox({
         prompt: '표시 이름(선택)',
-        placeHolder: '예: 작업실-Homey ADB',
+        placeHolder: '예: 개발-Homey ADB',
         ignoreFocusOut: true,
       });
 
       const id = serial;
-      const entry: DeviceEntry = {
-        id,
-        type: 'adb',
-        name: friendly?.trim() || id,
-        serial,
-      };
+      const entry: DeviceEntry = { id, type: 'adb', name: friendly?.trim() || id, serial };
 
       const exist = list.find((x) => (x.id ?? '') === id);
-      if (exist) {
-        await updateDeviceById(this._context, id, entry);
-      } else {
-        await addDevice(this._context, entry);
-      }
+      if (exist) await updateDeviceById(this._context, id, entry);
+      else await addDevice(this._context, entry);
 
       return { id, type: 'adb', serial } as HostConfig;
     }
@@ -397,15 +429,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     return;
   }
 
-  // 커스텀 로그 뷰어 열기/재사용
   private async openLogViewerPanel(): Promise<vscode.WebviewPanel> {
     if (this._logPanel) {
-      try {
-        this._logPanel.reveal(vscode.ViewColumn.Active);
-        return this._logPanel;
-      } catch {
-        this._logPanel = undefined;
-      }
+      try { this._logPanel.reveal(vscode.ViewColumn.Active); return this._logPanel; }
+      catch { this._logPanel = undefined; }
     }
 
     const panel = vscode.window.createWebviewPanel(
@@ -425,7 +452,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     html = html.replace(/%NONCE%/g, getNonce()).replace(/%CSP_SOURCE%/g, panel.webview.cspSource);
     panel.webview.html = html;
 
-    // ✅ Log Viewer Webview에서도 ui.log 수신 처리
     panel.webview.onDidReceiveMessage((msg) => {
       if (msg?.v === 1 && msg?.type === 'ui.log') {
         const lvl = String(msg.payload?.level ?? 'info') as 'debug'|'info'|'warn'|'error';
@@ -436,10 +462,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    panel.onDidDispose(() => {
-      this._logPanel = undefined;
-    });
-
+    panel.onDidDispose(() => { this._logPanel = undefined; });
     this._logPanel = panel;
     return panel;
   }
@@ -447,8 +470,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   private _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): string {
     const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
     const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.css'));
-    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.js'));
-
+    const jsUri  = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.js'));
     const nonce = getNonce();
     const cspSource = webview.cspSource;
 
@@ -458,7 +480,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       .replace(/%JS_URI%/g, String(jsUri))
       .replace(/%NONCE%/g, nonce)
       .replace(/%CSP_SOURCE%/g, cspSource);
-
     return html;
   }
 }
@@ -491,9 +512,5 @@ function deviceEntryToHostConfig(d: DeviceEntry): HostConfig {
       user: String((d as any).user ?? 'root'),
     };
   }
-  return {
-    id: d.id ?? String((d as any).serial ?? ''),
-    type: 'adb',
-    serial: String((d as any).serial ?? d.id ?? ''),
-  };
+  return { id: d.id ?? String((d as any).serial ?? ''), type: 'adb', serial: String((d as any).serial ?? d.id ?? '') };
 }

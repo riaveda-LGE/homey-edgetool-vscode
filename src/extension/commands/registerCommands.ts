@@ -1,6 +1,5 @@
 // === src/extension/commands/registerCommands.ts ===
 import * as vscode from 'vscode';
-
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { COMMAND_UPDATE_NOW } from '../../shared/const.js';
 import { createCommandHandlers } from './commandHandlers.js';
@@ -14,7 +13,6 @@ export function registerCommands(context: vscode.ExtensionContext) {
     await handlers.updateNow();
   });
 
-  // 커맨드 팔레트에서 직접 워크스페이스 변경
   const d2 = vscode.commands.registerCommand('homeyEdgetool.changeWorkspace', async () => {
     await handlers.changeWorkspace('');
   });
@@ -22,7 +20,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(d1, d2);
 }
 
-// EdgePanel에서 콘솔 명령 실행 시 사용
+// EdgePanel에서 콘솔 라인 실행
 export async function runConsoleCommand(
   line: string,
   appendLog?: (s: string) => void,

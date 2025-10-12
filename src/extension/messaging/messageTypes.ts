@@ -31,6 +31,8 @@ export type H2W =
     >
   | Envelope<'connection.status', { state: 'connected' | 'disconnected'; host: string }>
   | Envelope<'update.available', { version: string }>
+  | Envelope<'buttons.set', { sections: { title: string; items: { id: string; label: string; desc?: string }[] }[] }>
+  | Envelope<'ui.toggleMode', { toggle?: boolean; mode?: 'mode-normal' | 'mode-debug' }>
   | Envelope<'error', { code: string; message: string; detail?: any; inReplyTo?: string }>;
 
 // Webview → Host
@@ -41,4 +43,5 @@ export type W2H =
   | Envelope<'logging.startFileMerge', { dir: string; types?: string[]; reverse?: boolean }>
   | Envelope<'logging.stop', EmptyPayload>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
-  | Envelope<'homey.command.run', { name: string; args?: string[] }>;
+  | Envelope<'homey.command.run', { name: string; args?: string[] }>
+  | Envelope<'button.click', { id: string }>;

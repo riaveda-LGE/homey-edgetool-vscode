@@ -13,30 +13,33 @@
     <title>Homey Edge Console</title>
   </head>
   <body>
-    <!-- 1) 상단 컨트롤 -->
-    <section id="controls" aria-label="controls">
-      <h3 style="margin: 0 0 8px 0">Control Panel</h3>
-      <div id="controlsContent">
-        <div class="row">
-          <button class="btn" id="btnVersionUpdate" style="display: none">버전 업데이트</button>
-          <button class="btn" id="btnReloadWindow" style="display: none">
-            Developer: Reload Window
-          </button>
-        </div>
-      </div>
-    </section>
+    <div id="root" class="mode-normal"><!-- mode-normal | mode-debug -->
 
-    <!-- 2) 로그 영역 -->
-    <section id="logs" aria-label="logs"></section>
+      <!-- Control Panel (상단 고정 버튼 삭제) -->
+      <section id="controls" aria-label="controls">
+        <!-- 섹션 카드(SSOT에서 내려온 DTO로 렌더) -->
+        <div id="sections" class="section-grid"></div>
 
-    <!-- 3) 커맨드 입력줄 -->
-    <section id="cmdbar" aria-label="edge command">
-      <span id="prompt">edge&gt;</span>
-      <input id="input" type="text" autocomplete="off" spellcheck="false" />
-      <button id="runBtn" title="Enter" aria-label="Enter">Enter</button>
-    </section>
+        <!-- 추가 컨트롤 넣는 영역(선택) -->
+        <div id="controlsContent"></div>
+      </section>
 
-    <noscript>이 패널은 JavaScript가 필요합니다.</noscript>
+      <!-- Control / Log 사이 스플리터 -->
+      <div id="splitter" role="separator" aria-orientation="horizontal" tabindex="0"></div>
+
+      <!-- Log Panel -->
+      <section id="logs" aria-label="logs"></section>
+
+      <!-- Command Panel (1줄 고정) -->
+      <section id="cmdbar" aria-label="edge command">
+        <span id="prompt">edge&gt;</span>
+        <input id="input" type="text" autocomplete="off" spellcheck="false" />
+        <button id="runBtn" title="Enter" aria-label="Enter">Enter</button>
+      </section>
+
+    </div>
+
+    <noscript>JavaScript가 필요합니다.</noscript>
     <script nonce="%NONCE%" src="%JS_URI%"></script>
   </body>
 </html>
