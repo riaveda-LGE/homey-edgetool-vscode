@@ -1,17 +1,23 @@
-import { getLogger } from '../logging/extension-logger.js';
-import { runCommandLine } from '../connection/ExecRunner.js';
 import type { HostConfig } from '../connection/ConnectionManager.js';
+import { runCommandLine } from '../connection/ExecRunner.js';
+import { getLogger } from '../logging/extension-logger.js';
 
 export class FileTransferService {
   private log = getLogger('FileTransfer');
   constructor(private target: HostConfig) {}
 
-  async uploadViaTarBase64(localDir: string, remoteDir: string, opts?: { timeoutMs?: number; signal?: AbortSignal }) {
+  async uploadViaTarBase64(
+    localDir: string,
+    remoteDir: string,
+    opts?: { timeoutMs?: number; signal?: AbortSignal },
+  ) {
     const timeoutMs = opts?.timeoutMs ?? 60_000;
     if (this.target.type === 'ssh') {
       const ssh = buildSshPrefix(this.target);
       const cmd = `tar -C "${localDir}" -cf - . | base64 | ${ssh} "mkdir -p '${escapeQ(remoteDir)}' && base64 -d | tar -C '${escapeQ(remoteDir)}' -xpf -"`;
-      this.log.info(`upload ssh: ${localDir} -> ${this.target.user}@${this.target.host}:${remoteDir}`);
+      this.log.info(
+        `upload ssh: ${localDir} -> ${this.target.user}@${this.target.host}:${remoteDir}`,
+      );
       await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
       return;
     }
@@ -22,12 +28,18 @@ export class FileTransferService {
     await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
   }
 
-  async downloadViaTarBase64(remoteDir: string, localDir: string, opts?: { timeoutMs?: number; signal?: AbortSignal }) {
+  async downloadViaTarBase64(
+    remoteDir: string,
+    localDir: string,
+    opts?: { timeoutMs?: number; signal?: AbortSignal },
+  ) {
     const timeoutMs = opts?.timeoutMs ?? 60_000;
     if (this.target.type === 'ssh') {
       const ssh = buildSshPrefix(this.target);
       const cmd = `${ssh} "tar -C '${escapeQ(remoteDir)}' -cf - . | base64" | base64 -d | tar -C "${localDir}" -xpf -`;
-      this.log.info(`download ssh: ${this.target.user}@${this.target.host}:${remoteDir} -> ${localDir}`);
+      this.log.info(
+        `download ssh: ${this.target.user}@${this.target.host}:${remoteDir} -> ${localDir}`,
+      );
       await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
       return;
     }

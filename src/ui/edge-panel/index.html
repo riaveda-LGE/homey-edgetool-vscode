@@ -13,21 +13,17 @@
     <title>Homey Edge Console</title>
   </head>
   <body>
-    <div id="root" class="mode-normal"><!-- mode-normal | mode-debug -->
-
-      <!-- Control Panel (상단 고정 버튼 삭제) -->
+    <div id="root">
+      <!-- Control Panel -->
       <section id="controls" aria-label="controls">
-        <!-- 섹션 카드(SSOT에서 내려온 DTO로 렌더) -->
         <div id="sections" class="section-grid"></div>
-
-        <!-- 추가 컨트롤 넣는 영역(선택) -->
         <div id="controlsContent"></div>
       </section>
 
-      <!-- Control / Log 사이 스플리터 -->
+      <!-- Splitter (Control <-> Content) -->
       <div id="splitter" role="separator" aria-orientation="horizontal" tabindex="0"></div>
 
-      <!-- Log Panel -->
+      <!-- Content Area: logs가 기본 컨테이너, Explorer는 런타임에 panel.ts가 logs 내부에 동적 생성 -->
       <section id="logs" aria-label="logs"></section>
 
       <!-- Command Panel (1줄 고정) -->
@@ -36,7 +32,6 @@
         <input id="input" type="text" autocomplete="off" spellcheck="false" />
         <button id="runBtn" title="Enter" aria-label="Enter">Enter</button>
       </section>
-
     </div>
 
     <noscript>JavaScript가 필요합니다.</noscript>

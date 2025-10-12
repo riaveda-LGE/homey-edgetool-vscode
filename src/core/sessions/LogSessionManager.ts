@@ -1,7 +1,7 @@
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
-import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { mergeDirectory } from '../logs/LogFileIntegration.js';
 
 export type SessionCallbacks = {

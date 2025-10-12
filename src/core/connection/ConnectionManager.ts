@@ -1,6 +1,6 @@
-import { getLogger } from '../logging/extension-logger.js';
 import { adbShell, adbStream } from '../../adapters/adb/adbClient.js';
 import { sshRun, sshStream } from '../../adapters/ssh/sshClient.js';
+import { getLogger } from '../logging/extension-logger.js';
 
 export type HostConfig =
   | {
@@ -37,7 +37,10 @@ export class ConnectionManager {
     const full = [cmd, ...args].join(' ').trim();
     this.log.debug(`run: ${full}`);
     if (this.cfg.type === 'adb') {
-      return { code: (await adbShell(full, { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs })).code };
+      return {
+        code: (await adbShell(full, { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs }))
+          .code,
+      };
     }
     const code = await sshRun(full, {
       host: this.cfg.host,
@@ -54,7 +57,11 @@ export class ConnectionManager {
   async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
     this.log.debug(`stream: ${cmd}`);
     if (this.cfg.type === 'adb') {
-      await adbStream(cmd, { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs, signal: abort }, onLine);
+      await adbStream(
+        cmd,
+        { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs, signal: abort },
+        onLine,
+      );
       return;
     }
     await sshStream(

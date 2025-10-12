@@ -1,5 +1,2 @@
-src/extension/commands/edgepanel.buttons.ts
-src/ui/edge-panel/index.html
 src/ui/edge-panel/panel.ts
-src/ui/edge-panel/panel.css
-src/extension/panels/extensionPanel.ts
+dist/ui/edge-panel/index.html

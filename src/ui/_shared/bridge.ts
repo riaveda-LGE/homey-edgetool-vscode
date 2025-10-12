@@ -14,10 +14,7 @@ function getApi(): any {
 
 export function makeBridge(api: any = getApi()) {
   let seq = 0;
-  const pend = new Map<
-    string,
-    { resolve: (v: any) => void; reject: (e: any) => void }
-  >();
+  const pend = new Map<string, { resolve: (v: any) => void; reject: (e: any) => void }>();
 
   // ack/error 수신
   window.addEventListener('message', (ev) => {

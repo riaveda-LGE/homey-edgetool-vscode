@@ -50,6 +50,8 @@ docker ps -a --format '{{.Names}}' | awk '/homey/ {print}' | xargs -r -n1 sh -c 
   async gitPush(path?: string) {
     await this.cm.connect();
     const p = path || '/etc/homey';
-    await this.cm.run(`sh -lc 'cd "${p}" && git add -A && git commit -m "edge push" || true && git push || true'`);
+    await this.cm.run(
+      `sh -lc 'cd "${p}" && git add -A && git commit -m "edge push" || true && git push || true'`,
+    );
   }
 }

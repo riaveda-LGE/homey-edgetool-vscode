@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
 import { getLogger } from '../logging/extension-logger.js';
 
@@ -8,10 +9,10 @@ const log = getLogger('LogFileIntegration');
 
 export type MergeOptions = {
   dir: string;
-  reverse?: boolean;         // 기본: 오래된→최신. false면 최신→오래된 순으로 파일 순회
+  reverse?: boolean; // 기본: 오래된→최신. false면 최신→오래된 순으로 파일 순회
   signal?: AbortSignal;
   onBatch: (logs: LogEntry[]) => void;
-  batchSize?: number;        // 기본 200
+  batchSize?: number; // 기본 200
 };
 
 export async function mergeDirectory(opts: MergeOptions) {
@@ -22,7 +23,12 @@ export async function mergeDirectory(opts: MergeOptions) {
   log.info(`mergeDirectory: ${ordered.length} files`);
 
   for (const f of ordered) {
-    await streamFile(path.join(opts.dir, f), (entries) => opts.onBatch(entries), batchSize, opts.signal);
+    await streamFile(
+      path.join(opts.dir, f),
+      (entries) => opts.onBatch(entries),
+      batchSize,
+      opts.signal,
+    );
     if (opts.signal?.aborted) break;
   }
 }
@@ -83,7 +89,7 @@ async function streamFile(
 
 function parseTs(line: string): number | undefined {
   // ISO-like 먼저
-  const iso = line.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?/);
+  const iso = line.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?/);
   if (iso) {
     const t = Date.parse(iso[0]);
     if (!Number.isNaN(t)) return t;

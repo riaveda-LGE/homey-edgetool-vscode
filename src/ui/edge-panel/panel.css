@@ -1,15 +1,35 @@
 :root {
-  --bg: #1e1e1e;
-  --panel: #252526;
-  --console-bg: #0b0b0b;
-  --console-fg: #b9f6ca;
-  --border: #3c3c3c;
-  --accent: #0e639c;
+  /* VS Code 테마 토큰 기반 매핑 */
+  --bg: var(--vscode-editor-background);
+  --panel: var(--vscode-editorWidget-background);
+  --console-bg: var(--vscode-terminal-background, var(--vscode-editor-background));
+  --console-fg: var(--vscode-terminal-foreground, var(--vscode-foreground));
+  --border: var(--vscode-panel-border, var(--vscode-editorWidget-border, #3c3c3c));
+  --accent: var(--vscode-button-background);
+  --accent-foreground: var(--vscode-button-foreground);
+  --accent-hover: var(--vscode-button-hoverBackground);
+  --focus: var(--vscode-focusBorder);
+  --section-bg: var(--vscode-sideBarSectionHeader-background, var(--vscode-editorWidget-background));
+  --section-title: var(--vscode-foreground);
+  --muted: var(--vscode-descriptionForeground);
+  --link: var(--vscode-textLink-foreground);
+
+  /* List/Tree 색상(토큰 사용, fallback 포함) */
+  --row-hover: var(--vscode-list-hoverBackground, rgba(128,128,128,.16));
+  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14,99,156,.35));
+  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+  --indent-guide: var(--vscode-tree-indentGuidesStroke, rgba(255,255,255,.08));
 
   /* 레이아웃 변수 */
   --splitter-h: 6px;
   --cmd-h: 40px;
   --ctrl-h: 40vh; /* 드래그로 변경, 최대 50vh로 제한됨 */
+
+  /* 트리 인덴트/체브론 기준 */
+  --indent: 18px;
+  --chev-w: 14px;
+  /* 세로/가로 라인이 시작되는 x 좌표(체브론의 가운데 근처) */
+  --branch-x: calc(var(--chev-w) / 2 + 4px);
 }
 
 * { box-sizing: border-box; }
@@ -17,63 +37,105 @@ html, body { height: 100%; }
 body {
   margin: 0;
   background: var(--bg);
-  color: #ddd;
+  color: var(--vscode-foreground);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
-/* 루트 레이아웃 */
-#root { height: 100vh; }
-#root.mode-debug {
+/* ── 루트 레이아웃 ───────────────────────────────────────────── */
+#root {
+  height: 100vh;
   display: grid;
+  grid-template-rows: 1fr; /* 기본: Control만 보임 */
+}
+
+/* 기본적으로 콘텐츠 패널/스플리터/커맨드 감춤 */
+#splitter, #logs, #explorer, #cmdbar { display: none; }
+
+/* Logs 토글 ON → Control, Splitter, Logs, Command */
+#root.show-logs {
   grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr var(--cmd-h);
 }
-#root.mode-normal {
-  display: grid;
-  grid-template-rows: 1fr; /* Control만 전체 화면 */
-}
-#root.mode-normal #splitter,
-#root.mode-normal #logs,
-#root.mode-normal #cmdbar { display: none; }
+#root.show-logs #splitter { display: block; }
+#root.show-logs #logs { display: block; }
+#root.show-logs #cmdbar { display: flex; }
 
-/* Control */
+/* Explorer 토글 ON → Control, Splitter, Explorer (Command는 감춤) */
+#root.show-explorer {
+  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr;
+}
+#root.show-explorer #splitter { display: block; }
+/* explorer는 logs 컨테이너 안에 붙으므로 logs도 보여야 함 */
+#root.show-explorer #logs { display: block; }
+#root.show-explorer #explorer { display: block; }
+
+/* ── Control ─────────────────────────────────────────────────── */
 #controls {
-  overflow: auto;            /* 내용은 wrap + 스크롤 */
+  overflow: auto;
   padding: 12px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
-.row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.lbl { display: flex; align-items: center; gap: 6px; }
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.lbl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+/* 공통 버튼 */
 .btn {
-  display: inline-flex; /* 내용 기준 너비 */
-  white-space: nowrap;  /* 버튼 라벨 줄바꿈 방지 */
+  display: inline-flex;
+  white-space: nowrap;
   background: var(--accent);
-  color: #fff;
-  border: none;
+  color: var(--accent-foreground);
+  border: 1px solid transparent;
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  transition: background-color .15s ease, transform .05s ease, box-shadow .15s ease;
 }
+.btn:hover { background: var(--accent-hover); }
 .btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn.toggle-on { box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
 
-/* ✅ 섹션 카드(Grid) */
+/* 변형 */
+.btn.small { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+.btn.ghost {
+  background: transparent;
+  color: var(--vscode-foreground);
+  border: 1px solid var(--border);
+}
+.btn.danger {
+  background: #b3261e;
+  color: #fff;
+}
+.btn.danger:hover { filter: brightness(1.1); }
+
+/* 섹션 카드(Grid) */
 .section-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 12px;
 }
 .section-card {
-  background: #2a2a2b;
+  background: var(--section-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 .section-card h4 {
   margin: 0 0 8px 0;
   font-size: 13px;
-  color: #c6c6c6;
+  color: var(--section-title);
   font-weight: 700;
 }
 .section-body {
@@ -87,9 +149,12 @@ body {
   cursor: row-resize;
   background: var(--panel);
   border-top: 1px solid var(--border);
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid var(--vscode-editor-background);
 }
-#splitter:focus-visible { outline: 2px solid #7df9ff; outline-offset: -2px; }
+#splitter:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
 
 /* Log */
 #logs {
@@ -102,7 +167,7 @@ body {
   border-bottom: 1px solid var(--border);
   font-size: 12px;
   line-height: 1.35;
-  min-height: 0; /* grid overflow 방지 */
+  min-height: 0;
 }
 
 /* Command (1줄 고정) */
@@ -113,15 +178,15 @@ body {
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  background: #000;
-  color: #ccc;
-  border-top: 1px solid #111;
+  background: var(--bg);
+  color: var(--vscode-foreground);
+  border-top: 1px solid var(--border);
 }
-#prompt { color: #7dd3fc; user-select: none; }
+#prompt { color: var(--link); user-select: none; }
 #input {
   flex: 1;
   background: transparent;
-  color: #eee;
+  color: var(--vscode-foreground);
   border: none;
   outline: none;
   font: inherit;
@@ -134,15 +199,194 @@ body {
   align-items: center;
   gap: 6px;
   background: var(--accent);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--accent-foreground);
+  border: 1px solid transparent;
   padding: 6px 12px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: transform 0.05s ease, filter 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.25);
+  transition: transform .05s ease, filter .15s ease, box-shadow .15s ease, background-color .15s ease;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.15);
 }
-#runBtn:hover { filter: brightness(1.08); }
-#runBtn:active, #runBtn.pressed { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
-#runBtn:focus-visible { outline: 2px solid #7df9ff; outline-offset: 2px; }
+#runBtn:hover { background: var(--accent-hover); }
+#runBtn:active, #runBtn.pressed { transform: translateY(1px); }
+#runBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ── Explorer (트리) ─────────────────────────────────────────── */
+#explorer {
+  background: var(--panel);
+  color: var(--vscode-foreground);
+  border-bottom: 1px solid var(--border);
+  overflow: auto;
+  min-height: 0;
+}
+
+#explorerBar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+}
+#explorerTitle { font-weight: 700; opacity: .9; }
+#explorerPath { color: var(--muted); }
+#explorerPath .crumb { color: var(--link); cursor: pointer; }
+#explorerPath .sep { opacity: .6; margin: 0 6px; }
+
+#explorerTree {
+  padding: 6px 8px 12px 6px;
+  outline: none;
+  font-size: 13px;
+}
+
+/* 트리 노드 */
+.tree-node {
+  position: relative;
+  border-radius: 6px;
+  padding: 0;
+  margin: 0;
+}
+.tree-node .tn-line {
+  position: relative;              /* 가이드 가로선 포지셔닝용 */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 4px;
+  border-radius: 6px;
+  user-select: none;
+  transition: background-color .12s ease;
+}
+.tree-node .tn-line:hover { background: var(--row-hover); }
+.tree-node.selected .tn-line {
+  background: var(--row-selected);
+  color: var(--row-selected-fg);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.tree-node.selected .tn-label { color: var(--row-selected-fg); }
+
+.tn-icon { width: 18px; text-align: center; opacity: .85; }
+.tn-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.tn-chevron {
+  width: var(--chev-w);
+  text-align: center;
+  opacity: .7;
+  cursor: default;
+}
+.tn-chevron::before { content: '▸'; }
+.tree-node.expanded > .tn-line .tn-chevron::before { content: '▾'; }
+.tn-chevron.tn-empty::before { content: ''; }
+
+/* 인덴트 그룹 */
+.tn-children {
+  margin-left: var(--indent);      /* 들여쓰기 */
+  position: relative;              /* 세로 가이드 라인 기준 */
+}
+
+/* 같은 레벨 가이드: 세로선 */
+.tn-children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--branch-x);
+  border-left: 1px solid var(--indent-guide);
+  pointer-events: none;
+  opacity: .9;
+}
+
+/* 같은 레벨 가이드: 가로 연결선 (루트의 직접 자식들부터 적용) */
+.tn-children > .tree-node > .tn-line::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: var(--branch-x);
+  width: calc(var(--indent) - var(--branch-x));
+  border-top: 1px solid var(--indent-guide);
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: .9;
+}
+
+/* 컨텍스트 메뉴 */
+#ctxMenu {
+  position: fixed;
+  min-width: 200px;
+  background: var(--panel);
+  color: var(--vscode-foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  padding: 6px;
+  z-index: 9999; /* 웹뷰 기본 메뉴보다 위 */
+}
+#ctxMenu[hidden] { display: none; }
+#ctxMenu .menu-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#ctxMenu .menu-item:hover { background: rgba(255,255,255,.08); }
+#ctxMenu hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 6px 0;
+}
+
+/* 컨텍스트 메뉴: 인라인 폼/확인 레이아웃 */
+#ctxMenu .menu-form,
+#ctxMenu .menu-confirm {
+  padding: 6px 4px 4px 4px;
+}
+#ctxMenu .menu-form-title {
+  font-size: 12px;
+  opacity: .9;
+  margin-bottom: 6px;
+}
+#ctxMenu input#ctxInput {
+  width: 100%;
+  background: var(--bg);
+  color: var(--vscode-foreground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  outline: none;
+}
+#ctxMenu input#ctxInput:focus { border-color: var(--focus); }
+#ctxMenu .menu-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+#ctxMenu .menu-confirm-text {
+  white-space: pre-wrap;
+  line-height: 1.35;
+  font-size: 12px;
+  opacity: .95;
+}
+
+/* HC 모드 보조 */
+@media (forced-colors: active) {
+  .btn, #runBtn {
+    border: 1px solid ButtonText;
+    box-shadow: none;
+  }
+  /* HC에서 가이드 라인 대비 강화 */
+  .tn-children::before,
+  .tn-children > .tree-node > .tn-line::before {
+    border-color: ButtonText;
+  }
+}
