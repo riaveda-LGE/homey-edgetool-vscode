@@ -99,7 +99,6 @@ export function getSections(): SectionDef[] {
       title: 'homey 조작',
       items: [
         { id: 'cmd.homeyLogging',       label: 'homey-logging',       op: { kind: 'line', line: 'homey-logging' } },
-        { id: 'cmd.homeyLoggingDir',    label: 'homey-logging (dir)', desc: '폴더 선택 후 병합', op: { kind: 'line', line: 'homey-logging --dir ' } },
         { id: 'cmd.homeyRestart',       label: 'homey-restart',       op: { kind: 'line', line: 'homey-restart' } },
         { id: 'cmd.homeyMount',         label: 'homey-mount',         op: { kind: 'line', line: 'homey-mount' } },
         { id: 'cmd.homeyUnmount',       label: 'homey-unmount',       op: { kind: 'line', line: 'homey-unmount' } },
