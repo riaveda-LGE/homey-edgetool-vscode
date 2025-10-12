@@ -215,18 +215,29 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async _runHandler(name: string) {
-    if (name === 'updateNow') {
-      await this._handleUpdateNow();
-      return;
-    } else if (name === 'openHelp') {
-      const content = this._buildHelpMarkdown(); // ✅ 동적 본문 생성
-      const doc = await vscode.workspace.openTextDocument({ language: 'markdown', content });
-      await vscode.commands.executeCommand('markdown.showPreview', doc.uri);
-      return;
+  // extensionPanel.ts 내
+private async _runHandler(name: string) {
+  if (name === 'updateNow') {
+    await this._handleUpdateNow();
+    return;
+  } else if (name === 'openHelp') {
+    try {
+      // 확장 루트 기준: media/resources/help.md
+      const helpUri = vscode.Uri.joinPath(this._extensionUri, 'media', 'resources', 'help.md');
+      // 존재 확인 (없으면 예외)
+      await vscode.workspace.fs.stat(helpUri);
+
+      const doc = await vscode.workspace.openTextDocument(helpUri);
+      await vscode.commands.executeCommand('markdown.showPreview', doc.uri); // 미리보기 탭으로 열기
+    } catch (e) {
+      this.appendLog('[warn] help.md를 찾을 수 없습니다: media/resources/help.md');
+      vscode.window.showWarningMessage('help.md를 찾을 수 없습니다. media/resources/help.md 위치에 파일이 있는지 확인하세요.');
     }
-    this.appendLog(`[warn] no handler registered: ${name}`);
+    return;
   }
+  this.appendLog(`[warn] no handler registered: ${name}`);
+}
+
 
   private async _handleUpdateNow() {
     if (!this._state.updateUrl) {
