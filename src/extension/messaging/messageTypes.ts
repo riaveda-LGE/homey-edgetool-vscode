@@ -49,4 +49,5 @@ export type W2H =
   | Envelope<'logging.stop', EmptyPayload>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
   | Envelope<'homey.command.run', { name: string; args?: string[] }>
-  | Envelope<'button.click', { id: string }>;
+  | Envelope<'button.click', { id: string }>
+  | Envelope<'perfMeasure', { name: string; duration: number }>;

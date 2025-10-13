@@ -105,7 +105,11 @@ export function getSections(): SectionDef[] {
     {
       id: 'help',
       title: '기타',
-      items: [{ id: 'cmd.help', label: '도움말', op: { kind: 'handler', name: 'openHelp' } }],
+      items: [
+        { id: 'cmd.performanceMonitor', label: '성능측정', desc: 'Performance Monitor 토글',
+          op: { kind: 'handler', name: 'togglePerformanceMonitoring' } },
+        { id: 'cmd.help', label: '도움말', op: { kind: 'handler', name: 'openHelp' } }
+      ],
     },
   ];
 }

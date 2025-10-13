@@ -28,6 +28,7 @@ import {
 import type { LogEntry } from '../messaging/messageTypes.js';
 import { downloadAndInstall } from '../update/updater.js';
 import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
+import { measure } from '../../core/logging/perf.js';
 
 interface EdgePanelState {
   version: string;
@@ -199,6 +200,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     await this._runOp(def);
   }
 
+  @measure()
   private async _runOp(def: ButtonDef) {
     const op = def.op;
     try {
@@ -230,7 +232,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  // ====== Homey Logging Viewer (기존) ======
+  @measure()
   public async handleHomeyLoggingCommand() {
     const pick = await vscode.window.showQuickPick(
       [
@@ -275,9 +277,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             payload: { logs, seq: ++seq },
           });
         },
-        onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
-          viewer.webview.postMessage({ v: 1, type: 'metrics.update', payload: m });
-        },
       });
       return;
     }
@@ -309,13 +308,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             payload: { logs, total, seq: ++seq },
           });
         },
-        onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
-          viewer.webview.postMessage({ v: 1, type: 'metrics.update', payload: m });
-        },
       });
     }
   }
 
+  @measure()
   private async pickConnection(): Promise<HostConfig | undefined> {
     const list = await readDeviceList(this._context);
 
@@ -419,6 +416,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     return;
   }
 
+  @measure()
   private async openLogViewerPanel(): Promise<vscode.WebviewPanel> {
     if (this._logPanel) {
       try {

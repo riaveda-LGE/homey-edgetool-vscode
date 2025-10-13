@@ -1,6 +1,7 @@
 import { adbShell, adbStream } from './adbClient.js';
 import { sshRun, sshStream } from './sshClient.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { measure } from '../logging/perf.js';
 
 export type HostConfig =
   | {
@@ -22,17 +23,19 @@ export class ConnectionManager {
   private connected = false;
   constructor(private cfg: HostConfig) {}
 
+  @measure()
   async connect() {
     // 가벼운 프리체크 정도만: 실제 연결은 실행 시점에 테스트됨
     this.log.info(`connect: type=${this.cfg.type}, id=${this.cfg.id}`);
     this.connected = true;
   }
 
+  @measure()
   isConnected() {
     return this.connected;
   }
 
-  /** 원격 단발 명령 실행 */
+  @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
     const full = [cmd, ...args].join(' ').trim();
     this.log.debug(`run: ${full}`);
@@ -53,7 +56,7 @@ export class ConnectionManager {
     return { code };
   }
 
-  /** 원격 스트림(journalctl/logcat 등) 한 줄씩 콜백 */
+  @measure()
   async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
     this.log.debug(`stream: ${cmd}`);
     if (this.cfg.type === 'adb') {
@@ -79,6 +82,7 @@ export class ConnectionManager {
     );
   }
 
+  @measure()
   dispose() {
     this.log.info('dispose');
     this.connected = false;

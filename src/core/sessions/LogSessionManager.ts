@@ -1,6 +1,7 @@
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
 import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { measure } from '../logging/perf.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
 import { mergeDirectory } from '../logs/LogFileIntegration.js';
 
@@ -17,6 +18,7 @@ export class LogSessionManager {
 
   constructor(private conn?: HostConfig) {}
 
+  @measure()
   async startRealtimeSession(opts: { signal?: AbortSignal; filter?: string } & SessionCallbacks) {
     this.log.info('startRealtimeSession');
     if (!this.conn) throw new Error('No connection configured');
@@ -61,6 +63,7 @@ export class LogSessionManager {
     );
   }
 
+  @measure()
   async startFileMergeSession(opts: { dir: string; signal?: AbortSignal } & SessionCallbacks) {
     this.log.info(`startFileMergeSession dir=${opts.dir}`);
     let seq = 0;
@@ -80,6 +83,7 @@ export class LogSessionManager {
     });
   }
 
+  @measure()
   stopAll() {
     this.log.info('stopAll');
     this.rtAbort?.abort();
