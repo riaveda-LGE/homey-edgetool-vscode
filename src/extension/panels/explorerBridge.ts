@@ -171,6 +171,14 @@ export function createExplorerBridge(
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.delete(uri, { recursive, useTrash });
       console.log('[explorerBridge] delete', rel, { recursive, useTrash });
+      
+      // 삭제 성공 후 UI 갱신 강제 트리거 (와쳐가 놓칠 수 있는 경우 대비)
+      const parentPath = parentDir(rel);
+      post({ type: 'explorer.fs.changed', path: rel }); // 삭제된 항목
+      if (parentPath !== rel) { // 부모 폴더도 갱신
+        post({ type: 'explorer.fs.changed', path: parentPath + '/dummy' });
+      }
+      
       post({ type: 'explorer.ok', op: 'delete', path: rel || '' });
     } catch (e: any) {
       console.error('[explorerBridge] delete error', rel, e);

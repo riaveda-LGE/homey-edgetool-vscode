@@ -1016,8 +1016,40 @@
 
       case 'explorer.ok': {
         log('on:ok', { op: msg.op, path: msg.path });
-        // open 이외에는 현재 폴더를 refresh
-        if (msg.op !== 'open') {
+        if (msg.op === 'delete') {
+          // 삭제 시 특별 처리: 부모 폴더 refresh, 선택 상태 정리
+          const deletedPath = String(msg.path || '');
+          const parentPath = dirOf(deletedPath);
+          
+          // 삭제된 경로로 시작하는 모든 노드 제거 (recursive 삭제 지원)
+          const toRemove: string[] = [];
+          state.nodesByPath.forEach((node, path) => {
+            if (path === deletedPath || path.startsWith(deletedPath + '/')) {
+              toRemove.push(path);
+              if (node.el && node.el.parentElement) {
+                node.el.parentElement.removeChild(node.el);
+              }
+            }
+          });
+          toRemove.forEach(path => state.nodesByPath.delete(path));
+          
+          // 삭제된 노드가 선택되어 있다면 선택 해제
+          const deletedNode = state.nodesByPath.get(deletedPath);
+          if (deletedNode && state.selected === deletedNode) {
+            state.selected = deletedNode.parent ?? state.root ?? null;
+            if (state.selected) selectNode(state.selected);
+          }
+          
+          // 현재 보고 있는 폴더가 삭제된 폴더라면 상위로 이동
+          if (state.explorerPath === deletedPath || state.explorerPath.startsWith(deletedPath + '/')) {
+            state.explorerPath = parentPath;
+            renderBreadcrumb(state.explorerPath);
+          }
+          
+          // 부모 폴더 refresh
+          requestList(parentPath);
+        } else if (msg.op !== 'open') {
+          // 다른 작업은 현재 폴더 refresh
           const target = state.selected?.kind === 'folder' ? state.selected : (state.selected?.parent ?? state.root);
           if (target) requestList(target.path);
         }
