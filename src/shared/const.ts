@@ -29,4 +29,3 @@ export const FETCH_JSON_TIMEOUT_MS = 12_000;
 export const FETCH_BUFFER_TIMEOUT_MS = 60_000;
 
 // Webview/Panel
-export const READY_MARKER = '%READY%' as const;

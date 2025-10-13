@@ -12,11 +12,11 @@
 
   const splitter = document.getElementById('splitter') as HTMLElement | null;
   const logsEl = document.getElementById('logs') as HTMLElement | null;
-  const cmdbarEl = document.getElementById('cmdbar') as HTMLElement | null;
-  const inputEl = document.getElementById('input') as HTMLInputElement | null;
-  const runBtn = document.getElementById('runBtn') as HTMLButtonElement | null;
 
-  // explorer 영역은 필요 시 동적 생성(로그 컨테이너(#logs) 안에 붙임)
+  // 콘텐츠 내부 스플리터 (explorer와 log 사이)
+  let contentSplitter: HTMLElement | null = null;
+
+  // explorer 영역은 필요 시 동적 생성(루트에 직접 붙임)
   let explorerEl = document.getElementById('explorer') as HTMLElement | null;
   let explorerPathEl = document.getElementById('explorerPath') as HTMLElement | null;
   let treeEl = document.getElementById('explorerTree') as HTMLElement | null;
@@ -29,8 +29,6 @@
   let ctxInputEl: HTMLInputElement | null = null;
   let ctxConfirmEl: HTMLElement | null = null;
   let ctxConfirmTextEl: HTMLElement | null = null;
-
-  if (runBtn) runBtn.innerHTML = 'Enter';
 
   // 필수 루트 요소 검증 (없으면 진행 불가)
   if (!rootEl || !controlsEl || !sectionsEl || !splitter || !logsEl) {
@@ -98,18 +96,23 @@
 
   // ── 레이아웃 적용 ────────────────────────────────────────────
   function applyLayout() {
-    const any = state.showLogs || state.showExplorer;
+    const hasLogs = state.showLogs;
+    const hasExplorer = state.showExplorer;
+    const hasAny = hasLogs || hasExplorer;
+
     rootEl!.style.display = 'grid';
 
     // CSS 클래스 토글(패널 CSS와 동기화)
-    rootEl!.classList.toggle('show-logs', state.showLogs);
-    rootEl!.classList.toggle('show-explorer', state.showExplorer);
+    rootEl!.classList.toggle('show-logs', hasLogs);
+    rootEl!.classList.toggle('show-explorer', hasExplorer);
+    rootEl!.classList.toggle('show-both', hasLogs && hasExplorer);
 
-    if (!any) {
+    if (!hasAny) {
       rootEl!.style.gridTemplateRows = '1fr';
       splitter!.style.display = 'none';
-      logsEl!.style.display = 'none';
-      if (cmdbarEl) cmdbarEl.style.display = 'none';
+      // explorerEl, logContainer 숨김
+      if (explorerEl) explorerEl.style.display = 'none';
+      if (logContainer) logContainer.style.display = 'none';
       closeCtxMenu();
       log('applyLayout -> control-only');
       return;
@@ -117,40 +120,67 @@
 
     ensureCtrlBounds();
 
-    if (state.showLogs) {
-      rootEl!.style.gridTemplateRows = 'var(--ctrl-h) var(--splitter-h) 1fr var(--cmd-h)';
-      splitter!.style.display = 'block';
-      logsEl!.style.display = 'block';
-      setLogsVisible(true);
-      if (cmdbarEl) cmdbarEl.style.display = 'flex';
+    // 5행으로 변경: Control, Splitter1, Explorer, Splitter2, Log
+    rootEl!.style.gridTemplateRows = 'var(--ctrl-h) var(--splitter-h) 1fr var(--splitter-h) 1fr';
+    splitter!.style.display = 'block'; // Control ↔ Explorer 스플리터
+
+    // Explorer 패널 표시/숨김 (독립)
+    if (hasExplorer) {
+      ensureExplorerDom();
+      if (explorerEl && (!explorerEl.parentElement || explorerEl.parentElement !== rootEl)) {
+        rootEl!.appendChild(explorerEl); // rootEl에 직접 붙임
+      }
+      explorerEl!.style.display = 'block';
+      explorerEl!.style.gridRow = hasLogs ? '3' : '3'; // show-both: 3행, show-explorer: 3행
+    } else {
       if (explorerEl) explorerEl.style.display = 'none';
       closeCtxMenu();
-      log('applyLayout -> logs');
-      return;
     }
 
-    // Explorer 모드 (explorer는 logs 영역 안에 동적 삽입)
-    rootEl!.style.gridTemplateRows = 'var(--ctrl-h) var(--splitter-h) 1fr';
-    splitter!.style.display = 'block';
-    logsEl!.style.display = 'block';
-    setLogsVisible(false); // 로그 라인은 감춤
-    if (cmdbarEl) cmdbarEl.style.display = 'none';
-    ensureExplorerDom();
-    if (explorerEl) explorerEl.style.display = 'block';
-    log('applyLayout -> explorer');
+    // Log 패널 표시/감춤 (독립)
+    if (hasLogs) {
+      if (!logContainer) {
+        logContainer = document.createElement('div');
+        logContainer.id = 'logContainer';
+        logContainer.className = 'log-container';
+      }
+      if (!logContainer.parentElement || logContainer.parentElement !== rootEl) {
+        rootEl!.appendChild(logContainer); // rootEl에 직접 붙임
+      }
+      logContainer.style.display = 'block';
+      logContainer.style.gridRow = hasExplorer ? '5' : '3'; // show-both: 5행, show-logs: 3행
+    } else {
+      if (logContainer) logContainer.style.display = 'none';
+    }
+
+    // Content splitter for between explorer and log
+    if (hasLogs && hasExplorer) {
+      if (!contentSplitter) {
+        contentSplitter = document.createElement('div');
+        contentSplitter.id = 'contentSplitter';
+        contentSplitter.className = 'content-splitter';
+      }
+      if (!contentSplitter.parentElement || contentSplitter.parentElement !== rootEl) {
+        rootEl!.appendChild(contentSplitter);
+      }
+      contentSplitter.style.display = 'block';
+      contentSplitter.style.gridRow = '4';
+      ensureContentSplitter();
+    } else {
+      if (contentSplitter) contentSplitter.style.display = 'none';
+    }
+
+    ensureCtrlContentFit(); // control content가 다 보이도록 높이 조정 (사용자가 조정하지 않은 경우)
   }
 
-  function setLogsVisible(v: boolean) {
-    const nodes = logsEl!.querySelectorAll('.log-line');
-    nodes.forEach((n) => ((n as HTMLElement).style.display = v ? '' : 'none'));
-  }
+
 
   // ── Explorer DOM ─────────────────────────────────────────────
   function ensureExplorerDom() {
-    if (!logsEl) return;
+    if (!rootEl) return; // rootEl 확인
     let created = false;
 
-    // 1) explorer 컨테이너가 없으면 생성 (항상 logs 내부에 둔다)
+    // 1) explorer 컨테이너가 없으면 생성 (루트에 직접 붙임)
     if (!explorerEl) {
       explorerEl = document.createElement('section');
       explorerEl.id = 'explorer';
@@ -162,11 +192,9 @@
         </div>
         <div id="explorerTree" role="tree" tabindex="0"></div>
       `;
-      logsEl.appendChild(explorerEl);
       created = true;
-    } else if (explorerEl.parentElement !== logsEl) {
-      // 기존에 다른 위치에 붙어있다면 이동
-      logsEl.appendChild(explorerEl);
+    } else if (explorerEl.parentElement !== rootEl) {
+      // 기존에 다른 위치에 붙어있다면 이동 (applyLayout에서 append)
       created = true;
     }
 
@@ -298,7 +326,7 @@
       );
 
       // 스크롤/리사이즈 시 메뉴 닫기
-      logsEl.addEventListener('scroll', closeCtxMenu);
+      rootEl.addEventListener('scroll', closeCtxMenu);
       window.addEventListener('resize', closeCtxMenu);
       log('bind: document contextmenu capture', { created });
     }
@@ -318,6 +346,8 @@
     document.documentElement.style.setProperty('--ctrl-h', `${px}px`);
   const isContentVisible = () => state.showLogs || state.showExplorer;
 
+  let userAdjustedControlHeight = false; // 사용자가 직접 조정한 적이 있는지
+
   function computeMinCtrlPx(): number {
     const anyBtn = controlsEl!.querySelector('.btn') as HTMLElement | null;
     const h = anyBtn ? anyBtn.getBoundingClientRect().height : 32;
@@ -331,9 +361,19 @@
     const cur = Math.min(Math.max(getCtrlH(), minPx), maxPx);
     setCtrlH(cur);
   }
-  window.addEventListener('resize', ensureCtrlBounds);
+  function ensureCtrlContentFit() {
+    if (!isContentVisible() || userAdjustedControlHeight) return;
+    // control content가 다 보이도록 높이 설정
+    const contentHeight = sectionsEl!.scrollHeight + 32; // padding 등 고려
+    const maxPx = Math.floor(window.innerHeight * 0.5);
+    setCtrlH(Math.min(contentHeight, maxPx));
+  }
+  window.addEventListener('resize', () => {
+    if (!userAdjustedControlHeight) ensureCtrlContentFit();
+    else ensureCtrlBounds();
+  });
 
-  // Drag
+  // Drag (Control ↔ Explorer splitter)
   let dragging = false, startY = 0, startH = 0;
   splitter!.addEventListener('mousedown', (e) => {
     if (!isContentVisible()) return;
@@ -348,6 +388,7 @@
     const minPx = computeMinCtrlPx();
     const maxPx = Math.floor(window.innerHeight * 0.5);
     setCtrlH(Math.min(Math.max(startH + delta, minPx), maxPx));
+    userAdjustedControlHeight = true; // 사용자가 조정했음
   });
   window.addEventListener('mouseup', () => {
     if (!dragging) return;
@@ -366,45 +407,74 @@
     }
   });
 
+  // Drag (Explorer ↔ Log splitter)
+  let contentDragging = false, contentStartY = 0, contentStartFlex = 0;
+  function setupContentSplitter() {
+    if (!contentSplitter) return;
+    contentSplitter.addEventListener('mousedown', (e) => {
+      if (!logContainer || !explorerEl) return;
+      contentDragging = true;
+      contentStartY = (e as MouseEvent).clientY;
+      // 현재 explorerEl의 높이를 기반으로 flex 계산 (간단히 1:1로 시작)
+      contentStartFlex = 0.5; // 기본 1:1
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+  }
+  window.addEventListener('mousemove', (e) => {
+    if (!contentDragging || !logContainer || !explorerEl) return;
+    const delta = (e as MouseEvent).clientY - contentStartY;
+    const totalHeight = rootEl!.clientHeight - getCtrlH() - 20; // 대략적인 총 높이 (splitter 높이 고려)
+    const explorerHeight = Math.max(100, Math.min(totalHeight - 100, totalHeight * contentStartFlex + delta));
+    const explorerFlex = explorerHeight / totalHeight;
+    // Grid에서는 flex 대신 height로 조절 (단순화)
+    explorerEl.style.height = `${explorerHeight}px`;
+    logContainer.style.height = `${totalHeight - explorerHeight}px`;
+  });
+  window.addEventListener('mouseup', () => {
+    if (!contentDragging) return;
+    contentDragging = false;
+    document.body.style.userSelect = '';
+  });
+
+  // 스플리터 설정 (applyLayout에서 호출)
+  function ensureContentSplitter() {
+    if (contentSplitter && !contentSplitter.dataset._setup) {
+      contentSplitter.dataset._setup = '1';
+      setupContentSplitter();
+    }
+  }
+
   // ── Logs ─────────────────────────────────────────────────────
   function appendLog(line: string) {
+    if (!logContainer) {
+      logContainer = document.createElement('div');
+      logContainer.id = 'logContainer';
+      logContainer.className = 'log-container';
+      rootEl!.appendChild(logContainer); // rootEl에 직접 붙임
+    }
     const div = document.createElement('div');
     div.className = 'log-line';
     if (line.includes('[E]')) {
       div.style.color = '#ff6b6b';
-    } else if (line.includes('%READY%')) {
-      div.style.color = '#98fb98';
-      div.style.fontWeight = 'bold';
-      div.style.fontStyle = 'italic';
-      line = line.replace('%READY%', '').trimStart();
     }
     div.textContent = line;
-    logsEl!.appendChild(div);
-    logsEl!.scrollTop = logsEl!.scrollHeight;
+    logContainer.appendChild(div);
+    logContainer.scrollTop = logContainer.scrollHeight;
   }
   function resetLogs(lines?: string[]) {
-    logsEl!.innerHTML = '';
+    if (!logContainer) {
+      logContainer = document.createElement('div');
+      logContainer.id = 'logContainer';
+      logContainer.className = 'log-container';
+      rootEl!.appendChild(logContainer); // rootEl에 직접 붙임
+    }
+    logContainer.innerHTML = '';
     if (Array.isArray(lines)) for (const l of lines) appendLog(l);
   }
 
-  // ── Command run ──────────────────────────────────────────────
-  function runCommand() {
-    if (!inputEl) return;
-    const text = (inputEl.value || '').trim();
-    if (!text) return;
-    appendLog(`edge> ${text}`);
-    vscode.postMessage({ command: 'run', text, verbose: false });
-    inputEl.value = '';
-    if (cmdbarEl && cmdbarEl.offsetParent !== null) inputEl.focus();
-  }
-  inputEl?.addEventListener('keydown', (e) => {
-    if ((e as KeyboardEvent).key === 'Enter') {
-      runBtn?.classList.add('pressed');
-      setTimeout(() => runBtn?.classList.remove('pressed'), 120);
-      runCommand();
-    }
-  });
-  runBtn?.addEventListener('click', runCommand);
+  // 로그 컨테이너 추가 (로그 라인들을 감쌈)
+  let logContainer: HTMLElement | null = null;
 
   // ── 섹션(Card) 렌더 ─────────────────────────────────────────
   type SectionDTO = { title: string; items: { id: string; label: string; desc?: string }[] };
@@ -426,6 +496,14 @@
         b.addEventListener('click', () => {
           vscode.postMessage({ type: 'button.click', id: it.id });
         });
+
+        // 상태 표시: 켜짐 상태일 때 btn-on 클래스 추가
+        if (it.id === 'panel.toggleLogs' && state.showLogs) {
+          b.classList.add('btn-on');
+        } else if (it.id === 'panel.toggleExplorer' && state.showExplorer) {
+          b.classList.add('btn-on');
+        }
+
         body.appendChild(b);
       });
       card.appendChild(body);
@@ -887,7 +965,6 @@
       // 패널 토글
       case 'ui.toggleLogs':
         state.showLogs = !state.showLogs;
-        if (state.showLogs) state.showExplorer = false;
         log('toggle logs ->', state.showLogs);
         applyLayout();
         break;
@@ -896,7 +973,6 @@
         state.showExplorer = !state.showExplorer;
         log('toggle explorer ->', state.showExplorer);
         if (state.showExplorer) {
-          state.showLogs = false;
           ensureExplorerDom();
           if (!state.root) {
             // 루트 노드 구성 후 목록 요청
@@ -988,7 +1064,6 @@
     vscode.postMessage({ command: 'ready' });
   }
   setTimeout(() => {
-    if (inputEl && cmdbarEl && cmdbarEl.offsetParent !== null) inputEl.focus();
     applyLayout();
     vscode.postMessage({ type: 'ui.requestButtons' });
   }, 0);

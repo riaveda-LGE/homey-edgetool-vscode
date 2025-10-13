@@ -7,7 +7,6 @@ import { exec as execCb } from 'child_process';
 // 사용자 구성 저장소
 import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { READY_MARKER } from '../../shared/const.js';
 import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
 
 const log = getLogger('cmd');
@@ -16,6 +15,7 @@ const exec = promisify(execCb);
 export function createCommandHandlers(
   appendLog?: (s: string) => void,
   context?: vscode.ExtensionContext,
+  extensionUri?: vscode.Uri,
 ) {
   const say = (s: string) => {
     log.info(s);
@@ -46,13 +46,21 @@ export function createCommandHandlers(
           return this.gitPassthrough(rest);
         case 'change_workspace':
           return this.changeWorkspaceQuick();
+        case 'updateNow':
+          return this.updateNow();
+        case 'openHelp':
+          return this.openHelp();
+        case 'changeWorkspaceQuick':
+          return this.changeWorkspaceQuick();
+        case 'openWorkspace':
+          return this.openWorkspace();
         default:
           say(`[info] unknown command: ${raw}`);
       }
     },
 
     async help() {
-      say(`${READY_MARKER} Commands:
+      say(`Commands:
   help | h
   homey-logging
   connect_info | connect_change
@@ -105,6 +113,21 @@ export function createCommandHandlers(
       } catch (e) {
         log.error('updateNow failed', e as any);
         vscode.window.showErrorMessage('Update failed: ' + (e as Error).message);
+      }
+    },
+
+    async openHelp() {
+      if (!extensionUri) return say('[error] internal: no extension uri');
+      try {
+        const helpUri = vscode.Uri.joinPath(extensionUri, 'media', 'resources', 'help.md');
+        await vscode.workspace.fs.stat(helpUri);
+        const doc = await vscode.workspace.openTextDocument(helpUri);
+        await vscode.commands.executeCommand('markdown.showPreview', doc.uri);
+      } catch {
+        say('[warn] help.md를 찾을 수 없습니다: media/resources/help.md');
+        vscode.window.showWarningMessage(
+          'help.md를 찾을 수 없습니다. media/resources/help.md 위치에 파일이 있는지 확인하세요.',
+        );
       }
     },
 

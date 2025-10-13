@@ -292,6 +292,12 @@ export async function doWork() {
 }
 ```
 
+## 버튼 처리 구조
+
+버튼 이벤트는 `extensionPanel.ts`에서 받아서 `commandHandlers.ts`로 라우팅합니다.  
+`commandHandlers.ts`는 명령과 버튼 핸들러 로직을 공유하며, 복잡한 비즈니스 로직을 처리합니다.  
+`edgepanel.buttons.ts`는 버튼 정의의 Single Source of Truth (SSOT)로, 버튼 메타데이터와 DTO 변환을 담당합니다.
+
 ## 프로젝트 트리
 ```
 homey-edgetool/
@@ -299,71 +305,71 @@ homey-edgetool/
 │  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
 │  │  ├─ main.ts                          # activate/deactivate, 초기 부트스트랩
 │  │  ├─ commands/
-│  │  │  ├─ registerCommands.ts           # 모든 명령 등록/해제
 │  │  │  └─ commandHandlers.ts            # help/h, connect_info, homey-logging 등 라우팅
-│  │  ├─ panels/
-│  │  │  └─ extensionPanel.ts             # Extension Panel 제공자
+│  │  │  └─ edgepanel.buttons.ts           # button 정의 SSOT
+│  │  ├─ editors/
 │  │  │  └─ LogViewEditorProvider.ts      # Custom Editor + Webview (homey-logging)
 │  │  ├─ messaging/
 │  │  │  ├─ hostWebviewBridge.ts          # Webview ↔ Extension message bridge
-│  │  │  └─ messageTypes.ts               # 공용 메시지 타입(웹/호스트 공용 import)
-│  │  └─ updater/
+│  │  │  ├─ messageTypes.ts               # 공용 메시지 타입(웹/호스트 공용 import)
+│  │  │  └─ bridge.ts                     # Webview 메시징 브리지 (이동됨)
+│  │  ├─ panels/
+│  │  │  └─ extensionPanel.ts             # Extension Panel 제공자
+│  │  └─ update/
 │  │     └─ updater.ts                    # checkLatestVersion(), downloadAndInstall()
 │  │
 │  ├─ core/                               # 핵심 비즈니스 로직(런타임 독립)
-│  │  ├─ logging/
-│  │  │  ├─ extension-logger.ts           # (현 util/extension-logger.ts) OutputChannel + sink
-│  │  │  └─ perf.ts                       # perfNow(), withPerf(), heap snapshot hook(추가 예정)
-│  │  ├─ logs/
-│  │  │  ├─ HybridLogBuffer.ts            # 4-버퍼 하이브리드(실시간/뷰포트/검색/스필)
-│  │  │  ├─ LogFileIntegration.ts         # k-way 병합(시간 역/정), 타임존 보정, 청크 처리
-│  │  │  ├─ LogFileStorage.ts             # JSONL/압축/범위 조회, 인덱스(선택)
-│  │  │  ├─ LogSearch.ts                  # contains/regex/time-range/pagination
-│  │  │  └─ types.ts                      # LogEntry/ViewportRange/Source 등 타입
+│  │  ├─ config/
+│  │  │  ├─ schema.ts                     # 사용자 설정 스키마
+│  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리
 │  │  ├─ connection/
-│  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 타입(ssh|adb 중 1개), run/stream/shell
-│  │  │  └─ ExecRunner.ts                 # spawn 표준화(PS/sh), timeout/cancel/stdio 라우팅
-│  │  ├─ transfer/
-│  │  │  └─ FileTransferService.ts        # tar/base64 over SSH (업/다운로드) — SCP 미의존
+│  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 관리
+│  │  │  ├─ ExecRunner.ts                 # spawn 표준화
+│  │  │  ├─ sshClient.ts                  # SSH 클라이언트 (adapters/에서 이동)
+│  │  │  └─ adbClient.ts                  # ADB 클라이언트 (adapters/에서 이동)
+│  │  ├─ logging/
+│  │  │  ├─ extension-logger.ts           # OutputChannel + sink
+│  │  │  └─ perf.ts                       # 성능 계측
+│  │  ├─ logs/
+│  │  │  ├─ HybridLogBuffer.ts            # 4-버퍼 하이브리드
+│  │  │  ├─ LogFileIntegration.ts         # k-way 병합
+│  │  │  ├─ LogFileStorage.ts             # JSONL 저장/읽기
+│  │  │  ├─ LogSearch.ts                  # 검색
+│  │  │  └─ types.ts                      # LogEntry 등 타입
 │  │  ├─ sessions/
-│  │  │  └─ LogSessionManager.ts          # 실시간/파일병합 세션, HybridLogBuffer 브릿지
-│  │  └─ config/
-│  │     └─ schema.ts                     # 사용자 설정 스키마(버퍼/타임아웃/경로/필터)
+│  │  │  └─ LogSessionManager.ts          # 세션 관리
+│  │  └─ transfer/
+│  │     └─ FileTransferService.ts        # tar/base64 전송
 │  │
-│  ├─ adapters/                           # 외부 종속 계층
-│  │  ├─ ssh/
-│  │  │  └─ sshClient.ts                  # ssh 명령 래퍼(포트/키/옵션), 표준입출력 파이프
-│  │  ├─ adb/
-│  │  │  └─ adbClient.ts                  # adb shell / tail -f 래퍼
+│  ├─ shared/                             # 공용 유틸/타입
+│  │  ├─ const.ts                         # 상수
+│  │  ├─ types.ts                         # 공용 타입
+│  │  ├─ errors.ts                        # 에러 분류
+│  │  ├─ utils.ts                         # 공용 유틸
+│  │  └─ ui-input.ts                      # UI 입력 유틸 (extension/ui/에서 이동)
 │  │
-│  ├─ shared/
-│  │  ├─ const.ts                         # (현 config/const.ts) EXT IDs, URLs, LOG, READY_MARKER
-│  │  ├─ types.ts                         # Result/Failure/Progress 등 공용 타입
-│  │  ├─ errors.ts                        # 에러 분류/래핑(권한/도구없음/경로/네트워크/타임아웃)
-│  │  └─ utils.ts                         # 공통 유틸(타임존/경로/문자열/세이프 JSON)
-│  │
-│  └─ ui/                                 # Webview 리소스(번들 대상)
+│  └─ ui/                                 # Webview 리소스
 │     ├─ log-viewer/
-│     │  ├─ index.html                    # 로그 뷰어 웹뷰 (Custom Editor)
-│     │  ├─ app.ts                        # 부트스트랩, EventBus, 상태
+│     │  ├─ index.html                    # 로그 뷰어 웹뷰
+│     │  ├─ app.ts                        # 부트스트랩
 │     │  ├─ services/
-│     │  │  └─ ws.ts                      # postMessage 래퍼, 배치 큐/재연결
+│     │  │  └─ ws.ts                      # postMessage 래퍼
 │     │  ├─ modules/
-│     │  │  └─ LogViewer.ts               # 가상 스크롤, 배치 렌더, 통계/하이라이트
-│     │  └─ protocol.ts                   # messageTypes.ts와 동일 타입(공용 import 권장)
+│     │  │  └─ LogViewer.ts               # 가상 스크롤
+│     │  └─ protocol.ts                   # 메시지 타입
 │     └─ edge-panel/
-│        ├─ index.html                    # (현 media/edge-panel/index.html)
-│        ├─ panel.css                     # (현 media/edge-panel/panel.css)
-│        └─ panel.ts                      # (현 panel.js → TS화)
+│        ├─ index.html                    # Edge Panel 웹뷰
+│        ├─ panel.css                     # 스타일
+│        └─ panel.ts                      # 로직
 │
-├─ media/                                 # (점진 이관) 아이콘/정적자원
+├─ media/                                 # 아이콘/정적자원
 │  └─ resources/edge-icon.svg
 ├─ scripts/
 │  └─ perf/
-│     └─ run-merge-bench.ts               # LogFileIntegration 벤치(추가 예정)
+│     └─ run-merge-bench.ts               # 벤치마크
 ├─ package.json
 ├─ tsconfig.json
-├─ TypeScript 컴파일 (tsc)                # Webview 리소스 복사 포함
+├─ TypeScript 컴파일 (tsc)
 └─ README.md / CHANGELOG.md / LICENSE
 ```
 
@@ -374,85 +380,91 @@ main.ts: 확장 진입점. 로거 초기화, 전역 예외 후킹, 업데이트 
 
 commands/
 
-registerCommands.ts: vscode.commands.registerCommand들의 모음.
+commandHandlers.ts: help/h, connect_info, homey-logging 등 명령 및 버튼 라우팅.
 
-commandHandlers.ts: help/h, connect_info/ci, connect_change/cc, homey-logging 등 사용자 UX 명령 라우팅. (EdgePanel edge> 입력과도 재활용 가능)
+edgepanel.buttons.ts: button 정의 SSOT, DTO 변환.
 
-panels/
+editors/
 
-extensionPanel.ts: (기존 extensionPanel.ts) 업데이트 버튼/리로드/로그 스트림 표시. edge> 입력 → 명령 라우팅.
-
-LogViewEditorProvider.ts: Custom Editor + Webview로 homey-logging 전용 뷰어(실시간/파일병합 UI).
+LogViewEditorProvider.ts: Custom Editor + Webview로 homey-logging 뷰어.
 
 messaging/
 
-messageTypes.ts: Host/Webview가 공유하는 Envelope 기반 메시지 타입(버전·상관관계·취소 키 지원).
+messageTypes.ts: Host/Webview 공유 메시지 타입.
 
-hostWebviewBridge.ts: Host쪽 메시지 브리지(검증/라우팅/배치 전송/에러 표준화/취소 전파).
+hostWebviewBridge.ts: Host 측 메시지 브리지.
 
-updater/
+bridge.ts: Webview 측 메시징 브리지 (ui/_shared/에서 이동).
 
-updater.ts: (현 구현 유지) latest.json 확인 → VSIX 다운로드/설치/무결성 검증.
+panels/
+
+extensionPanel.ts: Extension Panel 제공자 (버튼 이벤트 라우팅).
+
+update/
+
+updater.ts: 버전 체크, 다운로드/설치.
 
 core/
 
-logging/
+config/
 
-extension-logger.ts: (현 구현 유지) OutputChannel + sink + 버퍼/flush.
+schema.ts: 사용자 설정 스키마.
 
-perf.ts: withPerf(fn), GC/heap snapshot hook 등 성능 계측 유틸(추가 예정).
-
-logs/
-
-HybridLogBuffer.ts: 4-버퍼(실시간/뷰포트×2/검색/스필) + 메트릭 제공.
-
-LogFileIntegration.ts: k-way 병합 스트리밍, 타임존 보정, 청크 처리, 역순/정순 옵션.
-
-LogFileStorage.ts: JSONL 저장/읽기, 범위 조회, gzip(선택), 중복 제거.
-
-LogSearch.ts: contains/regex/time-range/pagination 검색.
-
-types.ts: LogEntry, ViewportRange, InputSource 등.
+userdata.ts: 워크스페이스 설정 관리.
 
 connection/
 
-ConnectionManager.ts: 호스트별 연결 타입 고정(ssh|adb 중 1개, 주로 ssh). run/stream/shell 수명주기.
+ConnectionManager.ts: 호스트별 연결 관리.
 
-ExecRunner.ts: 로컬 spawn 표준화(Windows: PowerShell / POSIX: /bin/sh), timeout/cancel/stdio 라우팅.
+ExecRunner.ts: spawn 표준화.
 
-transfer/
+sshClient.ts: SSH 클라이언트 (adapters/에서 이동).
 
-FileTransferService.ts: tar/base64 파이프로 업/다운로드(SCP 미의존), 단계별 타임아웃/취소/에러 카테고리.
+adbClient.ts: ADB 클라이언트 (adapters/에서 이동).
+
+logging/
+
+extension-logger.ts: OutputChannel + sink.
+
+perf.ts: 성능 계측.
+
+logs/
+
+HybridLogBuffer.ts: 4-버퍼 하이브리드.
+
+LogFileIntegration.ts: k-way 병합.
+
+LogFileStorage.ts: JSONL 저장/읽기.
+
+LogSearch.ts: 검색.
+
+types.ts: LogEntry 등 타입.
 
 sessions/
 
-LogSessionManager.ts: 실시간 스트림/파일 병합 세션을 관리, HybridLogBuffer로 공급, 브리지 콜백(onBatch/onMetrics) 호출.
+LogSessionManager.ts: 세션 관리.
 
-config/
+transfer/
 
-schema.ts: 호스트 설정(ssh|adb), 버퍼 크기, 청크 크기, 타임아웃, 필터/하이라이트 규칙 등.
-
-adapters/
-
-ssh/sshClient.ts: ssh 바이너리 래퍼. 키/포트/옵션 구성, run/stream 구현.
-
-adb/adbClient.ts: adb shell, tail -f 래퍼. (ADB 채택 호스트에서만 사용)
+FileTransferService.ts: tar/base64 전송.
 
 shared/
 
-const.ts: (현 config/const.ts) 확장 ID/뷰/로깅 상수/LATEST_JSON_URL 등.
+const.ts: 상수.
 
-types.ts: 공용 Result<T,E>, Progress, ErrorCategory 등.
+types.ts: 공용 타입.
 
-errors.ts: 에러 분류와 메시지 표준화(연결/권한/도구없음/경로/네트워크/타임아웃).
+errors.ts: 에러 분류.
 
-utils.ts: 타임존/경로 정규화/문자열/세이프 JSON 유틸.
+utils.ts: 공용 유틸.
+
+ui-input.ts: UI 입력 유틸 (extension/ui/에서 이동).
 
 ui/
 
-log-viewer/: Custom Editor용 Webview. 가상 스크롤, 배치 렌더, 검색/필터/하이라이트/북마크.
+log-viewer/: Custom Editor Webview.
 
-edge-panel/: (현 media/edge-panel/* → TS로 이관) 업데이트/진행률/간단 로그 콘솔.
+edge-panel/: Edge Panel Webview.
 
 
 # 🧭 VS Code Extension 입력 처리 가이드
@@ -472,7 +484,7 @@ edge-panel/: (현 media/edge-panel/* → TS로 이관) 업데이트/진행률/�
 
 ### ✅ 사용 예시
 ```ts
-import { pickFolder, pickFile } from '../ui/input.js';
+import { pickFolder, pickFile } from '../../shared/ui-input.js';
 
 // 폴더 선택
 const folder = await pickFolder({
@@ -500,7 +512,7 @@ if (file) {
 
 ### ✅ 사용 예시
 ```ts
-import { multiStep, promptText, pickFile } from '../ui/input.js';
+import { multiStep, promptText, pickFile } from '../../shared/ui-input.js';
 
 type SshState = { host?: string; user?: string; key?: vscode.Uri };
 const state: SshState = {};
@@ -525,7 +537,7 @@ console.log('Result:', state);
 
 ### ✅ 사용 예시
 ```ts
-import { promptText, promptNumber, promptSecret, confirm } from '../ui/input.js';
+import { promptText, promptNumber, promptSecret, confirm } from '../../shared/ui-input.js';
 
 // 텍스트 입력
 const name = await promptText({

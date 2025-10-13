@@ -16,7 +16,7 @@ import {
   removeLogSink,
 } from '../../core/logging/extension-logger.js';
 import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
-import { PANEL_VIEW_TYPE, READY_MARKER } from '../../shared/const.js';
+import { PANEL_VIEW_TYPE } from '../../shared/const.js';
 import { createCommandHandlers } from '../commands/commandHandlers.js';
 import {
   buildButtonContext,
@@ -53,6 +53,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   private _buttonSections = getSections();
   private _explorer?: ExplorerBridge;
+  private _handlers?: ReturnType<typeof createCommandHandlers>;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
@@ -105,6 +106,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       try { webviewView.webview.postMessage(m); } catch {}
     });
 
+    // 핸들러 초기화 (한 번만)
+    this._handlers = createCommandHandlers(
+      (s) => this.appendLog(s), 
+      this._context, 
+      this._extensionUri
+    );
+
     // Webview -> Extension
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
@@ -115,13 +123,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           return;
         }
 
-        if (msg?.command === 'run') {
-          const text = String(msg.text ?? '').trim();
-          this.log.info(`edge> ${text}`);
-          const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
-          await handlers.route(text);
-          return;
-        } else if (msg?.type === 'ui.log' && msg?.v === 1) {
+        if (msg?.type === 'ui.log' && msg?.v === 1) {
           const lvl = String(msg.payload?.level ?? 'info') as 'debug' | 'info' | 'warn' | 'error';
           const text = String(msg.payload?.text ?? '');
           const src = String(msg.payload?.source ?? 'ui.edgePanel');
@@ -136,9 +138,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             visible: !!(this._state.updateAvailable && this._state.updateUrl),
           });
           this._sendButtonSections();
-          this.appendLog(`${READY_MARKER} Ready. Type a command after "edge>" and hit Enter.`);
-        } else if (msg?.command === 'versionUpdate') {
-          await this._handleUpdateNow();
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
         } else if (msg?.type === 'button.click' && typeof msg.id === 'string') {
@@ -175,6 +174,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       try { this._explorer?.dispose(); } catch {}
       this._explorer = undefined;
 
+      this._handlers = undefined;
+
       this._view = undefined;
     });
   }
@@ -203,8 +204,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     try {
       switch (op.kind) {
         case 'line': {
-          const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
-          await handlers.route(op.line);
+          await this._handlers!.route(op.line);
           // changeWorkspaceQuick 같은 라인이면 여기서도 워처 재바인딩 시도 (보수적)
           if (/changeWorkspace/i.test(op.line ?? '')) {
             await this._explorer?.refreshWorkspaceRoot?.();
@@ -218,58 +218,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this._view?.webview.postMessage({ type: op.event, payload: op.payload });
           break;
         case 'handler':
-          await this._runHandler(op.name);
+          await this._handlers!.route(op.name);
+          // UI 후처리: 워크스페이스 변경 시 explorer refresh
+          if (op.name === 'changeWorkspaceQuick' || op.name === 'openWorkspace') {
+            await this._explorer?.refreshWorkspaceRoot?.();
+          }
           break;
       }
     } catch (e: any) {
       this.appendLog(`[error] button "${def.label}" failed: ${e?.message || String(e)}`);
     }
-  }
-
-  private async _runHandler(name: string) {
-    if (name === 'updateNow') {
-      await this._handleUpdateNow();
-      return;
-    } else if (name === 'openHelp') {
-      try {
-        const helpUri = vscode.Uri.joinPath(this._extensionUri, 'media', 'resources', 'help.md');
-        await vscode.workspace.fs.stat(helpUri);
-        const doc = await vscode.workspace.openTextDocument(helpUri);
-        await vscode.commands.executeCommand('markdown.showPreview', doc.uri);
-      } catch {
-        this.appendLog('[warn] help.md를 찾을 수 없습니다: media/resources/help.md');
-        vscode.window.showWarningMessage(
-          'help.md를 찾을 수 없습니다. media/resources/help.md 위치에 파일이 있는지 확인하세요.',
-        );
-      }
-      return;
-    } else if (name === 'changeWorkspaceQuick') {
-      const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
-      await handlers.changeWorkspaceQuick();
-      // 워크스페이스 변경 → 워처 재바인딩 & UI 루트 초기화 통지
-      await this._explorer?.refreshWorkspaceRoot?.();
-      return;
-    } else if (name === 'openWorkspace') {
-      const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
-      await (handlers as any).openWorkspace?.();
-      // openWorkspace 를 통해 루트가 바뀌는 경우도 방어적으로 갱신
-      await this._explorer?.refreshWorkspaceRoot?.();
-      return;
-    }
-    this.appendLog(`[warn] no handler registered: ${name}`);
-  }
-
-  private async _handleUpdateNow() {
-    if (!this._state.updateUrl) {
-      this.appendLog('[update] 최신 버전 URL이 없습니다.');
-      return;
-    }
-    this.appendLog('[update] 업데이트를 시작합니다…');
-    await downloadAndInstall(
-      this._state.updateUrl,
-      (line) => this.appendLog(line),
-      this._state.latestSha,
-    );
   }
 
   // ====== Homey Logging Viewer (기존) ======

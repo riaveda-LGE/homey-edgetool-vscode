@@ -1,5 +1,5 @@
-import { adbShell, adbStream } from '../../adapters/adb/adbClient.js';
-import { sshRun, sshStream } from '../../adapters/ssh/sshClient.js';
+import { adbShell, adbStream } from './adbClient.js';
+import { sshRun, sshStream } from './sshClient.js';
 import { getLogger } from '../logging/extension-logger.js';
 
 export type HostConfig =

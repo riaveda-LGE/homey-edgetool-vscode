@@ -3,7 +3,21 @@
   --bg: var(--vscode-editor-background);
   --panel: var(--vscode-editorWidget-background);
   --console-bg: var(--vscode-terminal-background, var(--vscode-editor-background));
-  --console-fg: var(--vscode-terminal-foreground, var(--vscode-foreground));
+  --con.log-container {
+  background: var(--panel);
+  color: var(--console-fg);
+  padding: 5px 10px 10px 10px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.35;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+  margin: 10px;
+}vscode-terminal-foreground, var(--vscode-foreground));
   --border: var(--vscode-panel-border, var(--vscode-editorWidget-border, #3c3c3c));
   --accent: var(--vscode-button-background);
   --accent-foreground: var(--vscode-button-foreground);
@@ -51,22 +65,28 @@ body {
 /* 기본적으로 콘텐츠 패널/스플리터/커맨드 감춤 */
 #splitter, #logs, #explorer, #cmdbar { display: none; }
 
-/* Logs 토글 ON → Control, Splitter, Logs, Command */
+/* Logs 토글 ON → Control, Splitter1, Log, Splitter2(0px), Explorer(0px) */
 #root.show-logs {
-  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr var(--cmd-h);
+  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr 0px 0px;
 }
 #root.show-logs #splitter { display: block; }
-#root.show-logs #logs { display: block; }
-#root.show-logs #cmdbar { display: flex; }
+#root.show-logs #logContainer { display: block; }
 
-/* Explorer 토글 ON → Control, Splitter, Explorer (Command는 감춤) */
+/* Explorer 토글 ON → Control, Splitter1, Explorer, Splitter2(0px), Log(0px) */
 #root.show-explorer {
-  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr;
+  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr 0px 0px;
 }
 #root.show-explorer #splitter { display: block; }
-/* explorer는 logs 컨테이너 안에 붙으므로 logs도 보여야 함 */
-#root.show-explorer #logs { display: block; }
 #root.show-explorer #explorer { display: block; }
+
+/* 둘 다 ON → Control, Splitter1, Explorer, Splitter2, Log */
+#root.show-both {
+  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr var(--splitter-h) 1fr;
+}
+#root.show-both #splitter { display: block; }
+#root.show-both #explorer { display: block; }
+#root.show-both #contentSplitter { display: block; }
+#root.show-both #logContainer { display: block; }
 
 /* ── Control ─────────────────────────────────────────────────── */
 #controls {
@@ -119,6 +139,13 @@ body {
 }
 .btn.danger:hover { filter: brightness(1.1); }
 
+/* 켜짐 상태 버튼 */
+.btn.btn-on {
+  background: #4caf50;
+  color: #fff;
+}
+.btn.btn-on:hover { background: #45a049; }
+
 /* 섹션 카드(Grid) */
 .section-grid {
   display: grid;
@@ -146,12 +173,45 @@ body {
 
 /* Splitter */
 #splitter {
+  height: 15px;
   cursor: row-resize;
   background: var(--panel);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--vscode-editor-background);
+  position: relative;
+}
+#splitter::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #000;
+  transform: translateY(-50%);
 }
 #splitter:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+/* 콘텐츠 내부 스플리터 */
+.content-splitter {
+  height: 15px;
+  cursor: row-resize;
+  background: var(--panel);
+  flex-shrink: 0;
+  position: relative;
+}
+.content-splitter::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #000;
+  transform: translateY(-50%);
+}
+.content-splitter:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
@@ -168,6 +228,22 @@ body {
   font-size: 12px;
   line-height: 1.35;
   min-height: 0;
+}
+
+.log-container {
+  background: var(--section-bg);
+  color: var(--console-fg);
+  padding: 5px 10px 10px 10px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.35;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+  margin: 10px;
 }
 
 /* Command (1줄 고정) */
