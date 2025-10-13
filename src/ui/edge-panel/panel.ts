@@ -66,9 +66,16 @@
     selected: null as TreeNode | null,
   };
 
+  // 디바운스 타이머(폴더별)
+  const refreshTimers = new Map<string, number>();
+
   // ── 유틸 ─────────────────────────────────────────────────────
   const posixJoin = (...parts: string[]) =>
     parts.filter(Boolean).join('/').replace(/\/+/g, '/');
+  const dirOf = (p: string) => {
+    const i = (p || '').lastIndexOf('/');
+    return i >= 0 ? p.slice(0, i) : '';
+  };
 
   function requestList(rel: string) {
     log('requestList ->', rel);
@@ -158,7 +165,7 @@
       logsEl.appendChild(explorerEl);
       created = true;
     } else if (explorerEl.parentElement !== logsEl) {
-      // 기존에 루트 등에 붙어있던 경우도 안전하게 logs 밑으로 이동
+      // 기존에 다른 위치에 붙어있다면 이동
       logsEl.appendChild(explorerEl);
       created = true;
     }
@@ -168,7 +175,7 @@
     treeEl = explorerEl.querySelector('#explorerTree') as HTMLElement | null;
     ctxMenuEl = explorerEl.querySelector('#ctxMenu') as HTMLElement | null;
 
-    // 2) 스켈레톤 자기치유: 트리/바가 없다면 주입
+    // 2) 스켈레톤 자기치유
     if (!explorerPathEl || !treeEl) {
       explorerEl.innerHTML = `
         <div id="explorerBar">
@@ -182,7 +189,7 @@
       log('explorer skeleton self-heal');
     }
 
-    // 3) 컨텍스트 메뉴가 없으면 explorer 내부에 생성 (인라인 폼/컨펌 포함)
+    // 3) 컨텍스트 메뉴 (인라인 폼/확인 포함)
     if (!ctxMenuEl) {
       ctxMenuEl = document.createElement('div');
       ctxMenuEl.id = 'ctxMenu';
@@ -842,6 +849,21 @@
   document.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Escape') closeCtxMenu(); });
 
   // ── Host → UI ────────────────────────────────────────────────
+  function scheduleFolderRefresh(dir: string) {
+    console.log('[panel] scheduleFolderRefresh called for dir:', dir, 'viewing:', state.explorerPath);
+    // 현재 표시(crumb) 폴더만 갱신
+    if (!state.showExplorer) return;
+    const viewing = state.explorerPath || '';
+    if (dir !== viewing) return;
+    const prev = refreshTimers.get(viewing);
+    if (prev) clearTimeout(prev);
+    const t = window.setTimeout(() => {
+      refreshTimers.delete(viewing);
+      requestList(viewing);
+    }, 150);
+    refreshTimers.set(viewing, t as unknown as number);
+  }
+
   window.addEventListener('message', (event) => {
     const msg = (event as MessageEvent<any>).data || {};
     switch (msg.type) {
@@ -923,6 +945,31 @@
           const target = state.selected?.kind === 'folder' ? state.selected : (state.selected?.parent ?? state.root);
           if (target) requestList(target.path);
         }
+        break;
+      }
+
+      case 'explorer.fs.changed': {
+        // 확장 쪽에서 변경 감지 → 현재 폴더와 동일한 상위면 갱신
+        console.log('[panel] explorer.fs.changed received:', msg.path);
+        const changedRel = String(msg.path || '');
+        const dir = dirOf(changedRel);
+        scheduleFolderRefresh(dir);
+        break;
+      }
+
+      case 'explorer.root.changed': {
+        // 워크스페이스 루트가 바뀜 → 상태 초기화 후 루트부터 재요청
+        log('on:root.changed');
+        state.root = null;
+        state.nodesByPath.clear();
+        state.selected = null;
+        state.explorerPath = '';
+        ensureExplorerDom();
+        if (treeEl) treeEl.innerHTML = '';
+        state.root = getOrCreateNode('', 'workspace', 'folder', null);
+        if (treeEl) mountNode(treeEl, state.root);
+        renderBreadcrumb(state.explorerPath);
+        requestList('');
         break;
       }
 

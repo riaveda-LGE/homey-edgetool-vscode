@@ -216,11 +216,14 @@ body {
 
 /* ── Explorer (트리) ─────────────────────────────────────────── */
 #explorer {
-  background: var(--panel);
+  background: var(--section-bg);
   color: var(--vscode-foreground);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
   overflow: auto;
   min-height: 0;
+  margin: 10px;
 }
 
 #explorerBar {

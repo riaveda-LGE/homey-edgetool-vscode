@@ -205,6 +205,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         case 'line': {
           const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
           await handlers.route(op.line);
+          // changeWorkspaceQuick 같은 라인이면 여기서도 워처 재바인딩 시도 (보수적)
+          if (/changeWorkspace/i.test(op.line ?? '')) {
+            await this._explorer?.refreshWorkspaceRoot?.();
+          }
           break;
         }
         case 'vscode':
@@ -242,10 +246,14 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     } else if (name === 'changeWorkspaceQuick') {
       const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
       await handlers.changeWorkspaceQuick();
+      // 워크스페이스 변경 → 워처 재바인딩 & UI 루트 초기화 통지
+      await this._explorer?.refreshWorkspaceRoot?.();
       return;
     } else if (name === 'openWorkspace') {
       const handlers = createCommandHandlers((s) => this.appendLog(s), this._context);
       await (handlers as any).openWorkspace?.();
+      // openWorkspace 를 통해 루트가 바뀌는 경우도 방어적으로 갱신
+      await this._explorer?.refreshWorkspaceRoot?.();
       return;
     }
     this.appendLog(`[warn] no handler registered: ${name}`);
@@ -264,11 +272,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     );
   }
 
-  // ====== Homey Logging Viewer (기존) ======  (생략 없이 유지)
-  // ... 아래 로깅 뷰어/유틸 함수들은 기존과 동일 ...
-  // (원문 그대로 유지)
-  // === 아래 원문 내용은 질문에 제공된 버전과 동일 ===
-
+  // ====== Homey Logging Viewer (기존) ======
   public async handleHomeyLoggingCommand() {
     const pick = await vscode.window.showQuickPick(
       [
