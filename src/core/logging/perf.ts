@@ -355,6 +355,18 @@ export function measure(name?: string) {
   };
 }
 
+// Decorator for I/O operations
+export function measureIO(operation: string, pathGetter: (instance: any) => string) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    descriptor.value = async function (...args: any[]) {
+      const path = pathGetter(this);
+      return await globalProfiler.measureIO(operation, path, () => originalMethod.apply(this, args));
+    };
+    return descriptor;
+  };
+}
+
 export interface MemorySnapshot {
   timestamp: number;
   heapUsed: number;

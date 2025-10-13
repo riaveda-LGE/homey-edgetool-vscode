@@ -1,22 +1,32 @@
 // === src/core/logs/LogFileStorage.ts ===
+import * as fs from 'fs';
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
-import { globalProfiler } from '../logging/perf.js';
+import { globalProfiler, measureIO } from '../logging/perf.js';
 
 export class LogFileStorage {
-  // JSONL 기반 저장/조회 스텁
-  async append(_e: LogEntry) {
-    // TODO: 실제 구현 시 I/O 측정 적용
-    // await globalProfiler.measureIO('writeFile', filePath, async () => {
-    //   await fs.promises.appendFile(filePath, JSON.stringify(_e) + '\n');
-    // });
+  constructor(private filePath: string) {}
+
+  // JSONL 기반 저장/조회
+  @measureIO('writeFile', (instance) => instance.filePath)
+  async append(e: LogEntry) {
+    await fs.promises.appendFile(this.filePath, JSON.stringify(e) + '\n');
   }
 
-  async range(_fromTs: number, _toTs: number): Promise<LogEntry[]> {
-    // TODO: 실제 구현 시 I/O 측정 적용
-    // return await globalProfiler.measureIO('readFile', filePath, async () => {
-    //   const data = await fs.promises.readFile(filePath, 'utf8');
-    //   return data.split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
-    // });
-    return [];
+  @measureIO('readFile', (instance) => instance.filePath)
+  async range(fromTs: number, toTs: number): Promise<LogEntry[]> {
+    const data = await fs.promises.readFile(this.filePath, 'utf8');
+    const lines = data.split('\n').filter(line => line.trim());
+    const entries: LogEntry[] = [];
+    for (const line of lines) {
+      try {
+        const entry: LogEntry = JSON.parse(line);
+        if (entry.ts >= fromTs && entry.ts <= toTs) {
+          entries.push(entry);
+        }
+      } catch (e) {
+        // Skip invalid lines
+      }
+    }
+    return entries;
   }
 }
