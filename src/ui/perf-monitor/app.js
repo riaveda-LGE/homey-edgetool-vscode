@@ -4,7 +4,16 @@ const vscode = acquireVsCodeApi();
 let chart;
 
 function initChart() {
-  const ctx = document.getElementById('chart').getContext('2d');
+  const canvas = document.getElementById('chart');
+  if (!canvas) {
+    console.error('Chart canvas element not found');
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error('Failed to get 2D context from canvas');
+    return;
+  }
   chart = new Chart(ctx, {
     type: 'line',
     data: {

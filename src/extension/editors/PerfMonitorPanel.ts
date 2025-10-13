@@ -76,13 +76,21 @@ export class PerfMonitorPanel {
     );
 
     this._panel.onDidDispose(() => {
-      this.stopMonitoring();
-      this._panel = undefined;
+      this.dispose();
     });
   }
 
   @measure()
   public closePanel() {
+    if (this._panel) {
+      this._panel.dispose();
+      this._panel = undefined;
+    }
+  }
+
+  @measure()
+  public dispose() {
+    this.stopMonitoring();
     if (this._panel) {
       this._panel.dispose();
       this._panel = undefined;

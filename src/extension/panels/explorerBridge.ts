@@ -233,9 +233,11 @@ export function createExplorerBridge(
     },
     dispose() {
       disposed = true;
-      try { watcher?.dispose(); } catch {}
-      watcher = undefined;
-      watcherBasePath = undefined;
+      if (watcher) {
+        try { watcher.dispose(); } catch (e) { console.error('[explorerBridge] watcher dispose error', e); }
+        watcher = undefined;
+        watcherBasePath = undefined;
+      }
     },
   };
 }

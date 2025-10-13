@@ -2,7 +2,7 @@
   "name": "homey-edgetool",
   "type": "module",
   "displayName": "Homey EdgeTool",
-  "publisher": "lge",
+  "publisher": "riaveda-LGE",
   "version": "0.0.2",
   "description": "Edge console for Homey Edge Tool",
   "repository": {
