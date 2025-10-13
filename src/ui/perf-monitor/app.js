@@ -4,11 +4,19 @@ const vscode = acquireVsCodeApi();
 let chart;
 
 function initChart() {
-  const canvas = document.getElementById('chart');
-  if (!canvas) {
-    console.error('Chart canvas element not found');
+  const chartContainer = document.getElementById('chart');
+  if (!chartContainer) {
+    console.error('Chart container element not found');
     return;
   }
+
+  // Create canvas element dynamically
+  const canvas = document.createElement('canvas');
+  canvas.id = 'performanceChart';
+  canvas.width = 800;
+  canvas.height = 400;
+  chartContainer.appendChild(canvas);
+
   const ctx = canvas.getContext('2d');
   if (!ctx) {
     console.error('Failed to get 2D context from canvas');

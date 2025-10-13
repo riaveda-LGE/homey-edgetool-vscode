@@ -66,45 +66,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
       // ✅ constructor 시그니처: (extensionUri, context, version, latestInfo)
       const provider = new EdgePanelProvider(context.extensionUri, context, version, latestInfo);
-      const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
-      context.subscriptions.push(disp);
+      try {
+        const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
+        context.subscriptions.push(disp);
+      } catch (e) {
+        log.info('registerWebviewViewProvider already registered, skipping', e as any);
+      }
 
       // ✅ homey-logging을 외부 커맨드로 노출
       registerEdgePanelCommands(context, provider);
 
       // ✅ Performance Monitor 등록
-      const perfProvider = new PerfMonitorPanel(context.extensionUri, context);
-
-      // ✅ Performance Toggle 명령어 등록
-      let isMonitoring = false;
-      const toggleCommand = vscode.commands.registerCommand('performance.toggle', async () => {
-        await globalProfiler.measureFunction('performance.toggle', async () => {
-          const items = ['ON', 'OFF'];
-          const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: 'Select Performance Monitoring',
-          });
-          if (selected === 'ON') {
-            if (!isMonitoring) {
-              perfProvider.createPanel();
-              perfProvider.startMonitoring();
-              vscode.window.showInformationMessage('Performance monitoring started.');
-              isMonitoring = true;
-            } else {
-              vscode.window.showInformationMessage('Performance monitoring is already running.');
-            }
-          } else if (selected === 'OFF') {
-            if (isMonitoring) {
-              perfProvider.stopMonitoring();
-              perfProvider.closePanel();
-              vscode.window.showInformationMessage('Performance monitoring stopped.');
-              isMonitoring = false;
-            } else {
-              vscode.window.showInformationMessage('Performance monitoring is not running.');
-            }
-          }
-        });
-      });
-      context.subscriptions.push(toggleCommand);
+      PerfMonitorPanel.register(context, context.extensionUri);
 
       log.info(
         `registerWebviewViewProvider OK, viewType=${EdgePanelProvider.viewType}, version=${version}`,

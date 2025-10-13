@@ -25,13 +25,6 @@
     "onView:edgePanel"
   ],
   "contributes": {
-    "commands": [
-      {
-        "command": "performance.toggle",
-        "title": "Performance Toggle",
-        "category": "Homey EdgeTool"
-      }
-    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -46,6 +39,7 @@
         {
           "id": "edgePanel",
           "name": "Edge Console",
+          "icon": "$(terminal)",
           "type": "webview",
           "retainContextWhenHidden": true
         }

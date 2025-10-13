@@ -42,6 +42,7 @@ interface EdgePanelState {
 
 export class EdgePanelProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = PANEL_VIEW_TYPE;
+  public static registered = false;
   private _view?: vscode.WebviewView;
   private _sink?: (line: string) => void;
   private log = getLogger('edgePanel');

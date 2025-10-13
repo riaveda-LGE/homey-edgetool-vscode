@@ -8,6 +8,7 @@ const log = getLogger('LogViewEditor');
 
 export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = `${PANEL_VIEW_TYPE}.logView`;
+  private readonly _disposables: vscode.Disposable[] = [];
 
   constructor(private readonly _extUri: vscode.Uri) {}
 
@@ -23,6 +24,14 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
       localResourceRoots: [vscode.Uri.joinPath(this._extUri, 'dist', 'ui', 'log-viewer')],
       ...({ retainContextWhenHidden: true } as any),
     };
+
+    // WebviewPanel dispose 이벤트 처리
+    const disposeListener = webviewPanel.onDidDispose(() => {
+      log.debug('LogViewEditorProvider: webviewPanel disposed');
+      this.cleanup();
+    }, this);
+
+    this._disposables.push(disposeListener);
 
     const html = `<!doctype html>
 <html lang="ko"><head>
@@ -52,6 +61,16 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
       .replace(/\$\{nonce\}/g, nonce)
       .replace(/\$\{webview\.cspSource\}/g, webviewPanel.webview.cspSource)
       .replace(/\$\{appJs\}/g, String(appJs));
+  }
+
+  public dispose(): void {
+    log.debug('LogViewEditorProvider: disposing');
+    this.cleanup();
+  }
+
+  private cleanup(): void {
+    this._disposables.forEach(d => d.dispose());
+    this._disposables.length = 0;
   }
 }
 

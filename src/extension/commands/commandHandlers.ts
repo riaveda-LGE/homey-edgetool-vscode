@@ -16,6 +16,9 @@ const exec = promisify(execCb);
 
 class CommandHandlers {
   private say: (s: string) => void;
+  private workspaceInfoCache?: Awaited<ReturnType<typeof resolveWorkspaceInfo>>;
+  private cacheExpiry = 0;
+  private readonly CACHE_DURATION = 30000; // 30초 캐시
 
   constructor(
     private appendLog?: (s: string) => void,
@@ -147,39 +150,61 @@ class CommandHandlers {
   async changeWorkspaceQuick() {
     if (!this.context) return this.say('[error] internal: no extension context');
 
-    const info = await resolveWorkspaceInfo(this.context);
-    const sel = await vscode.window.showOpenDialog({
-      canSelectFiles: false,
-      canSelectFolders: true,
-      canSelectMany: false,
-      openLabel: 'Select folder',
-      title: '새 Workspace 베이스 폴더 선택 (그 하위에 workspace/가 생성됩니다)',
-      defaultUri: info.baseDirUri,
-    });
-    if (!sel || !sel[0]) return this.say('[info] change_workspace cancelled');
-
-    const picked = sel[0].fsPath;
-    const baseForConfig =
-      path.basename(picked).toLowerCase() === 'workspace'
-        ? path.dirname(picked)
-        : picked;
+    const startTime = Date.now();
 
     try {
-      const updated = await changeWorkspaceBaseDir(this.context, baseForConfig);
-      await ensureGitInit(updated.wsDirFsPath, this.say);
+      // 캐시된 workspace 정보 사용 (불필요한 resolveWorkspaceInfo 호출 방지)
+      const info = await this.getCachedWorkspaceInfo();
+
+      // 폴더 선택 다이얼로그 (UI 병목 최소화)
+      const sel = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: 'Select folder',
+        title: '새 Workspace 베이스 폴더 선택 (그 하위에 workspace/가 생성됩니다)',
+        defaultUri: info.baseDirUri,
+      });
+
+      if (!sel || !sel[0]) {
+        this.say('[info] change_workspace cancelled');
+        return;
+      }
+
+      const picked = sel[0].fsPath;
+      const baseForConfig =
+        path.basename(picked).toLowerCase() === 'workspace'
+          ? path.dirname(picked)
+          : picked;
+
+      // 병렬 처리로 성능 향상: workspace 변경과 git init 동시에 수행
+      const [updated] = await Promise.all([
+        changeWorkspaceBaseDir(this.context, baseForConfig),
+        // git init은 백그라운드에서 수행
+        this.ensureGitInitAsync(baseForConfig),
+      ]);
+
       this.say(`[info] workspace (사용자 지정) base=${updated.baseDirFsPath}`);
       this.say(`[info] -> 실제 사용 경로: ${updated.wsDirFsPath}`);
 
+      // 사용자 경험 개선: 바로 열지 물어보는 대신 빠른 액션 제공
       const openNow = await vscode.window.showInformationMessage(
         '새 Workspace가 설정되었습니다. 바로 열어볼까요?',
+        { modal: false }, // 모달이 아니므로 더 빠름
         'Open folder',
         'No',
       );
+
       if (openNow === 'Open folder') {
         // 폴더 '안'을 바로 연다
         await vscode.env.openExternal(updated.wsDirUri);
       }
+
+      const duration = Date.now() - startTime;
+      log.debug(`changeWorkspaceQuick completed in ${duration}ms`);
     } catch (e: any) {
+      const duration = Date.now() - startTime;
+      log.error(`changeWorkspaceQuick failed after ${duration}ms`, e);
       this.say(`[error] change_workspace 실패: ${e?.message || String(e)}`);
     }
   }
@@ -231,6 +256,38 @@ class CommandHandlers {
       panel.stopMonitoring();
       panel.closePanel();
       this.say('[info] Performance Monitoring stopped');
+    }
+  }
+
+  // 캐시된 workspace 정보 조회
+  private async getCachedWorkspaceInfo() {
+    const now = Date.now();
+    if (!this.workspaceInfoCache || now > this.cacheExpiry) {
+      if (!this.context) throw new Error('no extension context');
+      this.workspaceInfoCache = await resolveWorkspaceInfo(this.context);
+      this.cacheExpiry = now + this.CACHE_DURATION;
+    }
+    return this.workspaceInfoCache;
+  }
+
+  // 비동기 git init (백그라운드 실행)
+  private async ensureGitInitAsync(baseDir: string): Promise<void> {
+    try {
+      const wsDir = path.basename(baseDir).toLowerCase() === 'workspace'
+        ? baseDir
+        : path.join(baseDir, 'workspace');
+
+      // 이미 .git 있으면 패스
+      await vscode.workspace.fs.stat(vscode.Uri.file(path.join(wsDir, '.git')));
+      return;
+    } catch {}
+
+    try {
+      this.say?.(`[info] git init in: ${baseDir}/workspace`);
+      await exec('git init', { cwd: path.join(baseDir, 'workspace') });
+      this.say?.('[info] git init done');
+    } catch (e: any) {
+      this.say?.(`[warn] git init failed: ${e?.message || String(e)}`);
     }
   }
 }

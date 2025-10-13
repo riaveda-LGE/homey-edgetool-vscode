@@ -26,6 +26,42 @@ export class PerfMonitorPanel {
     private readonly _context: vscode.ExtensionContext
   ) {}
 
+  // 정적 메서드로 명령어 등록
+  public static register(context: vscode.ExtensionContext, extensionUri: vscode.Uri) {
+    const perfProvider = new PerfMonitorPanel(extensionUri, context);
+    let isMonitoring = false;
+
+    // ✅ Performance Toggle 명령어 등록 (package.json에 선언된 명령어 구현)
+    const toggleCommand = vscode.commands.registerCommand('performance.toggle', async () => {
+      await globalProfiler.measureFunction('performance.toggle', async () => {
+        const items = ['ON', 'OFF'];
+        const selected = await vscode.window.showQuickPick(items, {
+          placeHolder: 'Select Performance Monitoring',
+        });
+        if (selected === 'ON') {
+          if (!isMonitoring) {
+            perfProvider.createPanel();
+            perfProvider.startMonitoring();
+            vscode.window.showInformationMessage('Performance monitoring started.');
+            isMonitoring = true;
+          } else {
+            vscode.window.showInformationMessage('Performance monitoring is already running.');
+          }
+        } else if (selected === 'OFF') {
+          if (isMonitoring) {
+            perfProvider.stopMonitoring();
+            perfProvider.closePanel();
+            vscode.window.showInformationMessage('Performance monitoring stopped.');
+            isMonitoring = false;
+          } else {
+            vscode.window.showInformationMessage('Performance monitoring is not running.');
+          }
+        }
+      });
+    });
+    context.subscriptions.push(toggleCommand);
+  }
+
   @measure()
   public createPanel() {
     if (this._panel) {
@@ -219,6 +255,17 @@ export class PerfMonitorPanel {
         <td>${name}</td><td>${stats.count}</td><td>${stats.avgTime.toFixed(2)}</td><td>${stats.maxTime.toFixed(2)}</td><td>${stats.totalTime.toFixed(2)}</td>
       </tr>`).join('')}
   </table>
+  
+  ${a.ioAnalysis && a.ioAnalysis.totalOperations > 0 ? `
+  <h2>I/O Operations</h2>
+  <table>
+    <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Errors</th></tr>
+    ${a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0 ? 
+      `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>` : ''}
+    ${a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0 ? 
+      `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>` : ''}
+  </table>
+  ` : ''}
   
   <h2>Flame Graph</h2>
   <div id="flameGraph">${JSON.stringify(a.flameGraph)}</div>
