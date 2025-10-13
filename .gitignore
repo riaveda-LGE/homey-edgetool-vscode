@@ -29,7 +29,6 @@ Thumbs.db
 # Workspace folder
 workspace/
 dev/
-logs/
 cts_suite/result/
 
 # Node modules

@@ -1,0 +1,2 @@
+src/ui/edge-panel/panel.ts
+dist/ui/edge-panel/index.html
