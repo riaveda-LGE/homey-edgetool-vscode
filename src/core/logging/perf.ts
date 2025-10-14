@@ -171,6 +171,7 @@ export class PerformanceProfiler {
     path: string,
     fn: () => Promise<T>
   ): Promise<T> {
+    if (!this.isEnabled) return fn();  // ✅ Off면 그냥 실행 (오버헤드 없음)
     const startTime = perfNow();
     try {
       const result = await fn();
@@ -332,11 +333,18 @@ export class PerformanceProfiler {
 
   private generateFlameGraph(functionCalls: FunctionCall[]) {
     // 간단한 Flame Graph 데이터 생성 (스택 기반)
-    const stacks = functionCalls.map(call => ({
-      name: call.name,
-      value: call.duration,
-      children: [] // 실제 스택 트레이스가 없으므로 단순화
-    }));
+    if (!functionCalls || functionCalls.length === 0) {
+      return { name: 'root', children: [] };
+    }
+
+    const stacks = functionCalls
+      .filter(call => call && typeof call.duration === 'number' && call.duration >= 0)
+      .map(call => ({
+        name: call.name || 'unknown',
+        value: call.duration,
+        children: [] // 실제 스택 트레이스가 없으므로 단순화
+      }));
+
     return { name: 'root', children: stacks };
   }
 }
@@ -360,6 +368,7 @@ export function measureIO(operation: string, pathGetter: (instance: any) => stri
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
     descriptor.value = async function (...args: any[]) {
+      if (!globalProfiler['isEnabled']) return originalMethod.apply(this, args);  // ✅ Off면 그냥 실행 (오버헤드 없음)
       const path = pathGetter(this);
       return await globalProfiler.measureIO(operation, path, () => originalMethod.apply(this, args));
     };

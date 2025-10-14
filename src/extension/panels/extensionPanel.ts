@@ -49,6 +49,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   private _session?: LogSessionManager;
   private _currentAbort?: AbortController;
+  private _perfMonitor?: any; // Performance Monitor 인스턴스
 
   private _logPanel?: vscode.WebviewPanel;
 
@@ -61,7 +62,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     private readonly _context: vscode.ExtensionContext,
     version: string,
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
+    perfMonitor?: any,
   ) {
+    this._perfMonitor = perfMonitor;
     this._state = {
       version,
       updateAvailable: !!latestInfo?.hasUpdate,
@@ -220,7 +223,49 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this._view?.webview.postMessage({ type: op.event, payload: op.payload });
           break;
         case 'handler':
-          await this._handlers!.route(op.name);
+          if (op.name === 'togglePerformanceMonitoring') {
+            // 성능 모니터링 ON/OFF 선택
+            const items = [
+              { label: 'ON - 성능 모니터링 시작', description: '실시간 성능 데이터를 모니터링합니다', value: 'on' },
+              { label: 'OFF - 성능 모니터링 종료', description: '모니터링을 중지하고 창을 닫습니다', value: 'off' }
+            ];
+
+            const selected = await vscode.window.showQuickPick(items, {
+              placeHolder: '성능 모니터링 모드를 선택하세요',
+              matchOnDescription: true
+            });
+
+            if (!selected) return;
+
+            if (selected.value === 'on') {
+              // ON 선택: 모니터링 시작 및 창 열기
+              if (this._perfMonitor) {
+                this._perfMonitor.createPanel();
+                this._perfMonitor.startMonitoring();
+                vscode.window.showInformationMessage('성능 모니터링을 시작했습니다.');
+              } else {
+                vscode.window.showErrorMessage('Performance Monitor is not available.');
+              }
+            } else {
+              // OFF 선택: 모니터링 중지 및 창 닫기
+              if (this._perfMonitor) {
+                this._perfMonitor.stopMonitoring();
+                this._perfMonitor.closePanel();
+                vscode.window.showInformationMessage('성능 모니터링을 중지했습니다.');
+              }
+            }
+          } else if (op.name === 'updateNow') {
+            await downloadAndInstall(this._state.updateUrl!, this._state.latestSha!);
+            await vscode.commands.executeCommand('workbench.action.reloadWindow');
+          } else if (op.name === 'changeWorkspaceQuick') {
+            await this._handlers!.route('changeWorkspaceQuick');
+          } else if (op.name === 'openWorkspace') {
+            await this._handlers!.route('openWorkspace');
+          } else if (op.name === 'openHelp') {
+            await this._handlers!.route('help');
+          } else {
+            await this._handlers!.route(op.name);
+          }
           // UI 후처리: 워크스페이스 변경 시 explorer refresh
           if (op.name === 'changeWorkspaceQuick' || op.name === 'openWorkspace') {
             await this._explorer?.refreshWorkspaceRoot?.();
@@ -479,7 +524,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 export function registerEdgePanelCommands(
   context: vscode.ExtensionContext,
   provider: EdgePanelProvider,
+  perfMonitor?: any,
 ) {
+  // Performance Monitor를 provider에 설정
+  if (perfMonitor) {
+    (provider as any)._perfMonitor = perfMonitor;
+  }
+
   const d = vscode.commands.registerCommand('homeyEdgetool.openHomeyLogging', async () => {
     await provider.handleHomeyLoggingCommand();
   });

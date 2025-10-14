@@ -64,8 +64,11 @@ export async function activate(context: vscode.ExtensionContext) {
       const latestInfo = await checkLatestVersion(version);
       log.info(`latestInfo: ${JSON.stringify(latestInfo)}`);
 
+      // ✅ Performance Monitor 인스턴스 생성
+      const perfMonitor = PerfMonitorPanel.register(context, context.extensionUri);
+
       // ✅ constructor 시그니처: (extensionUri, context, version, latestInfo)
-      const provider = new EdgePanelProvider(context.extensionUri, context, version, latestInfo);
+      const provider = new EdgePanelProvider(context.extensionUri, context, version, latestInfo, perfMonitor);
       try {
         const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
         context.subscriptions.push(disp);
@@ -74,10 +77,7 @@ export async function activate(context: vscode.ExtensionContext) {
       }
 
       // ✅ homey-logging을 외부 커맨드로 노출
-      registerEdgePanelCommands(context, provider);
-
-      // ✅ Performance Monitor 등록
-      PerfMonitorPanel.register(context, context.extensionUri);
+      registerEdgePanelCommands(context, provider, perfMonitor);
 
       log.info(
         `registerWebviewViewProvider OK, viewType=${EdgePanelProvider.viewType}, version=${version}`,

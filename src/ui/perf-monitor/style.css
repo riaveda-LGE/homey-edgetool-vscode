@@ -2,22 +2,29 @@
 body {
   font-family: Arial, sans-serif;
   padding: 10px;
+  background-color: var(--vscode-bg, #1e1e1e);
+  color: var(--vscode-fg, #cccccc);
 }
 
 #chart {
   width: 100%;
   height: 400px;
+  background-color: var(--vscode-bg, #1e1e1e);
+  border: 1px solid var(--vscode-accent, #007acc);
+  border-radius: 4px;
+  padding: 10px;
 }
 
 button {
   margin-top: 10px;
   padding: 10px;
-  background-color: #007acc;
-  color: white;
+  background-color: var(--vscode-accent, #007acc);
+  color: var(--vscode-fg, white);
   border: none;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #005a9e;
+  background-color: var(--vscode-accent, #005a9e);
+  opacity: 0.8;
 }

@@ -117,8 +117,9 @@ export class PerfMonitorPanel {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'ui', 'perf-monitor', 'app.js'));
-    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'ui', 'perf-monitor', 'style.css'));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'app.js'));
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'style.css'));
+    const chartUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'chart.umd.js'));
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -132,7 +133,7 @@ export class PerfMonitorPanel {
     <h2>Performance Monitor</h2>
     <div id="chart"></div>
     <button id="exportBtn">Export JSON</button>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="${chartUri}"></script>
     <script src="${scriptUri}"></script>
 </body>
 </html>`;

@@ -8,7 +8,7 @@ import { exec as execCb } from 'child_process';
 import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
-import { measure } from '../../core/logging/perf.js';
+import { measure, globalProfiler } from '../../core/logging/perf.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 
 const log = getLogger('cmd');
@@ -249,13 +249,13 @@ class CommandHandlers {
 
     const panel = new PerfMonitorPanel(this.extensionUri, this.context);
     if (pick.label === 'Performance Monitoring On') {
-      panel.startMonitoring();
+      globalProfiler.enable();
       panel.createPanel();
-      this.say('[info] Performance Monitoring started');
+      this.say('[info] Performance Monitoring enabled');
     } else {
-      panel.stopMonitoring();
+      globalProfiler.disable();
       panel.closePanel();
-      this.say('[info] Performance Monitoring stopped');
+      this.say('[info] Performance Monitoring disabled');
     }
   }
 
