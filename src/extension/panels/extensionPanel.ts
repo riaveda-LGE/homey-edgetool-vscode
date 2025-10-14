@@ -224,35 +224,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           break;
         case 'handler':
           if (op.name === 'togglePerformanceMonitoring') {
-            // 성능 모니터링 ON/OFF 선택
-            const items = [
-              { label: 'ON - 성능 모니터링 시작', description: '실시간 성능 데이터를 모니터링합니다', value: 'on' },
-              { label: 'OFF - 성능 모니터링 종료', description: '모니터링을 중지하고 창을 닫습니다', value: 'off' }
-            ];
-
-            const selected = await vscode.window.showQuickPick(items, {
-              placeHolder: '성능 모니터링 모드를 선택하세요',
-              matchOnDescription: true
-            });
-
-            if (!selected) return;
-
-            if (selected.value === 'on') {
-              // ON 선택: 모니터링 시작 및 창 열기
-              if (this._perfMonitor) {
-                this._perfMonitor.createPanel();
-                this._perfMonitor.startMonitoring();
-                vscode.window.showInformationMessage('성능 모니터링을 시작했습니다.');
-              } else {
-                vscode.window.showErrorMessage('Performance Monitor is not available.');
-              }
+            // 성능 모니터링 패널 열기
+            if (this._perfMonitor) {
+              this._perfMonitor.createPanel();
+              vscode.window.showInformationMessage('Performance Monitor opened.');
             } else {
-              // OFF 선택: 모니터링 중지 및 창 닫기
-              if (this._perfMonitor) {
-                this._perfMonitor.stopMonitoring();
-                this._perfMonitor.closePanel();
-                vscode.window.showInformationMessage('성능 모니터링을 중지했습니다.');
-              }
+              vscode.window.showErrorMessage('Performance Monitor is not available.');
             }
           } else if (op.name === 'updateNow') {
             await downloadAndInstall(this._state.updateUrl!, this._state.latestSha!);

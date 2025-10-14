@@ -34,34 +34,11 @@ export class PerfMonitorPanel {
   // 정적 메서드로 명령어 등록
   public static register(context: vscode.ExtensionContext, extensionUri: vscode.Uri) {
     const perfProvider = new PerfMonitorPanel(extensionUri, context);
-    let isMonitoring = false;
 
     // ✅ Performance Toggle 명령어 등록 (package.json에 선언된 명령어 구현)
     const toggleCommand = vscode.commands.registerCommand('performance.toggle', async () => {
       await globalProfiler.measureFunction('performance.toggle', async () => {
-        const items = ['ON', 'OFF'];
-        const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: 'Select Performance Monitoring',
-        });
-        if (selected === 'ON') {
-          if (!isMonitoring) {
-            perfProvider.createPanel();
-            perfProvider._startCapture();
-            vscode.window.showInformationMessage('Performance capture started.');
-            isMonitoring = true;
-          } else {
-            vscode.window.showInformationMessage('Performance capture is already running.');
-          }
-        } else if (selected === 'OFF') {
-          if (isMonitoring) {
-            perfProvider._stopCapture();
-            perfProvider.closePanel();
-            vscode.window.showInformationMessage('Performance capture stopped.');
-            isMonitoring = false;
-          } else {
-            vscode.window.showInformationMessage('Performance capture is not running.');
-          }
-        }
+        perfProvider.createPanel();
       });
     });
     context.subscriptions.push(toggleCommand);

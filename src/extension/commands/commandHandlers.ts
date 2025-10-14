@@ -238,25 +238,9 @@ class CommandHandlers {
   async togglePerformanceMonitoring() {
     if (!this.context || !this.extensionUri) return this.say('[error] internal: no context or extension uri');
 
-    const pick = await vscode.window.showQuickPick(
-      [
-        { label: 'Performance Monitoring On', description: '실시간 모니터링 시작' },
-        { label: 'Performance Monitoring Off', description: '모니터링 중지' },
-      ],
-      { placeHolder: 'Performance Monitoring을 선택하세요' },
-    );
-    if (!pick) return;
-
     const panel = new PerfMonitorPanel(this.extensionUri, this.context);
-    if (pick.label === 'Performance Monitoring On') {
-      globalProfiler.enable();
-      panel.createPanel();
-      this.say('[info] Performance Monitoring enabled');
-    } else {
-      globalProfiler.disable();
-      panel.closePanel();
-      this.say('[info] Performance Monitoring disabled');
-    }
+    panel.createPanel();
+    this.say('[info] Performance Monitor opened');
   }
 
   // 캐시된 workspace 정보 조회
