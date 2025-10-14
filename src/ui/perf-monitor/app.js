@@ -3,7 +3,6 @@ const vscode = acquireVsCodeApi();
 
 // Global variables
 let chart = null;
-let flameGraphReady = false;
 let exportHtml = '';
 
 // Apply VS Code theme variables
@@ -40,30 +39,6 @@ function applyTheme() {
       console.error('Error updating chart theme:', e);
     }
   }
-}
-
-function initFlameGraph() {
-  // Check if D3 is loaded
-  let retryCount = 0;
-  const maxRetries = 50; // 5 seconds max
-
-  const checkD3 = () => {
-    retryCount++;
-    console.log(`Checking D3 (attempt ${retryCount})...`);
-    console.log('d3:', typeof d3, d3 ? 'loaded' : 'not loaded');
-
-    if (typeof d3 !== 'undefined') {
-      console.log('D3 library loaded successfully, initializing custom flame graph');
-      flameGraphReady = true;
-    } else if (retryCount < maxRetries) {
-      console.warn(`D3 library is not loaded yet, retrying... (${retryCount}/${maxRetries})`);
-      setTimeout(checkD3, 100);
-    } else {
-      console.error('Failed to load D3 library after maximum retries. Flame Graph will not be available.');
-    }
-  };
-
-  checkD3();
 }
 
 function initChart() {
@@ -189,207 +164,13 @@ function displayHtmlReport(html) {
       try {
         eval(script.textContent);
       } catch (error) {
-        console.error('Error executing inline script:', error);
+        console.error('Error executing inline script in exported report:', error);
       }
     }
   });
-
-  // Check if flame graph container exists and render flame graph
-  const flameGraphContainer = reportDiv.querySelector('#flameGraph');
-  if (flameGraphContainer && flameGraphReady) {
-    // Get performance data from the extension
-    vscode.postMessage({ v: 1, type: 'perf.getFlameGraphData' });
-  }
-}// Custom Flame Graph implementation using D3 v6 with advanced features
-function renderFlameGraph(data, containerId) {
-  console.log('renderFlameGraph called with data:', data, 'containerId:', containerId);
-  if (!flameGraphReady || !d3) {
-    console.error('Flame Graph not ready or D3 not loaded');
-    return;
-  }
-
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error('Flame Graph container not found:', containerId);
-    return;
-  }
-
-  // Clear previous content
-  container.innerHTML = '';
-
-  // Set up dimensions
-  const width = 800;
-  const height = 400;
-  const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-
-  // Create SVG
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height)
-    .style('border', '1px solid #ccc');
-
-  // Check if data is already in flame graph format
-  let root;
-  if (data && data.name === 'root' && data.children) {
-    // Data is already in flame graph format
-    root = d3.hierarchy(data)
-      .sum(d => d.value || 1)
-      .sort((a, b) => b.value - a.value);
-  } else {
-    // Convert performance data to flame graph format
-    const flameData = convertToFlameGraphData(data);
-    root = d3.hierarchy({ name: 'root', children: flameData })
-      .sum(d => d.value || 1)
-      .sort((a, b) => b.value - a.value);
-  }
-
-  if (!root.children || root.children.length === 0) {
-    svg.append('text')
-      .attr('x', width / 2)
-      .attr('y', height / 2)
-      .attr('text-anchor', 'middle')
-      .text('No flame graph data available');
-    console.log('No flame graph data available');
-    return;
-  }
-
-  // Create partition layout (icicle plot)
-  const partition = d3.partition()
-    .size([width, height])
-    .padding(1);
-
-  partition(root);
-
-  // Create color scale
-  const color = d3.scaleOrdinal(d3.schemeCategory10);
-
-  // Create zoom behavior
-  const zoom = d3.zoom()
-    .scaleExtent([1, 8])
-    .translateExtent([[-margin.left, -margin.top], [width - margin.right, height - margin.bottom]])
-    .on('zoom', (event) => {
-      const { transform } = event;
-      g.attr('transform', `translate(${margin.left + transform.x},${margin.top + transform.y}) scale(${transform.k})`);
-    });
-
-  svg.call(zoom);
-
-  // Create main group
-  const g = svg.append('g')
-    .attr('transform', `translate(${margin.left},${margin.top})`);
-
-  // Add rectangles
-  const nodes = g.selectAll('g')
-    .data(root.descendants())
-    .enter()
-    .append('g')
-    .attr('transform', d => `translate(${d.x0},${d.y0})`);
-
-  nodes.append('rect')
-    .attr('width', d => d.x1 - d.x0)
-    .attr('height', d => d.y1 - d.y0)
-    .attr('fill', d => color(d.data.name))
-    .attr('stroke', '#fff')
-    .attr('stroke-width', 0.5)
-    .style('cursor', 'pointer')
-    .on('click', (event, d) => {
-      // Zoom to clicked node
-      const bounds = event.currentTarget.getBBox();
-      const dx = bounds.width;
-      const dy = bounds.height;
-      const x = bounds.x + bounds.width / 2;
-      const y = bounds.y + bounds.height / 2;
-      const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / (width - margin.left - margin.right), dy / (height - margin.top - margin.bottom))));
-      const translate = [-x * scale + (width - margin.left - margin.right) / 2, -y * scale + (height - margin.top - margin.bottom) / 2];
-
-      svg.transition()
-        .duration(750)
-        .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
-    });
-
-  // Add text labels
-  nodes.append('text')
-    .attr('x', 3)
-    .attr('y', 13)
-    .attr('font-size', d => Math.min(12, (d.x1 - d.x0) / 8))
-    .attr('fill', '#fff')
-    .attr('pointer-events', 'none')
-    .text(d => (d.x1 - d.x0) > 50 ? d.data.name.substring(0, Math.floor((d.x1 - d.x0) / 8)) : '');
-
-  // Add tooltips
-  nodes.append('title')
-    .text(d => `${d.data.name}\nTime: ${d.value}ms\nDepth: ${d.depth}`);
-
-  // Search functionality
-  const searchInput = document.getElementById('flameSearch');
-  const searchBtn = document.getElementById('flameSearchBtn');
-  const resetBtn = document.getElementById('flameResetBtn');
-  const infoSpan = document.getElementById('flameInfo');
-
-  if (searchInput && searchBtn && resetBtn && infoSpan) {
-    const updateSearch = () => {
-      const query = searchInput.value.toLowerCase();
-      if (!query) {
-        // Reset all
-        nodes.select('rect').attr('opacity', 1);
-        infoSpan.textContent = '';
-        return;
-      }
-
-      let matchCount = 0;
-      nodes.each(function(d) {
-        const rect = d3.select(this).select('rect');
-        const matches = d.data.name.toLowerCase().includes(query);
-        rect.attr('opacity', matches ? 1 : 0.3);
-        if (matches) matchCount++;
-      });
-
-      infoSpan.textContent = `Found ${matchCount} matches`;
-    };
-
-    searchBtn.addEventListener('click', updateSearch);
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') updateSearch();
-    });
-
-    resetBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      updateSearch();
-      // Reset zoom
-      svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-    });
-  }
-
-  console.log('Flame graph rendered successfully with advanced features');
 }
 
-// Convert performance data to flame graph format
-function convertToFlameGraphData(data) {
-  if (!data || data.length === 0) return [];
 
-  // Group data by function names and calculate total time
-  const functionMap = new Map();
-
-  data.forEach(entry => {
-    if (entry.stack && Array.isArray(entry.stack)) {
-      entry.stack.forEach(frame => {
-        const key = frame.functionName || frame.fileName || 'unknown';
-        if (!functionMap.has(key)) {
-          functionMap.set(key, { name: key, value: 0, count: 0 });
-        }
-        const func = functionMap.get(key);
-        func.value += entry.cpu.user + entry.cpu.system; // Use CPU time as value
-        func.count += 1;
-      });
-    }
-  });
-
-  // Convert to array and sort by value
-  return Array.from(functionMap.values())
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 50); // Limit to top 50 functions
-}
 
 function measureFunction(name, fn) {
   const start = performance.now();
@@ -402,7 +183,6 @@ function measureFunction(name, fn) {
 // Initialize components
 document.addEventListener('DOMContentLoaded', function() {
   initChart();
-  initFlameGraph();
   applyTheme();
 });
 
@@ -445,11 +225,6 @@ window.addEventListener('message', event => {
         exportHtml = message.payload.exportHtml;
       }
       break;
-    case 'perf.flameGraphData':
-      console.log('Received flame graph data:', message.payload.data);
-      if (message.payload.data) {
-        renderFlameGraph(message.payload.data, 'flameGraph');
-      }
-      break;
+// flame graph messages removed
   }
 });

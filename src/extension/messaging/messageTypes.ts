@@ -41,7 +41,7 @@ export type H2W =
   | Envelope<'perf.captureStopped', { result: any; htmlReport: string; exportHtml: string }>
   | Envelope<'perf.monitoringStarted', EmptyPayload>
   | Envelope<'perf.monitoringStopped', EmptyPayload>
-  | Envelope<'perf.flameGraphData', { data: any[] }>;
+  ;
 
 // Webview → Host
 export type W2H =
@@ -63,4 +63,4 @@ export type W2H =
   | Envelope<'perf.stopMonitoring', EmptyPayload>
   | Envelope<'perf.exportJson', EmptyPayload>
   | Envelope<'perf.exportHtmlReport', { html: string }>
-  | Envelope<'perf.getFlameGraphData', EmptyPayload>;
+  ;

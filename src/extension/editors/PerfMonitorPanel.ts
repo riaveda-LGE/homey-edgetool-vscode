@@ -86,21 +86,6 @@ export class PerfMonitorPanel {
           case 'perf.exportHtmlReport':
             this._exportDisplayedHtml(message.payload.html);
             break;
-          case 'perf.getFlameGraphData':
-            // Send flame graph data to webview
-            const captureResult = this._profiler.getLastCaptureResult();
-            console.log('getLastCaptureResult:', captureResult);
-            if (captureResult && captureResult.analysis && captureResult.analysis.flameGraph) {
-              console.log('Sending flame graph data:', captureResult.analysis.flameGraph);
-              this._panel?.webview.postMessage({
-                v: 1,
-                type: 'perf.flameGraphData',
-                payload: { data: captureResult.analysis.flameGraph }
-              } as H2W);
-            } else {
-              console.log('No flame graph data available');
-            }
-            break;
         }
       },
       undefined,
@@ -193,8 +178,8 @@ export class PerfMonitorPanel {
     }
 
     // Webview 데이터 통합
-    const combinedFunctionCalls = [...(result.functionCalls || []), ...this._webviewPerfData.map((d: any) => ({ name: d.name, start: 0, duration: d.duration }))];
-    const combinedResult = { ...result, functionCalls: combinedFunctionCalls };
+  const combinedFunctionCalls = [...(result.functionCalls || []), ...this._webviewPerfData.map((d: any) => ({ name: d.name, start: 0, duration: d.duration }))];
+  const combinedResult = { ...result, functionCalls: combinedFunctionCalls };
     // HTML 보고서 생성 (웹뷰용과 익스포트용)
     const webviewHtml = this._generateHtmlReport(combinedResult, true);
     const exportHtml = this._generateHtmlReport(combinedResult, false);
@@ -235,32 +220,11 @@ export class PerfMonitorPanel {
   private _generateHtmlReport(result: any, isForWebview: boolean = false): string {
     const a = result.analysis || {};
     
-    let flameGraphScriptBlock = '';
-    if (isForWebview) {
-      // For webview, D3 is already loaded in the main HTML
-      flameGraphScriptBlock = '';
-    } else {
-      // For export, inline the D3 libraries
-      try {
-        const d3MinPath = path.join(this._extensionUri.fsPath, 'dist', 'ui', 'perf-monitor', 'd3.min.js');
-        
-        const d3MinContent = fs.readFileSync(d3MinPath, 'utf8');
-        
-        flameGraphScriptBlock = `
-          <script>${d3MinContent}</script>
-        `;
-      } catch (error) {
-        console.error('Failed to inline D3 libraries:', error);
-        flameGraphScriptBlock = '<div>Failed to load D3 libraries</div>';
-      }
-    }
-    
     let html = `
 <!DOCTYPE html>
 <html>
 <head>
   <title>Performance Report</title>
-  ${flameGraphScriptBlock}
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -335,16 +299,6 @@ export class PerfMonitorPanel {
   </table>
   ` : ''}
   
-  <h2>Flame Graph</h2>
-  <div style="margin-bottom: 10px;">
-    <input type="text" id="flameSearch" placeholder="Search functions..." style="width: 200px; padding: 5px;">
-    <button id="flameSearchBtn">Search</button>
-    <button id="flameResetBtn">Reset</button>
-    <span id="flameInfo" style="margin-left: 20px; color: #cccccc;"></span>
-  </div>
-  <div id="flameGraph" style="width: 100%; height: 400px; border: 1px solid #555; margin: 10px 0;">
-    ${isForWebview ? '<div>Loading flame graph...</div>' : '<div>Flame graph will be rendered here</div>'}
-  </div>
 </body>
 </html>`;
     return html;
@@ -418,152 +372,7 @@ export class PerfMonitorPanel {
     }
   }
 
-  private _renderFlameGraph(data: any, isForWebview: boolean = false): string {
-    if (!data || !data.children || data.children.length === 0) return '<div>No flame graph data available</div>';
-
-    const totalTime = data.children.reduce((sum: number, child: any) => sum + (child.value || 0), 0);
-    if (totalTime === 0) return '<div>No measurable flame graph data</div>';
-
-    // Create a unique ID for this flame graph instance
-    const graphId = `flame-graph-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    if (isForWebview) {
-      // For webview, D3 is already loaded, so we can render immediately
-      return `
-        <div id="${graphId}" style="width: 100%; height: 300px; border: 1px solid #555; margin: 10px 0;"></div>
-        <script>
-          (function() {
-            const containerId = '${graphId}';
-            const flameData = ${JSON.stringify(data)};
-
-            if (typeof d3 !== 'undefined' && typeof d3.flameGraph !== 'undefined') {
-              try {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-
-                container.innerHTML = '';
-
-                const flameGraph = d3.flameGraph()
-                  .width(800)
-                  .height(300)
-                  .cellHeight(18)
-                  .transitionDuration(750)
-                  .transitionEase(d3.easeCubic)
-                  .sort(true)
-                  .title('')
-                  .tooltip(function(d) {
-                    return \`\${d.data.name}: \${d.data.value || 0}ms\`;
-                  });
-
-                flameGraph.color(function(d) {
-                  const depth = d.depth || 0;
-                  const colors = ['#007acc', '#0099ff', '#00ccff', '#00ffcc', '#00ff99', '#00ff66', '#66ff00', '#ccff00', '#ffff00', '#ffcc00'];
-                  return colors[depth % colors.length];
-                });
-
-                const svg = d3.select('#' + containerId)
-                  .append('svg')
-                  .attr('width', 800)
-                  .attr('height', 300);
-
-                svg.append('text')
-                  .attr('x', 10)
-                  .attr('y', 20)
-                  .attr('fill', '#ffffff')
-                  .attr('font-size', '14px')
-                  .attr('font-weight', 'bold')
-                  .text('Flame Graph (Time: ' + flameData.children.reduce((sum, child) => sum + (child.value || 0), 0) + 'ms)');
-
-                svg.datum(flameData).call(flameGraph);
-
-              } catch (error) {
-                console.error('Error rendering flame graph:', error);
-                document.getElementById(containerId).innerHTML = '<div>Error rendering flame graph: ' + error.message + '</div>';
-              }
-            } else {
-              document.getElementById(containerId).innerHTML = '<div>D3 libraries not loaded</div>';
-            }
-          })();
-        </script>
-      `;
-    } else {
-      // For export HTML, include D3 libraries inline and render
-      try {
-        const d3MinPath = path.join(this._extensionUri.fsPath, 'dist', 'ui', 'perf-monitor', 'd3.min.js');
-        const d3FlameGraphMinPath = path.join(this._extensionUri.fsPath, 'dist', 'ui', 'perf-monitor', 'd3-flamegraph.min.js');
-        const d3FlameGraphCssPath = path.join(this._extensionUri.fsPath, 'dist', 'ui', 'perf-monitor', 'd3-flamegraph.css');
-        
-        const d3MinContent = fs.readFileSync(d3MinPath, 'utf8');
-        const d3FlameGraphMinContent = fs.readFileSync(d3FlameGraphMinPath, 'utf8');
-        const d3FlameGraphCssContent = fs.readFileSync(d3FlameGraphCssPath, 'utf8');
-        
-        return `
-          <style>${d3FlameGraphCssContent}</style>
-          <div id="${graphId}" style="width: 100%; height: 300px; border: 1px solid #555; margin: 10px 0;"></div>
-          <script>${d3MinContent}</script>
-          <script>${d3FlameGraphMinContent}</script>
-          <script>
-            (function() {
-              const containerId = '${graphId}';
-              const flameData = ${JSON.stringify(data)};
-
-              if (typeof d3 !== 'undefined' && typeof d3.flameGraph !== 'undefined') {
-                try {
-                  const container = document.getElementById(containerId);
-                  if (!container) return;
-
-                  container.innerHTML = '';
-
-                  const flameGraph = d3.flameGraph()
-                    .width(800)
-                    .height(300)
-                    .cellHeight(18)
-                    .transitionDuration(750)
-                    .transitionEase(d3.easeCubic)
-                    .sort(true)
-                    .title('')
-                    .tooltip(function(d) {
-                      return \`\${d.data.name}: \${d.data.value || 0}ms\`;
-                    });
-
-                  flameGraph.color(function(d) {
-                    const depth = d.depth || 0;
-                    const colors = ['#007acc', '#0099ff', '#00ccff', '#00ffcc', '#00ff99', '#00ff66', '#66ff00', '#ccff00', '#ffff00', '#ffcc00'];
-                    return colors[depth % colors.length];
-                  });
-
-                  const svg = d3.select('#' + containerId)
-                    .append('svg')
-                    .attr('width', 800)
-                    .attr('height', 300);
-
-                  svg.append('text')
-                    .attr('x', 10)
-                    .attr('y', 20)
-                    .attr('fill', '#ffffff')
-                    .attr('font-size', '14px')
-                    .attr('font-weight', 'bold')
-                    .text('Flame Graph (Time: ' + flameData.children.reduce((sum, child) => sum + (child.value || 0), 0) + 'ms)');
-
-                  svg.datum(flameData).call(flameGraph);
-
-                } catch (error) {
-                  console.error('Error rendering flame graph:', error);
-                  document.getElementById(containerId).innerHTML = '<div>Error rendering flame graph: ' + error.message + '</div>';
-                }
-              } else {
-                document.getElementById(containerId).innerHTML = '<div>D3 libraries not loaded</div>';
-              }
-            })();
-          </script>
-        `;
-      } catch (error) {
-        console.error('Failed to inline D3 libraries for flame graph:', error);
-        return '<div>Failed to load D3 libraries for flame graph</div>';
-      }
-    }
-  }
-
+  
   private _getMaxDepth(node: any, depth = 0): number {
     if (!node || !node.children || node.children.length === 0) return depth;
     return Math.max(...node.children.map((child: any) => this._getMaxDepth(child, depth + 1)));
@@ -586,31 +395,14 @@ export class PerfMonitorPanel {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'app.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'style.css'));
     const chartUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'chart.umd.js'));
-    const d3Uri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'perf-monitor', 'd3.min.js'));
-
-    return `<!DOCTYPE html>
+  // no d3 dependency
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Monitor</title>
-    <link href="${styleUri}" rel="stylesheet">
-    <script src="${d3Uri}" onerror="console.error('Failed to load d3.min.js')"></script>
-    <style>
-      #flameGraph {
-        width: 100%;
-        height: 400px;
-        border: 1px solid var(--vscode-panel-border);
-        margin: 10px 0;
-      }
-      .d3-flame-graph rect {
-        stroke: var(--vscode-panel-border);
-      }
-      .d3-flame-graph text {
-        fill: var(--vscode-foreground);
-        font-size: 11px;
-      }
-    </style>
+  <link href="${styleUri}" rel="stylesheet">
 </head>
 <body>
     <h2>Performance Monitor</h2>
@@ -619,7 +411,7 @@ export class PerfMonitorPanel {
         <button id="exportBtn">Export JSON</button>
         <button id="exportHtmlBtn">Export HTML Report</button>
     </div>
-    <div id="chart"></div>
+  <div id="chart"></div>
     <div id="htmlReport"></div>
     <script src="${chartUri}"></script>
     <script src="${scriptUri}"></script>
