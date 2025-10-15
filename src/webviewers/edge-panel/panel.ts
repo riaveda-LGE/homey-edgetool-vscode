@@ -9,9 +9,6 @@
     error: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'error', text: t, source: 'ui.edgePanel' } }),
   };
 
-  const log = (...a: any[]) => uiLog.info(`[edge-panel] ${a.join(' ')}`);
-
-  // ── DOM refs (null-safe) ─────────────────────────────────────
   const rootEl = document.getElementById('root') as HTMLElement | null;
   const controlsEl = document.getElementById('controls') as HTMLElement | null;
   const sectionsEl = document.getElementById('sections') as HTMLElement | null;
@@ -83,7 +80,7 @@
   };
 
   function requestList(rel: string) {
-    log('requestList ->', rel);
+    uiLog.info('[edge-panel] requestList -> ' + rel);
     vscode.postMessage({ type: 'explorer.list', path: rel || '' });
   }
 
@@ -105,7 +102,7 @@
   function applyLayout() {
     const hasLogs = state.showLogs;
     const hasExplorer = state.showExplorer;
-    log('applyLayout: showExplorer =', hasExplorer, 'showLogs =', hasLogs);
+    uiLog.info('[edge-panel] applyLayout: showExplorer = ' + hasExplorer + ' showLogs = ' + hasLogs);
     const hasAny = hasLogs || hasExplorer;
 
     rootEl!.style.display = 'grid';
@@ -122,7 +119,7 @@
       if (explorerEl) explorerEl.style.display = 'none';
       if (logContainer) logContainer.style.display = 'none';
       closeCtxMenu();
-      log('applyLayout -> control-only');
+      uiLog.info('[edge-panel] applyLayout -> control-only');
       return;
     }
 
@@ -222,7 +219,7 @@
       `;
       explorerPathEl = explorerEl.querySelector('#explorerPath') as HTMLElement | null;
       treeEl = explorerEl.querySelector('#explorerTree') as HTMLElement | null;
-      log('explorer skeleton self-heal');
+      uiLog.info('[edge-panel] explorer skeleton self-heal');
     }
 
     // 3) 컨텍스트 메뉴 (인라인 폼/확인 포함)
@@ -258,7 +255,7 @@
         </div>
       `;
       explorerEl.appendChild(ctxMenuEl);
-      log('ctxMenu self-heal: created');
+      uiLog.info('[edge-panel] ctxMenu self-heal: created');
     }
 
     // 내부 레퍼런스 캐시
@@ -287,7 +284,7 @@
           }
         }
       });
-      log('bind: ctxMenu click handlers');
+      uiLog.info('[edge-panel] bind: ctxMenu click handlers');
     }
 
     // 5) 트리 키/클릭 바인딩(1회)
@@ -309,7 +306,7 @@
         if (node.kind === 'folder') toggleNode(node, true);
         else openFile(node);
       });
-      log('bind: tree keyboard/click handlers');
+      uiLog.info('[edge-panel] bind: tree keyboard/click handlers');
     }
 
     // 6) Explorer 영역 우클릭 메뉴 (캡처 단계에서 기본 메뉴 차단)
@@ -327,7 +324,7 @@
           const li = t.closest('.tree-node') as HTMLElement | null;
           const targetNode = li ? state.nodesByPath.get(li?.dataset.path!) ?? null : null;
           const me = e as MouseEvent;
-          log('contextmenu captured', { x: me.clientX, y: me.clientY, hasNode: !!targetNode });
+          uiLog.info('[edge-panel] contextmenu captured ' + JSON.stringify({ x: me.clientX, y: me.clientY, hasNode: !!targetNode }));
           openCtxMenu(me.clientX, me.clientY, targetNode);
         },
         true, // capture
@@ -336,14 +333,14 @@
       // 스크롤/리사이즈 시 메뉴 닫기
       rootEl.addEventListener('scroll', closeCtxMenu);
       window.addEventListener('resize', closeCtxMenu);
-      log('bind: document contextmenu capture', { created });
+      uiLog.info('[edge-panel] bind: document contextmenu capture ' + JSON.stringify({ created }));
     }
 
-    log('ensureExplorerDom', {
+    uiLog.info('[edge-panel] ensureExplorerDom ' + JSON.stringify({
       hasTree: !!treeEl,
       treeBound: !!treeEl?.dataset._bound,
       treeChildren: treeEl?.childElementCount,
-    });
+    }));
   }
 
   // ── Splitter/Control 높이 ────────────────────────────────────
@@ -615,7 +612,7 @@
     }
     if (node.selected) el.classList.add('selected');
     parentEl.appendChild(el);
-    log('mountNode', { parent: parentEl.id || parentEl.className, path: node.path, kind: node.kind });
+    uiLog.info('[edge-panel] mountNode ' + JSON.stringify({ parent: parentEl.id || parentEl.className, path: node.path, kind: node.kind }));
   }
 
   function ensureChildrenContainer(node: TreeNode): HTMLElement | null {
@@ -635,7 +632,7 @@
     }
 
     const group = ensureChildrenContainer(node);
-    log('renderChildren: enter', { node: node.path, items: items.map(i => `${i.kind}:${i.name}`), hasGroup: !!group });
+    uiLog.info('[edge-panel] renderChildren: enter ' + JSON.stringify({ node: node.path, items: items.map(i => `${i.kind}:${i.name}`), hasGroup: !!group }));
     if (!group) return;
 
     group.innerHTML = ''; // 기존 DOM 요소 모두 제거
@@ -672,7 +669,7 @@
     node.loaded = true;
     node.expanded = true;
     updateNodeExpanded(node);
-    log('renderChildren: done', { node: node.path, childCount: group.childElementCount });
+    uiLog.info('[edge-panel] renderChildren: done ' + JSON.stringify({ node: node.path, childCount: group.childElementCount }));
   }
 
   function collapseTo(node: TreeNode) {
@@ -720,7 +717,7 @@
     node.el.setAttribute('aria-expanded', node.kind === 'folder' ? String(!!node.expanded) : 'false');
     node.el.classList.toggle('expanded', !!node.expanded);
     if (group) group.style.display = node.expanded ? '' : 'none';
-    log('updateNodeExpanded', { path: node.path, expanded: !!node.expanded, groupVisible: group ? group.style.display !== 'none' : null });
+    uiLog.info('[edge-panel] updateNodeExpanded ' + JSON.stringify({ path: node.path, expanded: !!node.expanded, groupVisible: group ? group.style.display !== 'none' : null }));
   }
 
   function selectNode(node: TreeNode) {
@@ -897,7 +894,7 @@
 
     const openBtn = ctxMenuEl.querySelector('[data-cmd="open"]') as HTMLElement | null;
     if (openBtn) openBtn.style.display = target && target.kind === 'file' ? 'block' : 'none';
-    log('openCtxMenu', { x: maxX, y: maxY, target: target?.path, kind: target?.kind });
+    uiLog.info('[edge-panel] openCtxMenu ' + JSON.stringify({ x: maxX, y: maxY, target: target?.path, kind: target?.kind }));
   }
 
   function closeCtxMenu() {
@@ -925,7 +922,7 @@
     const name = ctxTarget?.name || '';
     const kind = ctxTarget?.kind || '';
 
-    log('ctxmenu click', { cmd, baseDir: ctxBaseDir, name, kind });
+    uiLog.info('[edge-panel] ctxmenu click ' + JSON.stringify({ cmd, baseDir: ctxBaseDir, name, kind }));
 
     if (cmd === 'open' && kind === 'file') {
       vscode.postMessage({ type: 'explorer.open', path: posixJoin(ctxBaseDir, name) });
@@ -958,21 +955,21 @@
   if (toggleLogsEl) {
     toggleLogsEl.addEventListener('click', () => {
       state.showLogs = !state.showLogs;
-      log('logs toggled to:', state.showLogs);
+      uiLog.info('[edge-panel] logs toggled to: ' + state.showLogs);
       applyLayout();
     });
   }
   if (toggleExplorerEl) {
     toggleExplorerEl.addEventListener('click', () => {
       state.showExplorer = !state.showExplorer;
-      log('explorer toggled to:', state.showExplorer);
+      uiLog.info('[edge-panel] explorer toggled to: ' + state.showExplorer);
       applyLayout();
     });
   }
 
   // ── Host → UI ────────────────────────────────────────────────
   function scheduleFolderRefresh(dir: string) {
-    log('scheduleFolderRefresh called for dir:', dir, 'viewing:', state.explorerPath);
+    uiLog.info('[edge-panel] scheduleFolderRefresh called for dir: ' + dir + ' viewing: ' + state.explorerPath);
     // 현재 표시(crumb) 폴더만 갱신
     if (!state.showExplorer) return;
     const viewing = state.explorerPath || '';
@@ -993,7 +990,7 @@
     switch (msg.type) {
       case 'initState': {
         const { logs } = msg.state || {};
-        log('on:initState');
+        uiLog.info('[edge-panel] on:initState');
         resetLogs(logs);
         applyLayout();
         vscode.postMessage({ type: 'ui.requestButtons' });
@@ -1011,13 +1008,13 @@
       // 패널 토글
       case 'ui.toggleLogs':
         state.showLogs = !state.showLogs;
-        log('toggle logs ->', state.showLogs);
+        uiLog.info('[edge-panel] toggle logs -> ' + state.showLogs);
         applyLayout();
         break;
 
       case 'ui.toggleExplorer':
         state.showExplorer = !state.showExplorer;
-        log('toggle explorer ->', state.showExplorer);
+        uiLog.info('[edge-panel] toggle explorer -> ' + state.showExplorer);
         if (state.showExplorer) {
           ensureExplorerDom();
           if (!state.root) {
@@ -1045,7 +1042,7 @@
       case 'explorer.list.result': {
         const rel = String(msg.path || '');
         const items = (msg.items || []) as { name: string; kind: Kind }[];
-        log('on:list.result', { rel, count: items.length, rootConnected: !!state.root?.el?.isConnected });
+        uiLog.info('[edge-panel] on:list.result ' + JSON.stringify({ rel, count: items.length, rootConnected: !!state.root?.el?.isConnected }));
 
         if (!state.root) {
           // 안전망
@@ -1061,7 +1058,7 @@
       }
 
       case 'explorer.ok': {
-        log('on:ok', { op: msg.op, path: msg.path });
+        uiLog.info('[edge-panel] on:ok ' + JSON.stringify({ op: msg.op, path: msg.path }));
         if (msg.op === 'delete') {
           // 삭제 시 특별 처리: 부모 폴더 refresh, 선택 상태 정리
           const deletedPath = String(msg.path || '');
@@ -1108,7 +1105,7 @@
 
       case 'explorer.fs.changed': {
         // 확장 쪽에서 변경 감지 → 현재 폴더와 동일한 상위면 갱신
-        log('explorer.fs.changed received:', msg.path);
+        uiLog.info('[edge-panel] explorer.fs.changed received: ' + msg.path);
         const changedRel = String(msg.path || '');
         const dir = dirOf(changedRel);
         scheduleFolderRefresh(dir);
@@ -1117,7 +1114,7 @@
 
       case 'explorer.root.changed': {
         // 워크스페이스 루트가 바뀜 → 상태 초기화 후 루트부터 재요청
-        log('on:root.changed');
+        uiLog.info('[edge-panel] on:root.changed');
         state.root = null;
         state.nodesByPath.clear();
         state.selected = null;
