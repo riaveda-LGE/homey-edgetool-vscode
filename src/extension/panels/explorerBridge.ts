@@ -24,18 +24,19 @@ export function createExplorerBridge(
   context: vscode.ExtensionContext,
   post: (m: any) => void,
 ): ExplorerBridge {
-  const log = getLogger('explorerBridge');
+  const log = getLogger('extension:panels:explorerBridge');
   let disposed = false;
   let info: { wsDirUri: vscode.Uri } | undefined;
 
-  // FS watcher
-  let watcher: vscode.FileSystemWatcher | undefined;
-  let watcherBasePath: string | undefined;
+  // 동적 워처 맵: 폴더 경로 -> 워처
+  const watchers = new Map<string, vscode.FileSystemWatcher>();
 
   async function ensureInfo() {
-    if (!info) info = await resolveWorkspaceInfo(context);
-    // 워처는 루트가 정해질 때 한 번 보장
-    await ensureWatcher();
+    if (!info) {
+      info = await resolveWorkspaceInfo(context);
+      // 워처는 루트가 정해질 때 한 번 보장
+      await ensureWatchers();
+    }
     return info!;
   }
 
@@ -45,50 +46,115 @@ export function createExplorerBridge(
     return vscode.Uri.joinPath(base, ...parts);
   }
 
-  async function ensureWatcher() {
-    if (disposed) return;
-    if (!info) return;
-    const baseUri = info.wsDirUri;
-    const baseFsPath = baseUri.fsPath;
-    if (watcher && watcherBasePath === baseFsPath) return;
-
-    // 기존 워처 정리
-    if (watcher) {
-      try { watcher.dispose(); } catch {}
-      watcher = undefined;
+  function addWatcherForFolder(relPath: string, folderUri: vscode.Uri) {
+    if (disposed || watchers.has(relPath)) {
+      log.info('watcher already exists or disposed for folder:', relPath);
+      return;
     }
 
-    // 새 워처 생성
-    const pattern = new vscode.RelativePattern(baseFsPath, '**/*');
-    watcher = vscode.workspace.createFileSystemWatcher(pattern, false, false, false);
-    watcherBasePath = baseFsPath;
+    const pattern = new vscode.RelativePattern(folderUri.fsPath, '**/*');
+    const w = vscode.workspace.createFileSystemWatcher(pattern, false, false, false);
+    watchers.set(relPath, w);
+
+    log.info('adding watcher for folder:', relPath, 'at path:', folderUri.fsPath);
 
     const onFs = (uri: vscode.Uri) => {
       if (disposed) return;
       try {
+        const baseFsPath = info!.wsDirUri.fsPath;
         const rel = relFromBase(baseFsPath, uri);
-        // 상위 폴더 기준으로만 UI 갱신 유도
         const dir = parentDir(rel);
-        // 숨김 루트(예: .git 폴더 내부 변화)는 무시 (상위 첫 세그먼트 기준)
         const top = dir.split('/').filter(Boolean)[0] ?? rel.split('/').filter(Boolean)[0] ?? '';
         if (HIDE_DIRS.has(top)) return;
 
-        log.debug(`fs event: ${uri.fsPath}, rel: ${rel}, dir: ${dir}`);
+        log.info('[explorerBridge] fs event in folder', relPath, ':', uri.fsPath, 'rel:', rel);
+
+        // 폴더 생성 시 워처 추가
+        if (uri.fsPath.startsWith(folderUri.fsPath)) {
+          (vscode.workspace.fs.stat(uri) as Promise<any>).then((stat) => {
+            if (stat.type === vscode.FileType.Directory) {
+              const newRel = relFromBase(baseFsPath, uri);
+              log.info('[explorerBridge] detected folder creation:', newRel, 'adding watcher');
+              addWatcherForFolder(newRel, uri);
+            }
+          }).catch(() => {});
+        }
+
+        // 폴더 삭제 시 워처 해제
+        // onDidDelete에서 처리
 
         // UI에 변경 알림
         post({ type: 'explorer.fs.changed', path: rel });
       } catch (e) {
-        log.error(`fs event error: ${e}`);
+        log.error('[explorerBridge] fs event error', e);
       }
     };
 
-    const d1 = watcher.onDidCreate(onFs);
-    const d2 = watcher.onDidChange(onFs);
-    const d3 = watcher.onDidDelete(onFs);
+    const onDelete = (uri: vscode.Uri) => {
+      if (disposed) return;
+      try {
+        const baseFsPath = info!.wsDirUri.fsPath;
+        const rel = relFromBase(baseFsPath, uri);
+        vscode.workspace.fs.stat(uri).then((stat: vscode.FileStat) => {
+          if (stat.type === vscode.FileType.Directory) {
+            log.info('[explorerBridge] detected folder deletion:', rel, 'removing watcher');
+            removeWatcherForFolder(rel);
+          }
+        });
+        post({ type: 'explorer.fs.changed', path: rel });
+      } catch (e) {
+        log.error('[explorerBridge] delete event error', e);
+      }
+    };
 
-    context.subscriptions.push(watcher, d1, d2, d3);
+    const d1 = w.onDidCreate(onFs);
+    const d2 = w.onDidChange(onFs);
+    const d3 = w.onDidDelete(onDelete);
 
-    log.info(`watcher ready at ${toPosix(baseFsPath)}`);
+    context.subscriptions.push(w, d1, d2, d3);
+
+    log.info('[explorerBridge] watcher added for folder:', relPath);
+  }
+
+  function removeWatcherForFolder(relPath: string) {
+    const w = watchers.get(relPath);
+    if (w) {
+      log.info('[explorerBridge] removing watcher for folder:', relPath);
+      try { w.dispose(); } catch (e) { log.error('[explorerBridge] watcher dispose error for', relPath, e); }
+      watchers.delete(relPath);
+      log.info('[explorerBridge] watcher removed for folder:', relPath);
+    } else {
+      log.info('[explorerBridge] no watcher found to remove for folder:', relPath);
+    }
+  }
+
+  async function ensureWatchers() {
+    if (disposed || !info) return;
+    const baseUri = info.wsDirUri;
+    const baseFsPath = baseUri.fsPath;
+
+    // 기존 워처 모두 해제
+    for (const [path, w] of watchers) {
+      try { w.dispose(); } catch {}
+    }
+    watchers.clear();
+
+    // 루트 폴더 스캔해서 기존 폴더에 워처 등록
+    try {
+      const entries = await vscode.workspace.fs.readDirectory(baseUri);
+      for (const [name, type] of entries) {
+        if (type === vscode.FileType.Directory && !shouldHideEntry(name, 'folder')) {
+          const folderRel = name;
+          const folderUri = vscode.Uri.joinPath(baseUri, name);
+          log.info('[explorerBridge] initializing watcher for existing folder:', folderRel);
+          addWatcherForFolder(folderRel, folderUri);
+        }
+      }
+    } catch (e) {
+      log.error('[explorerBridge] initial folder scan error', e);
+    }
+
+    log.info('[explorerBridge] watchers initialized for workspace root:', toPosix(baseFsPath));
   }
 
   async function list(rel: string) {
@@ -103,7 +169,7 @@ export function createExplorerBridge(
           return !shouldHideEntry(name, kind as 'file' | 'folder');
         })
         .map(([name, t]) => ({ name, kind: t === vscode.FileType.Directory ? 'folder' : ('file' as const) }));
-      console.log('[explorerBridge] list', rel, '->', items.length, 'items');
+      log.info('[explorerBridge] list', rel, '->', items.length, 'items');
       post({ type: 'explorer.list.result', path: rel || '', items });
     } catch (e: any) {
       log.error(`list error for ${rel}: ${e?.message || String(e)}`);
@@ -117,7 +183,7 @@ export function createExplorerBridge(
       const uri = toChildUri(wsDirUri, rel);
       const doc = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(doc, { preview: false });
-      log.debug(`open ${rel}`);
+      log.info('[explorerBridge] open', rel);
       post({ type: 'explorer.ok', op: 'open', path: rel || '' });
     } catch (e: any) {
       log.error(`open error for ${rel}: ${e?.message || String(e)}`);
@@ -130,7 +196,7 @@ export function createExplorerBridge(
       const { wsDirUri } = await ensureInfo();
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.writeFile(uri, new Uint8Array());
-      log.debug(`createFile ${rel}`);
+      log.info('[explorerBridge] createFile', rel);
       post({ type: 'explorer.ok', op: 'createFile', path: rel || '' });
     } catch (e: any) {
       log.error(`createFile error for ${rel}: ${e?.message || String(e)}`);
@@ -143,7 +209,7 @@ export function createExplorerBridge(
       const { wsDirUri } = await ensureInfo();
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.createDirectory(uri);
-      log.debug(`createFolder ${rel}`);
+      log.info('[explorerBridge] createFolder', rel);
       post({ type: 'explorer.ok', op: 'createFolder', path: rel || '' });
     } catch (e: any) {
       log.error(`createFolder error for ${rel}: ${e?.message || String(e)}`);
@@ -156,15 +222,13 @@ export function createExplorerBridge(
       const { wsDirUri } = await ensureInfo();
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.delete(uri, { recursive, useTrash });
-      log.debug(`delete ${rel}, recursive: ${recursive}, useTrash: ${useTrash}`);
-      
-      // 삭제 성공 후 UI 갱신 강제 트리거 (와쳐가 놓칠 수 있는 경우 대비)
-      const parentPath = parentDir(rel);
-      post({ type: 'explorer.fs.changed', path: rel }); // 삭제된 항목
-      if (parentPath !== rel) { // 부모 폴더도 갱신
-        post({ type: 'explorer.fs.changed', path: parentPath });
+      log.info('[explorerBridge] delete', rel, { recursive, useTrash });
+
+      // 폴더 삭제 시 워처 제거 (onDelete 이벤트 방지)
+      if (recursive) {
+        removeWatcherForFolder(rel);
       }
-      
+
       post({ type: 'explorer.ok', op: 'delete', path: rel || '' });
     } catch (e: any) {
       log.error(`delete error for ${rel}: ${e?.message || String(e)}`);
@@ -175,16 +239,17 @@ export function createExplorerBridge(
   async function refreshWorkspaceRoot() {
     // 다음 ensureInfo에서 새 루트를 읽도록 초기화
     info = undefined;
-    // 기존 워처 제거
-    if (watcher) {
-      try { watcher.dispose(); } catch {}
-      watcher = undefined;
-      watcherBasePath = undefined;
+    // 기존 워처 모두 해제
+    for (const [path, w] of watchers) {
+      log.info('[explorerBridge] disposing watcher for folder:', path, 'due to root change');
+      try { w.dispose(); } catch {}
     }
+    watchers.clear();
+    log.info('[explorerBridge] all watchers disposed for workspace root change');
     // 새 루트 정보 불러오고 워처 재바인딩
     await ensureInfo();
     // UI에 루트 변경 통지 → UI는 상태 초기화 후 루트 목록 다시 요청
-    post({ type: 'explorer.root.changed', path: '' });
+    post({ type: 'explorer.root.changed' });
   }
 
   return {
@@ -192,23 +257,23 @@ export function createExplorerBridge(
       if (disposed || !msg) return false;
       switch (msg.type) {
         case 'explorer.list':
-          log.debug(`<- list ${msg.path}`);
+          log.info('[explorerBridge] <- list', msg.path);
           await list(String(msg.path || ''));
           return true;
         case 'explorer.open':
-          log.debug(`<- open ${msg.path}`);
+          log.info('[explorerBridge] <- open', msg.path);
           await open(String(msg.path || ''));
           return true;
         case 'explorer.createFile':
-          log.debug(`<- createFile ${msg.path}`);
+          log.info('[explorerBridge] <- createFile', msg.path);
           await createFile(String(msg.path || ''));
           return true;
         case 'explorer.createFolder':
-          log.debug(`<- createFolder ${msg.path}`);
+          log.info('[explorerBridge] <- createFolder', msg.path);
           await createFolder(String(msg.path || ''));
           return true;
         case 'explorer.delete':
-          log.debug(`<- delete ${msg.path}, recursive: ${!!msg.recursive}, useTrash: ${!!msg.useTrash}`);
+          log.info('[explorerBridge] <- delete', msg.path, { recursive: !!msg.recursive, useTrash: !!msg.useTrash });
           await remove(String(msg.path || ''), !!msg.recursive, !!msg.useTrash);
           return true;
       }
@@ -219,11 +284,12 @@ export function createExplorerBridge(
     },
     dispose() {
       disposed = true;
-      if (watcher) {
-        try { watcher.dispose(); } catch (e) { log.error(`watcher dispose error: ${e}`); }
-        watcher = undefined;
-        watcherBasePath = undefined;
+      for (const [path, w] of watchers) {
+        log.info('[explorerBridge] disposing watcher for folder:', path, 'on bridge dispose');
+        try { w.dispose(); } catch (e) { log.error('[explorerBridge] watcher dispose error', e); }
       }
+      watchers.clear();
+      log.info('[explorerBridge] all watchers disposed on bridge dispose');
     },
   };
 }

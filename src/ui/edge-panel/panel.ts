@@ -43,6 +43,10 @@
     return;
   }
 
+  // 토글 버튼 refs
+  const toggleLogsEl = document.getElementById('toggleLogs') as HTMLButtonElement | null;
+  const toggleExplorerEl = document.getElementById('toggleExplorer') as HTMLButtonElement | null;
+
   rootEl.classList.remove('mode-normal', 'mode-debug'); // 과거 레이아웃 클래스 제거
 
   // ── 상태/타입 ────────────────────────────────────────────────
@@ -102,6 +106,7 @@
   function applyLayout() {
     const hasLogs = state.showLogs;
     const hasExplorer = state.showExplorer;
+    log('applyLayout: showExplorer =', hasExplorer, 'showLogs =', hasLogs);
     const hasAny = hasLogs || hasExplorer;
 
     rootEl!.style.display = 'grid';
@@ -732,6 +737,7 @@
     node.expanded = !node.expanded;
     updateNodeExpanded(node);
     if (node.expanded && !node.loaded) requestList(node.path);
+    if (node.expanded) scheduleFolderRefresh(node.path); // 펼쳐질 때 refresh 추가
     if (focusAfter && node.el) (node.el as HTMLElement).focus?.();
   }
 
@@ -949,21 +955,38 @@
   });
   document.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Escape') closeCtxMenu(); });
 
+  // 토글 버튼 이벤트
+  if (toggleLogsEl) {
+    toggleLogsEl.addEventListener('click', () => {
+      state.showLogs = !state.showLogs;
+      log('logs toggled to:', state.showLogs);
+      applyLayout();
+    });
+  }
+  if (toggleExplorerEl) {
+    toggleExplorerEl.addEventListener('click', () => {
+      state.showExplorer = !state.showExplorer;
+      log('explorer toggled to:', state.showExplorer);
+      applyLayout();
+    });
+  }
+
   // ── Host → UI ────────────────────────────────────────────────
   function scheduleFolderRefresh(dir: string) {
-    console.log('[panel] scheduleFolderRefresh called for dir:', dir, 'viewing:', state.explorerPath);
-    // 현재 표시(crumb) 폴더 또는 그 하위 폴더 변경 시 갱신
+    log('scheduleFolderRefresh called for dir:', dir, 'viewing:', state.explorerPath);
+    // 현재 표시(crumb) 폴더만 갱신
     if (!state.showExplorer) return;
     const viewing = state.explorerPath || '';
-    // dir이 viewing의 하위이거나 동일하면 갱신
-    if (dir !== viewing && !dir.startsWith(viewing + '/')) return;
-    const prev = refreshTimers.get(viewing);
+    // dir이 viewing이 아니어도, dir 폴더가 expanded이면 갱신 (자식 변경 감지)
+    const node = state.nodesByPath.get(dir);
+    if (dir !== viewing && (!node || !node.expanded)) return;
+    const prev = refreshTimers.get(dir); // 폴더별 타이머
     if (prev) clearTimeout(prev);
     const t = window.setTimeout(() => {
-      refreshTimers.delete(viewing);
-      requestList(viewing);
+      refreshTimers.delete(dir);
+      requestList(dir);
     }, 150);
-    refreshTimers.set(viewing, t as unknown as number);
+    refreshTimers.set(dir, t as unknown as number);
   }
 
   window.addEventListener('message', (event) => {
@@ -1072,6 +1095,10 @@
           
           // 부모 폴더 refresh
           requestList(parentPath);
+        } else if (msg.op === 'createFile' || msg.op === 'createFolder') {
+          // 생성 작업은 생성된 항목의 부모 폴더 refresh
+          const parentDir = dirOf(String(msg.path || ''));
+          requestList(parentDir);
         } else if (msg.op !== 'open') {
           // 다른 작업은 현재 폴더 refresh
           const target = state.selected?.kind === 'folder' ? state.selected : (state.selected?.parent ?? state.root);
@@ -1082,7 +1109,7 @@
 
       case 'explorer.fs.changed': {
         // 확장 쪽에서 변경 감지 → 현재 폴더와 동일한 상위면 갱신
-        console.log('[panel] explorer.fs.changed received:', msg.path);
+        log('explorer.fs.changed received:', msg.path);
         const changedRel = String(msg.path || '');
         const dir = dirOf(changedRel);
         scheduleFolderRefresh(dir);
@@ -1106,7 +1133,7 @@
       }
 
       case 'explorer.error': {
-        uiLog.error(`[edge-panel] explorer.error: ${JSON.stringify(msg)}`);
+        uiLog.error(`explorer.error: ${JSON.stringify(msg)}`);
         alert(`탐색기 작업 실패: ${msg.message || msg.op || 'unknown'}`);
         break;
       }
