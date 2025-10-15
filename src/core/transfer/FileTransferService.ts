@@ -1,11 +1,13 @@
 import type { HostConfig } from '../connection/ConnectionManager.js';
 import { runCommandLine } from '../connection/ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { measure } from '../logging/perf.js';
 
 export class FileTransferService {
   private log = getLogger('FileTransfer');
   constructor(private target: HostConfig) {}
 
+  @measure()
   async uploadViaTarBase64(
     localDir: string,
     remoteDir: string,
@@ -28,6 +30,7 @@ export class FileTransferService {
     await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
   }
 
+  @measure()
   async downloadViaTarBase64(
     remoteDir: string,
     localDir: string,

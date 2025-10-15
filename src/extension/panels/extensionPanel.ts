@@ -28,6 +28,7 @@ import {
 import type { LogEntry } from '../messaging/messageTypes.js';
 import { downloadAndInstall } from '../update/updater.js';
 import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
+import { measure } from '../../core/logging/perf.js';
 
 interface EdgePanelState {
   version: string;
@@ -48,6 +49,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   private _session?: LogSessionManager;
   private _currentAbort?: AbortController;
+  private _perfMonitor?: any; // Performance Monitor 인스턴스
 
   private _logPanel?: vscode.WebviewPanel;
 
@@ -60,7 +62,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     private readonly _context: vscode.ExtensionContext,
     version: string,
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
+    perfMonitor?: any,
   ) {
+    this._perfMonitor = perfMonitor;
     this._state = {
       version,
       updateAvailable: !!latestInfo?.hasUpdate,
@@ -199,6 +203,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     await this._runOp(def);
   }
 
+  @measure()
   private async _runOp(def: ButtonDef) {
     const op = def.op;
     try {
@@ -218,7 +223,26 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this._view?.webview.postMessage({ type: op.event, payload: op.payload });
           break;
         case 'handler':
-          await this._handlers!.route(op.name);
+          if (op.name === 'togglePerformanceMonitoring') {
+            // 성능 모니터링 패널 열기
+            if (this._perfMonitor) {
+              this._perfMonitor.createPanel();
+              vscode.window.showInformationMessage('Performance Monitor opened.');
+            } else {
+              vscode.window.showErrorMessage('Performance Monitor is not available.');
+            }
+          } else if (op.name === 'updateNow') {
+            await downloadAndInstall(this._state.updateUrl!, this._state.latestSha!);
+            await vscode.commands.executeCommand('workbench.action.reloadWindow');
+          } else if (op.name === 'changeWorkspaceQuick') {
+            await this._handlers!.route('changeWorkspaceQuick');
+          } else if (op.name === 'openWorkspace') {
+            await this._handlers!.route('openWorkspace');
+          } else if (op.name === 'openHelp') {
+            await this._handlers!.route('help');
+          } else {
+            await this._handlers!.route(op.name);
+          }
           // UI 후처리: 워크스페이스 변경 시 explorer refresh
           if (op.name === 'changeWorkspaceQuick' || op.name === 'openWorkspace') {
             await this._explorer?.refreshWorkspaceRoot?.();
@@ -230,7 +254,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  // ====== Homey Logging Viewer (기존) ======
+  @measure()
   public async handleHomeyLoggingCommand() {
     const pick = await vscode.window.showQuickPick(
       [
@@ -275,9 +299,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             payload: { logs, seq: ++seq },
           });
         },
-        onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
-          viewer.webview.postMessage({ v: 1, type: 'metrics.update', payload: m });
-        },
       });
       return;
     }
@@ -309,13 +330,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             payload: { logs, total, seq: ++seq },
           });
         },
-        onMetrics: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => {
-          viewer.webview.postMessage({ v: 1, type: 'metrics.update', payload: m });
-        },
       });
     }
   }
 
+  @measure()
   private async pickConnection(): Promise<HostConfig | undefined> {
     const list = await readDeviceList(this._context);
 
@@ -419,6 +438,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     return;
   }
 
+  @measure()
   private async openLogViewerPanel(): Promise<vscode.WebviewPanel> {
     if (this._logPanel) {
       try {
@@ -481,7 +501,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 export function registerEdgePanelCommands(
   context: vscode.ExtensionContext,
   provider: EdgePanelProvider,
+  perfMonitor?: any,
 ) {
+  // Performance Monitor를 provider에 설정
+  if (perfMonitor) {
+    (provider as any)._perfMonitor = perfMonitor;
+  }
+
   const d = vscode.commands.registerCommand('homeyEdgetool.openHomeyLogging', async () => {
     await provider.handleHomeyLoggingCommand();
   });

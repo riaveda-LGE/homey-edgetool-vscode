@@ -27,8 +27,8 @@ try {
   console.log('🧹 Clean dist...');
   execSync('rimraf dist', { stdio: 'inherit' });
 
-  console.log('📦 Deploy extension...');
-  execSync('npm run deploy', { stdio: 'inherit' });
+  console.log('📦 Package extension...');
+  execSync('npm run package', { stdio: 'inherit' });
 
   console.log(`📥 Install ${vsix}...`);
   execSync(`code --install-extension ${vsix}`, { stdio: 'inherit' });

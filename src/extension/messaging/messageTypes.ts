@@ -35,7 +35,13 @@ export type H2W =
       { sections: { title: string; items: { id: string; label: string; desc?: string }[] }[] }
     >
   | Envelope<'ui.toggleMode', { toggle?: boolean; mode?: 'mode-normal' | 'mode-debug' }>
-  | Envelope<'error', { code: string; message: string; detail?: any; inReplyTo?: string }>;
+  | Envelope<'error', { code: string; message: string; detail?: any; inReplyTo?: string }>
+  | Envelope<'perf.updateData', { data: any[] }>
+  | Envelope<'perf.captureStarted', EmptyPayload>
+  | Envelope<'perf.captureStopped', { result: any; htmlReport: string; exportHtml: string }>
+  | Envelope<'perf.monitoringStarted', EmptyPayload>
+  | Envelope<'perf.monitoringStopped', EmptyPayload>
+  ;
 
 // Webview → Host
 export type W2H =
@@ -49,4 +55,12 @@ export type W2H =
   | Envelope<'logging.stop', EmptyPayload>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
   | Envelope<'homey.command.run', { name: string; args?: string[] }>
-  | Envelope<'button.click', { id: string }>;
+  | Envelope<'button.click', { id: string }>
+  | Envelope<'perfMeasure', { name: string; duration: number }>
+  | Envelope<'perf.startCapture', EmptyPayload>
+  | Envelope<'perf.stopCapture', EmptyPayload>
+  | Envelope<'perf.startMonitoring', EmptyPayload>
+  | Envelope<'perf.stopMonitoring', EmptyPayload>
+  | Envelope<'perf.exportJson', EmptyPayload>
+  | Envelope<'perf.exportHtmlReport', { html: string }>
+  ;

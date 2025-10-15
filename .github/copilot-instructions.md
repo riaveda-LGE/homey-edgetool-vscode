@@ -256,7 +256,29 @@ webview.onDidReceiveMessage((msg) => {
 
 ---
 
-### 8. 구현 체크리스트
+### 9. Performance Monitoring Architecture
+
+- **목적**: 전역 성능 모니터링 플래그로 On/Off 제어, Off 시 성능 오버헤드 0%
+- **핵심 요소**
+  - `PerformanceProfiler`: 싱글톤 클래스, `isEnabled` 플래그 관리
+  - `measureFunction()`: 함수 실행 시간 측정 (데코레이터용)
+  - `measureIO()`: I/O 작업 성능 측정 (데코레이터용)
+- **On/Off 동작**
+  - **Off 모드**: `isEnabled = false` → 모든 측정 로직 스킵 (최대 성능)
+  - **On 모드**: `isEnabled = true` → 측정 및 기록 수행
+- **데코레이터**
+  - `@measure`: 함수 실행 시간 측정
+  - `@measureIO`: 파일 I/O 성능 측정
+- **명령어**
+  - `togglePerformanceMonitoring`: On/Off 모드 전환 (Quick Pick)
+  - On 선택: `globalProfiler.enable()` + 패널 열기
+  - Off 선택: `globalProfiler.disable()` + 패널 닫기
+- **주의사항**
+  - Off 모드에서는 모든 `@measure`/`@measureIO` 데코레이터가 그냥 함수 실행 (오버헤드 없음)
+  - 직접 `measureFunction()` 호출도 `isEnabled` 체크 적용
+  - 실제 캡처는 panel의 "Start Capture" 버튼에서 수동 제어
+
+---
 
 - [ ] ConnectionManager (SSH/ADB)
 - [ ] HomeyController (mount/git/homey 명령)
