@@ -2,6 +2,9 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import { XError, ErrorCategory } from '../../shared/errors.js';
+import { readJsonFile } from '../../shared/utils.js';
+
 export type Json = any;
 
 /** 확장 전역 사용자 설정 (config.json) */
@@ -49,17 +52,6 @@ export async function ensureDir(uri: vscode.Uri) {
   await vscode.workspace.fs.createDirectory(uri);
 }
 
-/** JSON 읽기 (없으면 undefined) */
-export async function readJson<T = any>(uri: vscode.Uri): Promise<T | undefined> {
-  try {
-    const buf = await vscode.workspace.fs.readFile(uri);
-    const txt = new TextDecoder('utf8').decode(buf);
-    return JSON.parse(txt) as T;
-  } catch {
-    return undefined;
-  }
-}
-
 /** JSON 쓰기 (pretty) */
 export async function writeJson(uri: vscode.Uri, obj: any) {
   const txt = JSON.stringify(obj ?? {}, null, 2);
@@ -88,7 +80,7 @@ export async function resolveWorkspaceInfo(ctx: vscode.ExtensionContext): Promis
   const paths = getUserdataPaths(ctx);
   await ensureDir(paths.storageDir);
 
-  const cfg = (await readJson<AppConfigFile>(paths.configJson)) ?? {};
+  const cfg = (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
   const base = cfg.workspace_dir?.trim();
 
   if (base && path.isAbsolute(base)) {
@@ -131,12 +123,12 @@ export async function changeWorkspaceBaseDir(
   absoluteBaseDir: string,
 ): Promise<WorkspaceInfo> {
   if (!absoluteBaseDir || !path.isAbsolute(absoluteBaseDir)) {
-    throw new Error('절대 경로를 입력해야 합니다.');
+    throw new XError(ErrorCategory.Path, '절대 경로를 입력해야 합니다.');
   }
   const paths = getUserdataPaths(ctx);
   await ensureDir(paths.storageDir);
 
-  const cfg = (await readJson<AppConfigFile>(paths.configJson)) ?? {};
+  const cfg = (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
   cfg.workspace_dir = absoluteBaseDir;
   await writeJson(paths.configJson, cfg);
 
@@ -155,7 +147,7 @@ export async function getCurrentWorkspacePathFs(ctx: vscode.ExtensionContext): P
 export async function readDeviceList(ctx: vscode.ExtensionContext): Promise<DeviceListFile> {
   const { storageDir, deviceListJson } = getUserdataPaths(ctx);
   await ensureDir(storageDir);
-  return (await readJson<DeviceListFile>(deviceListJson)) ?? [];
+  return (await readJsonFile<DeviceListFile>(deviceListJson)) ?? [];
 }
 
 /** 장치 목록 통째로 덮어쓰기 */

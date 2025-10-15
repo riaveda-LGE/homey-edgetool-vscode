@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { PANEL_VIEW_TYPE } from '../../shared/const.js';
+import { PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
 
 const log = getLogger('LogViewEditor');
 
@@ -77,6 +77,6 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
 function getNonce() {
   let text = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < RANDOM_STRING_LENGTH; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
   return text;
 }

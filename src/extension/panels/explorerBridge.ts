@@ -1,6 +1,8 @@
 // === src/extension/panels/explorerBridge.ts ===
 import * as vscode from 'vscode';
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
+import { toPosix, relFromBase, parentDir } from '../../shared/utils.js';
 
 export type ExplorerBridge = {
   handleMessage(msg: any): Promise<boolean>;
@@ -18,27 +20,11 @@ function shouldHideEntry(name: string, kind: 'file' | 'folder') {
   return HIDE_FILES.has(name);
 }
 
-// 경로 유틸 (posix 통일)
-function toPosix(p: string) {
-  return p.replace(/\\/g, '/');
-}
-function relFromBase(baseFsPath: string, uri: vscode.Uri): string {
-  const base = toPosix(baseFsPath).replace(/\/+$/, '');
-  const full = toPosix(uri.fsPath);
-  let rel = full.startsWith(base) ? full.slice(base.length) : full;
-  rel = rel.replace(/^\/+/, '');
-  return rel;
-}
-function parentDir(rel: string): string {
-  const p = toPosix(rel);
-  const i = p.lastIndexOf('/');
-  return i >= 0 ? p.slice(0, i) : '';
-}
-
 export function createExplorerBridge(
   context: vscode.ExtensionContext,
   post: (m: any) => void,
 ): ExplorerBridge {
+  const log = getLogger('explorerBridge');
   let disposed = false;
   let info: { wsDirUri: vscode.Uri } | undefined;
 
@@ -87,12 +73,12 @@ export function createExplorerBridge(
         const top = dir.split('/').filter(Boolean)[0] ?? rel.split('/').filter(Boolean)[0] ?? '';
         if (HIDE_DIRS.has(top)) return;
 
-        console.log('[explorerBridge] fs event:', uri.fsPath, 'rel:', rel, 'dir:', dir);
+        log.debug(`fs event: ${uri.fsPath}, rel: ${rel}, dir: ${dir}`);
 
         // UI에 변경 알림
         post({ type: 'explorer.fs.changed', path: rel });
       } catch (e) {
-        console.error('[explorerBridge] fs event error', e);
+        log.error(`fs event error: ${e}`);
       }
     };
 
@@ -102,7 +88,7 @@ export function createExplorerBridge(
 
     context.subscriptions.push(watcher, d1, d2, d3);
 
-    console.log('[explorerBridge] watcher ready at', toPosix(baseFsPath));
+    log.info(`watcher ready at ${toPosix(baseFsPath)}`);
   }
 
   async function list(rel: string) {
@@ -120,7 +106,7 @@ export function createExplorerBridge(
       console.log('[explorerBridge] list', rel, '->', items.length, 'items');
       post({ type: 'explorer.list.result', path: rel || '', items });
     } catch (e: any) {
-      console.error('[explorerBridge] list error', rel, e);
+      log.error(`list error for ${rel}: ${e?.message || String(e)}`);
       post({ type: 'explorer.error', op: 'list', message: e?.message || String(e) });
     }
   }
@@ -131,10 +117,10 @@ export function createExplorerBridge(
       const uri = toChildUri(wsDirUri, rel);
       const doc = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(doc, { preview: false });
-      console.log('[explorerBridge] open', rel);
+      log.debug(`open ${rel}`);
       post({ type: 'explorer.ok', op: 'open', path: rel || '' });
     } catch (e: any) {
-      console.error('[explorerBridge] open error', rel, e);
+      log.error(`open error for ${rel}: ${e?.message || String(e)}`);
       post({ type: 'explorer.error', op: 'open', message: e?.message || String(e) });
     }
   }
@@ -144,10 +130,10 @@ export function createExplorerBridge(
       const { wsDirUri } = await ensureInfo();
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.writeFile(uri, new Uint8Array());
-      console.log('[explorerBridge] createFile', rel);
+      log.debug(`createFile ${rel}`);
       post({ type: 'explorer.ok', op: 'createFile', path: rel || '' });
     } catch (e: any) {
-      console.error('[explorerBridge] createFile error', rel, e);
+      log.error(`createFile error for ${rel}: ${e?.message || String(e)}`);
       post({ type: 'explorer.error', op: 'createFile', message: e?.message || String(e) });
     }
   }
@@ -157,10 +143,10 @@ export function createExplorerBridge(
       const { wsDirUri } = await ensureInfo();
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.createDirectory(uri);
-      console.log('[explorerBridge] createFolder', rel);
+      log.debug(`createFolder ${rel}`);
       post({ type: 'explorer.ok', op: 'createFolder', path: rel || '' });
     } catch (e: any) {
-      console.error('[explorerBridge] createFolder error', rel, e);
+      log.error(`createFolder error for ${rel}: ${e?.message || String(e)}`);
       post({ type: 'explorer.error', op: 'createFolder', message: e?.message || String(e) });
     }
   }
@@ -170,18 +156,18 @@ export function createExplorerBridge(
       const { wsDirUri } = await ensureInfo();
       const uri = toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.delete(uri, { recursive, useTrash });
-      console.log('[explorerBridge] delete', rel, { recursive, useTrash });
+      log.debug(`delete ${rel}, recursive: ${recursive}, useTrash: ${useTrash}`);
       
       // 삭제 성공 후 UI 갱신 강제 트리거 (와쳐가 놓칠 수 있는 경우 대비)
       const parentPath = parentDir(rel);
       post({ type: 'explorer.fs.changed', path: rel }); // 삭제된 항목
       if (parentPath !== rel) { // 부모 폴더도 갱신
-        post({ type: 'explorer.fs.changed', path: parentPath + '/dummy' });
+        post({ type: 'explorer.fs.changed', path: parentPath });
       }
       
       post({ type: 'explorer.ok', op: 'delete', path: rel || '' });
     } catch (e: any) {
-      console.error('[explorerBridge] delete error', rel, e);
+      log.error(`delete error for ${rel}: ${e?.message || String(e)}`);
       post({ type: 'explorer.error', op: 'delete', message: e?.message || String(e) });
     }
   }
@@ -206,23 +192,23 @@ export function createExplorerBridge(
       if (disposed || !msg) return false;
       switch (msg.type) {
         case 'explorer.list':
-          console.log('[explorerBridge] <- list', msg.path);
+          log.debug(`<- list ${msg.path}`);
           await list(String(msg.path || ''));
           return true;
         case 'explorer.open':
-          console.log('[explorerBridge] <- open', msg.path);
+          log.debug(`<- open ${msg.path}`);
           await open(String(msg.path || ''));
           return true;
         case 'explorer.createFile':
-          console.log('[explorerBridge] <- createFile', msg.path);
+          log.debug(`<- createFile ${msg.path}`);
           await createFile(String(msg.path || ''));
           return true;
         case 'explorer.createFolder':
-          console.log('[explorerBridge] <- createFolder', msg.path);
+          log.debug(`<- createFolder ${msg.path}`);
           await createFolder(String(msg.path || ''));
           return true;
         case 'explorer.delete':
-          console.log('[explorerBridge] <- delete', msg.path, { recursive: !!msg.recursive, useTrash: !!msg.useTrash });
+          log.debug(`<- delete ${msg.path}, recursive: ${!!msg.recursive}, useTrash: ${!!msg.useTrash}`);
           await remove(String(msg.path || ''), !!msg.recursive, !!msg.useTrash);
           return true;
       }
@@ -234,7 +220,7 @@ export function createExplorerBridge(
     dispose() {
       disposed = true;
       if (watcher) {
-        try { watcher.dispose(); } catch (e) { console.error('[explorerBridge] watcher dispose error', e); }
+        try { watcher.dispose(); } catch (e) { log.error(`watcher dispose error: ${e}`); }
         watcher = undefined;
         watcherBasePath = undefined;
       }

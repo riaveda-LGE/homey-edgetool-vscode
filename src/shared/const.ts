@@ -29,3 +29,18 @@ export const FETCH_JSON_TIMEOUT_MS = 12_000;
 export const FETCH_BUFFER_TIMEOUT_MS = 60_000;
 
 // Webview/Panel
+export const DEFAULT_SSH_PORT = 22;
+export const DEFAULT_TRANSFER_TIMEOUT_MS = 60_000;
+export const DEFAULT_COMMAND_TIMEOUT_MS = 30_000;
+export const MAX_SSH_PORT = 65535;
+export const MIN_SSH_PORT = 1;
+
+// Logs & Buffers
+export const DEFAULT_BATCH_SIZE = 200;
+export const REALTIME_BUFFER_MAX = 1000;
+export const PERF_DATA_MAX = 1000;
+export const LOG_TOTAL_CALLS_THRESHOLD = 1000;
+
+// UI & Misc
+export const PERF_UPDATE_INTERVAL_MS = 1000;
+export const RANDOM_STRING_LENGTH = 32;

@@ -34,3 +34,6 @@ cts_suite/result/
 # Node modules
 node_modules/
 dist/
+
+# Performance test results
+.homey-perf/

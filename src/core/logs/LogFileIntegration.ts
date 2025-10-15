@@ -4,6 +4,9 @@ import * as readline from 'readline';
 
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { measureIO } from '../logging/perf.js';
+import { XError, ErrorCategory } from '../../shared/errors.js';
+import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
 
 const log = getLogger('LogFileIntegration');
 
@@ -16,20 +19,24 @@ export type MergeOptions = {
 };
 
 export async function mergeDirectory(opts: MergeOptions) {
-  const batchSize = Math.max(1, opts.batchSize ?? 200);
-  const files = await listLogFiles(opts.dir);
-  const ordered = opts.reverse ? files : files.sort(compareLogOrderDesc); // 최신부터
+  try {
+    const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
+    const files = await listLogFiles(opts.dir);
+    const ordered = opts.reverse ? files : files.sort(compareLogOrderDesc); // 최신부터
 
-  log.info(`mergeDirectory: ${ordered.length} files`);
+    log.info(`mergeDirectory: ${ordered.length} files`);
 
-  for (const f of ordered) {
-    await streamFile(
-      path.join(opts.dir, f),
-      (entries) => opts.onBatch(entries),
-      batchSize,
-      opts.signal,
-    );
-    if (opts.signal?.aborted) break;
+    for (const f of ordered) {
+      await streamFile(
+        path.join(opts.dir, f),
+        (entries) => opts.onBatch(entries),
+        batchSize,
+        opts.signal,
+      );
+      if (opts.signal?.aborted) break;
+    }
+  } catch (e) {
+    throw new XError(ErrorCategory.Path, `Failed to merge log directory ${opts.dir}: ${e instanceof Error ? e.message : String(e)}`, e);
   }
 }
 
@@ -48,8 +55,12 @@ function numberSuffix(name: string) {
 }
 
 async function listLogFiles(dir: string): Promise<string[]> {
-  const all = await fs.promises.readdir(dir);
-  return all.filter((f) => /\.log(\.\d+)?$/.test(f));
+  try {
+    const all = await fs.promises.readdir(dir);
+    return all.filter((f) => /\.log(\.\d+)?$/.test(f));
+  } catch (e) {
+    throw new XError(ErrorCategory.Path, `Failed to list log files in ${dir}: ${e instanceof Error ? e.message : String(e)}`, e);
+  }
 }
 
 async function streamFile(
@@ -84,6 +95,7 @@ async function streamFile(
     signal?.removeEventListener('abort', onAbort);
   } catch (e) {
     log.warn(`streamFile error ${filePath}: ${String(e)}`);
+    throw new XError(ErrorCategory.Path, `Failed to stream log file ${filePath}: ${e instanceof Error ? e.message : String(e)}`, e);
   }
 }
 

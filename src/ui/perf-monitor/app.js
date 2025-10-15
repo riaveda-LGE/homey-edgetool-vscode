@@ -1,6 +1,14 @@
 // === src/ui/perf-monitor/app.js ===
 const vscode = acquireVsCodeApi();
 
+// UI Logger for perf-monitor
+const uiLog = {
+  debug: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'debug', text, source: 'ui.perfMonitor' } }),
+  info: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'info', text, source: 'ui.perfMonitor' } }),
+  warn: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'warn', text, source: 'ui.perfMonitor' } }),
+  error: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'error', text, source: 'ui.perfMonitor' } }),
+};
+
 // Global variables
 let chart = null;
 let exportHtml = '';
@@ -36,7 +44,7 @@ function applyTheme() {
       }
       chart.update();
     } catch (e) {
-      console.error('Error updating chart theme:', e);
+      uiLog.error(`Error updating chart theme: ${e}`);
     }
   }
 }
@@ -48,13 +56,13 @@ function initChart() {
 
   const checkChart = () => {
     retryCount++;
-    console.log(`Checking Chart.js (attempt ${retryCount})...`);
-    console.log('Chart:', typeof Chart, Chart ? 'loaded' : 'not loaded');
+    uiLog.info(`Checking Chart.js (attempt ${retryCount})...`);
+    uiLog.info(`Chart: ${typeof Chart}, ${Chart ? 'loaded' : 'not loaded'}`);
 
     if (typeof Chart !== 'undefined') {
       const chartContainer = document.getElementById('chart');
       if (!chartContainer) {
-        console.error('Chart container element not found');
+        uiLog.error('Chart container element not found');
         return;
       }
 
@@ -67,7 +75,7 @@ function initChart() {
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        console.error('Failed to get 2D context from canvas');
+        uiLog.error('Failed to get 2D context from canvas');
         return;
       }
       chart = new Chart(ctx, {
@@ -119,12 +127,12 @@ function initChart() {
           },
         },
       });
-      console.log('Chart initialized successfully');
+      uiLog.info('Chart initialized successfully');
     } else if (retryCount < maxRetries) {
-      console.warn(`Chart.js is not loaded yet, retrying... (${retryCount}/${maxRetries})`);
+      uiLog.warn(`Chart.js is not loaded yet, retrying... (${retryCount}/${maxRetries})`);
       setTimeout(checkChart, 100);
     } else {
-      console.error('Failed to load Chart.js after maximum retries. Chart will not be available.');
+      uiLog.error('Failed to load Chart.js after maximum retries. Chart will not be available.');
       // Create a fallback message
       const chartContainer = document.getElementById('chart');
       if (chartContainer) {
@@ -164,7 +172,7 @@ function displayHtmlReport(html) {
       try {
         eval(script.textContent);
       } catch (error) {
-        console.error('Error executing inline script in exported report:', error);
+        uiLog.error(`Error executing inline script in exported report: ${error}`);
       }
     }
   });

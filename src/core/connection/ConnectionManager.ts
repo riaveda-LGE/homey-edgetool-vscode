@@ -1,7 +1,8 @@
 import { adbShell, adbStream } from './adbClient.js';
 import { sshRun, sshStream } from './sshClient.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { measure } from '../logging/perf.js';
+import { measure, measureIO } from '../logging/perf.js';
+import { XError, ErrorCategory } from '../../shared/errors.js';
 
 export type HostConfig =
   | {
@@ -18,7 +19,15 @@ export type HostConfig =
 
 export type RunResult = { code: number | null };
 
-export class ConnectionManager {
+export interface IConnectionManager {
+  connect(): Promise<void>;
+  isConnected(): boolean;
+  run(cmd: string, args?: string[]): Promise<RunResult>;
+  stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal): Promise<void>;
+  dispose(): void;
+}
+
+export class ConnectionManager implements IConnectionManager {
   private log = getLogger('ConnectionManager');
   private connected = false;
   constructor(private cfg: HostConfig) {}
@@ -35,51 +44,59 @@ export class ConnectionManager {
     return this.connected;
   }
 
-  @measure()
+  @measureIO('run', (instance) => instance.cfg.id)
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
-    const full = [cmd, ...args].join(' ').trim();
-    this.log.debug(`run: ${full}`);
-    if (this.cfg.type === 'adb') {
-      return {
-        code: (await adbShell(full, { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs }))
-          .code,
-      };
-    }
-    const code = await sshRun(full, {
-      host: this.cfg.host,
-      port: this.cfg.port,
-      user: this.cfg.user,
-      keyPath: this.cfg.keyPath,
-      password: this.cfg.password,
-      timeoutMs: this.cfg.timeoutMs,
-    });
-    return { code };
-  }
-
-  @measure()
-  async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
-    this.log.debug(`stream: ${cmd}`);
-    if (this.cfg.type === 'adb') {
-      await adbStream(
-        cmd,
-        { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs, signal: abort },
-        onLine,
-      );
-      return;
-    }
-    await sshStream(
-      cmd,
-      {
+    try {
+      const full = [cmd, ...args].join(' ').trim();
+      this.log.debug(`run: ${full}`);
+      if (this.cfg.type === 'adb') {
+        return {
+          code: (await adbShell(full, { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs }))
+            .code,
+        };
+      }
+      const code = await sshRun(full, {
         host: this.cfg.host,
         port: this.cfg.port,
         user: this.cfg.user,
         keyPath: this.cfg.keyPath,
         password: this.cfg.password,
         timeoutMs: this.cfg.timeoutMs,
-        signal: abort,
-      },
-      onLine,
-    );
+      });
+      return { code };
+    } catch (e) {
+      throw new XError(ErrorCategory.Connection, `Command failed: ${e instanceof Error ? e.message : String(e)}`, e);
+    }
+  }
+
+  @measureIO('stream', (instance) => instance.cfg.id)
+  async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
+    try {
+      this.log.debug(`stream: ${cmd}`);
+      if (this.cfg.type === 'adb') {
+        await adbStream(
+          cmd,
+          { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs, signal: abort },
+          onLine,
+        );
+        return;
+      }
+      await sshStream(
+        cmd,
+        {
+          host: this.cfg.host,
+          port: this.cfg.port,
+          user: this.cfg.user,
+          keyPath: this.cfg.keyPath,
+          password: this.cfg.password,
+          timeoutMs: this.cfg.timeoutMs,
+          signal: abort,
+        },
+        onLine,
+      );
+    } catch (e) {
+      throw new XError(ErrorCategory.Connection, `Stream failed: ${e instanceof Error ? e.message : String(e)}`, e);
+    }
   }
 
   @measure()

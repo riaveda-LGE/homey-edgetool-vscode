@@ -278,21 +278,6 @@ webview.onDidReceiveMessage((msg) => {
   - 직접 `measureFunction()` 호출도 `isEnabled` 체크 적용
   - 실제 캡처는 panel의 "Start Capture" 버튼에서 수동 제어
 
----
-
-- [ ] ConnectionManager (SSH/ADB)
-- [ ] HomeyController (mount/git/homey 명령)
-- [ ] FileTransferService (tar/base64 파이프)
-- [ ] LogSessionManager (realtime/file merge)
-- [ ] CustomEditorProvider (webview 브리지)
-- [ ] WebSocketService (배치 큐 + 재연결)
-- [ ] LogViewer (가상 스크롤 + 통계)
-- [ ] Filter/Search/Highlight/Bookmark/Tooltip 매니저
-- [ ] AbortController 일괄 취소
-- [ ] PanelProvider (상태/업데이트)
-- [ ] 설정 스키마 (connection, logs, buffer 등)
-
----
 
 ## 로깅 사용 예시
 각 모듈에서 getLogger를 사용해서 디버깅 로그를 extension view에 보내고 싶으면 아래와 같이 사용해야 됨:
@@ -323,22 +308,63 @@ export async function doWork() {
 ## 프로젝트 트리
 ```
 homey-edgetool/
+├─ .github/                               # GitHub 관련 설정 및 문서
+│  └─ copilot-instructions.md             # Copilot 지침 문서
+├─ doc/                                   # 프로젝트 문서
+│  ├─ button_command_add_rule.md          # 버튼 명령 추가 규칙
+│  ├─ development-notes.md                # 개발 노트
+│  └─ homey_logging_architect.md          # Homey 로깅 아키텍처
+├─ media/                                 # 아이콘/정적자원
+│  └─ resources/
+│     ├─ edge-icon.svg                    # 확장 아이콘
+│     └─ help.md                          # 도움말
+├─ scripts/                               # 빌드/배포 스크립트
+│  ├─ clean-reinstall.ps1                 # 클린 재설치 스크립트
+│  ├─ deploy.js                           # 배포 스크립트
+│  ├─ get_source/                         # 소스 가져오기
+│  │  ├─ get_source.ps1                   # 소스 가져오기 스크립트
+│  │  └─ source_list.txt                  # 소스 목록
+│  └─ perf/
+│     └─ run-merge-bench.ts               # 병합 벤치마크
 ├─ src/
 │  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
 │  │  ├─ main.ts                          # activate/deactivate, 초기 부트스트랩
 │  │  ├─ commands/
-│  │  │  └─ commandHandlers.ts            # help/h, connect_info, homey-logging 등 라우팅
-│  │  │  └─ edgepanel.buttons.ts           # button 정의 SSOT
+│  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅
+│  │  │  ├─ CommandHandlersConnect.ts     # 연결 관련 명령
+│  │  │  ├─ CommandHandlersGit.ts         # Git 관련 명령
+│  │  │  ├─ CommandHandlersHomey.ts       # Homey 관련 명령
+│  │  │  ├─ CommandHandlersHost.ts        # 호스트 관련 명령
+│  │  │  ├─ CommandHandlersLogging.ts     # 로깅 관련 명령
+│  │  │  ├─ CommandHandlersUpdate.ts      # 업데이트 관련 명령
+│  │  │  ├─ CommandHandlersWorkspace.ts   # 워크스페이스 관련 명령
+│  │  │  ├─ edgepanel.buttons.ts           # 버튼 정의 SSOT
+│  │  │  └─ ICommandHandlers.ts           # 명령 핸들러 인터페이스
 │  │  ├─ editors/
-│  │  │  └─ LogViewEditorProvider.ts      # Custom Editor + Webview (homey-logging)
+│  │  │  ├─ LogViewEditorProvider.ts      # 로그 뷰어 에디터 제공자
+│  │  │  ├─ PerfMonitorEditorProvider.ts  # 성능 모니터 에디터 제공자
+│  │  │  ├─ PerfMonitorPanel.ts           # 성능 모니터 패널
+│  │  │  ├─ PerfMonitorCaptureManager.ts  # 성능 데이터 캡처 관리
+│  │  │  ├─ PerfMonitorCommandHandler.ts  # 성능 모니터 명령 핸들러
+│  │  │  ├─ PerfMonitorDataManager.ts     # 성능 데이터 관리
+│  │  │  ├─ PerfMonitorExportManager.ts   # 성능 데이터 내보내기
+│  │  │  ├─ PerfMonitorHtmlGenerator.ts   # HTML 생성
+│  │  │  ├─ PerfMonitorMessageHandler.ts  # 메시지 핸들링
+│  │  │  ├─ PerfMonitorWebviewManager.ts  # 웹뷰 관리
+│  │  │  ├─ IPerfMonitorComponents.ts     # 성능 모니터 컴포넌트 인터페이스
+│  │  │  └─ IPerfMonitorPanelComponents.ts # 패널 컴포넌트 인터페이스
 │  │  ├─ messaging/
-│  │  │  ├─ hostWebviewBridge.ts          # Webview ↔ Extension message bridge
-│  │  │  ├─ messageTypes.ts               # 공용 메시지 타입(웹/호스트 공용 import)
-│  │  │  └─ bridge.ts                     # Webview 메시징 브리지 (이동됨)
+│  │  │  ├─ hostWebviewBridge.ts          # Webview ↔ Extension 메시지 브리지
+│  │  │  ├─ messageTypes.ts               # 공용 메시지 타입
+│  │  │  └─ bridge.ts                     # 메시징 브리지
 │  │  ├─ panels/
-│  │  │  └─ extensionPanel.ts             # Extension Panel 제공자
+│  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자
+│  │  │  ├─ EdgePanelButtonHandler.ts     # 버튼 이벤트 핸들링
+│  │  │  ├─ EdgePanelConnectionManager.ts # 연결 관리
+│  │  │  ├─ EdgePanelLogViewer.ts         # 로그 뷰어 관리
+│  │  │  └─ explorerBridge.ts             # 파일 탐색기 브리지
 │  │  └─ update/
-│  │     └─ updater.ts                    # checkLatestVersion(), downloadAndInstall()
+│  │     └─ updater.ts                    # 업데이트 관리
 │  │
 │  ├─ core/                               # 핵심 비즈니스 로직(런타임 독립)
 │  │  ├─ config/
@@ -346,148 +372,66 @@ homey-edgetool/
 │  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리
 │  │  ├─ connection/
 │  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 관리
-│  │  │  ├─ ExecRunner.ts                 # spawn 표준화
-│  │  │  ├─ sshClient.ts                  # SSH 클라이언트 (adapters/에서 이동)
-│  │  │  └─ adbClient.ts                  # ADB 클라이언트 (adapters/에서 이동)
+│  │  │  ├─ ExecRunner.ts                 # 프로세스 실행 표준화
+│  │  │  ├─ sshClient.ts                  # SSH 클라이언트
+│  │  │  ├─ adbClient.ts                  # ADB 클라이언트
+│  │  │  └─ HomeyController.ts            # Homey 디바이스 제어
 │  │  ├─ logging/
-│  │  │  ├─ extension-logger.ts           # OutputChannel + sink
-│  │  │  └─ perf.ts                       # 성능 계측
+│  │  │  ├─ extension-logger.ts           # OutputChannel + 로깅 싱크
+│  │  │  └─ perf.ts                       # 성능 계측 데코레이터
 │  │  ├─ logs/
-│  │  │  ├─ HybridLogBuffer.ts            # 4-버퍼 하이브리드
-│  │  │  ├─ LogFileIntegration.ts         # k-way 병합
-│  │  │  ├─ LogFileStorage.ts             # JSONL 저장/읽기
-│  │  │  ├─ LogSearch.ts                  # 검색
-│  │  │  └─ types.ts                      # LogEntry 등 타입
+│  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼
+│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합
+│  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기
+│  │  │  └─ LogSearch.ts                  # 로그 검색
 │  │  ├─ sessions/
-│  │  │  └─ LogSessionManager.ts          # 세션 관리
+│  │  │  └─ LogSessionManager.ts          # 로그 세션 관리
 │  │  └─ transfer/
-│  │     └─ FileTransferService.ts        # tar/base64 전송
+│  │     └─ FileTransferService.ts        # 파일 전송 서비스
 │  │
 │  ├─ shared/                             # 공용 유틸/타입
-│  │  ├─ const.ts                         # 상수
-│  │  ├─ types.ts                         # 공용 타입
-│  │  ├─ errors.ts                        # 에러 분류
-│  │  ├─ utils.ts                         # 공용 유틸
-│  │  └─ ui-input.ts                      # UI 입력 유틸 (extension/ui/에서 이동)
+│  │  ├─ const.ts                         # 상수 정의
+│  │  ├─ types.ts                         # 공용 타입 정의
+│  │  ├─ errors.ts                        # 에러 처리
+│  │  ├─ utils.ts                         # 공용 유틸리티
+│  │  └─ ui-input.ts                      # UI 입력 유틸리티
 │  │
-│  └─ ui/                                 # Webview 리소스
+│  ├─ types/                              # 타입 정의
+│  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입
+│  │
+│  └─ ui/                                 # Webview 리소스 (ES 모듈 기반)
+│     ├─ edge-panel/
+│     │  ├─ index.html                    # Edge Panel 웹뷰
+│     │  ├─ panel.css                     # 스타일시트
+│     │  ├─ panel.ts                      # 메인 로직 (ES 모듈 import)
+│     │  ├─ panel-dom.ts                  # DOM 조작 및 요소 관리
+│     │  ├─ panel-events.ts               # 이벤트 핸들러
+│     │  ├─ panel-render.ts               # 렌더링 함수
+│     │  └─ panel-state.ts                # 상태 관리
 │     ├─ log-viewer/
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰
 │     │  ├─ app.ts                        # 부트스트랩
+│     │  ├─ protocol.ts                   # 메시지 프로토콜
 │     │  ├─ services/
-│     │  │  └─ ws.ts                      # postMessage 래퍼
-│     │  ├─ modules/
-│     │  │  └─ LogViewer.ts               # 가상 스크롤
-│     │  └─ protocol.ts                   # 메시지 타입
-│     └─ edge-panel/
-│        ├─ index.html                    # Edge Panel 웹뷰
-│        ├─ panel.css                     # 스타일
-│        └─ panel.ts                      # 로직
+│     │  │  └─ ws.ts                      # WebSocket 래퍼
+│     │  └─ modules/
+│     │     └─ LogViewer.ts               # 가상 스크롤 로그 뷰어
+│     └─ perf-monitor/
+│        ├─ app.js                        # 성능 모니터 앱 (Chart.js 기반)
+│        └─ style.css                     # 스타일시트
 │
-├─ media/                                 # 아이콘/정적자원
-│  └─ resources/edge-icon.svg
-├─ scripts/
-│  └─ perf/
-│     └─ run-merge-bench.ts               # 벤치마크
-├─ package.json
-├─ tsconfig.json
-├─ TypeScript 컴파일 (tsc)
-└─ README.md / CHANGELOG.md / LICENSE
+├─ package.json                           # 프로젝트 설정
+├─ tsconfig.json                          # TypeScript 설정
+├─ eslint.config.js                       # ESLint 설정
+├─ .prettierrc                            # Prettier 설정
+├─ .prettierignore                        # Prettier 제외 파일
+├─ .gitattributes                         # Git 속성
+├─ .gitignore                             # Git 제외 파일
+├─ LICENSE                                # 라이선스
+├─ homey-edgetool-0.0.2.vsix              # 빌드된 VSIX 파일
+├─ dist/                                  # 컴파일 출력 디렉토리
+└─ node_modules/                          # 의존성
 ```
-
-## 모듈 간단 설명
-extension/
-
-main.ts: 확장 진입점. 로거 초기화, 전역 예외 후킹, 업데이트 확인, EdgePanel 등록.
-
-commands/
-
-commandHandlers.ts: help/h, connect_info, homey-logging 등 명령 및 버튼 라우팅.
-
-edgepanel.buttons.ts: button 정의 SSOT, DTO 변환.
-
-editors/
-
-LogViewEditorProvider.ts: Custom Editor + Webview로 homey-logging 뷰어.
-
-messaging/
-
-messageTypes.ts: Host/Webview 공유 메시지 타입.
-
-hostWebviewBridge.ts: Host 측 메시지 브리지.
-
-bridge.ts: Webview 측 메시징 브리지 (ui/_shared/에서 이동).
-
-panels/
-
-extensionPanel.ts: Extension Panel 제공자 (버튼 이벤트 라우팅).
-
-update/
-
-updater.ts: 버전 체크, 다운로드/설치.
-
-core/
-
-config/
-
-schema.ts: 사용자 설정 스키마.
-
-userdata.ts: 워크스페이스 설정 관리.
-
-connection/
-
-ConnectionManager.ts: 호스트별 연결 관리.
-
-ExecRunner.ts: spawn 표준화.
-
-sshClient.ts: SSH 클라이언트 (adapters/에서 이동).
-
-adbClient.ts: ADB 클라이언트 (adapters/에서 이동).
-
-logging/
-
-extension-logger.ts: OutputChannel + sink.
-
-perf.ts: 성능 계측.
-
-logs/
-
-HybridLogBuffer.ts: 4-버퍼 하이브리드.
-
-LogFileIntegration.ts: k-way 병합.
-
-LogFileStorage.ts: JSONL 저장/읽기.
-
-LogSearch.ts: 검색.
-
-types.ts: LogEntry 등 타입.
-
-sessions/
-
-LogSessionManager.ts: 세션 관리.
-
-transfer/
-
-FileTransferService.ts: tar/base64 전송.
-
-shared/
-
-const.ts: 상수.
-
-types.ts: 공용 타입.
-
-errors.ts: 에러 분류.
-
-utils.ts: 공용 유틸.
-
-ui-input.ts: UI 입력 유틸 (extension/ui/에서 이동).
-
-ui/
-
-log-viewer/: Custom Editor Webview.
-
-edge-panel/: Edge Panel Webview.
-
 
 # 🧭 VS Code Extension 입력 처리 가이드
 
