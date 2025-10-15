@@ -1,5 +1,6 @@
 // === src/core/logging/perf.ts ===
 import * as fs from 'fs';
+import { LOG_TOTAL_CALLS_THRESHOLD } from '../../shared/const.js';
 
 export function perfNow() {
   const [s, ns] = process.hrtime();
@@ -321,7 +322,7 @@ export class PerformanceProfiler {
     }
 
     const totalCalls = Object.values(functionSummary).reduce((sum: number, s: any) => sum + s.count, 0);
-    if (totalCalls > 1000) {
+    if (totalCalls > LOG_TOTAL_CALLS_THRESHOLD) {
       insights.push('함수 호출 수가 많음 - 캐싱 고려');
     }
     return insights;

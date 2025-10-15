@@ -1,9 +1,11 @@
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
 import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { XError, ErrorCategory } from '../../shared/errors.js';
 import { measure } from '../logging/perf.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
 import { mergeDirectory } from '../logs/LogFileIntegration.js';
+import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
 
 export type SessionCallbacks = {
   onBatch: (logs: LogEntry[], total?: number, seq?: number) => void;
@@ -15,16 +17,17 @@ export class LogSessionManager {
   private hb = new HybridLogBuffer();
   private seq = 0;
   private rtAbort?: AbortController;
+  private cm?: ConnectionManager; // 연결 관리자 추적
 
   constructor(private conn?: HostConfig) {}
 
   @measure()
   async startRealtimeSession(opts: { signal?: AbortSignal; filter?: string } & SessionCallbacks) {
     this.log.info('startRealtimeSession');
-    if (!this.conn) throw new Error('No connection configured');
+    if (!this.conn) throw new XError(ErrorCategory.Connection, 'No connection configured');
 
-    const cm = new ConnectionManager(this.conn);
-    await cm.connect();
+    this.cm = new ConnectionManager(this.conn);
+    await this.cm.connect();
 
     this.rtAbort = new AbortController();
     if (opts.signal) opts.signal.addEventListener('abort', () => this.rtAbort?.abort());
@@ -40,7 +43,7 @@ export class LogSessionManager {
         ? `logcat -v time`
         : `sh -lc 'journalctl -f -o short-iso -n 0 -u "homey*" 2>/dev/null || docker ps --format "{{.Names}}" | awk "/homey/{print}" | xargs -r -n1 docker logs -f --since 0s'`;
 
-    await cm.stream(
+    await this.cm.stream(
       cmd,
       (line) => {
         if (!filter(line)) return;
@@ -71,7 +74,7 @@ export class LogSessionManager {
       dir: opts.dir,
       reverse: false,
       signal: opts.signal,
-      batchSize: 200,
+      batchSize: DEFAULT_BATCH_SIZE,
       onBatch: (logs) => {
         this.hb.addBatch(logs);
         opts.onBatch(logs, undefined, ++seq);
@@ -87,5 +90,12 @@ export class LogSessionManager {
   stopAll() {
     this.log.info('stopAll');
     this.rtAbort?.abort();
+    this.cm?.dispose(); // 연결 정리
+  }
+
+  dispose() {
+    this.stopAll();
+    this.cm?.dispose();
+    this.hb?.clear();
   }
 }

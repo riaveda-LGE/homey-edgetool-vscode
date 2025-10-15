@@ -3,33 +3,19 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 import {
-  addDevice,
-  type DeviceEntry,
-  readDeviceList,
-  updateDeviceById,
-} from '../../core/config/userdata.js';
-import type { HostConfig } from '../../core/connection/ConnectionManager.js';
-import {
   addLogSink,
   getBufferedLogs,
   getLogger,
   removeLogSink,
 } from '../../core/logging/extension-logger.js';
-import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
-import { PANEL_VIEW_TYPE } from '../../shared/const.js';
-import { promptText, promptNumber } from '../../shared/ui-input.js';
-import { createCommandHandlers } from '../commands/commandHandlers.js';
-import {
-  buildButtonContext,
-  type ButtonDef,
-  findButtonById,
-  getSections,
-  toSectionDTO,
-} from '../commands/edgepanel.buttons.js';
-import type { LogEntry } from '../messaging/messageTypes.js';
-import { downloadAndInstall } from '../update/updater.js';
+import { readFileAsText } from '../../shared/utils.js';
+import { PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
 import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
+import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { measure } from '../../core/logging/perf.js';
+import { EdgePanelConnectionManager } from './EdgePanelConnectionManager.js';
+import { EdgePanelLogViewer } from './EdgePanelLogViewer.js';
+import { EdgePanelButtonHandler, type IEdgePanelButtonHandler } from './EdgePanelButtonHandler.js';
 
 interface EdgePanelState {
   version: string;
@@ -48,22 +34,20 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   private log = getLogger('edgePanel');
   private _state: EdgePanelState;
 
-  private _session?: LogSessionManager;
-  private _currentAbort?: AbortController;
-  private _perfMonitor?: any; // Performance Monitor 인스턴스
-
-  private _logPanel?: vscode.WebviewPanel;
-
-  private _buttonSections = getSections();
+  private _perfMonitor?: PerfMonitor;
   private _explorer?: ExplorerBridge;
-  private _handlers?: ReturnType<typeof createCommandHandlers>;
+  private _buttonHandler?: IEdgePanelButtonHandler;
+  private _logViewer?: EdgePanelLogViewer;
+
+  // 메모리 관리: 이벤트 리스너 추적
+  private _disposables = new Set<() => void>();
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
     version: string,
     latestInfo?: { hasUpdate?: boolean; latest?: string; url?: string; sha256?: string },
-    perfMonitor?: any,
+    perfMonitor?: PerfMonitor,
   ) {
     this._perfMonitor = perfMonitor;
     this._state = {
@@ -81,7 +65,20 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._view?.webview.postMessage({ type: 'appendLog', text: line });
   }
 
-  resolveWebviewView(webviewView: vscode.WebviewView) {
+  // 메모리 관리 헬퍼
+  private _trackDisposable(disposable: () => void) {
+    this._disposables.add(disposable);
+  }
+
+  private _disposeTracked() {
+    // 일반 disposables 정리
+    for (const dispose of this._disposables) {
+      try { dispose(); } catch (e) { this.log.warn(`dispose error: ${e}`); }
+    }
+    this._disposables.clear();
+  }
+
+  async resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
     const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
@@ -94,9 +91,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     webviewView.title = `Edge Console - v${this._state.version}`;
 
     try {
-      webviewView.webview.html = this._getHtmlFromFiles(webviewView.webview, uiRoot);
-    } catch (e: any) {
-      const msg = `Failed to load panel HTML: ${e?.message || e}`;
+      webviewView.webview.html = await this._getHtmlFromFiles(webviewView.webview, uiRoot);
+    } catch (e: unknown) {
+      const msg = `Failed to load panel HTML: ${e instanceof Error ? e.message : String(e)}`;
       this.log.error(msg);
       vscode.window.showErrorMessage(msg);
       webviewView.webview.html = `<html><body style="color:#ddd;background:#1e1e1e;font-family:ui-monospace,Consolas,monospace;padding:12px">
@@ -111,20 +108,35 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       try { webviewView.webview.postMessage(m); } catch {}
     });
 
-    // 핸들러 초기화 (한 번만)
-    this._handlers = createCommandHandlers(
-      (s) => this.appendLog(s), 
-      this._context, 
-      this._extensionUri
+    // 버튼 핸들러
+    this._buttonHandler = new EdgePanelButtonHandler(
+      webviewView,
+      this._context,
+      this._extensionUri,
+      (line) => this.appendLog(line),
+      {
+        updateAvailable: this._state.updateAvailable,
+        updateUrl: this._state.updateUrl,
+        latestSha: this._state.latestSha
+      },
+      this._perfMonitor,
+      this._explorer
+    );
+
+    // 로그 뷰어
+    this._logViewer = new EdgePanelLogViewer(
+      this._context,
+      this._extensionUri,
+      (line) => this.appendLog(line)
     );
 
     // Webview -> Extension
-    webviewView.webview.onDidReceiveMessage(async (msg) => {
+    const messageDisposable = webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
         if (this._explorer && (await this._explorer.handleMessage(msg))) return;
 
         if (msg?.type === 'ui.requestButtons') {
-          this._sendButtonSections();
+          this._buttonHandler?.sendButtonSections();
           return;
         }
 
@@ -142,25 +154,27 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
             type: 'setUpdateVisible',
             visible: !!(this._state.updateAvailable && this._state.updateUrl),
           });
-          this._sendButtonSections();
+          this._buttonHandler?.sendButtonSections();
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
         } else if (msg?.type === 'button.click' && typeof msg.id === 'string') {
-          await this._dispatchButton(msg.id);
+          await this._buttonHandler?.dispatchButton(msg.id);
         }
       } catch (e) {
         this.log.error('onDidReceiveMessage error', e as any);
       }
     });
+    this._trackDisposable(() => messageDisposable.dispose());
 
-    webviewView.onDidChangeVisibility(() => {
+    const visibilityDisposable = webviewView.onDidChangeVisibility(() => {
       if (!webviewView.visible) return;
       try {
         const state = { ...this._state, logs: getBufferedLogs() };
         webviewView.webview.postMessage({ type: 'initState', state });
-        this._sendButtonSections();
+        this._buttonHandler?.sendButtonSections();
       } catch {}
     });
+    this._trackDisposable(() => visibilityDisposable.dispose());
 
     // OutputChannel -> EdgePanel
     this._sink = (line: string) => {
@@ -169,322 +183,37 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     addLogSink(this._sink);
 
     webviewView.onDidDispose(() => {
+      this._disposeTracked();
+
       if (this._sink) removeLogSink(this._sink);
       this._sink = undefined;
-      this._session?.stopAll();
-      this._currentAbort?.abort();
-      this._session = undefined;
-      this._currentAbort = undefined;
 
       try { this._explorer?.dispose(); } catch {}
       this._explorer = undefined;
 
-      this._handlers = undefined;
+      this._buttonHandler?.dispose();
+      this._buttonHandler = undefined;
+
+      this._logViewer?.dispose();
+      this._logViewer = undefined;
 
       this._view = undefined;
     });
   }
 
-  private _sendButtonSections() {
-    if (!this._view) return;
-    const ctx = buildButtonContext({
-      updateAvailable: this._state.updateAvailable,
-      updateUrl: this._state.updateUrl,
-    });
-    const dto = toSectionDTO(this._buttonSections, ctx);
-    this._view.webview.postMessage({ type: 'buttons.set', sections: dto });
-  }
-
-  private async _dispatchButton(id: string) {
-    const def = findButtonById(this._buttonSections, id);
-    if (!def) {
-      this.appendLog(`[warn] unknown button id: ${id}`);
-      return;
-    }
-    await this._runOp(def);
-  }
-
-  @measure()
-  private async _runOp(def: ButtonDef) {
-    const op = def.op;
-    try {
-      switch (op.kind) {
-        case 'line': {
-          await this._handlers!.route(op.line);
-          // changeWorkspaceQuick 같은 라인이면 여기서도 워처 재바인딩 시도 (보수적)
-          if (/changeWorkspace/i.test(op.line ?? '')) {
-            await this._explorer?.refreshWorkspaceRoot?.();
-          }
-          break;
-        }
-        case 'vscode':
-          await vscode.commands.executeCommand(op.command, ...(op.args ?? []));
-          break;
-        case 'post':
-          this._view?.webview.postMessage({ type: op.event, payload: op.payload });
-          break;
-        case 'handler':
-          if (op.name === 'togglePerformanceMonitoring') {
-            // 성능 모니터링 패널 열기
-            if (this._perfMonitor) {
-              this._perfMonitor.createPanel();
-              vscode.window.showInformationMessage('Performance Monitor opened.');
-            } else {
-              vscode.window.showErrorMessage('Performance Monitor is not available.');
-            }
-          } else if (op.name === 'updateNow') {
-            await downloadAndInstall(this._state.updateUrl!, this._state.latestSha!);
-            await vscode.commands.executeCommand('workbench.action.reloadWindow');
-          } else if (op.name === 'changeWorkspaceQuick') {
-            await this._handlers!.route('changeWorkspaceQuick');
-          } else if (op.name === 'openWorkspace') {
-            await this._handlers!.route('openWorkspace');
-          } else if (op.name === 'openHelp') {
-            await this._handlers!.route('help');
-          } else {
-            await this._handlers!.route(op.name);
-          }
-          // UI 후처리: 워크스페이스 변경 시 explorer refresh
-          if (op.name === 'changeWorkspaceQuick' || op.name === 'openWorkspace') {
-            await this._explorer?.refreshWorkspaceRoot?.();
-          }
-          break;
-      }
-    } catch (e: any) {
-      this.appendLog(`[error] button "${def.label}" failed: ${e?.message || String(e)}`);
-    }
-  }
-
   @measure()
   public async handleHomeyLoggingCommand() {
-    const pick = await vscode.window.showQuickPick(
-      [
-        { label: '실시간 로그 모드', value: 'realtime' },
-        { label: '파일 병합 모드', value: 'filemerge' },
-      ],
-      { placeHolder: 'Homey Logging 모드를 선택하세요' },
-    );
-    if (!pick) return;
-
-    const viewer = await this.openLogViewerPanel();
-
-    if (pick.value === 'realtime') {
-      this._session?.stopAll();
-      this._currentAbort?.abort();
-
-      const conn = await this.pickConnection();
-      if (!conn) {
-        viewer.webview.postMessage({
-          v: 1,
-          type: 'logs.batch',
-          payload: {
-            logs: [
-              { id: Date.now(), ts: Date.now(), text: '실시간 로그를 시작할 수 없습니다 (연결 정보 없음).' },
-            ],
-            seq: 1,
-          },
-        });
-        return;
-      }
-
-      this._session = new LogSessionManager(conn);
-      this._currentAbort = new AbortController();
-
-      let seq = 0;
-      await this._session.startRealtimeSession({
-        signal: this._currentAbort.signal,
-        onBatch: (logs: LogEntry[]) => {
-          viewer.webview.postMessage({
-            v: 1,
-            type: 'logs.batch',
-            payload: { logs, seq: ++seq },
-          });
-        },
-      });
-      return;
-    }
-
-    if (pick.value === 'filemerge') {
-      const dirPick = await vscode.window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: '로그 폴더 선택',
-      });
-      if (!dirPick || dirPick.length === 0) return;
-      const dir = dirPick[0].fsPath;
-
-      this._session?.stopAll();
-      this._currentAbort?.abort();
-
-      this._session = new LogSessionManager();
-      this._currentAbort = new AbortController();
-
-      let seq = 0;
-      await this._session.startFileMergeSession({
-        dir,
-        signal: this._currentAbort.signal,
-        onBatch: (logs: LogEntry[], total?: number) => {
-          viewer.webview.postMessage({
-            v: 1,
-            type: 'logs.batch',
-            payload: { logs, total, seq: ++seq },
-          });
-        },
-      });
-    }
+    await this._logViewer?.handleHomeyLoggingCommand();
   }
 
-  @measure()
-  private async pickConnection(): Promise<HostConfig | undefined> {
-    const list = await readDeviceList(this._context);
-
-    const deviceItems = list.map((d) => {
-      const label =
-        d.type === 'ssh'
-          ? `SSH  ${d.host ?? ''}${d.port ? ':' + d.port : ''}${(d as any).user ? ` (${(d as any).user})` : ''}`
-          : `ADB  ${(d as any).serial ?? d.id ?? ''}`;
-      const desc = d.name || d.id || '';
-      return {
-        label,
-        description: desc,
-        detail: d.type === 'ssh' ? `${d.host ?? ''} ${(d as any).user ?? ''}` : `${(d as any).serial ?? ''}`,
-        device: d,
-        alwaysShow: true,
-      } as vscode.QuickPickItem & { device: DeviceEntry };
-    });
-
-    const addItems: (vscode.QuickPickItem & { __action: 'add-ssh' | 'add-adb' })[] = [
-      { label: '새 연결 추가 (SSH)', description: 'host/user/port 입력', __action: 'add-ssh' },
-      { label: '새 연결 추가 (ADB)', description: 'serial 입력', __action: 'add-adb' },
-    ];
-
-    const pick = await vscode.window.showQuickPick([...deviceItems, ...addItems], {
-      placeHolder: deviceItems.length > 0 ? '최근 연결을 선택하거나, 새 연결을 추가하세요' : '저장된 연결이 없습니다. 새 연결을 추가하세요',
-      matchOnDescription: true,
-      matchOnDetail: true,
-    });
-    if (!pick) return;
-
-    if ((pick as any).device) {
-      const d = (pick as any).device as DeviceEntry;
-      return deviceEntryToHostConfig(d);
-    }
-
-    if ((pick as any).__action === 'add-ssh') {
-      const host = await promptText({
-        prompt: 'SSH Host (예: 192.168.0.10)',
-        placeHolder: '호스트/IP',
-        validateInput: (v) => (!v ? '필수 입력' : undefined),
-      });
-      if (!host) return;
-
-      const user = await promptText({
-        prompt: 'SSH User (예: root)',
-        placeHolder: '사용자',
-        validateInput: (v) => (!v ? '필수 입력' : undefined),
-      });
-      if (!user) return;
-
-      const port = await promptNumber({
-        prompt: 'SSH Port (기본 22)',
-        placeHolder: '22',
-        min: 1,
-        max: 65535,
-      });
-
-      const friendly = await promptText({
-        prompt: '표시 이름(선택)',
-        placeHolder: '예: 사무실-Homey SSH',
-      });
-
-      const id = `${host}:${port ?? 22}`;
-      const entry: DeviceEntry = { id, type: 'ssh', name: friendly?.trim() || id, host, port, user };
-
-      const exist = list.find((x) => (x.id ?? '') === id);
-      if (exist) await updateDeviceById(this._context, id, entry);
-      else await addDevice(this._context, entry);
-
-      return { id, type: 'ssh', host, port, user } as HostConfig;
-    }
-
-    if ((pick as any).__action === 'add-adb') {
-      const serial = await promptText({
-        prompt: 'ADB Serial (adb devices 로 확인 가능)',
-        placeHolder: 'device-serial',
-        validateInput: (v) => (!v ? '필수 입력' : undefined),
-      });
-      if (!serial) return;
-
-      const friendly = await promptText({
-        prompt: '표시 이름(선택)',
-        placeHolder: '예: 개발-Homey ADB',
-      });
-
-      const id = serial;
-      const entry: DeviceEntry = { id, type: 'adb', name: friendly?.trim() || id, serial };
-
-      const exist = list.find((x) => (x.id ?? '') === id);
-      if (exist) await updateDeviceById(this._context, id, entry);
-      else await addDevice(this._context, entry);
-
-      return { id, type: 'adb', serial } as HostConfig;
-    }
-
-    return;
-  }
-
-  @measure()
-  private async openLogViewerPanel(): Promise<vscode.WebviewPanel> {
-    if (this._logPanel) {
-      try {
-        this._logPanel.reveal(vscode.ViewColumn.Active);
-        return this._logPanel;
-      } catch {
-        this._logPanel = undefined;
-      }
-    }
-
-    const panel = vscode.window.createWebviewPanel(
-      'homeyLogViewer',
-      'Homey Log Viewer',
-      vscode.ViewColumn.Active,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'log-viewer')],
-      },
-    );
-
-    const mediaRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'log-viewer');
-    const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
-    let html = (await vscode.workspace.fs.readFile(htmlPath)).toString();
-    html = html.replace(/%NONCE%/g, getNonce()).replace(/%CSP_SOURCE%/g, panel.webview.cspSource);
-    panel.webview.html = html;
-
-    panel.webview.onDidReceiveMessage((msg) => {
-      if (msg?.v === 1 && msg?.type === 'ui.log') {
-        const lvl = String(msg.payload?.level ?? 'info') as 'debug' | 'info' | 'warn' | 'error';
-        const text = String(msg.payload?.text ?? '');
-        const src = String(msg.payload?.source ?? 'ui.logViewer');
-        const lg = getLogger(src);
-        (lg[lvl] ?? lg.info).call(lg, text);
-      }
-    });
-
-    panel.onDidDispose(() => { this._logPanel = undefined; });
-    this._logPanel = panel;
-    return panel;
-  }
-
-  private _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): string {
+  private async _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): Promise<string> {
     const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
     const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.css'));
     const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.js'));
     const nonce = getNonce();
     const cspSource = webview.cspSource;
 
-    let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+    let html = await readFileAsText(htmlPath);
     html = html
       .replace(/%CSS_URI%/g, String(cssUri))
       .replace(/%JS_URI%/g, String(jsUri))
@@ -497,7 +226,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 export function registerEdgePanelCommands(
   context: vscode.ExtensionContext,
   provider: EdgePanelProvider,
-  perfMonitor?: any,
+  perfMonitor?: PerfMonitor,
 ) {
   // Performance Monitor를 provider에 설정
   if (perfMonitor) {
@@ -513,24 +242,6 @@ export function registerEdgePanelCommands(
 function getNonce() {
   let text = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < RANDOM_STRING_LENGTH; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
   return text;
-}
-
-function deviceEntryToHostConfig(d: DeviceEntry): HostConfig {
-  if (d.type === 'ssh') {
-    const id = d.id ?? `${d.host ?? ''}:${d.port ?? 22}`;
-    return {
-      id,
-      type: 'ssh',
-      host: String(d.host ?? ''),
-      port: typeof d.port === 'number' ? d.port : undefined,
-      user: String((d as any).user ?? 'root'),
-    };
-  }
-  return {
-    id: d.id ?? String((d as any).serial ?? ''),
-    type: 'adb',
-    serial: String((d as any).serial ?? d.id ?? ''),
-  };
 }

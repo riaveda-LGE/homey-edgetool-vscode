@@ -3,7 +3,14 @@
   const vscode = acquireVsCodeApi();
 
   // lightweight logger
-  const log = (...a: any[]) => console.log('[edge-panel]', ...a);
+  const uiLog = {
+    debug: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'debug', text: t, source: 'ui.edgePanel' } }),
+    info: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'info', text: t, source: 'ui.edgePanel' } }),
+    warn: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'warn', text: t, source: 'ui.edgePanel' } }),
+    error: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'error', text: t, source: 'ui.edgePanel' } }),
+  };
+
+  const log = (...a: any[]) => uiLog.info(`[edge-panel] ${a.join(' ')}`);
 
   // ── DOM refs (null-safe) ─────────────────────────────────────
   const rootEl = document.getElementById('root') as HTMLElement | null;
@@ -32,10 +39,7 @@
 
   // 필수 루트 요소 검증 (없으면 진행 불가)
   if (!rootEl || !controlsEl || !sectionsEl || !splitter || !logsEl) {
-    console.error('[edge-panel] Missing root elements', {
-      rootEl: !!rootEl, controlsEl: !!controlsEl, sectionsEl: !!sectionsEl,
-      splitter: !!splitter, logsEl: !!logsEl,
-    });
+    uiLog.error(`[edge-panel] Missing root elements: rootEl=${!!rootEl}, controlsEl=${!!controlsEl}, sectionsEl=${!!sectionsEl}, splitter=${!!splitter}, logsEl=${!!logsEl}`);
     return;
   }
 
@@ -600,8 +604,11 @@
   }
 
   function mountNode(parentEl: HTMLElement, node: TreeNode) {
-    const el = nodeLabel(node);
-    node.el = el;
+    let el = node.el;
+    if (!el) {
+      el = nodeLabel(node);
+      node.el = el;
+    }
     if (node.selected) el.classList.add('selected');
     parentEl.appendChild(el);
     log('mountNode', { parent: parentEl.id || parentEl.className, path: node.path, kind: node.kind });
@@ -627,7 +634,11 @@
     log('renderChildren: enter', { node: node.path, items: items.map(i => `${i.kind}:${i.name}`), hasGroup: !!group });
     if (!group) return;
 
-    group.innerHTML = '';
+    group.innerHTML = ''; // 기존 DOM 요소 모두 제거
+
+    // 기존 children 맵 생성
+    const existing = new Map(node.children?.map(c => [c.name, c]) || []);
+    node.children = [];
 
     // 정렬: 폴더 우선, 이름순
     items.sort((a, b) =>
@@ -636,12 +647,24 @@
         : a.kind === 'folder' ? -1 : 1
     );
 
-    node.children = items.map((it) => {
-      const childPath = posixJoin(node.path, it.name);
-      const child = getOrCreateNode(childPath, it.name, it.kind, node);
+    items.forEach((it) => {
+      let child = existing.get(it.name);
+      if (!child) {
+        const childPath = posixJoin(node.path, it.name);
+        child = getOrCreateNode(childPath, it.name, it.kind, node);
+      }
+      // 항상 mount (el 새로 만들고 append)
       mountNode(group, child);
-      return child;
+      node.children!.push(child);
     });
+
+    // items에 없는 기존 children 제거 (state에서만)
+    existing.forEach((child, name) => {
+      if (!items.some(it => it.name === name)) {
+        state.nodesByPath.delete(child.path);
+      }
+    });
+
     node.loaded = true;
     node.expanded = true;
     updateNodeExpanded(node);
@@ -929,10 +952,11 @@
   // ── Host → UI ────────────────────────────────────────────────
   function scheduleFolderRefresh(dir: string) {
     console.log('[panel] scheduleFolderRefresh called for dir:', dir, 'viewing:', state.explorerPath);
-    // 현재 표시(crumb) 폴더만 갱신
+    // 현재 표시(crumb) 폴더 또는 그 하위 폴더 변경 시 갱신
     if (!state.showExplorer) return;
     const viewing = state.explorerPath || '';
-    if (dir !== viewing) return;
+    // dir이 viewing의 하위이거나 동일하면 갱신
+    if (dir !== viewing && !dir.startsWith(viewing + '/')) return;
     const prev = refreshTimers.get(viewing);
     if (prev) clearTimeout(prev);
     const t = window.setTimeout(() => {
@@ -1082,7 +1106,7 @@
       }
 
       case 'explorer.error': {
-        console.error('[edge-panel] explorer.error', msg);
+        uiLog.error(`[edge-panel] explorer.error: ${JSON.stringify(msg)}`);
         alert(`탐색기 작업 실패: ${msg.message || msg.op || 'unknown'}`);
         break;
       }
