@@ -59,6 +59,7 @@ export class PerfMonitorPanel {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
+        retainContextWhenHidden: true,
         localResourceRoots: [this._extensionUri],
       }
     );
