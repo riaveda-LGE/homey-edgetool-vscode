@@ -1,4 +1,3 @@
-// === src/ui/log-viewer/app.ts ===
 import { makeBridge, makeUiLogger } from '../../extension/messaging/bridge.js';
 
 const bridge = makeBridge();

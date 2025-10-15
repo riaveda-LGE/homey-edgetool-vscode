@@ -1,9 +1,10 @@
-## 4. Webview UI (src/ui/\*\*)
+## 4. Webview UI (src/webviewers/**)
+ 4. Webview UI (src/webviewers/\*\*)
 
 ### 개요
 
 **Webview UI 레이어**는 VS Code 확장에서 제공하는 **브라우저 런타임 기반 화면**이다.  
-HTML/CSS/JS로 작성된 UI를 빌드 후 `dist/ui/**`에 배치하고,  
+HTML/CSS/JS로 작성된 UI를 빌드 후 `dist/webviewers/**`에 배치하고,  
 Extension Host가 이를 Webview에 로드하여 사용자에게 표시한다.
 
 이 레이어는 두 가지 주요 화면을 제공한다:
@@ -31,9 +32,9 @@ Extension Host가 이를 Webview에 로드하여 사용자에게 표시한다.
 
 #### 3. 빌드 & 배포
 
-- 개발 소스: `src/ui/**` (TypeScript/HTML/CSS/JS)
-- 빌드 출력: `dist/ui/**`
-- 확장 실행 시 `dist/ui/**`의 리소스를 Webview에 로드
+- 개발 소스: `src/webviewers/**` (TypeScript/HTML/CSS/JS)
+- 빌드 출력: `dist/webviewers/**`
+- 확장 실행 시 `dist/webviewers/**`의 리소스를 Webview에 로드
 - Content Security Policy(CSP) 적용으로 안전한 실행 보장
 
 ---
@@ -42,21 +43,21 @@ Extension Host가 이를 Webview에 로드하여 사용자에게 표시한다.
 
 ```
 src/
-└─ ui/
-├─ edge-panel/ # 사이드 패널 UI
+└─ webviewers/
+├─ edge-panel/ # 사이드 패널 webviewer
 │ ├─ index.html
 │ ├─ panel.ts
 │ └─ style.css
-├─ log-viewer/ # 로그 뷰어 UI
+├─ log-viewer/ # 로그 뷰어 webviewer
 │ ├─ index.html
 │ ├─ viewer.ts
 │ └─ style.css
-└─ common/ # 공통 UI 컴포넌트/유틸
+└─ common/ # 공통 webviewer 컴포넌트/유틸
 
 빌드 후:
 
 dist/
-└─ ui/
+└─ webviewers/
 ├─ edge-panel/
 └─ log-viewer/
 ```

@@ -1,4 +1,3 @@
-// === src/ui/edge-panel/panel.ts ===
 (function () {
   const vscode = acquireVsCodeApi();
 

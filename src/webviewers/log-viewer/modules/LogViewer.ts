@@ -1,4 +1,3 @@
-// === src/ui/log-viewer/modules/LogViewer.ts ===
 export class LogViewer {
   constructor(private el: HTMLElement) {}
   append(line: string) {

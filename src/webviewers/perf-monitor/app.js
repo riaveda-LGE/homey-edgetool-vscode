@@ -1,4 +1,3 @@
-// === src/ui/perf-monitor/app.js ===
 const vscode = acquireVsCodeApi();
 
 // UI Logger for perf-monitor

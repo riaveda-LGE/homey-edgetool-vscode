@@ -27,7 +27,7 @@ export class PerfMonitorWebviewManager {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'ui', 'perf-monitor')],
+        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor')],
       },
     );
 

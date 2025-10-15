@@ -95,12 +95,19 @@ export function createExplorerBridge(
       try {
         const baseFsPath = info!.wsDirUri.fsPath;
         const rel = relFromBase(baseFsPath, uri);
-        vscode.workspace.fs.stat(uri).then((stat: vscode.FileStat) => {
+
+        // 삭제 이벤트가 발생했으므로 watcher가 있다면 무조건 제거
+        removeWatcherForFolder(rel);
+
+        // 파일 존재 여부 확인 (폴더 타입 확인용)
+        Promise.resolve(vscode.workspace.fs.stat(uri)).then((stat: vscode.FileStat) => {
           if (stat.type === vscode.FileType.Directory) {
-            log.info('[explorerBridge] detected folder deletion:', rel, 'removing watcher');
-            removeWatcherForFolder(rel);
+            log.info('[explorerBridge] confirmed folder deletion:', rel);
+          } else {
+            log.debug('[explorerBridge] file deletion detected:', rel);
           }
-        });
+        }).catch(() => {});
+
         post({ type: 'explorer.fs.changed', path: rel });
       } catch (e) {
         log.error('[explorerBridge] delete event error', e);

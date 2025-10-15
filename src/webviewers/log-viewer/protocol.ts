@@ -1,4 +1,3 @@
-// === src/ui/log-viewer/protocol.ts ===
 export type LogEntry = {
   id: number;
   ts: number;

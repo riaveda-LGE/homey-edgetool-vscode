@@ -1,2 +1,2 @@
-src/ui/edge-panel/panel.ts
-dist/ui/edge-panel/index.html
+src/webviewers/edge-panel/panel.ts
+dist/webviewers/edge-panel/index.html

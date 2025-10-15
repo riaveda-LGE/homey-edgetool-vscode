@@ -81,7 +81,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   async resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
-    const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'edge-panel');
+    const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'edge-panel');
 
     webviewView.webview.options = {
       enableScripts: true,
