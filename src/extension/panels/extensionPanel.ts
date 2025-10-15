@@ -17,6 +17,7 @@ import {
 } from '../../core/logging/extension-logger.js';
 import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { PANEL_VIEW_TYPE } from '../../shared/const.js';
+import { promptText, promptNumber } from '../../shared/ui-input.js';
 import { createCommandHandlers } from '../commands/commandHandlers.js';
 import {
   buildButtonContext,
@@ -371,33 +372,30 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     }
 
     if ((pick as any).__action === 'add-ssh') {
-      const host = await vscode.window.showInputBox({
+      const host = await promptText({
         prompt: 'SSH Host (예: 192.168.0.10)',
         placeHolder: '호스트/IP',
-        ignoreFocusOut: true,
         validateInput: (v) => (!v ? '필수 입력' : undefined),
       });
       if (!host) return;
 
-      const user = await vscode.window.showInputBox({
+      const user = await promptText({
         prompt: 'SSH User (예: root)',
         placeHolder: '사용자',
-        ignoreFocusOut: true,
         validateInput: (v) => (!v ? '필수 입력' : undefined),
       });
       if (!user) return;
 
-      const portStr = await vscode.window.showInputBox({
+      const port = await promptNumber({
         prompt: 'SSH Port (기본 22)',
         placeHolder: '22',
-        ignoreFocusOut: true,
+        min: 1,
+        max: 65535,
       });
-      const port = portStr && /^\d+$/.test(portStr) ? parseInt(portStr, 10) : undefined;
 
-      const friendly = await vscode.window.showInputBox({
+      const friendly = await promptText({
         prompt: '표시 이름(선택)',
         placeHolder: '예: 사무실-Homey SSH',
-        ignoreFocusOut: true,
       });
 
       const id = `${host}:${port ?? 22}`;
@@ -411,18 +409,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     }
 
     if ((pick as any).__action === 'add-adb') {
-      const serial = await vscode.window.showInputBox({
+      const serial = await promptText({
         prompt: 'ADB Serial (adb devices 로 확인 가능)',
         placeHolder: 'device-serial',
-        ignoreFocusOut: true,
         validateInput: (v) => (!v ? '필수 입력' : undefined),
       });
       if (!serial) return;
 
-      const friendly = await vscode.window.showInputBox({
+      const friendly = await promptText({
         prompt: '표시 이름(선택)',
         placeHolder: '예: 개발-Homey ADB',
-        ignoreFocusOut: true,
       });
 
       const id = serial;

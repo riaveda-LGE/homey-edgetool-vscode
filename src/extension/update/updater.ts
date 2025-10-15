@@ -11,6 +11,7 @@ import {
   FETCH_JSON_TIMEOUT_MS,
   LATEST_JSON_URL,
 } from '../../shared/const.js';
+import { XError, ErrorCategory } from '../../shared/errors.js';
 import { globalProfiler } from '../../core/logging/perf.js';
 
 const log = getLogger('updater');
@@ -41,7 +42,7 @@ async function fetchJson<T>(url: string, timeoutMs = FETCH_JSON_TIMEOUT_MS): Pro
       headers: { Accept: 'application/json' },
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    if (!res.ok) throw new XError(ErrorCategory.Network, `HTTP ${res.status} ${res.statusText}`);
     return (await res.json()) as T;
   } finally {
     clearTimeout(t);
