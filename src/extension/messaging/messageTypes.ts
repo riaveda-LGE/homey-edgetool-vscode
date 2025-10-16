@@ -8,6 +8,16 @@ export type LogEntry = {
   text: string;
 };
 
+export type EdgePanelState = {
+  version: string;
+  updateAvailable: boolean;
+  latestVersion?: string;
+  updateUrl?: string;
+  latestSha?: string;
+  lastCheckTime?: string;
+  logs?: string[];
+};
+
 export type Envelope<TType extends string, TPayload> = {
   v: 1;
   id?: string; // 요청-응답 상관관계용 (선택)
@@ -41,6 +51,16 @@ export type H2W =
   | Envelope<'perf.captureStopped', { result: any; htmlReport: string; exportHtml: string }>
   | Envelope<'perf.monitoringStarted', EmptyPayload>
   | Envelope<'perf.monitoringStopped', EmptyPayload>
+  | Envelope<'explorer.list.result', { path: string; items: { name: string; kind: 'file' | 'folder' }[] }>
+  | Envelope<'explorer.ok', { op: string; path: string }>
+  | Envelope<'explorer.error', { op: string; message: string }>
+  | Envelope<'explorer.root.changed', EmptyPayload>
+  | Envelope<'explorer.fs.changed', { path: string }>
+  | Envelope<'appendLog', { text: string }>
+  | Envelope<'initState', { state: EdgePanelState }>
+  | Envelope<'setUpdateVisible', { visible: boolean }>
+  | Envelope<'ui.toggleExplorer', EmptyPayload>
+  | Envelope<'ui.toggleLogs', EmptyPayload>
   ;
 
 // Webview → Host
@@ -63,4 +83,14 @@ export type W2H =
   | Envelope<'perf.stopMonitoring', EmptyPayload>
   | Envelope<'perf.exportJson', EmptyPayload>
   | Envelope<'perf.exportHtmlReport', { html: string }>
+  | Envelope<'workspace.ensure', EmptyPayload>
+  | Envelope<'explorer.list', { path: string }>
+  | Envelope<'explorer.open', { path: string }>
+  | Envelope<'explorer.createFile', { path: string }>
+  | Envelope<'explorer.createFolder', { path: string }>
+  | Envelope<'explorer.delete', { path: string; recursive?: boolean; useTrash?: boolean }>
+  | Envelope<'ui.toggleExplorer', EmptyPayload>
+  | Envelope<'ui.toggleLogs', EmptyPayload>
+  | Envelope<'ui.requestButtons', EmptyPayload>
+  | Envelope<'perf.ready', EmptyPayload>
   ;

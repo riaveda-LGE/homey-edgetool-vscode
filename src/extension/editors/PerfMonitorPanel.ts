@@ -32,7 +32,7 @@ export class PerfMonitorPanel {
       // 파일 생성 후 Homey Edge Tool의 Explorer 패널 갱신
       if (this._panel) {
         const relPath = vscode.workspace.asRelativePath(filePath);
-        this._panel.webview.postMessage({ type: 'explorer.fs.changed', path: relPath });
+        this._panel.webview.postMessage({ v: 1, type: 'explorer.fs.changed', payload: { path: relPath } });
       }
     });
     this._htmlGenerator = new PerfMonitorHtmlGenerator(_extensionUri);

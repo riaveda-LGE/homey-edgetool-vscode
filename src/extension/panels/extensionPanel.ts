@@ -16,6 +16,7 @@ import { measure } from '../../core/logging/perf.js';
 import { EdgePanelConnectionManager } from './EdgePanelConnectionManager.js';
 import { EdgePanelLogViewer } from './EdgePanelLogViewer.js';
 import { EdgePanelButtonHandler, type IEdgePanelButtonHandler } from './EdgePanelButtonHandler.js';
+import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
 
 interface EdgePanelState {
   version: string;
@@ -62,7 +63,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
 
   public appendLog(line: string) {
-    this._view?.webview.postMessage({ type: 'appendLog', text: line });
+    this._view?.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
   }
 
   // 메모리 관리 헬퍼
@@ -135,7 +136,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       try {
         if (this._explorer && (await this._explorer.handleMessage(msg))) return;
 
-        if (msg?.type === 'ui.requestButtons') {
+        if (msg?.type === 'workspace.ensure' && msg?.v === 1) {
+          await this._explorer?.refreshWorkspaceRoot();
+          return;
+        }
+
+        if (msg?.type === 'ui.requestButtons' && msg?.v === 1) {
           this._buttonHandler?.sendButtonSections();
           return;
         }
@@ -147,18 +153,23 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           const lg = getLogger(src);
           (lg[lvl] ?? lg.info).call(lg, text);
           return;
-        } else if (msg?.command === 'ready') {
+        } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
           this._state.logs = getBufferedLogs();
-          webviewView.webview.postMessage({ type: 'initState', state: this._state });
-          webviewView.webview.postMessage({
-            type: 'setUpdateVisible',
-            visible: !!(this._state.updateAvailable && this._state.updateUrl),
-          });
+          const panelState = await readEdgePanelState(this._context);
+          webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state: this._state, panelState } });
+          webviewView.webview.postMessage({ v: 1, type: 'setUpdateVisible', payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) } });
           this._buttonHandler?.sendButtonSections();
+
+          // 저장된 상태에서 Explorer가 켜져 있으면 초기화
+          if (panelState.showExplorer) {
+            await this._explorer?.refreshWorkspaceRoot();
+          }
+        } else if (msg?.type === 'ui.savePanelState' && msg?.v === 1) {
+          await writeEdgePanelState(this._context, msg.payload.panelState);
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
-        } else if (msg?.type === 'button.click' && typeof msg.id === 'string') {
-          await this._buttonHandler?.dispatchButton(msg.id);
+        } else if (msg?.type === 'button.click' && msg?.v === 1 && typeof msg.payload.id === 'string') {
+          await this._buttonHandler?.dispatchButton(msg.payload.id);
         }
       } catch (e) {
         this.log.error('onDidReceiveMessage error', e as any);
@@ -166,19 +177,25 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
     this._trackDisposable(() => messageDisposable.dispose());
 
-    const visibilityDisposable = webviewView.onDidChangeVisibility(() => {
+    const visibilityDisposable = webviewView.onDidChangeVisibility(async () => {
       if (!webviewView.visible) return;
       try {
         const state = { ...this._state, logs: getBufferedLogs() };
-        webviewView.webview.postMessage({ type: 'initState', state });
+        const panelState = await readEdgePanelState(this._context);
+        webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
         this._buttonHandler?.sendButtonSections();
+
+        // 저장된 상태에서 Explorer가 켜져 있으면 초기화
+        if (panelState.showExplorer) {
+          await this._explorer?.refreshWorkspaceRoot();
+        }
       } catch {}
     });
     this._trackDisposable(() => visibilityDisposable.dispose());
 
     // OutputChannel -> EdgePanel
     this._sink = (line: string) => {
-      try { webviewView.webview.postMessage({ type: 'appendLog', text: line }); } catch {}
+      try { webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } }); } catch {}
     };
     addLogSink(this._sink);
 
