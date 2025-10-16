@@ -11,6 +11,13 @@ export type Json = any;
 export type AppConfigFile = {
   /** 사용자가 지정한 절대 기반 경로. 실제 워크스페이스는 <workspace_dir>/workspace 를 사용 */
   workspace_dir?: string;
+  /** Edge Panel 상태 */
+  panelState?: {
+    showExplorer?: boolean;
+    showLogs?: boolean;
+    controlHeight?: number;
+    splitterPosition?: number;
+  };
   /** 그 외 확장 전역 설정 값들 */
   [k: string]: Json | undefined;
 };
@@ -186,4 +193,47 @@ export async function updateDeviceById(
     list[idx] = { ...list[idx], ...patch };
     await writeDeviceList(ctx, list);
   }
+}
+
+/* -------------------- Edge Panel State Helpers -------------------- */
+
+/**
+ * AppConfigFile을 읽어옵니다.
+ */
+async function readAppConfig(ctx: vscode.ExtensionContext): Promise<AppConfigFile> {
+  const paths = getUserdataPaths(ctx);
+  await ensureDir(paths.storageDir);
+  return (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
+}
+
+/**
+ * AppConfigFile을 씁니다.
+ */
+async function writeAppConfig(ctx: vscode.ExtensionContext, config: AppConfigFile): Promise<void> {
+  const paths = getUserdataPaths(ctx);
+  await ensureDir(paths.storageDir);
+  await writeJson(paths.configJson, config);
+}
+
+/**
+ * Edge Panel 상태를 읽어옵니다.
+ * 기본값: showExplorer=true, showLogs=false, controlHeight=auto, splitterPosition=undefined
+ */
+export async function readEdgePanelState(ctx: vscode.ExtensionContext): Promise<NonNullable<AppConfigFile['panelState']>> {
+  const config = await readAppConfig(ctx);
+  return {
+    showExplorer: config.panelState?.showExplorer ?? true,
+    showLogs: config.panelState?.showLogs ?? false,
+    controlHeight: config.panelState?.controlHeight,
+    splitterPosition: config.panelState?.splitterPosition,
+  };
+}
+
+/**
+ * Edge Panel 상태를 저장합니다.
+ */
+export async function writeEdgePanelState(ctx: vscode.ExtensionContext, state: NonNullable<AppConfigFile['panelState']>): Promise<void> {
+  const config = await readAppConfig(ctx);
+  config.panelState = { ...config.panelState, ...state };
+  await writeAppConfig(ctx, config);
 }

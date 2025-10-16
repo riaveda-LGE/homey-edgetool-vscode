@@ -16,6 +16,7 @@ import { measure } from '../../core/logging/perf.js';
 import { EdgePanelConnectionManager } from './EdgePanelConnectionManager.js';
 import { EdgePanelLogViewer } from './EdgePanelLogViewer.js';
 import { EdgePanelButtonHandler, type IEdgePanelButtonHandler } from './EdgePanelButtonHandler.js';
+import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
 
 interface EdgePanelState {
   version: string;
@@ -154,9 +155,17 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           return;
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
           this._state.logs = getBufferedLogs();
-          webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state: this._state } });
+          const panelState = await readEdgePanelState(this._context);
+          webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state: this._state, panelState } });
           webviewView.webview.postMessage({ v: 1, type: 'setUpdateVisible', payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) } });
           this._buttonHandler?.sendButtonSections();
+
+          // 저장된 상태에서 Explorer가 켜져 있으면 초기화
+          if (panelState.showExplorer) {
+            await this._explorer?.refreshWorkspaceRoot();
+          }
+        } else if (msg?.type === 'ui.savePanelState' && msg?.v === 1) {
+          await writeEdgePanelState(this._context, msg.payload.panelState);
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
         } else if (msg?.type === 'button.click' && msg?.v === 1 && typeof msg.payload.id === 'string') {
@@ -168,12 +177,18 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
     this._trackDisposable(() => messageDisposable.dispose());
 
-    const visibilityDisposable = webviewView.onDidChangeVisibility(() => {
+    const visibilityDisposable = webviewView.onDidChangeVisibility(async () => {
       if (!webviewView.visible) return;
       try {
         const state = { ...this._state, logs: getBufferedLogs() };
-        webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state } });
+        const panelState = await readEdgePanelState(this._context);
+        webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
         this._buttonHandler?.sendButtonSections();
+
+        // 저장된 상태에서 Explorer가 켜져 있으면 초기화
+        if (panelState.showExplorer) {
+          await this._explorer?.refreshWorkspaceRoot();
+        }
       } catch {}
     });
     this._trackDisposable(() => visibilityDisposable.dispose());

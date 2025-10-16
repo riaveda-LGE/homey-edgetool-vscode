@@ -58,7 +58,7 @@ import { createUiLog } from '../shared/utils.js';
 
   const state = {
     showLogs: false,
-    showExplorer: false,
+    showExplorer: true, // 기본적으로 Explorer 열기
     explorerPath: '' as string, // 현재 breadcrumb 기준 경로
     root: null as TreeNode | null,
     nodesByPath: new Map<string, TreeNode>(),
@@ -396,6 +396,7 @@ import { createUiLog } from '../shared/utils.js';
     if (!dragging) return;
     dragging = false;
     document.body.style.userSelect = '';
+    savePanelState(); // 드래그 종료 시 상태 저장
   });
   splitter!.addEventListener('keydown', (e) => {
     if (!isContentVisible()) return;
@@ -406,6 +407,8 @@ import { createUiLog } from '../shared/utils.js';
       const maxPx = Math.floor(window.innerHeight * 0.5);
       const cur = getCtrlH() + ((e as KeyboardEvent).key === 'ArrowUp' ? -step : step);
       setCtrlH(Math.min(Math.max(cur, minPx), maxPx));
+      userAdjustedControlHeight = true; // 사용자가 조정했음
+      savePanelState(); // 키보드 조정 시 상태 저장
     }
   });
 
@@ -437,6 +440,7 @@ import { createUiLog } from '../shared/utils.js';
     if (!contentDragging) return;
     contentDragging = false;
     document.body.style.userSelect = '';
+    savePanelState(); // content splitter 조정 시 상태 저장
   });
 
   // 스플리터 설정 (applyLayout에서 호출)
@@ -984,6 +988,7 @@ import { createUiLog } from '../shared/utils.js';
       state.showLogs = !state.showLogs;
       uiLog.info('[edge-panel] logs toggled to: ' + state.showLogs);
       applyLayout();
+      savePanelState();
     });
   }
   if (toggleExplorerEl) {
@@ -991,6 +996,7 @@ import { createUiLog } from '../shared/utils.js';
       state.showExplorer = !state.showExplorer;
       uiLog.info('[edge-panel] explorer toggled to: ' + state.showExplorer);
       applyLayout();
+      savePanelState();
     });
   }
 
@@ -1019,6 +1025,30 @@ import { createUiLog } from '../shared/utils.js';
         const { logs } = msg.payload.state || {};
         uiLog.info('[edge-panel] on:initState');
         resetLogs(logs);
+        
+        // 저장된 패널 상태 불러오기
+        if (msg.payload.panelState) {
+          const ps = msg.payload.panelState;
+          state.showExplorer = ps.showExplorer ?? true;
+          state.showLogs = ps.showLogs ?? false;
+          if (ps.controlHeight) {
+            setCtrlH(ps.controlHeight);
+            userAdjustedControlHeight = true; // 저장된 값이 있으면 사용자가 조정한 것으로 간주
+          }
+          if (ps.splitterPosition && ps.splitterPosition > 0 && ps.splitterPosition < 1) {
+            // content splitter 위치 복원 (다음 틱에서 실행)
+            setTimeout(() => {
+              if (state.showLogs && state.showExplorer && explorerEl && logContainer) {
+                const totalHeight = rootEl!.clientHeight - getCtrlH() - 20; // splitter 높이 고려
+                const explorerHeight = Math.round(totalHeight * ps.splitterPosition);
+                const logHeight = totalHeight - explorerHeight;
+                explorerEl.style.height = `${explorerHeight}px`;
+                logContainer.style.height = `${logHeight}px`;
+              }
+            }, 0);
+          }
+        }
+        
         applyLayout();
         vscode.postMessage({ v: 1, type: 'ui.requestButtons', payload: {} });
         break;
@@ -1037,6 +1067,8 @@ import { createUiLog } from '../shared/utils.js';
         state.showLogs = !state.showLogs;
         uiLog.info('[edge-panel] toggle logs -> ' + state.showLogs);
         applyLayout();
+        savePanelState();
+        vscode.postMessage({ v: 1, type: 'ui.requestButtons', payload: {} });
         break;
 
       case 'ui.toggleExplorer':
@@ -1064,6 +1096,8 @@ import { createUiLog } from '../shared/utils.js';
           treeEl?.focus();
         }
         applyLayout();
+        savePanelState();
+        vscode.postMessage({ v: 1, type: 'ui.requestButtons', payload: {} });
         break;
 
       // Explorer 응답
@@ -1161,7 +1195,27 @@ import { createUiLog } from '../shared/utils.js';
     }
   });
 
-  // ── Ready ───────────────────────────────────────────────────
+  // ── 상태 저장 ──────────────────────────────────────────────
+  function savePanelState() {
+    // content splitter 위치 계산 (explorer 높이 비율)
+    let splitterPosition: number | undefined;
+    if (state.showLogs && state.showExplorer && explorerEl && logContainer) {
+      const explorerHeight = parseFloat(explorerEl.style.height || '0');
+      const logHeight = parseFloat(logContainer.style.height || '0');
+      const totalHeight = explorerHeight + logHeight;
+      if (totalHeight > 0) {
+        splitterPosition = explorerHeight / totalHeight;
+      }
+    }
+
+    const panelState = {
+      showExplorer: state.showExplorer,
+      showLogs: state.showLogs,
+      controlHeight: getCtrlH(),
+      splitterPosition,
+    };
+    vscode.postMessage({ v: 1, type: 'ui.savePanelState', payload: { panelState } });
+  }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => vscode.postMessage({ v: 1, type: 'ui.ready', payload: {} }));
   } else {
@@ -1169,6 +1223,8 @@ import { createUiLog } from '../shared/utils.js';
   }
   setTimeout(() => {
     applyLayout();
+    // 초기 로딩 시 Control 패널이 모든 버튼이 보이도록 높이 조정
+    ensureCtrlContentFit();
     vscode.postMessage({ v: 1, type: 'ui.requestButtons', payload: {} });
   }, 0);
 })();
