@@ -59,7 +59,7 @@ export class PerfMonitorWebviewManager {
     if (this._webviewPanel && this._dataManager.isPerfMode()) {
       const data = this._dataManager.getPerfData();
       data.forEach((item) => {
-        this._webviewPanel!.webview.postMessage({ type: 'perf.update', data: item });
+        this._webviewPanel!.webview.postMessage({ v: 1, type: 'perf.updateData', payload: { data: item } });
       });
     }
   }
@@ -76,7 +76,7 @@ export class PerfMonitorWebviewManager {
     const data = this._dataManager.getPerfData();
     if (data.length > 0) {
       data.forEach((item) => {
-        this._webviewPanel?.webview.postMessage({ type: 'perf.update', data: item });
+        this._webviewPanel?.webview.postMessage({ v: 1, type: 'perf.updateData', payload: { data: item } });
       });
     }
   }
@@ -106,6 +106,13 @@ export class PerfMonitorWebviewManager {
           .header {
             text-align: center;
             margin-bottom: 30px;
+          }
+          .chart-container {
+            background: var(--vscode-editorWidget-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
           }
           .metrics {
             display: grid;
@@ -197,6 +204,8 @@ export class PerfMonitorWebviewManager {
           <p>Real-time CPU, Memory, and Operation Analysis</p>
         </div>
 
+        <div id="chart" class="chart-container" style="margin-bottom: 20px;"></div>
+
         <div class="metrics">
           <div class="metric-card">
             <div class="metric-title">CPU Usage</div>
@@ -218,10 +227,15 @@ export class PerfMonitorWebviewManager {
 
         <div class="data-section">
           <h3>Performance Data (Copy for Analysis)</h3>
+          <button id="captureBtn">Start Capture</button>
+          <button id="exportBtn">Export JSON</button>
+          <button id="exportHtmlBtn">Export HTML Report</button>
           <button id="copyDataBtn">Copy Data to Clipboard</button>
           <button id="exportDataBtn">Export to File</button>
           <pre id="dataDisplay">No data yet...</pre>
         </div>
+
+        <div id="htmlReport" style="display: none;"></div>
 
         <div id="status" class="status">
           Waiting for performance data... Click buttons in Edge Panel to start monitoring.

@@ -45,7 +45,7 @@ export class EdgePanelButtonHandler implements IEdgePanelButtonHandler {
       updateUrl: this._updateState.updateUrl,
     });
     const dto = toSectionDTO(this._buttonSections, ctx);
-    this._view.webview.postMessage({ type: 'buttons.set', sections: dto });
+    this._view.webview.postMessage({ v: 1, type: 'buttons.set', payload: { sections: dto } });
   }
 
   async dispatchButton(id: string) {
@@ -73,7 +73,7 @@ export class EdgePanelButtonHandler implements IEdgePanelButtonHandler {
           await vscode.commands.executeCommand(op.command, ...(op.args ?? []));
           break;
         case 'post':
-          this._view.webview.postMessage({ type: op.event, payload: op.payload });
+          this._view.webview.postMessage({ v: 1, type: op.event, payload: op.payload });
           break;
         case 'handler':
           if (op.name === 'togglePerformanceMonitoring') {

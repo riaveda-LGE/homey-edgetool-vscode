@@ -196,6 +196,10 @@ class ExplorerUI {
 
   /** 파일 시스템 이벤트 처리 */
   async handleFsEvent(relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') {
+    // 워크스페이스 정보가 없으면 초기화
+    if (!this.watcherManager.wsDirUri) {
+      await this.watcherManager.ensureInfo();
+    }
     const baseFsPath = this.watcherManager.wsDirUri!.fsPath;
     const rel = relFromBase(baseFsPath, uri);
     const dir = parentDir(rel);
@@ -235,7 +239,7 @@ class ExplorerUI {
         const parentUri = this.watcherManager.toChildUri(this.watcherManager.wsDirUri!, parentRel);
         this.log.info('[ExplorerUI] detected new folder from file:', parentRel, 'adding watcher');
         this.watcherManager.addWatcher(parentRel, parentUri);
-        this.post({ type: 'explorer.fs.changed', path: '' });
+        this.post({ v: 1, type: 'explorer.fs.changed', payload: { path: '' } });
       }
     }
   }
@@ -255,10 +259,10 @@ class ExplorerUI {
 
   private notifyUIChange(relPath: string, rel: string) {
     if (relPath !== '') {
-      this.post({ type: 'explorer.fs.changed', path: rel });
+      this.post({ v: 1, type: 'explorer.fs.changed', payload: { path: rel } });
     } else {
       const parentDirPath = parentDir(rel);
-      this.post({ type: 'explorer.fs.changed', path: parentDirPath });
+      this.post({ v: 1, type: 'explorer.fs.changed', payload: { path: parentDirPath } });
     }
   }
 
@@ -266,24 +270,24 @@ class ExplorerUI {
   async handleMessage(msg: any): Promise<boolean> {
     switch (msg.type) {
       case 'explorer.list':
-        this.log.info('[ExplorerUI] <- list', msg.path);
-        await this.list(String(msg.path || ''));
+        this.log.info('[ExplorerUI] <- list', msg.payload?.path);
+        await this.list(String(msg.payload?.path || ''));
         return true;
       case 'explorer.open':
-        this.log.info('[ExplorerUI] <- open', msg.path);
-        await this.open(String(msg.path || ''));
+        this.log.info('[ExplorerUI] <- open', msg.payload?.path);
+        await this.open(String(msg.payload?.path || ''));
         return true;
       case 'explorer.createFile':
-        this.log.info('[ExplorerUI] <- createFile', msg.path);
-        await this.createFile(String(msg.path || ''));
+        this.log.info('[ExplorerUI] <- createFile', msg.payload?.path);
+        await this.createFile(String(msg.payload?.path || ''));
         return true;
       case 'explorer.createFolder':
-        this.log.info('[ExplorerUI] <- createFolder', msg.path);
-        await this.createFolder(String(msg.path || ''));
+        this.log.info('[ExplorerUI] <- createFolder', msg.payload?.path);
+        await this.createFolder(String(msg.payload?.path || ''));
         return true;
       case 'explorer.delete':
-        this.log.info('[ExplorerUI] <- delete', msg.path, { recursive: !!msg.recursive, useTrash: !!msg.useTrash });
-        await this.remove(String(msg.path || ''), !!msg.recursive, !!msg.useTrash);
+        this.log.info('[ExplorerUI] <- delete', msg.payload?.path, { recursive: !!msg.payload?.recursive, useTrash: !!msg.payload?.useTrash });
+        await this.remove(String(msg.payload?.path || ''), !!msg.payload?.recursive, !!msg.payload?.useTrash);
         return true;
     }
     return false;
@@ -291,6 +295,10 @@ class ExplorerUI {
 
   private async list(rel: string) {
     try {
+      // 워크스페이스 정보가 없으면 초기화
+      if (!this.watcherManager.wsDirUri) {
+        await this.watcherManager.ensureInfo();
+      }
       const wsDirUri = this.watcherManager.wsDirUri!;
       const dirUri = this.watcherManager.toChildUri(wsDirUri, rel);
 
@@ -308,55 +316,71 @@ class ExplorerUI {
         })
         .map(([name, t]) => ({ name, kind: t === vscode.FileType.Directory ? 'folder' : ('file' as const) }));
       this.log.info('[ExplorerUI] list', rel, '->', items.length, 'items');
-      this.post({ type: 'explorer.list.result', path: rel || '', items });
+      this.post({ v: 1, type: 'explorer.list.result', payload: { path: rel || '', items } });
     } catch (e: any) {
       this.log.error(`list error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ type: 'explorer.error', op: 'list', message: e?.message || String(e) });
+      this.post({ v: 1, type: 'explorer.error', payload: { op: 'list', message: e?.message || String(e) } });
     }
   }
 
   private async open(rel: string) {
     try {
+      // 워크스페이스 정보가 없으면 초기화
+      if (!this.watcherManager.wsDirUri) {
+        await this.watcherManager.ensureInfo();
+      }
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       const doc = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(doc, { preview: false });
       this.log.info('[ExplorerUI] open', rel);
-      this.post({ type: 'explorer.ok', op: 'open', path: rel || '' });
+      this.post({ v: 1, type: 'explorer.ok', payload: { op: 'open', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`open error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ type: 'explorer.error', op: 'open', message: e?.message || String(e) });
+      this.post({ v: 1, type: 'explorer.error', payload: { op: 'open', message: e?.message || String(e) } });
     }
   }
 
   private async createFile(rel: string) {
     try {
+      // 워크스페이스 정보가 없으면 초기화
+      if (!this.watcherManager.wsDirUri) {
+        await this.watcherManager.ensureInfo();
+      }
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.writeFile(uri, new Uint8Array());
       this.log.info('[ExplorerUI] createFile', rel);
-      this.post({ type: 'explorer.ok', op: 'createFile', path: rel || '' });
+      this.post({ v: 1, type: 'explorer.ok', payload: { op: 'createFile', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`createFile error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ type: 'explorer.error', op: 'createFile', message: e?.message || String(e) });
+      this.post({ v: 1, type: 'explorer.error', payload: { op: 'createFile', message: e?.message || String(e) } });
     }
   }
 
   private async createFolder(rel: string) {
     try {
+      // 워크스페이스 정보가 없으면 초기화
+      if (!this.watcherManager.wsDirUri) {
+        await this.watcherManager.ensureInfo();
+      }
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.createDirectory(uri);
       this.log.info('[ExplorerUI] createFolder', rel);
-      this.post({ type: 'explorer.ok', op: 'createFolder', path: rel || '' });
+      this.post({ v: 1, type: 'explorer.ok', payload: { op: 'createFolder', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`createFolder error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ type: 'explorer.error', op: 'createFolder', message: e?.message || String(e) });
+      this.post({ v: 1, type: 'explorer.error', payload: { op: 'createFolder', message: e?.message || String(e) } });
     }
   }
 
   private async remove(rel: string, recursive: boolean, useTrash: boolean) {
     try {
+      // 워크스페이스 정보가 없으면 초기화
+      if (!this.watcherManager.wsDirUri) {
+        await this.watcherManager.ensureInfo();
+      }
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.delete(uri, { recursive, useTrash });
@@ -366,10 +390,10 @@ class ExplorerUI {
         this.watcherManager.removeWatcher(rel);
       }
 
-      this.post({ type: 'explorer.ok', op: 'delete', path: rel || '' });
+      this.post({ v: 1, type: 'explorer.ok', payload: { op: 'delete', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`delete error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ type: 'explorer.error', op: 'delete', message: e?.message || String(e) });
+      this.post({ v: 1, type: 'explorer.error', payload: { op: 'delete', message: e?.message || String(e) } });
     }
   }
 
@@ -377,7 +401,7 @@ class ExplorerUI {
   async refreshWorkspaceRoot() {
     this.watcherManager.info = undefined;
     await this.watcherManager.ensureInfo();
-    this.post({ type: 'explorer.root.changed' });
+    this.post({ v: 1, type: 'explorer.root.changed', payload: {} });
   }
 }
 

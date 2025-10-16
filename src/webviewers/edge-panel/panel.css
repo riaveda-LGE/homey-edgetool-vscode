@@ -342,12 +342,10 @@ body {
   transition: background-color .12s ease;
 }
 .tree-node .tn-line:hover { background: var(--row-hover); }
-.tree-node.selected .tn-line {
+.tree-node.selected > .tn-line {
   background: var(--row-selected);
   color: var(--row-selected-fg);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
 }
-.tree-node.selected .tn-label { color: var(--row-selected-fg); }
 
 .tn-icon { width: 18px; text-align: center; opacity: .85; }
 .tn-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

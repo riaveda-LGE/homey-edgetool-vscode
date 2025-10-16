@@ -62,7 +62,7 @@ import { createUiLog } from '../shared/utils.js';
     explorerPath: '' as string, // 현재 breadcrumb 기준 경로
     root: null as TreeNode | null,
     nodesByPath: new Map<string, TreeNode>(),
-    selected: null as TreeNode | null,
+    selected: [] as TreeNode[], // 다중 선택 배열
   };
 
   // 디바운스 타이머(폴더별)
@@ -78,7 +78,7 @@ import { createUiLog } from '../shared/utils.js';
 
   function requestList(rel: string) {
     uiLog.info('[edge-panel] requestList -> ' + rel);
-    vscode.postMessage({ type: 'explorer.list', path: rel || '' });
+    vscode.postMessage({ v: 1, type: 'explorer.list', payload: { path: rel || '' } });
   }
 
   function getOrCreateNode(path: string, name: string, kind: Kind, parent: TreeNode | null): TreeNode {
@@ -292,7 +292,7 @@ import { createUiLog } from '../shared/utils.js';
         const nodeEl = (e.target as HTMLElement).closest('.tree-node') as HTMLElement | null;
         if (nodeEl) {
           const node = state.nodesByPath.get(nodeEl.dataset.path || '');
-          if (node) selectNode(node);
+          if (node) selectNode(node, (e as MouseEvent).ctrlKey || (e as MouseEvent).metaKey);
         }
       });
       treeEl.addEventListener('dblclick', (e) => {
@@ -496,7 +496,7 @@ import { createUiLog } from '../shared/utils.js';
         b.title = it.desc || it.label;
         b.textContent = it.label;
         b.addEventListener('click', () => {
-          vscode.postMessage({ type: 'button.click', id: it.id });
+          vscode.postMessage({ v: 1, type: 'button.click', payload: { id: it.id } });
         });
 
         // 상태 표시: 켜짐 상태일 때 btn-on 클래스 추가
@@ -719,11 +719,31 @@ import { createUiLog } from '../shared/utils.js';
     uiLog.info('[edge-panel] updateNodeExpanded ' + JSON.stringify({ path: node.path, expanded: isExpanded, groupVisible: group ? group.style.display !== 'none' : null }));
   }
 
-  function selectNode(node: TreeNode) {
-    if (state.selected?.el) state.selected.el.classList.remove('selected');
-    state.selected = node;
-    if (node.el) node.el.classList.add('selected');
-    if (node.kind === 'folder') state.explorerPath = node.path;
+  function selectNode(node: TreeNode, ctrlKey = false) {
+    if (ctrlKey) {
+      // 다중 선택: 토글
+      const index = state.selected.indexOf(node);
+      if (index > -1) {
+        // 이미 선택됨: 제거
+        state.selected.splice(index, 1);
+        if (node.el) node.el.classList.remove('selected');
+      } else {
+        // 추가
+        state.selected.push(node);
+        if (node.el) node.el.classList.add('selected');
+      }
+    } else {
+      // 단일 선택: 기존 선택 모두 해제 후 새로 선택
+      state.selected.forEach(n => {
+        if (n.el) n.el.classList.remove('selected');
+      });
+      state.selected = [node];
+      if (node.el) node.el.classList.add('selected');
+    }
+    // breadcrumb는 첫 번째 선택된 노드로 설정 (단일 선택 시)
+    if (state.selected.length === 1 && state.selected[0].kind === 'folder') {
+      state.explorerPath = state.selected[0].path;
+    }
     renderBreadcrumb(state.explorerPath);
   }
 
@@ -740,7 +760,7 @@ import { createUiLog } from '../shared/utils.js';
 
   function openFile(node: TreeNode) {
     if (node.kind !== 'file') return;
-    vscode.postMessage({ type: 'explorer.open', path: node.path });
+    vscode.postMessage({ v: 1, type: 'explorer.open', payload: { path: node.path } });
   }
 
   // ── Context Menu helpers ─────────────────────────────────────
@@ -790,20 +810,26 @@ import { createUiLog } from '../shared/utils.js';
     if (!nm) return;
     const full = posixJoin(ctxBaseDir, nm);
     if (ctxMode === 'new-file') {
-      vscode.postMessage({ type: 'explorer.createFile', path: full });
+      vscode.postMessage({ v: 1, type: 'explorer.createFile', payload: { path: full } });
     } else if (ctxMode === 'new-folder') {
-      vscode.postMessage({ type: 'explorer.createFolder', path: full });
+      vscode.postMessage({ v: 1, type: 'explorer.createFolder', payload: { path: full } });
     }
     closeCtxMenu();
   }
 
   function confirmDeleteYes() {
     if (!ctxTarget) return;
-    vscode.postMessage({
-      type: 'explorer.delete',
-      path: ctxTarget.path,
-      recursive: ctxTarget.kind === 'folder',
-      useTrash: true,
+    // 다중 선택된 항목 모두 삭제
+    state.selected.forEach(node => {
+      vscode.postMessage({
+        v: 1,
+        type: 'explorer.delete',
+        payload: {
+          path: node.path,
+          recursive: node.kind === 'folder',
+          useTrash: true,
+        },
+      });
     });
     closeCtxMenu();
   }
@@ -811,7 +837,7 @@ import { createUiLog } from '../shared/utils.js';
   // ── Keyboard on tree ─────────────────────────────────────────
   function onTreeKey(e: KeyboardEvent) {
     const vis = visibleNodes();
-    const cur = state.selected ? vis.indexOf(state.selected) : -1;
+    const cur = state.selected.length > 0 ? vis.indexOf(state.selected[0]) : -1;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -827,7 +853,7 @@ import { createUiLog } from '../shared/utils.js';
     }
     if (e.key === 'ArrowRight') {
       e.preventDefault();
-      const n = state.selected;
+      const n = state.selected[0];
       if (!n) return;
       if (n.kind === 'folder') {
         if (!n.expanded) toggleNode(n, true);
@@ -840,27 +866,27 @@ import { createUiLog } from '../shared/utils.js';
     }
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      const n = state.selected;
+      const n = state.selected[0];
       if (!n) return;
       if (n.kind === 'folder' && n.expanded) toggleNode(n, true);
       else if (n.parent) selectNode(n.parent);
       return;
     }
     if (e.key === 'Enter') {
-      const n = state.selected;
+      const n = state.selected[0];
       if (!n) return;
       if (n.kind === 'folder') toggleNode(n, true);
       else openFile(n);
       return;
     }
-    if ((e.key === 'Delete' || e.key === 'Backspace') && state.selected) {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && state.selected.length > 0) {
       // sandbox에서 confirm() 불가 → 인라인 확인 UI
       e.preventDefault();
-      const li = state.selected.el as HTMLElement | null;
+      const li = state.selected[0].el as HTMLElement | null;
       const r = li?.getBoundingClientRect();
       const x = r ? r.left + Math.min(160, r.width) : 120;
       const y = r ? r.top + 24 : 120;
-      openCtxMenu(x, y, state.selected);
+      openCtxMenu(x, y, state.selected[0]); // 첫 번째 선택된 노드로 메뉴 열기
       showDeleteConfirm();
     }
   }
@@ -926,7 +952,7 @@ import { createUiLog } from '../shared/utils.js';
     uiLog.info('[edge-panel] ctxmenu click ' + JSON.stringify({ cmd, baseDir: ctxBaseDir, name, kind }));
 
     if (cmd === 'open' && kind === 'file') {
-      vscode.postMessage({ type: 'explorer.open', path: posixJoin(ctxBaseDir, name) });
+      vscode.postMessage({ v: 1, type: 'explorer.open', payload: { path: posixJoin(ctxBaseDir, name) } });
       closeCtxMenu();
       return;
     }
@@ -990,20 +1016,20 @@ import { createUiLog } from '../shared/utils.js';
     const msg = (event as MessageEvent<any>).data || {};
     switch (msg.type) {
       case 'initState': {
-        const { logs } = msg.state || {};
+        const { logs } = msg.payload.state || {};
         uiLog.info('[edge-panel] on:initState');
         resetLogs(logs);
         applyLayout();
-        vscode.postMessage({ type: 'ui.requestButtons' });
+        vscode.postMessage({ v: 1, type: 'ui.requestButtons', payload: {} });
         break;
       }
 
       case 'appendLog':
-        if (typeof msg.text === 'string') appendLog(msg.text);
+        if (typeof msg.payload.text === 'string') appendLog(msg.payload.text);
         break;
 
       case 'buttons.set':
-        renderSections((msg.sections || []) as SectionDTO[]);
+        renderSections((msg.payload.sections || []) as SectionDTO[]);
         break;
 
       // 패널 토글
@@ -1018,6 +1044,7 @@ import { createUiLog } from '../shared/utils.js';
         uiLog.info('[edge-panel] toggle explorer -> ' + state.showExplorer);
         if (state.showExplorer) {
           ensureExplorerDom();
+          vscode.postMessage({ v: 1, type: 'workspace.ensure', payload: {} });
           if (!state.root) {
             // 루트 노드 구성 후 목록 요청
             state.root = getOrCreateNode('', 'workspace', 'folder', null);
@@ -1041,8 +1068,8 @@ import { createUiLog } from '../shared/utils.js';
 
       // Explorer 응답
       case 'explorer.list.result': {
-        const rel = String(msg.path || '');
-        const items = (msg.items || []) as { name: string; kind: Kind }[];
+        const rel = String(msg.payload.path || '');
+        const items = (msg.payload.items || []) as { name: string; kind: Kind }[];
         uiLog.info('[edge-panel] on:list.result ' + JSON.stringify({ rel, count: items.length, rootConnected: !!state.root?.el?.isConnected }));
 
         if (!state.root) {
@@ -1054,15 +1081,15 @@ import { createUiLog } from '../shared/utils.js';
         if (!node) return;
 
         renderChildren(node, items);
-        if (node === state.root && !state.selected) selectNode(state.root);
+        if (node === state.root && state.selected.length === 0) selectNode(state.root);
         break;
       }
 
       case 'explorer.ok': {
-        uiLog.info('[edge-panel] on:ok ' + JSON.stringify({ op: msg.op, path: msg.path }));
-        if (msg.op === 'delete') {
+        uiLog.info('[edge-panel] on:ok ' + JSON.stringify({ op: msg.payload.op, path: msg.payload.path }));
+        if (msg.payload.op === 'delete') {
           // 삭제 시 특별 처리: 부모 폴더 refresh, 선택 상태 정리
-          const deletedPath = String(msg.path || '');
+          const deletedPath = String(msg.payload.path || '');
           const parentPath = dirOf(deletedPath);
           
           // 삭제된 경로로 시작하는 모든 노드 제거 (recursive 삭제 지원)
@@ -1078,11 +1105,7 @@ import { createUiLog } from '../shared/utils.js';
           toRemove.forEach(path => state.nodesByPath.delete(path));
           
           // 삭제된 노드가 선택되어 있다면 선택 해제
-          const deletedNode = state.nodesByPath.get(deletedPath);
-          if (deletedNode && state.selected === deletedNode) {
-            state.selected = deletedNode.parent ?? state.root ?? null;
-            if (state.selected) selectNode(state.selected);
-          }
+          state.selected = state.selected.filter(node => !toRemove.includes(node.path));
           
           // 현재 보고 있는 폴더가 삭제된 폴더라면 상위로 이동
           if (state.explorerPath === deletedPath || state.explorerPath.startsWith(deletedPath + '/')) {
@@ -1092,13 +1115,14 @@ import { createUiLog } from '../shared/utils.js';
           
           // 부모 폴더 refresh
           requestList(parentPath);
-        } else if (msg.op === 'createFile' || msg.op === 'createFolder') {
+        } else if (msg.payload.op === 'createFile' || msg.payload.op === 'createFolder') {
           // 생성 작업은 생성된 항목의 부모 폴더 refresh
-          const parentDir = dirOf(String(msg.path || ''));
+          const parentDir = dirOf(String(msg.payload.path || ''));
           requestList(parentDir);
         } else if (msg.op !== 'open') {
           // 다른 작업은 현재 폴더 refresh
-          const target = state.selected?.kind === 'folder' ? state.selected : (state.selected?.parent ?? state.root);
+          const firstSelected = state.selected[0];
+          const target = firstSelected?.kind === 'folder' ? firstSelected : (firstSelected?.parent ?? state.root);
           if (target) requestList(target.path);
         }
         break;
@@ -1106,8 +1130,8 @@ import { createUiLog } from '../shared/utils.js';
 
       case 'explorer.fs.changed': {
         // 확장 쪽에서 변경 감지 → 현재 폴더와 동일한 상위면 갱신
-        uiLog.info('[edge-panel] explorer.fs.changed received: ' + msg.path);
-        const changedRel = String(msg.path || '');
+        uiLog.info('[edge-panel] explorer.fs.changed received: ' + msg.payload.path);
+        const changedRel = String(msg.payload.path || '');
         const dir = dirOf(changedRel);
         scheduleFolderRefresh(dir);
         break;
@@ -1118,7 +1142,7 @@ import { createUiLog } from '../shared/utils.js';
         uiLog.info('[edge-panel] on:root.changed');
         state.root = null;
         state.nodesByPath.clear();
-        state.selected = null;
+        state.selected = [];
         state.explorerPath = '';
         ensureExplorerDom();
         if (treeEl) treeEl.innerHTML = '';
@@ -1130,8 +1154,8 @@ import { createUiLog } from '../shared/utils.js';
       }
 
       case 'explorer.error': {
-        uiLog.error(`explorer.error: ${JSON.stringify(msg)}`);
-        alert(`탐색기 작업 실패: ${msg.message || msg.op || 'unknown'}`);
+        uiLog.error(`explorer.error: ${JSON.stringify(msg.payload)}`);
+        alert(`탐색기 작업 실패: ${msg.payload.message || msg.payload.op || 'unknown'}`);
         break;
       }
     }
@@ -1139,12 +1163,12 @@ import { createUiLog } from '../shared/utils.js';
 
   // ── Ready ───────────────────────────────────────────────────
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => vscode.postMessage({ command: 'ready' }));
+    document.addEventListener('DOMContentLoaded', () => vscode.postMessage({ v: 1, type: 'ui.ready', payload: {} }));
   } else {
-    vscode.postMessage({ command: 'ready' });
+    vscode.postMessage({ v: 1, type: 'ui.ready', payload: {} });
   }
   setTimeout(() => {
     applyLayout();
-    vscode.postMessage({ type: 'ui.requestButtons' });
+    vscode.postMessage({ v: 1, type: 'ui.requestButtons', payload: {} });
   }, 0);
 })();
