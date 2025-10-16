@@ -1,13 +1,10 @@
+import { createUiLog } from '../shared/utils.js';
+
 (function () {
   const vscode = acquireVsCodeApi();
 
   // lightweight logger
-  const uiLog = {
-    debug: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'debug', text: t, source: 'ui.edgePanel' } }),
-    info: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'info', text: t, source: 'ui.edgePanel' } }),
-    warn: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'warn', text: t, source: 'ui.edgePanel' } }),
-    error: (t: string) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'error', text: t, source: 'ui.edgePanel' } }),
-  };
+  const uiLog = createUiLog(vscode, 'ui.edgePanel');
 
   const rootEl = document.getElementById('root') as HTMLElement | null;
   const controlsEl = document.getElementById('controls') as HTMLElement | null;
@@ -714,10 +711,12 @@
   function updateNodeExpanded(node: TreeNode) {
     if (!node.el) return;
     const group = ensureChildrenContainer(node);
-    node.el.setAttribute('aria-expanded', node.kind === 'folder' ? String(!!node.expanded) : 'false');
-    node.el.classList.toggle('expanded', !!node.expanded);
-    if (group) group.style.display = node.expanded ? '' : 'none';
-    uiLog.info('[edge-panel] updateNodeExpanded ' + JSON.stringify({ path: node.path, expanded: !!node.expanded, groupVisible: group ? group.style.display !== 'none' : null }));
+    // root 노드(workspace)는 항상 expanded 유지
+    const isExpanded = node.path === '' ? true : !!node.expanded;
+    node.el.setAttribute('aria-expanded', node.kind === 'folder' ? String(isExpanded) : 'false');
+    node.el.classList.toggle('expanded', isExpanded);
+    if (group) group.style.display = isExpanded ? '' : 'none';
+    uiLog.info('[edge-panel] updateNodeExpanded ' + JSON.stringify({ path: node.path, expanded: isExpanded, groupVisible: group ? group.style.display !== 'none' : null }));
   }
 
   function selectNode(node: TreeNode) {
@@ -730,6 +729,8 @@
 
   function toggleNode(node: TreeNode, focusAfter = false) {
     if (node.kind !== 'folder') return;
+    // root 노드(workspace)는 항상 expanded 유지
+    if (node.path === '') return;
     node.expanded = !node.expanded;
     updateNodeExpanded(node);
     if (node.expanded && !node.loaded) requestList(node.path);

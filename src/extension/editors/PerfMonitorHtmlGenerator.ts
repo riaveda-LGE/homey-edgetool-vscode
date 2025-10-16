@@ -98,7 +98,7 @@ export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
   }
 
   getHtmlForWebview(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'app.js'));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'app.bundle.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css'));
     const chartUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'chart.umd.js'));
 

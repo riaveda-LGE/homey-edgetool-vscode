@@ -1,12 +1,9 @@
+import { createUiLog } from '../shared/utils.js';
+
 const vscode = acquireVsCodeApi();
 
 // UI Logger for perf-monitor
-const uiLog = {
-  debug: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'debug', text, source: 'ui.perfMonitor' } }),
-  info: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'info', text, source: 'ui.perfMonitor' } }),
-  warn: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'warn', text, source: 'ui.perfMonitor' } }),
-  error: (text) => vscode.postMessage({ v: 1, type: 'ui.log', payload: { level: 'error', text, source: 'ui.perfMonitor' } }),
-};
+const uiLog = createUiLog(vscode, 'ui.perfMonitor');
 
 // Global variables
 let chart = null;
@@ -235,3 +232,127 @@ window.addEventListener('message', event => {
 // flame graph messages removed
   }
 });
+
+// HTML inline script content moved here
+let perfData = { cpu: [], memory: [], timings: [] };
+
+// 데이터 표시 업데이트
+function updateDataDisplay() {
+  const dataStr = JSON.stringify(perfData, null, 2);
+  document.getElementById('dataDisplay').textContent = dataStr;
+}
+
+// 복사 버튼
+document.getElementById('copyDataBtn').addEventListener('click', async () => {
+  const dataStr = JSON.stringify(perfData, null, 2);
+  try {
+    await navigator.clipboard.writeText(dataStr);
+    alert('Performance data copied to clipboard!');
+  } catch (err) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = dataStr;
+    document.body.appendChild(textArea);
+    textArea.select();
+    textArea.focus();
+    document.execCommand('selectall');
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('Performance data copied to clipboard!');
+  }
+});
+
+// 내보내기 버튼
+document.getElementById('exportDataBtn').addEventListener('click', () => {
+  const dataStr = JSON.stringify(perfData, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'homey-perf-data-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// 데이터 업데이트 함수
+function updateDisplay(data) {
+  // CPU 데이터
+  if (data.cpuDelta) {
+    perfData.cpu.push({
+      user: data.cpuDelta.user,
+      system: data.cpuDelta.system,
+      timestamp: data.timestamp
+    });
+    if (perfData.cpu.length > 10) perfData.cpu.shift();
+
+    const latest = perfData.cpu[perfData.cpu.length - 1];
+    document.getElementById('cpuValue').textContent =
+      `${(latest.user + latest.system).toFixed(2)} ms`;
+
+    document.getElementById('cpuList').innerHTML = perfData.cpu
+      .map(entry =>
+        `<div class="perf-entry">
+          ${new Date(entry.timestamp).toLocaleTimeString()}:
+          User ${entry.user.toFixed(2)}ms, System ${entry.system.toFixed(2)}ms
+        </div>`
+      ).join('');
+  }
+
+  // 메모리 데이터
+  if (data.memDelta) {
+    perfData.memory.push({
+      heapUsed: data.memDelta.heapUsed,
+      rss: data.memDelta.rss,
+      timestamp: data.timestamp
+    });
+    if (perfData.memory.length > 10) perfData.memory.shift();
+
+    const latest = perfData.memory[perfData.memory.length - 1];
+    document.getElementById('memValue').textContent =
+      `${latest.heapUsed.toFixed(2)} MB`;
+
+    document.getElementById('memList').innerHTML = perfData.memory
+      .map(entry =>
+        `<div class="perf-entry">
+          ${new Date(entry.timestamp).toLocaleTimeString()}:
+          Heap ${entry.heapUsed.toFixed(2)}MB, RSS ${entry.rss.toFixed(2)}MB
+        </div>`
+      ).join('');
+  }
+
+  // 타이밍 데이터
+  perfData.timings.push({
+    operation: data.operation,
+    duration: data.duration,
+    timestamp: data.timestamp
+  });
+  if (perfData.timings.length > 20) perfData.timings.shift();
+
+  document.getElementById('timingList').innerHTML = perfData.timings
+    .map(entry =>
+      `<div class="perf-entry">
+        ${new Date(entry.timestamp).toLocaleTimeString()} -
+        ${entry.operation}: ${data.duration?.toFixed(2)}ms
+      </div>`
+    ).join('');
+
+  // 상태 업데이트
+  document.getElementById('status').textContent =
+    `Last update: ${new Date(data.timestamp).toLocaleTimeString()} - ${data.operation}`;
+
+  // 데이터 표시 업데이트
+  updateDataDisplay();
+}
+
+// VS Code 메시지 수신
+window.addEventListener('message', (event) => {
+  const msg = event.data;
+  if (msg.type === 'perf.update') {
+    updateDisplay(msg.data);
+  }
+});
+
+// 준비 완료 알림
+vscode.postMessage({ type: 'perf.ready' });

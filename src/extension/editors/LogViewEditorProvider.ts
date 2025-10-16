@@ -54,7 +54,7 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
 
     const nonce = getNonce();
     const appJs = webviewPanel.webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extUri, 'dist', 'webviewers', 'log-viewer', 'app.js'),
+      vscode.Uri.joinPath(this._extUri, 'dist', 'webviewers', 'log-viewer', 'app.bundle.js'),
     );
 
     webviewPanel.webview.html = html

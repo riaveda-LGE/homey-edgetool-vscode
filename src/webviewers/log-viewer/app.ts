@@ -1,12 +1,12 @@
-import { makeBridge, makeUiLogger } from '../../extension/messaging/bridge.js';
+import { createUiLog } from '../shared/utils.js';
 
-const bridge = makeBridge();
-const uiLog = makeUiLogger(bridge, 'log-viewer');
+const vscode = acquireVsCodeApi();
+const uiLog = createUiLog(vscode, 'log-viewer');
 
 const logEl = document.getElementById('log')!;
 
 // 초기 ready 신호 (표준 Envelope)
-bridge.post('ui.ready', {});
+vscode.postMessage({ v: 1, type: 'ui.ready' });
 
 const lines: string[] = [];
 

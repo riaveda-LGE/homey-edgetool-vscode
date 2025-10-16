@@ -27,6 +27,7 @@ export function createExplorerBridge(
   const log = getLogger('extension:panels:explorerBridge');
   let disposed = false;
   let info: { wsDirUri: vscode.Uri } | undefined;
+  let cleanupTimer: NodeJS.Timeout | undefined;
 
   // 동적 워처 맵: 폴더 경로 -> 워처
   const watchers = new Map<string, vscode.FileSystemWatcher>();
@@ -44,6 +45,34 @@ export function createExplorerBridge(
     const clean = String(rel || '').replace(/^[\\/]+/, '').replace(/\\/g, '/');
     const parts = clean.split('/').filter(Boolean);
     return vscode.Uri.joinPath(base, ...parts);
+  }
+
+  async function cleanupWatchers() {
+    if (disposed || !info) return;
+    log.info('[explorerBridge] starting periodic watcher cleanup');
+    const beforeCount = watchers.size;
+
+    // 검증: 존재하지 않는 폴더의 워처 제거
+    const toRemove: string[] = [];
+    for (const [relPath] of watchers) {
+      if (relPath === '') continue; // 루트 워처는 유지
+      const uri = toChildUri(info.wsDirUri, relPath);
+      try {
+        await vscode.workspace.fs.stat(uri);
+      } catch {
+        toRemove.push(relPath);
+      }
+    }
+    for (const relPath of toRemove) {
+      removeWatcherForFolder(relPath);
+    }
+
+    const afterCleanupCount = watchers.size;
+    log.info(`[explorerBridge] cleanup removed ${beforeCount - afterCleanupCount} watchers, now ${afterCleanupCount}`);
+
+    // 전체 재갱신: ensureWatchers로 클린 재등록
+    await ensureWatchers();
+    log.info('[explorerBridge] periodic watcher cleanup completed');
   }
 
   function addWatcherForFolder(relPath: string, folderUri: vscode.Uri) {
@@ -69,8 +98,8 @@ export function createExplorerBridge(
 
         log.info('[explorerBridge] fs event in folder', relPath, ':', uri.fsPath, 'rel:', rel);
 
-        // 폴더 생성 시 워처 추가
-        if (uri.fsPath.startsWith(folderUri.fsPath)) {
+        // 폴더 생성 시 워처 추가 (루트 워처에서만 처리)
+        if (relPath === '' && uri.fsPath.startsWith(folderUri.fsPath)) {
           (vscode.workspace.fs.stat(uri) as Promise<any>).then((stat) => {
             if (stat.type === vscode.FileType.Directory) {
               const newRel = relFromBase(baseFsPath, uri);
@@ -80,11 +109,29 @@ export function createExplorerBridge(
           }).catch(() => {});
         }
 
+        // 새 폴더 내 파일 생성 시 폴더 감지 및 워처 추가
+        if (relPath === '' && rel.includes('/')) {
+          const parentRel = parentDir(rel);
+          if (!watchers.has(parentRel)) {
+            const parentUri = toChildUri(info!.wsDirUri, parentRel);
+            log.info('[explorerBridge] detected new folder from file creation:', parentRel, 'adding watcher');
+            addWatcherForFolder(parentRel, parentUri);
+            // 루트 refresh하여 새 폴더 표시
+            post({ type: 'explorer.fs.changed', path: '' });
+          }
+        }
+
         // 폴더 삭제 시 워처 해제
         // onDidDelete에서 처리
 
-        // UI에 변경 알림
-        post({ type: 'explorer.fs.changed', path: rel });
+        // UI에 변경 알림 (루트 워처에서는 폴더 생성/삭제만, 개별 워처에서는 내부 변경)
+        if (relPath !== '') {
+          post({ type: 'explorer.fs.changed', path: rel });
+        } else {
+          // 루트 워처에서 모든 이벤트에 대해 부모 폴더 변경 알림
+          const parentDirPath = parentDir(rel);
+          post({ type: 'explorer.fs.changed', path: parentDirPath });
+        }
       } catch (e) {
         log.error('[explorerBridge] fs event error', e);
       }
@@ -108,7 +155,14 @@ export function createExplorerBridge(
           }
         }).catch(() => {});
 
-        post({ type: 'explorer.fs.changed', path: rel });
+        // UI에 변경 알림 (루트 워처에서는 하지 않음, 개별 워처에서 처리)
+        if (relPath !== '') {
+          post({ type: 'explorer.fs.changed', path: rel });
+        } else {
+          // 루트 워처에서 폴더 삭제 시 부모 폴더 변경 알림
+          const parentDirPath = parentDir(rel);
+          post({ type: 'explorer.fs.changed', path: parentDirPath });
+        }
       } catch (e) {
         log.error('[explorerBridge] delete event error', e);
       }
@@ -146,6 +200,10 @@ export function createExplorerBridge(
     }
     watchers.clear();
 
+    // 루트 폴더에 워처 추가 (모든 하위 폴더 생성/삭제 감지용)
+    log.info('[explorerBridge] adding root watcher for workspace');
+    addWatcherForFolder('', baseUri);
+
     // 루트 폴더 스캔해서 기존 폴더에 워처 등록
     try {
       const entries = await vscode.workspace.fs.readDirectory(baseUri);
@@ -168,6 +226,13 @@ export function createExplorerBridge(
     try {
       const { wsDirUri } = await ensureInfo();
       const dirUri = toChildUri(wsDirUri, rel);
+
+      // UI에서 폴더를 expand할 때 워처 등록 (없으면)
+      if (rel && !watchers.has(rel)) {
+        log.info('[explorerBridge] registering watcher for expanded folder:', rel);
+        addWatcherForFolder(rel, dirUri);
+      }
+
       const entries = await vscode.workspace.fs.readDirectory(dirUri);
       const items = entries
         .filter(([name, t]) => {
@@ -259,6 +324,9 @@ export function createExplorerBridge(
     post({ type: 'explorer.root.changed' });
   }
 
+  // 주기적 워처 정리 타이머 시작 (5분 간격)
+  cleanupTimer = setInterval(cleanupWatchers, 5 * 60 * 1000);
+
   return {
     async handleMessage(msg: any) {
       if (disposed || !msg) return false;
@@ -291,6 +359,10 @@ export function createExplorerBridge(
     },
     dispose() {
       disposed = true;
+      if (cleanupTimer) {
+        clearInterval(cleanupTimer);
+        cleanupTimer = undefined;
+      }
       for (const [path, w] of watchers) {
         log.info('[explorerBridge] disposing watcher for folder:', path, 'on bridge dispose');
         try { w.dispose(); } catch (e) { log.error('[explorerBridge] watcher dispose error', e); }

@@ -209,7 +209,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   private async _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): Promise<string> {
     const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
     const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.css'));
-    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.js'));
+    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.bundle.js'));
     const nonce = getNonce();
     const cspSource = webview.cspSource;
 
