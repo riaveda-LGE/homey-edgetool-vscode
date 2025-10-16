@@ -18,10 +18,10 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
   ): void | Thenable<void> {
     log.info('resolveCustomTextEditor', document.uri.toString());
 
-    // dist/ui/log-viewer 리소스만 허용
+    // dist/webviewers/log-viewer 리소스만 허용
     webviewPanel.webview.options = {
       enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(this._extUri, 'dist', 'ui', 'log-viewer')],
+      localResourceRoots: [vscode.Uri.joinPath(this._extUri, 'dist', 'webviewers', 'log-viewer')],
       ...({ retainContextWhenHidden: true } as any),
     };
 
@@ -54,7 +54,7 @@ export class LogViewEditorProvider implements vscode.CustomTextEditorProvider {
 
     const nonce = getNonce();
     const appJs = webviewPanel.webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extUri, 'dist', 'ui', 'log-viewer', 'app.js'),
+      vscode.Uri.joinPath(this._extUri, 'dist', 'webviewers', 'log-viewer', 'app.bundle.js'),
     );
 
     webviewPanel.webview.html = html

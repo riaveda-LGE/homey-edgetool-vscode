@@ -118,11 +118,11 @@ export class EdgePanelLogViewer {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'log-viewer')],
+        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'log-viewer')],
       },
     );
 
-    const mediaRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'ui', 'log-viewer');
+    const mediaRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'log-viewer');
     const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
     let html = await readFileAsText(htmlPath);
     html = html.replace(/%NONCE%/g, getNonce()).replace(/%CSP_SOURCE%/g, panel.webview.cspSource);

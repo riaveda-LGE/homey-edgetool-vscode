@@ -1,4 +1,3 @@
-// === src/ui/log-viewer/services/ws.ts ===
 export type PostMsg = (type: string, payload?: any) => void;
 
 export function createPostMessage(api: any): PostMsg {
