@@ -34,7 +34,7 @@ foreach ($relPath in $lines) {
                 else { Join-Path $ProjectRoot $relPath }
 
     if (-not (Test-Path -LiteralPath $filePath)) {
-        Write-Host "File not found: $filePath"
+        Write-Host "File not found: $filePath" -ForegroundColor Red
         continue
     }
 
@@ -56,3 +56,11 @@ $utf8Bom = New-Object System.Text.UTF8Encoding($true)
 
 Write-Host "ProjectRoot = $ProjectRoot"
 Write-Host "source.tmp created successfully. -> $OutPath"
+
+# 현재 열린 VS Code에서 파일 열기
+try {
+    & code $OutPath
+    Write-Host "Opened $OutPath in VS Code"
+} catch {
+    Write-Host "Failed to open $OutPath in VS Code: $_" -ForegroundColor Yellow
+}

@@ -61,8 +61,8 @@
     "format": "npm run lint:fix && npm run format:prettier",
     "perf:merge": "node --expose-gc dist/scripts/perf/run-merge-bench.js",
     "webpack": "webpack --mode production",
-    "vscode:prepublish": "npm run webpack && tsc -p . && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/webviewers/edge-panel','dist/webviewers/edge-panel');copy('src/webviewers/log-viewer','dist/webviewers/log-viewer');copy('src/webviewers/perf-monitor','dist/webviewers/perf-monitor');fs.copyFileSync('node_modules/chart.js/dist/chart.umd.js','dist/webviewers/perf-monitor/chart.umd.js');\"",
-    "build": "npm run webpack && tsc -p . && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/webviewers/edge-panel','dist/webviewers/edge-panel');copy('src/webviewers/log-viewer','dist/webviewers/log-viewer');copy('src/webviewers/perf-monitor','dist/webviewers/perf-monitor');fs.copyFileSync('node_modules/chart.js/dist/chart.umd.js','dist/webviewers/perf-monitor/chart.umd.js');\"",
+    "vscode:prepublish": "npm run webpack && tsc -p .",
+    "build": "npm run webpack && tsc -p .",
     "compile": "npm run build",
     "package": "npm run build && vsce package",
     "deploy": "node scripts/deploy.js",
@@ -73,6 +73,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.6.2",
     "chart.js": "^4.4.0",
+    "copy-webpack-plugin": "^12.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^3.6.2",
@@ -88,6 +89,5 @@
     "media/**",
     "package.json",
     "LICENSE"
-  ],
-  "dependencies": {}
+  ]
 }

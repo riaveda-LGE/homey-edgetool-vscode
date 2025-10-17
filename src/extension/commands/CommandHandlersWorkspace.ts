@@ -65,19 +65,6 @@ export class CommandHandlersWorkspace {
       this.say(`[info] workspace (사용자 지정) base=${updated.baseDirFsPath}`);
       this.say(`[info] -> 실제 사용 경로: ${updated.wsDirFsPath}`);
 
-      // 사용자 경험 개선: 바로 열지 물어보는 대신 빠른 액션 제공
-      const openNow = await vscode.window.showInformationMessage(
-        '새 Workspace가 설정되었습니다. 바로 열어볼까요?',
-        { modal: false }, // 모달이 아니므로 더 빠름
-        'Open folder',
-        'No',
-      );
-
-      if (openNow === 'Open folder') {
-        // 폴더 '안'을 바로 연다
-        await vscode.env.openExternal(updated.wsDirUri);
-      }
-
       const duration = Date.now() - startTime;
       log.debug(`changeWorkspaceQuick completed in ${duration}ms`);
     } catch (e: any) {

@@ -5,29 +5,32 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'none'; img-src %CSP_SOURCE% https: data:;
-               style-src 'unsafe-inline' %CSP_SOURCE%;
+               style-src %CSP_SOURCE% 'unsafe-inline';
                script-src 'nonce-%NONCE%';"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="%CSS_URI%" />
+    <!-- 분리된 스타일 -->
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/components.css" />
     <title>Homey Edge Console</title>
   </head>
   <body>
-    <div id="root">
-      <!-- Control Panel -->
+    <div id="root" class="app-root">
       <section id="controls" aria-label="controls">
         <div id="sections" class="section-grid"></div>
         <div id="controlsContent"></div>
       </section>
 
-      <!-- Splitter (Control <-> Content) -->
       <div id="splitter" role="separator" aria-orientation="horizontal" tabindex="0"></div>
 
-      <!-- Content Area: logs가 기본 컨테이너, Explorer는 런타임에 panel.ts가 logs 내부에 동적 생성 -->
-      <section id="logs" aria-label="logs"></section>
+      <section id="content" aria-label="content">
+        <!-- Explorer/Logs는 런타임에 삽입 -->
+      </section>
     </div>
 
     <noscript>JavaScript가 필요합니다.</noscript>
-    <script nonce="%NONCE%" src="%JS_URI%"></script>
+    <script nonce="%NONCE%" src="app.bundle.js"></script>
   </body>
 </html>

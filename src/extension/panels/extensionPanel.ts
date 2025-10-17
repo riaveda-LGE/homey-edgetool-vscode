@@ -72,7 +72,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
 
   private _disposeTracked() {
-    // 일반 disposables 정리
     for (const dispose of this._disposables) {
       try { dispose(); } catch (e) { this.log.warn(`dispose error: ${e}`); }
     }
@@ -177,21 +176,48 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
     this._trackDisposable(() => messageDisposable.dispose());
 
+    // =========================
+    // 안전망: 포커스/가시성 변화 시 선택 해제 신호 보내기
+    // =========================
+
+    // 뷰 가시성 변경
     const visibilityDisposable = webviewView.onDidChangeVisibility(async () => {
-      if (!webviewView.visible) return;
       try {
+        if (!webviewView.visible) {
+          webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+          return;
+        }
+        // 다시 보일 때는 버튼/상태 동기화
         const state = { ...this._state, logs: getBufferedLogs() };
         const panelState = await readEdgePanelState(this._context);
         webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
         this._buttonHandler?.sendButtonSections();
-
-        // 저장된 상태에서 Explorer가 켜져 있으면 초기화
         if (panelState.showExplorer) {
           await this._explorer?.refreshWorkspaceRoot();
         }
       } catch {}
     });
     this._trackDisposable(() => visibilityDisposable.dispose());
+
+    // 활성 에디터가 바뀌면(에디터/커스텀 에디터/Diff 등) → 선택 해제
+    const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
+      try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
+    });
+    this._trackDisposable(() => activeEditorDisposable.dispose());
+
+    // 터미널 포커스 변화도 커버
+    const activeTerminalDisposable = vscode.window.onDidChangeActiveTerminal(() => {
+      try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
+    });
+    this._trackDisposable(() => activeTerminalDisposable.dispose());
+
+    // 창 포커스(윈도우) 상태 변화
+    const winStateDisposable = vscode.window.onDidChangeWindowState((state) => {
+      if (!state.focused) {
+        try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
+      }
+    });
+    this._trackDisposable(() => winStateDisposable.dispose());
 
     // OutputChannel -> EdgePanel
     this._sink = (line: string) => {
@@ -223,19 +249,37 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     await this._logViewer?.handleHomeyLoggingCommand();
   }
 
+  /**
+   * index.html 안의 상대 경로(href/src)를 전부 webview.asWebviewUri(...)로 치환
+   */
   private async _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): Promise<string> {
     const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
-    const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.css'));
-    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'panel.bundle.js'));
+
+    // 실제 배포 파일 경로
+    const tokensCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'tokens.css'));
+    const baseCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'base.css'));
+    const layoutCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'layout.css'));
+    const componentsCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'components.css'));
+    const appJs = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'app.bundle.js'));
+
     const nonce = getNonce();
     const cspSource = webview.cspSource;
 
     let html = await readFileAsText(htmlPath);
+
+    // CSP/nonce 치환
     html = html
-      .replace(/%CSS_URI%/g, String(cssUri))
-      .replace(/%JS_URI%/g, String(jsUri))
       .replace(/%NONCE%/g, nonce)
       .replace(/%CSP_SOURCE%/g, cspSource);
+
+    // 링크/스크립트 경로 치환
+    html = html
+      .replace(/href=["'](?:styles\/)?tokens\.css["']/g, `href="${String(tokensCss)}"`)
+      .replace(/href=["'](?:styles\/)?base\.css["']/g, `href="${String(baseCss)}"`)
+      .replace(/href=["'](?:styles\/)?layout\.css["']/g, `href="${String(layoutCss)}"`)
+      .replace(/href=["'](?:styles\/)?components\.css["']/g, `href="${String(componentsCss)}"`)
+      .replace(/src=["']app\.bundle\.js["']/g, `src="${String(appJs)}"`);
+
     return html;
   }
 }
@@ -245,7 +289,6 @@ export function registerEdgePanelCommands(
   provider: EdgePanelProvider,
   perfMonitor?: PerfMonitor,
 ) {
-  // Performance Monitor를 provider에 설정
   if (perfMonitor) {
     (provider as any)._perfMonitor = perfMonitor;
   }
