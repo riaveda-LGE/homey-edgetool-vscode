@@ -16,6 +16,7 @@ edgetool.exe
 
 # TEMP files
 *.tmp
+*.txt
 
 # OS generated files
 .DS_Store

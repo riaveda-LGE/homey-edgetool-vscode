@@ -1,0 +1,72 @@
+.app-root {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: var(--ctrl-h) var(--splitter-h) 1fr;
+  overflow: hidden;
+}
+
+#controls {
+  overflow: auto;
+  padding: 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+#splitter {
+  height: var(--splitter-h);
+  cursor: row-resize;
+  background: var(--panel);
+  position: relative;
+  user-select: none;
+}
+#splitter::before {
+  content: '';
+  position: absolute; top: 50%; left: 0; right: 0; height: 1px;
+  background: #000; transform: translateY(-50%);
+}
+
+#content {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr; /* 기본: 단일 패널 */
+  overflow: hidden;
+}
+
+/* 동적 토글 조합 */
+.app-root.show-logs.show-explorer #content {
+  grid-template-rows: 1fr var(--splitter-h) 1fr;
+}
+
+/* 두 패널일 때 행 고정: explorer(1) → splitter(2) → logs(3) */
+.app-root.show-logs.show-explorer #explorer { grid-row: 1; }
+.app-root.show-logs.show-explorer #contentSplitter { grid-row: 2; }
+.app-root.show-logs.show-explorer #logContainer { grid-row: 3; }
+
+/* 내부 스플리터 */
+.content-splitter {
+  height: var(--splitter-h);
+  cursor: row-resize;
+  background: var(--panel);
+  position: relative;
+  user-select: none;
+}
+.content-splitter::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0; height: 1px;
+  background: #000;
+  transform: translateY(-50%);
+}
+
+/* 그리드 안에서 수직 리사이즈가 제대로 되도록 필수 */
+#explorer,
+#logContainer {
+  min-height: 0;
+  overflow: auto;
+}

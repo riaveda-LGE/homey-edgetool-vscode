@@ -23,18 +23,13 @@ function applyTheme() {
   // Update chart colors if chart exists
   if (chart) {
     try {
-      // Use bright colors for dark theme visibility
-      chart.data.datasets[0].borderColor = '#00ff00'; // Green for CPU User
+      chart.data.datasets[0].borderColor = '#00ff00'; // CPU User
       chart.data.datasets[0].backgroundColor = 'rgba(0, 255, 0, 0.2)';
-      chart.data.datasets[1].borderColor = '#ffff00'; // Yellow for CPU System
+      chart.data.datasets[1].borderColor = '#ffff00'; // CPU System
       chart.data.datasets[1].backgroundColor = 'rgba(255, 255, 0, 0.2)';
-      chart.data.datasets[2].borderColor = '#ff0000'; // Red for Memory
+      chart.data.datasets[2].borderColor = '#ff0000'; // Memory
       chart.data.datasets[2].backgroundColor = 'rgba(255, 0, 0, 0.2)';
-      // Note: scales.title.color is not supported in Chart.js 4.x
-      // chart.options.scales.x.title.color = fg;
-      // chart.options.scales.x.ticks.color = fg;
-      // chart.options.scales.y.title.color = fg;
-      // chart.options.scales.y.ticks.color = fg;
+
       if (chart.options.plugins && chart.options.plugins.legend) {
         chart.options.plugins.legend.labels.color = fg;
       }
@@ -62,11 +57,10 @@ function initChart() {
         return;
       }
 
-      // Create canvas element dynamically
+      // Create canvas element dynamically (⚠️ 고정 폭/높이 설정 금지)
       const canvas = document.createElement('canvas');
       canvas.id = 'performanceChart';
-      canvas.width = 800;
-      canvas.height = 400;
+      // CSS가 100% 폭/높이를 맡도록 width/height 속성은 주지 않는다
       chartContainer.appendChild(canvas);
 
       const ctx = canvas.getContext('2d');
@@ -74,6 +68,7 @@ function initChart() {
         uiLog.error('Failed to get 2D context from canvas');
         return;
       }
+
       chart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -82,63 +77,67 @@ function initChart() {
             {
               label: 'CPU User (ms)',
               data: [],
-              borderColor: '#00ff00', // Green
+              borderColor: '#00ff00',
               backgroundColor: 'rgba(0, 255, 0, 0.2)',
             },
             {
               label: 'CPU System (ms)',
               data: [],
-              borderColor: '#ffff00', // Yellow
+              borderColor: '#ffff00',
               backgroundColor: 'rgba(255, 255, 0, 0.2)',
             },
             {
               label: 'Memory Used (MB)',
               data: [],
-              borderColor: '#ff0000', // Red
+              borderColor: '#ff0000',
               backgroundColor: 'rgba(255, 0, 0, 0.2)',
             },
           ],
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false, // 컨테이너 높이에 맞춰 늘어남 (#chart가 400px)
           scales: {
             x: {
-              title: {
-                display: true,
-                text: 'Time',
-              },
+              title: { display: true, text: 'Time' },
             },
             y: {
-              title: {
-                display: true,
-                text: 'Value',
-              },
+              title: { display: true, text: 'Value' },
             },
           },
           plugins: {
             legend: {
-              labels: {
-                color: 'var(--vscode-fg)',
-              },
+              labels: { color: 'var(--vscode-fg)' },
             },
           },
         },
       });
+
+      // 컨테이너 사이즈가 변할 때(웹뷰 리사이즈 등) 차트 업데이트
+      const ro = new ResizeObserver(() => {
+        try { chart.resize(); } catch {}
+      });
+      ro.observe(chartContainer);
+
       uiLog.info('Chart initialized successfully');
     } else if (retryCount < maxRetries) {
       uiLog.warn(`Chart.js is not loaded yet, retrying... (${retryCount}/${maxRetries})`);
       setTimeout(checkChart, 100);
     } else {
       uiLog.error('Failed to load Chart.js after maximum retries. Chart will not be available.');
-      // Create a fallback message
       const chartContainer = document.getElementById('chart');
       if (chartContainer) {
-        chartContainer.innerHTML = '<div style="color: #ff6b6b; padding: 20px; border: 1px solid #ff6b6b; border-radius: 4px;">Chart.js library failed to load. Please check the console for details.</div>';
+        chartContainer.innerHTML =
+          '<div style="color: #ff6b6b; padding: 20px; border: 1px solid #ff6b6b; border-radius: 4px;">Chart.js library failed to load. Please check the console for details.</div>';
       }
     }
   };
 
   checkChart();
-}function updateChart(data) {
+}
+
+function updateChart(data) {
+  if (!chart) return;
   const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString());
   const cpuUser = data.map(d => d.cpu.user / 1000); // ms
   const cpuSystem = data.map(d => d.cpu.system / 1000);
@@ -159,12 +158,10 @@ function displayHtmlReport(html) {
   const scripts = reportDiv.querySelectorAll('script');
   scripts.forEach(script => {
     if (script.src) {
-      // External script - create new script element
       const newScript = document.createElement('script');
       newScript.src = script.src;
       document.head.appendChild(newScript);
     } else {
-      // Inline script - execute directly
       try {
         eval(script.textContent);
       } catch (error) {
@@ -173,8 +170,6 @@ function displayHtmlReport(html) {
     }
   });
 }
-
-
 
 function measureFunction(name, fn) {
   const start = performance.now();
@@ -200,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 데이터 업데이트 함수
   function updateDisplay(data) {
-    // CPU 데이터
+    // CPU
     if (data.cpuDelta) {
       perfData.cpu.push({
         user: data.cpuDelta.user,
@@ -222,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ).join('');
     }
 
-    // 메모리 데이터
+    // 메모리
     if (data.memDelta) {
       perfData.memory.push({
         heapUsed: data.memDelta.heapUsed,
@@ -244,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ).join('');
     }
 
-    // 타이밍 데이터
+    // 타이밍
     perfData.timings.push({
       operation: data.operation,
       duration: data.duration,
@@ -260,11 +255,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`
       ).join('');
 
-    // 상태 업데이트
+    // 상태
     document.getElementById('status').textContent =
       `Last update: ${new Date(data.timestamp).toLocaleTimeString()} - ${data.operation}`;
 
-    // 데이터 표시 업데이트
     updateDataDisplay();
   }
 
@@ -289,11 +283,11 @@ document.addEventListener('DOMContentLoaded', function() {
           exportHtml = message.payload.exportHtml;
         }
         break;
-  // flame graph messages removed
+      // flame graph messages removed
     }
   });
 
-  // Button event listeners
+  // Buttons
   document.getElementById('captureBtn').addEventListener('click', function() {
     const btn = this;
     if (btn.textContent === 'Start Capture') {
@@ -311,14 +305,12 @@ document.addEventListener('DOMContentLoaded', function() {
     vscode.postMessage({ v: 1, type: 'perf.exportHtmlReport', payload: { html: exportHtml } });
   });
 
-  // 복사 버튼
   document.getElementById('copyDataBtn').addEventListener('click', async () => {
     const dataStr = JSON.stringify(perfData, null, 2);
     try {
       await navigator.clipboard.writeText(dataStr);
       alert('Performance data copied to clipboard!');
     } catch (err) {
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = dataStr;
       document.body.appendChild(textArea);
@@ -331,20 +323,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // 내보내기 버튼
   document.getElementById('exportDataBtn').addEventListener('click', () => {
     const dataStr = JSON.stringify(perfData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'homey-perf-data-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.json';   
+    a.download = 'homey-perf-data-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
 
-  // 준비 완료 알림
+  // Ready
   vscode.postMessage({ v: 1, type: 'perf.ready', payload: {} });
 });

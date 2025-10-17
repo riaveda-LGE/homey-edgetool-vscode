@@ -1,0 +1,28 @@
+:root {
+  --bg: var(--vscode-editor-background);
+  --panel: var(--vscode-editorWidget-background);
+  --console-bg: var(--vscode-terminal-background, var(--vscode-editor-background));
+  --console-fg: var(--vscode-terminal-foreground, var(--vscode-foreground));
+  --border: var(--vscode-panel-border, var(--vscode-editorWidget-border, #3c3c3c));
+  --accent: var(--vscode-button-background);
+  --accent-foreground: var(--vscode-button-foreground);
+  --accent-hover: var(--vscode-button-hoverBackground);
+  --focus: var(--vscode-focusBorder);
+  --section-bg: var(--vscode-sideBarSectionHeader-background, var(--vscode-editorWidget-background));
+  --section-title: var(--vscode-foreground);
+  --muted: var(--vscode-descriptionForeground);
+  --link: var(--vscode-textLink-foreground);
+  --row-hover: var(--vscode-list-hoverBackground, rgba(128,128,128,.16));
+  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14,99,156,.35));
+  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+
+  /* 내부/외부 스플리터 높이 단일 소스 */
+  --splitter-h: 15px;
+
+  --cmd-h: 40px;
+  --ctrl-h: 40vh;
+
+  --indent: 18px;
+  --chev-w: 14px;
+  --branch-x: calc(var(--chev-w) / 2 + 4px);
+}

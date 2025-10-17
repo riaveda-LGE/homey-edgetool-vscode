@@ -1,0 +1,15 @@
+import type { W2H, H2W } from '../types/messages.js';
+
+export class HostBridge {
+  constructor(private vscode: any) {}
+
+  post<T extends W2H>(msg: T) {
+    this.vscode.postMessage(msg);
+  }
+
+  listen(handler: (msg: H2W) => void) {
+    window.addEventListener('message', (event) => {
+      handler((event as MessageEvent<any>).data as H2W);
+    });
+  }
+}

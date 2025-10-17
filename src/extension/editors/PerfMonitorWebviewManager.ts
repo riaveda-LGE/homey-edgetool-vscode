@@ -83,118 +83,34 @@ export class PerfMonitorWebviewManager {
 
   private getHtml(webview: vscode.Webview): string {
     const nonce = getNonce();
-    const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'bundle.js'));
+    // ✅ 실제 산출물 파일명과 일치
+    const jsUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'app.bundle.js')
+    );
+    // ✅ 외부 CSS 링크 추가
+    const styleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css')
+    );
+
     const cspSource = webview.cspSource;
 
-    // HTML 내용은 PerfMonitorEditorProvider.ts에서 복사
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'nonce-${nonce}';">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'nonce-${nonce}'; img-src ${cspSource} data:;">
         <title>Homey EdgeTool Performance Monitor</title>
+        <link rel="stylesheet" href="${styleUri}">
         <style>
+          /* 기본 VS Code 테마 변수 기반의 최소 레이아웃 보정 (외부 CSS가 핵심 스타일 담당) */
           body {
             font-family: var(--vscode-font-family);
             background: var(--vscode-editor-background);
             color: var(--vscode-editor-foreground);
-            padding: 20px;
             margin: 0;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-          .chart-container {
-            background: var(--vscode-editorWidget-background);
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-          }
-          .metrics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-          }
-          .metric-card {
-            background: var(--vscode-editorWidget-background);
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 8px;
-            padding: 15px;
-          }
-          .metric-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: var(--vscode-textLink-foreground);
-          }
-          .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-          .metric-list {
-            font-family: var(--vscode-editor-font-family);
-            font-size: 12px;
-            background: var(--vscode-input-background);
-            padding: 10px;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-          }
-          .status {
-            text-align: center;
-            padding: 10px;
-            background: var(--vscode-notificationsInfoIcon-foreground);
-            color: var(--vscode-notifications-background);
-            border-radius: 4px;
-            margin-top: 20px;
-          }
-          .perf-entry {
-            margin: 5px 0;
-            padding: 5px;
-            border-left: 3px solid var(--vscode-textLink-foreground);
-            background: var(--vscode-list-inactiveSelectionBackground);
-          }
-          .data-section {
-            margin-top: 30px;
             padding: 20px;
-            background: var(--vscode-editorWidget-background);
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 8px;
-          }
-          .data-section h3 {
-            margin-top: 0;
-            color: var(--vscode-textLink-foreground);
-          }
-          .data-section button {
-            background: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 10px;
-            margin-bottom: 10px;
-          }
-          .data-section button:hover {
-            background: var(--vscode-button-hoverBackground);
-          }
-          .data-section pre {
-            background: var(--vscode-input-background);
-            color: var(--vscode-input-foreground);
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: var(--vscode-editor-font-family);
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-all;
           }
         </style>
       </head>

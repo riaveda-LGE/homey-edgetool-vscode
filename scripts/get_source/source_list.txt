@@ -1,2 +1,0 @@
-src/webviewers/edge-panel/panel.ts
-dist/webviewers/edge-panel/index.html

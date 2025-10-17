@@ -125,14 +125,14 @@
 
 ---
 
-### 5. Webview 구조 & UX
+### 5. Webview 구조 & UX (MVU 아키텍처)
 
-- **모듈**
-  - EventBus, ModuleLoader, AppState
-  - WebSocketService (로그 스트림 수신)
-  - LogViewer (가상 스크롤, 통계)
-  - SearchManager, FilterManager, HighlightManager
-  - BookmarkManager, TooltipManager
+- **핵심 아키텍처**: 단일 상태(Store) + 순수 업데이트(리듀서) + 모듈화된 뷰/서비스의 미니 MVU(Elm 스타일) 흐름
+- **데이터 흐름**: 사용자 입력/호스트 이벤트 → Action → dispatch → reducer → state update → subscribe → render
+- **컴포넌트 계층**: AppView (루트, Grid 5행 구성/토글), ControlsView (섹션 카드/버튼), Layout/ (Panel, Splitter), Explorer/ (ExplorerView, TreeView, ContextMenu), Logs/LogsView
+- **상태 모델**: AppState { ui: { showExplorer, showLogs, ctrlHeightPx, splitRatio }, explorer: { path, root, nodesByPath, selection }, logs: { lines }, controls: Section[] }
+- **메시지 계층**: types/messages.ts에 Host ↔ Webview DTO 명시 (InitState, ExplorerListResult, AppendLog 등)
+- **CSS 전략**: tokens.css (VS Code 테마 토큰→로컬 변수), components.css (Panel/Titlebar/Tree 등 스타일 캡슐화), --splitter-thick-width로 두꺼운 바 길이 노출
 - **UX 정책**
   - 자동 스크롤: 하단 5% 이내면 유지, 벗어나면 해제
   - 검색: Ctrl+F, 실시간 하이라이트, 네비게이션
@@ -399,15 +399,39 @@ homey-edgetool/
 │  ├─ types/                              # 타입 정의
 │  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입
 │  │
-│  └─ ui/                                 # Webview 리소스 (ES 모듈 기반)
+│  └─ webviewers/                         # Webview 리소스 (ES 모듈 기반)
 │     ├─ edge-panel/
 │     │  ├─ index.html                    # Edge Panel 웹뷰
-│     │  ├─ panel.css                     # 스타일시트
-│     │  ├─ panel.ts                      # 메인 로직 (ES 모듈 import)
-│     │  ├─ panel-dom.ts                  # DOM 조작 및 요소 관리
-│     │  ├─ panel-events.ts               # 이벤트 핸들러
-│     │  ├─ panel-render.ts               # 렌더링 함수
-│     │  └─ panel-state.ts                # 상태 관리
+│     │  ├─ app/
+│     │  │  ├─ index.ts                   # 부트스트랩, Store 생성/구독, 첫 렌더
+│     │  │  ├─ store.ts                   # createStore, subscribe, dispatch
+│     │  │  ├─ reducer.ts                 # 순수 업데이트: Action × State -> State
+│     │  │  ├─ actions.ts                 # 액션 타입/크리에이터 정의
+│     │  │  └─ effects.ts                 # 부수효과: VS Code postMessage, 타이머 등
+│     │  ├─ views/
+│     │  │  ├─ AppView.ts                 # 루트, Grid 5행 구성/토글
+│     │  │  ├─ ControlsView.ts            # 섹션 카드/버튼
+│     │  │  ├─ Layout/
+│     │  │  │  ├─ Panel.ts                # 공통 패널 컨테이너 + 타이틀바
+│     │  │  │  └─ Splitter.ts             # 상단/중단 스플리터 컴포넌트
+│     │  │  ├─ Explorer/
+│     │  │  │  ├─ ExplorerView.ts         # 탐색기 패널 전체
+│     │  │  │  ├─ TreeView.ts             # 트리 렌더/키보드 내비/가상화
+│     │  │  │  └─ ContextMenu.ts          # 우클릭 메뉴 + 인라인 폼/확인
+│     │  │  └─ Logs/LogsView.ts           # 로그 패널, 줄 누적, 가상 스크롤
+│     │  ├─ services/
+│     │  │  ├─ HostBridge.ts              # postMessage/이벤트 → Action 변환
+│     │  │  ├─ ExplorerService.ts         # list/open/create/delete 래핑
+│     │  │  ├─ LogService.ts              # append/reset 래핑
+│     │  │  └─ PersistService.ts          # panelState 저장/복원
+│     │  ├─ styles/
+│     │  │  ├─ tokens.css                 # VS Code 테마 토큰→로컬 변수 매핑
+│     │  │  ├─ base.css                   # 리셋·타이포·색상 토큰
+│     │  │  ├─ layout.css                 # #root Grid, 패널 배치
+│     │  │  └─ components.css             # Panel/Titlebar/Tree/ContextMenu 등
+│     │  └─ types/
+│     │     ├─ messages.ts                # Host ↔ Webview 메시지 DTO
+│     │     └─ model.ts                   # State/TreeNode/Section 등 타입
 │     ├─ log-viewer/
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰
 │     │  ├─ app.ts                        # 부트스트랩

@@ -1,0 +1,161 @@
+.section-card {
+  background: var(--section-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+.section-card h4 { margin: 0 0 8px 0; font-size: 13px; color: var(--section-title); font-weight: 700; }
+.section-body { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── Logs ─────────────────────────────────────────────────────────────── */
+.log-container {
+  background: var(--section-bg);
+  color: var(--console-fg);
+  overflow: auto;               /* 내부 스크롤 */
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+/* 로그 타이틀 바 (Explorer와 톤 맞춤) */
+#logBar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+}
+#logTitle { font-weight: 700; opacity: .9; }
+
+/* 로그 본문 */
+.log-body {
+  padding: 6px 10px 10px 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* 각 로그 라인 */
+.log-line {}
+
+/* ── Explorer ─────────────────────────────────────────────────────────── */
+#explorer {
+  background: var(--section-bg);
+  color: var(--vscode-foreground);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+  overflow: auto;                     /* 내부 스크롤 */
+  min-height: 0;
+  margin: 10px;
+}
+#explorerBar {
+  position: sticky; top: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; background: var(--panel);
+  border-bottom: 1px solid var(--border); z-index: 1;
+}
+#explorerTitle { font-weight: 700; opacity: .9; }
+#explorerPath { color: var(--muted); }
+#explorerPath .crumb { color: var(--link); cursor: pointer; }
+#explorerPath .sep { opacity: .6; margin: 0 6px; }
+#explorerTree { padding: 6px 8px 12px 6px; outline: none; font-size: 13px; }
+
+/* 트리 라인 */
+.tree-node { position: relative; border-radius: 6px; padding: 0; margin: 0; }
+.tree-node .tn-line {
+  position: relative; display: flex; align-items: center; gap: 6px;
+  padding: 3px 6px 3px 4px; border-radius: 6px; user-select: none; transition: background-color .12s ease;
+}
+.tree-node .tn-line:hover { background: var(--row-hover); }
+.tree-node.selected > .tn-line { background: var(--row-selected); color: var(--row-selected-fg); }
+.tn-icon { width: 18px; text-align: center; opacity: .85; }
+.tn-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* === VS Code Explorer 느낌의 꺾쇠 아이콘 ============================== */
+/* 데이터 URI SVG를 마스크로 사용 → 선 두께가 균일하고 폰트 의존 X */
+:root {
+  /* 오른쪽 화살표 (chevron-right) */
+  --chev-mask-right: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'>\
+  <path d='M6 4l4 4-4 4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/>\
+</svg>");
+  /* 아래 화살표 (chevron-down) */
+  --chev-mask-down: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'>\
+  <path d='M4 6l4 4 4-4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/>\
+</svg>");
+}
+
+.tn-chevron {
+  width: var(--chev-w);         /* tokens.css: 기본 14px */
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .8;
+  flex: 0 0 auto;
+  cursor: default;
+}
+/* 기본: 접힘(▶) */
+.tn-chevron::before {
+  content: "";
+  display: block;
+  width: 12px;                  /* 실제 아이콘 크기 */
+  height: 12px;
+  background-color: currentColor;
+  -webkit-mask-image: var(--chev-mask-right);
+          mask-image: var(--chev-mask-right);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+          mask-position: center;
+  -webkit-mask-size: 100% 100%;
+          mask-size: 100% 100%;
+}
+/* 펼침(▼) */
+.tree-node.expanded > .tn-line .tn-chevron::before {
+  -webkit-mask-image: var(--chev-mask-down);
+          mask-image: var(--chev-mask-down);
+}
+/* 자식 없음이면 감추기 */
+.tn-chevron.tn-empty::before { display: none; }
+
+/* 가지 라인 */
+.tn-children { margin-left: var(--indent); position: relative; }
+.tn-children::before {
+  content: ""; position: absolute; top:0; bottom:0; left: var(--branch-x);
+  border-left: 1px solid rgba(255,255,255,.08); pointer-events: none; opacity: .9;
+}
+.tn-children > .tree-node > .tn-line::before {
+  content: ""; position: absolute; top: 50%; left: var(--branch-x);
+  width: calc(var(--indent) - var(--branch-x)); border-top: 1px solid rgba(255,255,255,.08);
+  transform: translateY(-50%); pointer-events: none; opacity: .9;
+}
+
+/* Context menu */
+#ctxMenu {
+  position: fixed; min-width: 200px; background: var(--panel); color: var(--vscode-foreground);
+  border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  padding: 6px; z-index: 9999;
+}
+#ctxMenu[hidden] { display: none; }
+#ctxMenu .menu-item { width: 100%; text-align: left; background: transparent; color: inherit; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+#ctxMenu .menu-item:hover { background: rgba(255,255,255,.08); }
+#ctxMenu hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+#ctxMenu .menu-form, #ctxMenu .menu-confirm { padding: 6px 4px 4px 4px; }
+#ctxMenu .menu-form-title { font-size: 12px; opacity: .9; margin-bottom: 6px; }
+#ctxMenu input#ctxInput {
+  width: 100%; background: var(--bg); color: var(--vscode-foreground);
+  border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font: inherit; outline: none;
+}
+#ctxMenu input#ctxInput:focus { border-color: var(--focus); }
+#ctxMenu .menu-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+#ctxMenu .menu-confirm-text { white-space: pre-wrap; line-height: 1.35; font-size: 12px; opacity: .95; }
