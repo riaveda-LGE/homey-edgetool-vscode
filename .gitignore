@@ -37,5 +37,6 @@ cts_suite/result/
 node_modules/
 dist/
 
-# Performance test results
+# test results
 .homey-perf/
+out/

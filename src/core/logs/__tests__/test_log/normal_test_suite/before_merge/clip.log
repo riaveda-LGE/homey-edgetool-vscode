@@ -1,0 +1,772 @@
+[Sep 30 08:00:13.1107 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:00:27.2090 clip[456]: Clip manager ready
+[Sep 30 08:00:56.7507 clip[456]: Clip manager ready
+[Sep 30 08:01:08.2431 clip[456]: Database connection established
+[Sep 30 08:02:02.3819 clip[456]: Database connection established
+[Sep 30 08:02:10.7122 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:02:13.1823 clip[456]: Connecting to database...
+[Sep 30 08:02:23.4922 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:02:36.3219 clip[456]: Clip manager ready
+[Sep 30 08:02:44.9462 clip[456]: Database connection established
+[Sep 30 08:03:08.8057 clip[456]: Clip service fully operational
+[Sep 30 08:03:30.8468 clip[456]: Clip service fully operational
+[Sep 30 08:03:41.0699 clip[456]: Clip manager ready
+[Sep 30 08:04:12.9610 clip[456]: Listening on port 8080
+[Sep 30 08:04:36.8828 clip[456]: Listening on port 8080
+[Sep 30 08:05:00.7263 clip[456]: Clip manager ready
+[Sep 30 08:05:08.5775 clip[456]: Initializing clip manager...
+[Sep 30 08:05:46.1639 clip[456]: Database connection established
+[Sep 30 08:05:49.1678 clip[456]: Starting clip event loop
+[Sep 30 08:05:54.0727 clip[456]: Initializing clip manager...
+[Sep 30 08:06:38.2034 clip[456]: Clip service starting...
+[Sep 30 08:06:40.9690 clip[456]: Listening on port 8080
+[Sep 30 08:06:58.8341 clip[456]: Clip service starting...
+[Sep 30 08:07:17.9342 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:08:06.6959 clip[456]: Initializing clip manager...
+[Sep 30 08:08:12.4659 clip[456]: Database connection established
+[Sep 30 08:08:15.0005 clip[456]: Initializing clip manager...
+[Sep 30 08:08:34.7678 clip[456]: Initializing clip manager...
+[Sep 30 08:08:39.9617 clip[456]: Listening on port 8080
+[Sep 30 08:09:00.1234 clip[456]: Clip manager ready
+[Sep 30 08:09:03.2022 clip[456]: Clip manager ready
+[Sep 30 08:09:14.6250 clip[456]: Listening on port 8080
+[Sep 30 08:09:23.2810 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:09:37.0154 clip[456]: Starting clip event loop
+[Sep 30 08:09:44.4564 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:10:10.4962 clip[456]: Clip manager ready
+[Sep 30 08:10:28.8056 clip[456]: Listening on port 8080
+[Sep 30 08:10:48.7409 clip[456]: Clip service starting...
+[Sep 30 08:11:13.2042 clip[456]: Clip service fully operational
+[Sep 30 08:11:29.1658 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:11:59.0988 clip[456]: Initializing clip manager...
+[Sep 30 08:12:01.5285 clip[456]: Clip manager ready
+[Sep 30 08:12:14.1355 clip[456]: Clip manager ready
+[Sep 30 08:12:28.3497 clip[456]: Clip service fully operational
+[Sep 30 08:12:30.7053 clip[456]: Clip service fully operational
+[Sep 30 08:12:45.1948 clip[456]: Clip service starting...
+[Sep 30 08:12:50.3566 clip[456]: Clip manager ready
+[Sep 30 08:13:03.8663 clip[456]: Clip service fully operational
+[Sep 30 08:13:09.3012 clip[456]: Clip service starting...
+[Sep 30 08:13:17.0866 clip[456]: Initializing clip manager...
+[Sep 30 08:13:19.7013 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:13:26.0667 clip[456]: Connecting to database...
+[Sep 30 08:13:29.1351 clip[456]: Listening on port 8080
+[Sep 30 08:14:03.3271 clip[456]: Clip service fully operational
+[Sep 30 08:14:08.9206 clip[456]: Clip service fully operational
+[Sep 30 08:14:44.4650 clip[456]: Clip service fully operational
+[Sep 30 08:14:52.8019 clip[456]: Initializing clip manager...
+[Sep 30 08:14:58.8391 clip[456]: Clip service fully operational
+[Sep 30 08:15:04.3129 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:15:10.0754 clip[456]: Initializing clip manager...
+[Sep 30 08:15:16.1804 clip[456]: Clip manager ready
+[Sep 30 08:15:36.1099 clip[456]: Listening on port 8080
+[Sep 30 08:15:43.9916 clip[456]: Clip service starting...
+[Sep 30 08:16:17.1562 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:16:20.3720 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:16:23.3757 clip[456]: Clip manager ready
+[Sep 30 08:16:26.0474 clip[456]: Clip service starting...
+[Sep 30 08:16:29.0348 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:16:53.9641 clip[456]: Clip service fully operational
+[Sep 30 08:16:56.1729 clip[456]: Initializing clip manager...
+[Sep 30 08:17:15.4704 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:17:20.6336 clip[456]: Database connection established
+[Sep 30 08:17:30.9573 clip[456]: Starting clip event loop
+[Sep 30 08:17:44.4863 clip[456]: Clip service fully operational
+[Sep 30 08:17:52.8496 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:18:08.5467 clip[456]: Connecting to database...
+[Sep 30 08:18:11.2173 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:18:23.1769 clip[456]: Clip service starting...
+[Sep 30 08:18:25.8632 clip[456]: Initializing clip manager...
+[Sep 30 08:18:28.5667 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:18:37.1637 clip[456]: Clip manager ready
+[Sep 30 08:18:44.7166 clip[456]: Starting clip event loop
+[Sep 30 08:18:53.7400 clip[456]: Clip service starting...
+[Sep 30 08:19:01.5883 clip[456]: Initializing clip manager...
+[Sep 30 08:19:04.5387 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:19:39.2364 clip[456]: Clip manager ready
+[Sep 30 08:19:42.2987 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:20:34.5762 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:20:52.4092 clip[456]: Database connection established
+[Sep 30 08:20:58.0519 clip[456]: Clip service fully operational
+[Sep 30 08:21:05.9881 clip[456]: Clip manager ready
+[Sep 30 08:21:11.9853 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:21:19.2172 clip[456]: Listening on port 8080
+[Sep 30 08:21:25.0273 clip[456]: Connecting to database...
+[Sep 30 08:21:52.9181 clip[456]: Clip service starting...
+[Sep 30 08:22:04.5344 clip[456]: Starting clip event loop
+[Sep 30 08:22:06.9974 clip[456]: Listening on port 8080
+[Sep 30 08:22:16.0364 clip[456]: Clip manager ready
+[Sep 30 08:22:42.5124 clip[456]: Clip manager ready
+[Sep 30 08:22:48.8445 clip[456]: Database connection established
+[Sep 30 08:23:16.3512 clip[456]: Connecting to database...
+[Sep 30 08:23:26.3917 clip[456]: Clip service fully operational
+[Sep 30 08:23:53.9713 clip[456]: Database connection established
+[Sep 30 08:24:00.0721 clip[456]: Clip service starting...
+[Sep 30 08:24:13.8357 clip[456]: Listening on port 8080
+[Sep 30 08:24:28.5201 clip[456]: Database connection established
+[Sep 30 08:24:50.6817 clip[456]: Database connection established
+[Sep 30 08:24:53.6336 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:24:55.8576 clip[456]: Initializing clip manager...
+[Sep 30 08:25:06.6328 clip[456]: Clip manager ready
+[Sep 30 08:25:20.7622 clip[456]: Clip service starting...
+[Sep 30 08:25:26.6552 clip[456]: Clip service starting...
+[Sep 30 08:25:42.5120 clip[456]: Listening on port 8080
+[Sep 30 08:25:53.1125 clip[456]: Initializing clip manager...
+[Sep 30 08:26:01.2945 clip[456]: Clip service fully operational
+[Sep 30 08:26:19.4326 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:26:38.1569 clip[456]: Connecting to database...
+[Sep 30 08:26:56.4520 clip[456]: Listening on port 8080
+[Sep 30 08:26:59.6158 clip[456]: Clip service starting...
+[Sep 30 08:27:09.4194 clip[456]: Clip service starting...
+[Sep 30 08:27:39.1193 clip[456]: Initializing clip manager...
+[Sep 30 08:28:11.0822 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:28:36.9373 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:29:24.0997 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:29:27.0222 clip[456]: Clip manager ready
+[Sep 30 08:29:44.9571 clip[456]: Starting clip event loop
+[Sep 30 08:29:50.6769 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:30:04.8259 clip[456]: Clip service starting...
+[Sep 30 08:30:10.2194 clip[456]: Clip service starting...
+[Sep 30 08:30:20.4860 clip[456]: Initializing clip manager...
+[Sep 30 08:30:34.1300 clip[456]: Database connection established
+[Sep 30 08:30:39.8901 clip[456]: Connecting to database...
+[Sep 30 08:31:16.2010 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:31:27.2286 clip[456]: Listening on port 8080
+[Sep 30 08:31:32.6520 clip[456]: Clip service fully operational
+[Sep 30 08:31:38.5023 clip[456]: Clip service starting...
+[Sep 30 08:31:41.2297 clip[456]: Connecting to database...
+[Sep 30 08:32:12.9184 clip[456]: Listening on port 8080
+[Sep 30 08:32:15.0918 clip[456]: Connecting to database...
+[Sep 30 08:32:44.0311 clip[456]: Database connection established
+[Sep 30 08:33:00.7076 clip[456]: Starting clip event loop
+[Sep 30 08:34:37.1347 clip[456]: Clip service starting...
+[Sep 30 08:34:40.1235 clip[456]: Database connection established
+[Sep 30 08:34:43.0417 clip[456]: Listening on port 8080
+[Sep 30 08:34:46.0091 clip[456]: Connecting to database...
+[Sep 30 08:34:51.2776 clip[456]: Connecting to database...
+[Sep 30 08:35:11.8875 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:35:29.0202 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:35:36.1372 clip[456]: Database connection established
+[Sep 30 08:35:41.3793 clip[456]: Clip service starting...
+[Sep 30 08:35:44.1986 clip[456]: Clip manager ready
+[Sep 30 08:35:52.7594 clip[456]: Listening on port 8080
+[Sep 30 08:36:13.3244 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:36:25.7500 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:36:46.8521 clip[456]: Database connection established
+[Sep 30 08:36:49.6234 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:36:54.6678 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:37:18.6757 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:38:16.5850 clip[456]: Database connection established
+[Sep 30 08:38:33.2927 clip[456]: Database connection established
+[Sep 30 08:38:35.7427 clip[456]: Initializing clip manager...
+[Sep 30 08:38:58.5497 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:39:17.4701 clip[456]: Clip manager ready
+[Sep 30 08:39:25.6031 clip[456]: Connecting to database...
+[Sep 30 08:40:30.8182 clip[456]: Connecting to database...
+[Sep 30 08:40:46.1758 clip[456]: Clip manager ready
+[Sep 30 08:41:12.0631 clip[456]: Clip service fully operational
+[Sep 30 08:41:30.6062 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:41:36.1663 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:41:38.5942 clip[456]: Listening on port 8080
+[Sep 30 08:41:49.5894 clip[456]: Connecting to database...
+[Sep 30 08:42:31.1364 clip[456]: Starting clip event loop
+[Sep 30 08:42:34.3059 clip[456]: Initializing clip manager...
+[Sep 30 08:42:37.1819 clip[456]: Database connection established
+[Sep 30 08:42:41.9227 clip[456]: Starting clip event loop
+[Sep 30 08:43:03.9033 clip[456]: Initializing clip manager...
+[Sep 30 08:43:06.8451 clip[456]: Clip service fully operational
+[Sep 30 08:43:27.5219 clip[456]: Connecting to database...
+[Sep 30 08:43:41.4017 clip[456]: Starting clip event loop
+[Sep 30 08:43:49.0402 clip[456]: Clip service starting...
+[Sep 30 08:43:57.2161 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:43:59.9109 clip[456]: Connecting to database...
+[Sep 30 08:44:04.9486 clip[456]: Database connection established
+[Sep 30 08:44:16.3249 clip[456]: Database connection established
+[Sep 30 08:45:26.0051 clip[456]: Starting clip event loop
+[Sep 30 08:45:34.6056 clip[456]: Clip service fully operational
+[Sep 30 08:45:57.5206 clip[456]: Starting clip event loop
+[Sep 30 08:46:08.1067 clip[456]: Starting clip event loop
+[Sep 30 08:46:13.4977 clip[456]: Clip manager ready
+[Sep 30 08:46:43.5580 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:46:56.9826 clip[456]: Clip service starting...
+[Sep 30 08:47:19.8593 clip[456]: Starting clip event loop
+[Sep 30 08:47:33.8836 clip[456]: Clip service starting...
+[Sep 30 08:47:44.1571 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:47:46.3633 clip[456]: Listening on port 8080
+[Sep 30 08:48:08.6914 clip[456]: Clip service starting...
+[Sep 30 08:48:24.1908 clip[456]: Initializing clip manager...
+[Sep 30 08:48:28.9721 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:48:42.7709 clip[456]: Connecting to database...
+[Sep 30 08:48:54.3503 clip[456]: Starting clip event loop
+[Sep 30 08:48:56.9398 clip[456]: Clip service starting...
+[Sep 30 08:49:07.6255 clip[456]: Clip service starting...
+[Sep 30 08:49:22.1600 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:49:25.0098 clip[456]: Database connection established
+[Sep 30 08:49:48.3237 clip[456]: Starting clip event loop
+[Sep 30 08:49:57.1663 clip[456]: Listening on port 8080
+[Sep 30 08:50:23.0215 clip[456]: Database connection established
+[Sep 30 08:50:47.3245 clip[456]: Initializing clip manager...
+[Sep 30 08:50:49.6116 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:50:52.2385 clip[456]: Clip service starting...
+[Sep 30 08:51:03.1041 clip[456]: Database connection established
+[Sep 30 08:51:08.6053 clip[456]: Connecting to database...
+[Sep 30 08:51:24.1182 clip[456]: Clip service starting...
+[Sep 30 08:51:34.7748 clip[456]: Database connection established
+[Sep 30 08:51:47.8381 clip[456]: Clip manager ready
+[Sep 30 08:51:56.6302 clip[456]: Listening on port 8080
+[Sep 30 08:51:59.1940 clip[456]: Listening on port 8080
+[Sep 30 08:52:24.4603 clip[456]: Clip service fully operational
+[Sep 30 08:52:27.4128 clip[456]: Connecting to database...
+[Sep 30 08:52:30.3328 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:52:35.7201 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:52:43.3926 clip[456]: Starting clip event loop
+[Sep 30 08:52:56.7305 clip[456]: Starting clip event loop
+[Sep 30 08:52:59.3821 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:53:07.8067 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:53:56.6506 clip[456]: Clip manager ready
+[Sep 30 08:54:33.3515 clip[456]: Clip manager ready
+[Sep 30 08:55:08.2693 clip[456]: Clip service fully operational
+[Sep 30 08:55:16.8230 clip[456]: Clip manager ready
+[Sep 30 08:55:44.1566 clip[456]: Listening on port 8080
+[Sep 30 08:56:13.8889 clip[456]: Clip service starting...
+[Sep 30 08:56:18.7231 clip[456]: Listening on port 8080
+[Sep 30 08:56:27.0730 clip[456]: Initializing clip manager...
+[Sep 30 08:56:48.0679 clip[456]: Clip manager ready
+[Sep 30 08:57:09.6189 clip[456]: Connecting to database...
+[Sep 30 08:57:29.3329 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:57:39.3849 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 08:57:42.5647 clip[456]: Clip service fully operational
+[Sep 30 08:57:58.0712 clip[456]: Clip process initialized with PID: 456
+[Sep 30 08:58:05.6302 clip[456]: Initializing clip manager...
+[Sep 30 08:59:21.7892 clip[456]: Clip service fully operational
+[Sep 30 08:59:30.2401 clip[456]: Connecting to database...
+[Sep 30 08:59:44.2161 clip[456]: Listening on port 8080
+[Sep 30 09:00:08.9139 clip[456]: Starting clip event loop
+[Sep 30 09:00:16.9604 clip[456]: Clip manager ready
+[Sep 30 09:01:09.8358 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:01:17.7514 clip[456]: Initializing clip manager...
+[Sep 30 09:01:23.1355 clip[456]: Database connection established
+[Sep 30 09:01:58.9472 clip[456]: Connecting to database...
+[Sep 30 09:02:01.5759 clip[456]: Starting clip event loop
+[Sep 30 09:02:14.7629 clip[456]: Connecting to database...
+[Sep 30 09:02:26.0717 clip[456]: Initializing clip manager...
+[Sep 30 09:02:59.4290 clip[456]: Clip service fully operational
+[Sep 30 09:03:21.6004 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:03:35.5056 clip[456]: Initializing clip manager...
+[Sep 30 09:04:10.7968 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:04:27.1102 clip[456]: Starting clip event loop
+[Sep 30 09:04:31.9148 clip[456]: Clip service starting...
+[Sep 30 09:04:43.0657 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:04:53.8629 clip[456]: Database connection established
+[Sep 30 09:05:07.2896 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:05:12.9236 clip[456]: Database connection established
+[Sep 30 09:05:18.9290 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:05:26.7637 clip[456]: Database connection established
+[Sep 30 09:05:35.0815 clip[456]: Clip service starting...
+[Sep 30 09:05:40.9584 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:06:18.8291 clip[456]: Listening on port 8080
+[Sep 30 09:06:30.3497 clip[456]: Clip service fully operational
+[Sep 30 09:06:33.0860 clip[456]: Database connection established
+[Sep 30 09:06:35.7449 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:06:37.9346 clip[456]: Initializing clip manager...
+[Sep 30 09:06:40.9966 clip[456]: Initializing clip manager...
+[Sep 30 09:06:46.9303 clip[456]: Clip service starting...
+[Sep 30 09:06:50.1677 clip[456]: Clip manager ready
+[Sep 30 09:07:03.5230 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:07:08.3733 clip[456]: Clip manager ready
+[Sep 30 09:07:16.6910 clip[456]: Starting clip event loop
+[Sep 30 09:07:21.7014 clip[456]: Database connection established
+[Sep 30 09:07:35.1434 clip[456]: Clip manager ready
+[Sep 30 09:07:42.7767 clip[456]: Clip service fully operational
+[Sep 30 09:08:06.3122 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:08:08.6264 clip[456]: Connecting to database...
+[Sep 30 09:08:47.8548 clip[456]: Connecting to database...
+[Sep 30 09:08:50.4784 clip[456]: Clip service starting...
+[Sep 30 09:09:32.1894 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:09:40.3499 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:10:02.3464 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:10:10.3996 clip[456]: Connecting to database...
+[Sep 30 09:10:24.4824 clip[456]: Clip manager ready
+[Sep 30 09:10:27.2560 clip[456]: Listening on port 8080
+[Sep 30 09:10:57.6836 clip[456]: Starting clip event loop
+[Sep 30 09:11:08.8924 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:11:17.4858 clip[456]: Clip manager ready
+[Sep 30 09:11:25.2352 clip[456]: Database connection established
+[Sep 30 09:11:51.8356 clip[456]: Listening on port 8080
+[Sep 30 09:11:54.9129 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:12:19.7400 clip[456]: Clip service starting...
+[Sep 30 09:12:33.6176 clip[456]: Starting clip event loop
+[Sep 30 09:12:54.7745 clip[456]: Clip manager ready
+[Sep 30 09:13:00.3772 clip[456]: Starting clip event loop
+[Sep 30 09:13:35.0756 clip[456]: Clip service starting...
+[Sep 30 09:13:46.9683 clip[456]: Clip service fully operational
+[Sep 30 09:13:53.0423 clip[456]: Clip manager ready
+[Sep 30 09:13:58.4305 clip[456]: Database connection established
+[Sep 30 09:14:20.4132 clip[456]: Clip service starting...
+[Sep 30 09:14:23.4681 clip[456]: Initializing clip manager...
+[Sep 30 09:15:29.5402 clip[456]: Database connection established
+[Sep 30 09:15:50.0420 clip[456]: Database connection established
+[Sep 30 09:16:10.5435 clip[456]: Starting clip event loop
+[Sep 30 09:16:21.4104 clip[456]: Starting clip event loop
+[Sep 30 09:16:26.6781 clip[456]: Connecting to database...
+[Sep 30 09:16:57.7110 clip[456]: Connecting to database...
+[Sep 30 09:17:08.7713 clip[456]: Listening on port 8080
+[Sep 30 09:17:31.1789 clip[456]: Database connection established
+[Sep 30 09:17:33.6691 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:17:36.7791 clip[456]: Database connection established
+[Sep 30 09:17:41.3988 clip[456]: Connecting to database...
+[Sep 30 09:17:46.0570 clip[456]: Clip service starting...
+[Sep 30 09:17:51.6574 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:18:38.9620 clip[456]: Database connection established
+[Sep 30 09:18:41.8274 clip[456]: Clip manager ready
+[Sep 30 09:19:05.5906 clip[456]: Starting clip event loop
+[Sep 30 09:19:07.9122 clip[456]: Clip service fully operational
+[Sep 30 09:19:30.3191 clip[456]: Listening on port 8080
+[Sep 30 09:19:41.7591 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:19:57.8431 clip[456]: Clip service fully operational
+[Sep 30 09:20:00.6189 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:20:35.5415 clip[456]: Clip service fully operational
+[Sep 30 09:20:38.5411 clip[456]: Clip service starting...
+[Sep 30 09:20:41.4958 clip[456]: Starting clip event loop
+[Sep 30 09:20:43.7547 clip[456]: Database connection established
+[Sep 30 09:20:49.8076 clip[456]: Listening on port 8080
+[Sep 30 09:20:57.8756 clip[456]: Listening on port 8080
+[Sep 30 09:21:03.8073 clip[456]: Clip manager ready
+[Sep 30 09:21:08.8250 clip[456]: Initializing clip manager...
+[Sep 30 09:21:27.1906 clip[456]: Listening on port 8080
+[Sep 30 09:21:47.6384 clip[456]: Clip service fully operational
+[Sep 30 09:22:04.4188 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:22:06.9895 clip[456]: Initializing clip manager...
+[Sep 30 09:22:29.7572 clip[456]: Listening on port 8080
+[Sep 30 09:22:38.5560 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:22:40.8834 clip[456]: Connecting to database...
+[Sep 30 09:22:46.3947 clip[456]: Connecting to database...
+[Sep 30 09:22:48.9316 clip[456]: Starting clip event loop
+[Sep 30 09:23:36.3453 clip[456]: Clip manager ready
+[Sep 30 09:24:39.2875 clip[456]: Initializing clip manager...
+[Sep 30 09:25:29.2964 clip[456]: Listening on port 8080
+[Sep 30 09:25:59.1936 clip[456]: Initializing clip manager...
+[Sep 30 09:26:02.3970 clip[456]: Clip manager ready
+[Sep 30 09:26:31.2494 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:26:34.3624 clip[456]: Starting clip event loop
+[Sep 30 09:26:36.7355 clip[456]: Connecting to database...
+[Sep 30 09:26:58.6537 clip[456]: Starting clip event loop
+[Sep 30 09:27:03.9624 clip[456]: Initializing clip manager...
+[Sep 30 09:27:18.0192 clip[456]: Clip service fully operational
+[Sep 30 09:27:24.1724 clip[456]: Clip service fully operational
+[Sep 30 09:27:26.5917 clip[456]: Initializing clip manager...
+[Sep 30 09:28:04.2304 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:28:26.6255 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:28:28.8295 clip[456]: Starting clip event loop
+[Sep 30 09:28:31.2590 clip[456]: Clip service starting...
+[Sep 30 09:28:37.2936 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:28:43.3223 clip[456]: Database connection established
+[Sep 30 09:29:08.7245 clip[456]: Initializing clip manager...
+[Sep 30 09:29:14.1851 clip[456]: Clip manager ready
+[Sep 30 09:29:28.0197 clip[456]: Listening on port 8080
+[Sep 30 09:29:30.7118 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:29:33.0024 clip[456]: Database connection established
+[Sep 30 09:29:41.2390 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:29:47.4504 clip[456]: Clip service fully operational
+[Sep 30 09:29:50.1684 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:30:06.5021 clip[456]: Clip service starting...
+[Sep 30 09:30:14.4641 clip[456]: Clip service fully operational
+[Sep 30 09:30:50.5360 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:31:06.1644 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:31:08.7625 clip[456]: Initializing clip manager...
+[Sep 30 09:31:21.8568 clip[456]: Database connection established
+[Sep 30 09:31:32.0943 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:31:44.8552 clip[456]: Clip service fully operational
+[Sep 30 09:32:04.5598 clip[456]: Starting clip event loop
+[Sep 30 09:32:12.3803 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:32:15.5141 clip[456]: Listening on port 8080
+[Sep 30 09:32:25.3939 clip[456]: Initializing clip manager...
+[Sep 30 09:32:38.2676 clip[456]: Clip manager ready
+[Sep 30 09:32:49.2313 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:32:51.5337 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:33:37.9723 clip[456]: Starting clip event loop
+[Sep 30 09:33:43.0280 clip[456]: Listening on port 8080
+[Sep 30 09:33:45.5368 clip[456]: Clip service starting...
+[Sep 30 09:34:01.0745 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:34:06.5799 clip[456]: Clip service starting...
+[Sep 30 09:34:14.9841 clip[456]: Database connection established
+[Sep 30 09:34:29.2002 clip[456]: Clip service fully operational
+[Sep 30 09:34:34.5079 clip[456]: Database connection established
+[Sep 30 09:35:28.3198 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:36:36.6118 clip[456]: Database connection established
+[Sep 30 09:36:51.5246 clip[456]: Initializing clip manager...
+[Sep 30 09:36:54.2291 clip[456]: Connecting to database...
+[Sep 30 09:37:28.3125 clip[456]: Starting clip event loop
+[Sep 30 09:38:06.7793 clip[456]: Clip service fully operational
+[Sep 30 09:38:09.4437 clip[456]: Database connection established
+[Sep 30 09:39:13.9211 clip[456]: Clip service fully operational
+[Sep 30 09:39:24.1093 clip[456]: Starting clip event loop
+[Sep 30 09:39:30.0491 clip[456]: Clip service fully operational
+[Sep 30 09:39:40.0350 clip[456]: Clip manager ready
+[Sep 30 09:40:00.2193 clip[456]: Clip service fully operational
+[Sep 30 09:40:28.4602 clip[456]: Initializing clip manager...
+[Sep 30 09:40:30.6385 clip[456]: Connecting to database...
+[Sep 30 09:40:33.1692 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:40:48.5072 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:40:59.7147 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:41:13.1563 clip[456]: Connecting to database...
+[Sep 30 09:41:57.9974 clip[456]: Database connection established
+[Sep 30 09:42:08.1036 clip[456]: Starting clip event loop
+[Sep 30 09:42:24.7061 clip[456]: Listening on port 8080
+[Sep 30 09:42:44.6766 clip[456]: Clip service starting...
+[Sep 30 09:43:01.3062 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:43:32.0078 clip[456]: Initializing clip manager...
+[Sep 30 09:43:43.6265 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:43:45.8115 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:43:57.1936 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:44:02.5697 clip[456]: Clip manager ready
+[Sep 30 09:44:15.9279 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:45:26.1000 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:45:31.9688 clip[456]: Clip service fully operational
+[Sep 30 09:46:03.7434 clip[456]: Connecting to database...
+[Sep 30 09:46:09.4824 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:46:27.7558 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:46:29.9254 clip[456]: Connecting to database...
+[Sep 30 09:46:32.3537 clip[456]: Clip service fully operational
+[Sep 30 09:46:40.9302 clip[456]: Clip manager ready
+[Sep 30 09:46:58.9024 clip[456]: Clip service starting...
+[Sep 30 09:47:04.1567 clip[456]: Clip service fully operational
+[Sep 30 09:47:23.7399 clip[456]: Initializing clip manager...
+[Sep 30 09:47:26.9474 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:47:29.7519 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:48:02.3712 clip[456]: Database connection established
+[Sep 30 09:48:06.7888 clip[456]: Clip manager ready
+[Sep 30 09:48:14.7560 clip[456]: Listening on port 8080
+[Sep 30 09:48:32.5032 clip[456]: Clip service starting...
+[Sep 30 09:48:35.2405 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:48:40.1598 clip[456]: Clip service fully operational
+[Sep 30 09:49:06.9430 clip[456]: Starting clip event loop
+[Sep 30 09:49:12.4176 clip[456]: Starting clip event loop
+[Sep 30 09:49:43.0675 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:49:49.2940 clip[456]: Database connection established
+[Sep 30 09:50:06.0615 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:50:17.1876 clip[456]: Listening on port 8080
+[Sep 30 09:50:22.5519 clip[456]: Connecting to database...
+[Sep 30 09:50:55.8100 clip[456]: Clip service starting...
+[Sep 30 09:50:58.0218 clip[456]: Listening on port 8080
+[Sep 30 09:51:10.0900 clip[456]: Clip service starting...
+[Sep 30 09:51:18.6838 clip[456]: Clip service fully operational
+[Sep 30 09:51:56.5197 clip[456]: Connecting to database...
+[Sep 30 09:52:19.0433 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 09:52:22.2716 clip[456]: Initializing clip manager...
+[Sep 30 09:52:25.2264 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:52:40.3718 clip[456]: Clip manager ready
+[Sep 30 09:52:43.3718 clip[456]: Clip manager ready
+[Sep 30 09:52:45.7571 clip[456]: Clip service starting...
+[Sep 30 09:52:56.9050 clip[456]: Connecting to database...
+[Sep 30 09:53:02.9323 clip[456]: Database connection established
+[Sep 30 09:53:05.5685 clip[456]: Listening on port 8080
+[Sep 30 09:53:22.8120 clip[456]: Clip service fully operational
+[Sep 30 09:53:27.6703 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:53:33.3581 clip[456]: Connecting to database...
+[Sep 30 09:53:36.0988 clip[456]: Starting clip event loop
+[Sep 30 09:53:41.2080 clip[456]: Clip manager ready
+[Sep 30 09:54:13.1744 clip[456]: Starting clip event loop
+[Sep 30 09:54:16.0731 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:54:29.0184 clip[456]: Starting clip event loop
+[Sep 30 09:54:37.2692 clip[456]: Clip service fully operational
+[Sep 30 09:54:42.6343 clip[456]: Database connection established
+[Sep 30 09:54:59.2139 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:55:09.1943 clip[456]: Clip manager ready
+[Sep 30 09:55:45.6442 clip[456]: Initializing clip manager...
+[Sep 30 09:55:48.6524 clip[456]: Clip service fully operational
+[Sep 30 09:56:10.6989 clip[456]: Initializing clip manager...
+[Sep 30 09:56:26.2938 clip[456]: Connecting to database...
+[Sep 30 09:56:47.4774 clip[456]: Listening on port 8080
+[Sep 30 09:57:44.8430 clip[456]: Database connection established
+[Sep 30 09:58:07.3548 clip[456]: Clip service fully operational
+[Sep 30 09:58:22.6227 clip[456]: Starting clip event loop
+[Sep 30 09:58:43.6837 clip[456]: Clip manager ready
+[Sep 30 09:58:49.3105 clip[456]: Clip service starting...
+[Sep 30 09:58:57.0956 clip[456]: Clip service fully operational
+[Sep 30 09:59:00.1280 clip[456]: Clip process initialized with PID: 456
+[Sep 30 09:59:08.2849 clip[456]: Connecting to database...
+[Sep 30 09:59:16.6202 clip[456]: Initializing clip manager...
+[Sep 30 09:59:33.7035 clip[456]: Initializing clip manager...
+[Sep 30 09:59:36.2956 clip[456]: Listening on port 8080
+[Sep 30 09:59:53.0950 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:00:00.7288 clip[456]: Clip manager ready
+[Sep 30 10:00:45.0455 clip[456]: Listening on port 8080
+[Sep 30 10:00:57.4002 clip[456]: Clip service starting...
+[Sep 30 10:01:02.0797 clip[456]: Connecting to database...
+[Sep 30 10:01:25.6939 clip[456]: Clip service starting...
+[Sep 30 10:01:51.2979 clip[456]: Clip manager ready
+[Sep 30 10:01:56.7062 clip[456]: Connecting to database...
+[Sep 30 10:02:05.3092 clip[456]: Initializing clip manager...
+[Sep 30 10:02:23.5835 clip[456]: Initializing clip manager...
+[Sep 30 10:02:57.3744 clip[456]: Connecting to database...
+[Sep 30 10:02:59.5706 clip[456]: Clip service starting...
+[Sep 30 10:03:08.2750 clip[456]: Starting clip event loop
+[Sep 30 10:03:29.6405 clip[456]: Initializing clip manager...
+[Sep 30 10:03:37.5880 clip[456]: Clip service starting...
+[Sep 30 10:03:39.9798 clip[456]: Database connection established
+[Sep 30 10:03:53.8860 clip[456]: Database connection established
+[Sep 30 10:04:16.9207 clip[456]: Database connection established
+[Sep 30 10:04:41.1445 clip[456]: Starting clip event loop
+[Sep 30 10:04:43.7524 clip[456]: Initializing clip manager...
+[Sep 30 10:04:46.0388 clip[456]: Initializing clip manager...
+[Sep 30 10:05:09.4503 clip[456]: Database connection established
+[Sep 30 10:05:22.6875 clip[456]: Clip manager ready
+[Sep 30 10:05:57.3716 clip[456]: Initializing clip manager...
+[Sep 30 10:06:12.5896 clip[456]: Connecting to database...
+[Sep 30 10:06:17.2950 clip[456]: Clip service starting...
+[Sep 30 10:06:42.5548 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:07:27.6799 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:07:35.3330 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:09:09.6108 clip[456]: Starting clip event loop
+[Sep 30 10:09:20.0155 clip[456]: Clip manager ready
+[Sep 30 10:09:33.3364 clip[456]: Clip service starting...
+[Sep 30 10:10:07.4351 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:10:31.8652 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:10:34.7632 clip[456]: Connecting to database...
+[Sep 30 10:10:42.4575 clip[456]: Database connection established
+[Sep 30 10:10:45.1720 clip[456]: Listening on port 8080
+[Sep 30 10:10:55.8342 clip[456]: Clip service fully operational
+[Sep 30 10:11:03.3416 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:11:31.9047 clip[456]: Starting clip event loop
+[Sep 30 10:11:59.4170 clip[456]: Clip manager ready
+[Sep 30 10:12:02.5637 clip[456]: Initializing clip manager...
+[Sep 30 10:12:05.7510 clip[456]: Starting clip event loop
+[Sep 30 10:12:10.5070 clip[456]: Initializing clip manager...
+[Sep 30 10:12:16.4396 clip[456]: Database connection established
+[Sep 30 10:12:24.4686 clip[456]: Clip service fully operational
+[Sep 30 10:12:27.3659 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:12:41.0912 clip[456]: Clip service starting...
+[Sep 30 10:12:45.8642 clip[456]: Starting clip event loop
+[Sep 30 10:12:54.7549 clip[456]: Listening on port 8080
+[Sep 30 10:12:57.9079 clip[456]: Clip manager ready
+[Sep 30 10:13:16.4646 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:13:25.2260 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:13:27.3914 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:14:13.4138 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:14:30.8034 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:14:36.2212 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:14:39.2065 clip[456]: Starting clip event loop
+[Sep 30 10:14:58.1575 clip[456]: Clip service fully operational
+[Sep 30 10:15:23.8448 clip[456]: Clip service starting...
+[Sep 30 10:15:51.4601 clip[456]: Starting clip event loop
+[Sep 30 10:15:54.6672 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:16:10.6171 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:16:25.9883 clip[456]: Initializing clip manager...
+[Sep 30 10:16:29.2255 clip[456]: Connecting to database...
+[Sep 30 10:16:42.4629 clip[456]: Listening on port 8080
+[Sep 30 10:16:52.5528 clip[456]: Listening on port 8080
+[Sep 30 10:17:00.9867 clip[456]: Connecting to database...
+[Sep 30 10:17:17.3820 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:18:10.5470 clip[456]: Listening on port 8080
+[Sep 30 10:18:18.8512 clip[456]: Database connection established
+[Sep 30 10:18:29.9920 clip[456]: Connecting to database...
+[Sep 30 10:18:51.4125 clip[456]: Initializing clip manager...
+[Sep 30 10:19:02.3014 clip[456]: Listening on port 8080
+[Sep 30 10:19:07.5467 clip[456]: Listening on port 8080
+[Sep 30 10:19:10.0961 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:19:13.1533 clip[456]: Connecting to database...
+[Sep 30 10:19:34.4365 clip[456]: Connecting to database...
+[Sep 30 10:20:08.4948 clip[456]: Starting clip event loop
+[Sep 30 10:20:13.3040 clip[456]: Database connection established
+[Sep 30 10:20:25.4073 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:20:34.2837 clip[456]: Clip manager ready
+[Sep 30 10:20:37.3580 clip[456]: Clip service fully operational
+[Sep 30 10:20:50.6802 clip[456]: Clip service fully operational
+[Sep 30 10:20:58.0416 clip[456]: Clip manager ready
+[Sep 30 10:21:00.5943 clip[456]: Listening on port 8080
+[Sep 30 10:21:08.9520 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:21:36.9446 clip[456]: Database connection established
+[Sep 30 10:21:40.1619 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:21:42.9998 clip[456]: Connecting to database...
+[Sep 30 10:21:59.5582 clip[456]: Initializing clip manager...
+[Sep 30 10:22:01.8652 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:22:18.1979 clip[456]: Initializing clip manager...
+[Sep 30 10:22:40.1660 clip[456]: Listening on port 8080
+[Sep 30 10:22:45.6247 clip[456]: Database connection established
+[Sep 30 10:22:51.2060 clip[456]: Connecting to database...
+[Sep 30 10:23:04.4841 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:23:07.4385 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:23:10.6033 clip[456]: Listening on port 8080
+[Sep 30 10:23:18.7198 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:23:30.0714 clip[456]: Listening on port 8080
+[Sep 30 10:23:46.8993 clip[456]: Listening on port 8080
+[Sep 30 10:24:11.5221 clip[456]: Initializing clip manager...
+[Sep 30 10:24:33.8001 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:24:49.5113 clip[456]: Clip service starting...
+[Sep 30 10:24:52.2704 clip[456]: Clip service fully operational
+[Sep 30 10:25:03.0283 clip[456]: Clip service starting...
+[Sep 30 10:25:08.9566 clip[456]: Clip manager ready
+[Sep 30 10:25:13.8532 clip[456]: Clip manager ready
+[Sep 30 10:25:19.7763 clip[456]: Connecting to database...
+[Sep 30 10:26:08.0905 clip[456]: Clip manager ready
+[Sep 30 10:26:11.3087 clip[456]: Clip manager ready
+[Sep 30 10:26:30.9551 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:26:33.2381 clip[456]: Starting clip event loop
+[Sep 30 10:26:41.0829 clip[456]: Database connection established
+[Sep 30 10:26:53.6212 clip[456]: Clip service fully operational
+[Sep 30 10:27:01.7555 clip[456]: Clip service fully operational
+[Sep 30 10:27:06.9823 clip[456]: Listening on port 8080
+[Sep 30 10:27:26.8267 clip[456]: Listening on port 8080
+[Sep 30 10:27:32.1618 clip[456]: Connecting to database...
+[Sep 30 10:27:36.8125 clip[456]: Clip manager ready
+[Sep 30 10:28:19.3356 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:28:34.6767 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:28:37.7952 clip[456]: Clip manager ready
+[Sep 30 10:28:42.9582 clip[456]: Starting clip event loop
+[Sep 30 10:28:45.9678 clip[456]: Listening on port 8080
+[Sep 30 10:29:03.5225 clip[456]: Clip service fully operational
+[Sep 30 10:29:05.9254 clip[456]: Listening on port 8080
+[Sep 30 10:29:13.7543 clip[456]: Clip service starting...
+[Sep 30 10:29:24.5299 clip[456]: Clip service fully operational
+[Sep 30 10:29:41.3825 clip[456]: Clip service fully operational
+[Sep 30 10:30:01.0079 clip[456]: Connecting to database...
+[Sep 30 10:30:09.0493 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:30:11.4072 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:30:14.4734 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:30:45.9645 clip[456]: Listening on port 8080
+[Sep 30 10:31:00.5830 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:31:03.4036 clip[456]: Clip service starting...
+[Sep 30 10:31:06.3023 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:31:31.3159 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:31:36.7794 clip[456]: Clip manager ready
+[Sep 30 10:31:46.9223 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:31:52.8494 clip[456]: Listening on port 8080
+[Sep 30 10:31:55.4685 clip[456]: Initializing clip manager...
+[Sep 30 10:32:08.8140 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:32:15.7100 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:32:18.4773 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:32:26.2999 clip[456]: Database connection established
+[Sep 30 10:32:36.6166 clip[456]: Connecting to database...
+[Sep 30 10:32:39.2782 clip[456]: Database connection established
+[Sep 30 10:32:42.0700 clip[456]: Initializing clip manager...
+[Sep 30 10:32:44.5032 clip[456]: Starting clip event loop
+[Sep 30 10:32:50.0494 clip[456]: Listening on port 8080
+[Sep 30 10:32:57.4752 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:33:24.8518 clip[456]: Clip service fully operational
+[Sep 30 10:33:46.2787 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:33:48.7917 clip[456]: Clip service fully operational
+[Sep 30 10:33:57.4986 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:34:00.4003 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:34:28.8555 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:35:15.6910 clip[456]: Clip service fully operational
+[Sep 30 10:35:30.3223 clip[456]: Starting clip event loop
+[Sep 30 10:35:32.8232 clip[456]: Database connection established
+[Sep 30 10:35:49.2354 clip[456]: Clip service fully operational
+[Sep 30 10:36:15.3673 clip[456]: Clip service starting...
+[Sep 30 10:36:18.3157 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:36:54.3252 clip[456]: Clip service starting...
+[Sep 30 10:36:57.2705 clip[456]: Clip service starting...
+[Sep 30 10:37:05.8650 clip[456]: Initializing clip manager...
+[Sep 30 10:37:11.8137 clip[456]: Initializing clip manager...
+[Sep 30 10:37:16.8623 clip[456]: Listening on port 8080
+[Sep 30 10:37:23.8233 clip[456]: Clip manager ready
+[Sep 30 10:37:28.3727 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:37:34.1509 clip[456]: Database connection established
+[Sep 30 10:37:42.3325 clip[456]: Clip service fully operational
+[Sep 30 10:37:55.7120 clip[456]: Clip manager ready
+[Sep 30 10:38:01.2086 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:38:50.5279 clip[456]: Database connection established
+[Sep 30 10:39:20.1383 clip[456]: Listening on port 8080
+[Sep 30 10:39:25.8366 clip[456]: Connecting to database...
+[Sep 30 10:39:33.7042 clip[456]: Clip manager ready
+[Sep 30 10:39:44.1008 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:40:02.2156 clip[456]: Starting clip event loop
+[Sep 30 10:40:07.6401 clip[456]: Starting clip event loop
+[Sep 30 10:40:27.2779 clip[456]: Initializing clip manager...
+[Sep 30 10:40:33.3059 clip[456]: Clip manager ready
+[Sep 30 10:40:39.5846 clip[456]: Clip service fully operational
+[Sep 30 10:40:44.8495 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:41:03.5710 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:41:09.7535 clip[456]: Clip service starting...
+[Sep 30 10:41:26.1128 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:41:39.3226 clip[456]: Database connection established
+[Sep 30 10:41:42.2800 clip[456]: Clip service fully operational
+[Sep 30 10:42:48.2145 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:42:53.5497 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:42:58.9836 clip[456]: Database connection established
+[Sep 30 10:43:02.1916 clip[456]: Connecting to database...
+[Sep 30 10:43:06.8421 clip[456]: Listening on port 8080
+[Sep 30 10:43:36.0035 clip[456]: Clip service fully operational
+[Sep 30 10:43:48.2228 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:43:51.0537 clip[456]: Connecting to database...
+[Sep 30 10:44:07.2611 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:44:09.5179 clip[456]: Connecting to database...
+[Sep 30 10:44:20.5268 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:44:23.4461 clip[456]: Clip service fully operational
+[Sep 30 10:44:25.6598 clip[456]: Clip service starting...
+[Sep 30 10:44:28.0017 clip[456]: Clip service starting...
+[Sep 30 10:44:30.5124 clip[456]: Initializing clip manager...
+[Sep 30 10:44:37.6289 clip[456]: Clip service starting...
+[Sep 30 10:44:55.9185 clip[456]: Database connection established
+[Sep 30 10:44:59.1215 clip[456]: Initializing clip manager...
+[Sep 30 10:45:01.9822 clip[456]: Connecting to database...
+[Sep 30 10:45:43.7648 clip[456]: Clip service fully operational
+[Sep 30 10:45:46.2361 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:45:54.2345 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:46:02.6274 clip[456]: Initializing clip manager...
+[Sep 30 10:46:20.4418 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:46:42.4277 clip[456]: Connecting to database...
+[Sep 30 10:46:44.6266 clip[456]: Clip service fully operational
+[Sep 30 10:47:13.4142 clip[456]: Clip service fully operational
+[Sep 30 10:47:23.8077 clip[456]: Database connection established
+[Sep 30 10:47:37.6657 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:47:40.2832 clip[456]: Clip manager ready
+[Sep 30 10:47:47.2639 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:47:50.0468 clip[456]: Starting clip event loop
+[Sep 30 10:48:10.9564 clip[456]: Initializing clip manager...
+[Sep 30 10:48:46.1627 clip[456]: Clip manager ready
+[Sep 30 10:48:49.0038 clip[456]: Connecting to database...
+[Sep 30 10:48:59.8206 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:49:08.4556 clip[456]: Starting clip event loop
+[Sep 30 10:49:19.8106 clip[456]: Clip service fully operational
+[Sep 30 10:49:22.2894 clip[456]: Starting clip event loop
+[Sep 30 10:49:35.6671 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:49:38.6463 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:49:41.5684 clip[456]: Clip service starting...
+[Sep 30 10:49:46.8971 clip[456]: Starting clip event loop
+[Sep 30 10:49:49.5285 clip[456]: Clip manager ready
+[Sep 30 10:50:14.4874 clip[456]: Starting clip event loop
+[Sep 30 10:50:16.9418 clip[456]: Listening on port 8080
+[Sep 30 10:50:46.3471 clip[456]: Starting clip event loop
+[Sep 30 10:50:58.1591 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:51:27.6724 clip[456]: Listening on port 8080
+[Sep 30 10:51:38.8477 clip[456]: Clip manager ready
+[Sep 30 10:51:54.5988 clip[456]: Starting clip event loop
+[Sep 30 10:52:36.7608 clip[456]: Clip manager ready
+[Sep 30 10:52:39.1282 clip[456]: Clip service starting...
+[Sep 30 10:52:49.8821 clip[456]: Clip service starting...
+[Sep 30 10:52:52.1746 clip[456]: Starting clip event loop
+[Sep 30 10:52:55.0586 clip[456]: Clip manager ready
+[Sep 30 10:53:16.2805 clip[456]: Starting clip event loop
+[Sep 30 10:53:51.4550 clip[456]: Clip service starting...
+[Sep 30 10:53:54.0367 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:53:57.0037 clip[456]: Starting clip event loop
+[Sep 30 10:53:59.6864 clip[456]: Initializing clip manager...
+[Sep 30 10:54:22.0980 clip[456]: Clip manager ready
+[Sep 30 10:54:24.4293 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:54:27.2236 clip[456]: Clip service fully operational
+[Sep 30 10:54:29.7743 clip[456]: Starting clip event loop
+[Sep 30 10:54:48.0171 clip[456]: Loading configuration from /etc/clip/config.json
+[Sep 30 10:54:58.1155 clip[456]: Clip manager ready
+[Sep 30 10:55:44.5915 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:55:46.9111 clip[456]: Clip service starting...
+[Sep 30 10:56:00.8015 clip[456]: Listening on port 8080
+[Sep 30 10:56:19.8442 clip[456]: Starting clip event loop
+[Sep 30 10:56:30.4874 clip[456]: Clip manager ready
+[Sep 30 10:57:01.7198 clip[456]: Clip manager ready
+[Sep 30 10:57:12.5748 clip[456]: Clip service starting...
+[Sep 30 10:57:17.5511 clip[456]: Listening on port 8080
+[Sep 30 10:57:33.7942 clip[456]: Clip process initialized with PID: 456
+[Sep 30 10:57:55.2028 clip[456]: Clip service starting...
+[Sep 30 10:58:17.4159 clip[456]: Connecting to database...
+[Sep 30 10:58:28.9020 clip[456]: Clip service fully operational
+[Sep 30 10:58:34.7535 clip[456]: Initializing clip manager...
+[Sep 30 10:58:43.3449 clip[456]: Listening on port 8080
+[Sep 30 10:59:02.1394 clip[456]: Database connection established
+[Sep 30 10:59:04.4559 clip[456]: Initializing clip manager...
+[Sep 30 10:59:15.0028 clip[456]: Listening on port 8080
+[Sep 30 10:59:17.2340 clip[456]: Clip service fully operational
+[Sep 30 10:59:44.4125 clip[456]: Starting clip event loop
+[Sep 30 10:59:47.4315 clip[456]: Clip manager ready
+[Sep 30 10:59:49.9839 clip[456]: Database connection established
