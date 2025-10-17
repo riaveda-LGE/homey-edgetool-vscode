@@ -1,6 +1,7 @@
 // === src/extension/editors/PerfMonitorHtmlGenerator.ts ===
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as vscode from 'vscode';
+
 import type { IPerfMonitorHtmlGenerator } from './IPerfMonitorPanelComponents.js';
 
 export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
@@ -13,7 +14,7 @@ export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
   generateHtmlReport(result: any, isForWebview: boolean = false): string {
     const a = result.analysis || {};
 
-    let html = `
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>

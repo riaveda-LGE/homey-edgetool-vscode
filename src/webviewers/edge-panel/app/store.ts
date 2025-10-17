@@ -1,5 +1,5 @@
-import type { Action } from './actions.js';
 import type { AppState } from '../types/model.js';
+import type { Action } from './actions.js';
 
 export type Listener = (s: AppState, a: Action) => void;
 

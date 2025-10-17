@@ -1,5 +1,5 @@
-import { HostBridge } from './HostBridge.js';
 import type { PanelStatePersist } from '../types/model.js';
+import { HostBridge } from './HostBridge.js';
 
 export class PersistService {
   constructor(private host: HostBridge) {}

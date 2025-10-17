@@ -22,13 +22,19 @@
   ],
   "main": "./dist/extension/main.js",
   "activationEvents": [
-    "onView:edgePanel"
+    "onView:edgePanel",
+    "onCommand:homeyEdgetool.openHomeyLogging"
   ],
   "contributes": {
     "commands": [
       {
         "command": "performance.toggle",
         "title": "Performance Monitor: Toggle On/Off",
+        "category": "Homey Edge"
+      },
+      {
+        "command": "homeyEdgetool.openHomeyLogging",
+        "title": "Homey Edgetool: Open Homey Logging",
         "category": "Homey Edge"
       }
     ],
@@ -59,14 +65,17 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format:prettier": "prettier --write \"{src,scripts,media}/**/*.{ts,tsx,js,jsx,css,html,json,md}\"",
     "format": "npm run lint:fix && npm run format:prettier",
-    "perf:merge": "node --expose-gc dist/scripts/perf/run-merge-bench.js",
-    "webpack": "webpack --mode production",
-    "vscode:prepublish": "npm run webpack && tsc -p .",
-    "build": "npm run webpack && tsc -p .",
+
+    "dev": "node scripts/deploy.js --dev",
+
+    "webpack": "cross-env NODE_ENV=production webpack",
+
+    "vscode:prepublish": "npm run build",
+    "build": "cross-env NODE_ENV=production webpack && tsc -p .",
     "compile": "npm run build",
     "package": "npm run build && vsce package",
-    "deploy": "node scripts/deploy.js",
-    "now": "node scripts/deploy.js"
+
+    "deploy": "cross-env NODE_ENV=production webpack && node scripts/deploy.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -74,6 +83,7 @@
     "@vscode/vsce": "^3.6.2",
     "chart.js": "^4.4.0",
     "copy-webpack-plugin": "^12.0.2",
+    "cross-env": "^7.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^3.6.2",

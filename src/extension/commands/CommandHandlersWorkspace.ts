@@ -1,14 +1,14 @@
 // === src/extension/commands/CommandHandlersWorkspace.ts ===
-import * as vscode from 'vscode';
+import { exec as execCb } from 'child_process';
 import * as path from 'path';
 import { promisify } from 'util';
-import { exec as execCb } from 'child_process';
+import * as vscode from 'vscode';
 
 import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { XError, ErrorCategory } from '../../shared/errors.js';
-import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 import { measure } from '../../core/logging/perf.js';
+import { ErrorCategory,XError } from '../../shared/errors.js';
+import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 
 const log = getLogger('cmd.workspace');
 const exec = promisify(execCb);

@@ -1,6 +1,6 @@
-import type { TreeNode, Kind } from '../../types/model.js';
-import { TreeView } from './TreeView.js';
+import type { Kind,TreeNode } from '../../types/model.js';
 import { ContextMenu } from './ContextMenu.js';
+import { TreeView } from './TreeView.js';
 
 export class ExplorerView {
   private pathEl!: HTMLElement;

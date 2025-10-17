@@ -10,7 +10,12 @@
 
 - **작업 기본 방침**: 새로운 파일 작성, 기존 코드 수정, 이슈 수정 등 모든 사항에 대해 기본방침은 언제나 분석이다. 난 수정보다 분석을 더 중요하게 여겨.
 
-## Homey EdgeTool — VS Code Custom Editor 아키텍처 & 구현 가이드
+## Homey EdgeTool — VS C│  ├─ shared/                             # 공용 유틸/타입
+│  │  ├─ const.ts                         # 상수 정의
+│  │  ├─ types.ts                         # 공용 타입 정의
+│  │  ├─ errors.ts                        # 에러 처리
+│  │  ├─ utils.ts                         # 공용 유틸리티
+│  │  └─ ui-input.ts                      # UI 입력 유틸리티om Editor 아키텍처 & 구현 가이드
 
 *(Node.js/TypeScript 기반)*
 
@@ -305,7 +310,8 @@ export async function doWork() {
 `commandHandlers.ts`는 명령과 버튼 핸들러 로직을 공유하며, 복잡한 비즈니스 로직을 처리합니다.  
 `edgepanel.buttons.ts`는 버튼 정의의 Single Source of Truth (SSOT)로, 버튼 메타데이터와 DTO 변환을 담당합니다.
 
-## 프로젝트 트리
+# Homey EdgeTool — Project Structure
+
 ```
 homey-edgetool/
 ├─ .github/                               # GitHub 관련 설정 및 문서
@@ -329,6 +335,7 @@ homey-edgetool/
 ├─ src/
 │  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
 │  │  ├─ main.ts                          # activate/deactivate, 초기 부트스트랩
+│  │  ├─ readme.md                        # 확장 모듈 설명
 │  │  ├─ commands/
 │  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅
 │  │  │  ├─ CommandHandlersConnect.ts     # 연결 관련 명령
@@ -341,7 +348,6 @@ homey-edgetool/
 │  │  │  ├─ edgepanel.buttons.ts           # 버튼 정의 SSOT
 │  │  │  └─ ICommandHandlers.ts           # 명령 핸들러 인터페이스
 │  │  ├─ editors/
-│  │  │  ├─ LogViewEditorProvider.ts      # 로그 뷰어 에디터 제공자
 │  │  │  ├─ PerfMonitorEditorProvider.ts  # 성능 모니터 에디터 제공자
 │  │  │  ├─ PerfMonitorPanel.ts           # 성능 모니터 패널
 │  │  │  ├─ PerfMonitorCaptureManager.ts  # 성능 데이터 캡처 관리
@@ -359,14 +365,15 @@ homey-edgetool/
 │  │  │  └─ bridge.ts                     # 메시징 브리지
 │  │  ├─ panels/
 │  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자
-│  │  │  ├─ EdgePanelButtonHandler.ts     # 버튼 이벤트 핸들링
-│  │  │  ├─ EdgePanelConnectionManager.ts # 연결 관리
-│  │  │  ├─ EdgePanelLogViewer.ts         # 로그 뷰어 관리
+│  │  │  ├─ EdgePanelActionRouter.ts      # 버튼→액션 라우터 역할
+│  │  │  ├─ LogConnectionPicker.ts        # 로그 연결 전용 QuickPick
+│  │  │  ├─ LogViewerPanelManager.ts      # 독립 Log Viewer 패널 컨트롤러
 │  │  │  └─ explorerBridge.ts             # 파일 탐색기 브리지
 │  │  └─ update/
 │  │     └─ updater.ts                    # 업데이트 관리
 │  │
 │  ├─ core/                               # 핵심 비즈니스 로직(런타임 독립)
+│  │  ├─ readme.md                        # 코어 모듈 설명
 │  │  ├─ config/
 │  │  │  ├─ schema.ts                     # 사용자 설정 스키마
 │  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리
@@ -400,6 +407,7 @@ homey-edgetool/
 │  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입
 │  │
 │  └─ webviewers/                         # Webview 리소스 (ES 모듈 기반)
+│     ├─ readme.md                        # Webviewers 모듈 설명
 │     ├─ edge-panel/
 │     │  ├─ index.html                    # Edge Panel 웹뷰
 │     │  ├─ app/
@@ -434,15 +442,33 @@ homey-edgetool/
 │     │     └─ model.ts                   # State/TreeNode/Section 등 타입
 │     ├─ log-viewer/
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰
-│     │  ├─ app.ts                        # 부트스트랩
-│     │  ├─ protocol.ts                   # 메시지 프로토콜
-│     │  ├─ services/
-│     │  │  └─ ws.ts                      # WebSocket 래퍼
-│     │  └─ modules/
-│     │     └─ LogViewer.ts               # 가상 스크롤 로그 뷰어
+│     │  ├─ app/
+│     │  │  ├─ index.ts                   # 부트스트랩
+│     │  │  ├─ model.ts                   # 모델 정의
+│     │  │  ├─ parse.ts                   # 파싱 로직
+│     │  │  ├─ types.ts                   # 타입 정의
+│     │  │  └─ update.ts                  # 업데이트 로직
+│     │  ├─ styles/
+│     │  │  ├─ base.css                   # 기본 스타일
+│     │  │  ├─ components.css             # 컴포넌트 스타일
+│     │  │  ├─ layout.css                 # 레이아웃 스타일
+│     │  │  └─ tokens.css                 # 테마 토큰
+│     │  └─ views/
+│     │     ├─ AppView.ts                 # 메인 앱 뷰
+│     │     ├─ BookmarksView.ts           # 북마크 뷰
+│     │     ├─ dom.ts                     # DOM 유틸리티
+│     │     ├─ GridHeaderView.ts          # 그리드 헤더 뷰
+│     │     ├─ GridView.ts                # 그리드 뷰
+│     │     ├─ Layout/                    # 레이아웃 컴포넌트
+│     │     ├─ ModalView.ts               # 모달 뷰
+│     │     ├─ SearchView.ts              # 검색 뷰
+│     │     └─ ToolbarView.ts             # 툴바 뷰
 │     └─ perf-monitor/
 │        ├─ app.js                        # 성능 모니터 앱 (Chart.js 기반)
 │        └─ style.css                     # 스타일시트
+│
+│     └─ shared/
+│        └─ utils.ts                      # 공용 유틸리티
 │
 ├─ package.json                           # 프로젝트 설정
 ├─ tsconfig.json                          # TypeScript 설정
@@ -454,7 +480,7 @@ homey-edgetool/
 ├─ LICENSE                                # 라이선스
 ├─ homey-edgetool-0.0.2.vsix              # 빌드된 VSIX 파일
 ├─ dist/                                  # 컴파일 출력 디렉토리
-└─ node_modules/                          # 의존성
+└─ node_modules/                          # 의존성 모듈
 ```
 
 # 🧭 VS Code Extension 입력 처리 가이드

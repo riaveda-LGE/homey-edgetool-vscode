@@ -1,5 +1,6 @@
 // === src/extension/commands/CommandHandlersHost.ts ===
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 

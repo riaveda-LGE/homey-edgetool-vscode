@@ -1,8 +1,9 @@
 // === src/extension/panels/explorerBridge.ts ===
 import * as vscode from 'vscode';
+
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { toPosix, relFromBase, parentDir } from '../../shared/utils.js';
+import { parentDir,relFromBase, toPosix } from '../../shared/utils.js';
 
 export type ExplorerBridge = {
   handleMessage(msg: any): Promise<boolean>;

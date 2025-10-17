@@ -1,7 +1,10 @@
+// === src/extension/messaging/messageTypes.ts ===
 // 공용 메시지 타입 (Host <-> Webview)
 export type LogEntry = {
   id: number;
-  ts: number; // epoch ms
+  /** 전역 인덱스(최신=1). 파일 병합 세션에서만 부여됨 */
+  idx?: number;
+  ts: number; // epoch ms (보정된 시간; 실시간 세션은 원시 now)
   level?: 'D' | 'I' | 'W' | 'E';
   type?: 'system' | 'homey' | 'application' | 'other';
   source?: string;
@@ -31,6 +34,7 @@ type EmptyPayload = Record<string, never>;
 // Host → Webview
 export type H2W =
   | Envelope<'logs.batch', { logs: LogEntry[]; total?: number; seq?: number }>
+  | Envelope<'logs.page.response', { startIdx: number; endIdx: number; logs: LogEntry[] }>
   | Envelope<
       'metrics.update',
       {
@@ -61,6 +65,14 @@ export type H2W =
   | Envelope<'setUpdateVisible', { visible: boolean }>
   | Envelope<'ui.toggleExplorer', EmptyPayload>
   | Envelope<'ui.toggleLogs', EmptyPayload>
+  /** 파일 병합 저장 완료/정보 */
+  | Envelope<'logmerge.saved', { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }>
+  /** 병합 진행률(증분/완료) */
+  | Envelope<'merge.progress', { inc?: number; total?: number; done?: number; active?: boolean }>
+  /** 사용자 환경설정 전달 */
+  | Envelope<'logviewer.prefs', { prefs: any }>
+  /** 단순 확인 응답(예: saveUserPrefs ack) */
+  | Envelope<'ack', { inReplyTo?: string }>
   ;
 
 // Webview → Host
@@ -73,6 +85,7 @@ export type W2H =
   | Envelope<'logging.startRealtime', { filter?: string; files?: string[] }>
   | Envelope<'logging.startFileMerge', { dir: string; types?: string[]; reverse?: boolean }>
   | Envelope<'logging.stop', EmptyPayload>
+  | Envelope<'logs.page.request', { startIdx: number; endIdx: number }>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
   | Envelope<'homey.command.run', { name: string; args?: string[] }>
   | Envelope<'button.click', { id: string }>
@@ -93,4 +106,6 @@ export type W2H =
   | Envelope<'ui.toggleLogs', EmptyPayload>
   | Envelope<'ui.requestButtons', EmptyPayload>
   | Envelope<'perf.ready', EmptyPayload>
+  | Envelope<'logviewer.getUserPrefs', {}>
+  | Envelope<'logviewer.saveUserPrefs', { prefs: any }>
   ;

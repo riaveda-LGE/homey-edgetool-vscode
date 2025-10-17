@@ -2,7 +2,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { XError, ErrorCategory } from '../../shared/errors.js';
+import { ErrorCategory,XError } from '../../shared/errors.js';
 import { readJsonFile } from '../../shared/utils.js';
 
 export type Json = any;
@@ -17,6 +17,19 @@ export type AppConfigFile = {
     showLogs?: boolean;
     controlHeight?: number;
     splitterPosition?: number;
+  };
+  /** Log Viewer 사용자 설정(웹뷰 전용) */
+  logViewer?: {
+    showTime?: boolean;
+    showProc?: boolean;
+    showPid?: boolean;
+    showMsg?: boolean;
+    wrapMode?: boolean;
+    bookmarksOpen?: boolean;
+    highlightWords?: { color: string; text: string }[]; // 최대 5개 (색상 슬롯+텍스트)
+    columnWidths?: number[];
+    theme?: 'light' | 'dark';
+    [k: string]: Json | undefined;
   };
   /** 그 외 확장 전역 설정 값들 */
   [k: string]: Json | undefined;
@@ -81,7 +94,7 @@ export type WorkspaceInfo = {
 
 /**
  * 현재 config 기준의 워크스페이스 정보를 계산하고,
- * 실제 사용하는 폴더(<base>/workspace 또는 <storageDir>/workspace)를 보장해 반환한다.
+ * 실제 사용하는 폴더(<base>/workspace 또는 <storageDir>/workspace>)를 보장해 반환한다.
  */
 export async function resolveWorkspaceInfo(ctx: vscode.ExtensionContext): Promise<WorkspaceInfo> {
   const paths = getUserdataPaths(ctx);
@@ -219,7 +232,9 @@ async function writeAppConfig(ctx: vscode.ExtensionContext, config: AppConfigFil
  * Edge Panel 상태를 읽어옵니다.
  * 기본값: showExplorer=true, showLogs=false, controlHeight=auto, splitterPosition=undefined
  */
-export async function readEdgePanelState(ctx: vscode.ExtensionContext): Promise<NonNullable<AppConfigFile['panelState']>> {
+export async function readEdgePanelState(
+  ctx: vscode.ExtensionContext,
+): Promise<NonNullable<AppConfigFile['panelState']>> {
   const config = await readAppConfig(ctx);
   return {
     showExplorer: config.panelState?.showExplorer ?? true,
@@ -232,8 +247,44 @@ export async function readEdgePanelState(ctx: vscode.ExtensionContext): Promise<
 /**
  * Edge Panel 상태를 저장합니다.
  */
-export async function writeEdgePanelState(ctx: vscode.ExtensionContext, state: NonNullable<AppConfigFile['panelState']>): Promise<void> {
+export async function writeEdgePanelState(
+  ctx: vscode.ExtensionContext,
+  state: NonNullable<AppConfigFile['panelState']>,
+): Promise<void> {
   const config = await readAppConfig(ctx);
   config.panelState = { ...config.panelState, ...state };
+  await writeAppConfig(ctx, config);
+}
+
+/* -------------------- Log Viewer Prefs Helpers -------------------- */
+
+/** Log Viewer 기본값 */
+const DEFAULT_LOGVIEWER_PREFS: NonNullable<AppConfigFile['logViewer']> = {
+  showTime: true,
+  showProc: true,
+  showPid: true,
+  showMsg: true,
+  wrapMode: false,
+  bookmarksOpen: false,
+  highlightWords: [],
+  columnWidths: [],
+  // theme 기본 미설정(옵션)
+};
+
+/** Log Viewer 설정 읽기 */
+export async function readLogViewerPrefs(
+  ctx: vscode.ExtensionContext,
+): Promise<NonNullable<AppConfigFile['logViewer']>> {
+  const config = await readAppConfig(ctx);
+  return { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}) };
+}
+
+/** Log Viewer 설정 저장(부분 갱신 merge) */
+export async function writeLogViewerPrefs(
+  ctx: vscode.ExtensionContext,
+  patch: Partial<NonNullable<AppConfigFile['logViewer']>>,
+): Promise<void> {
+  const config = await readAppConfig(ctx);
+  config.logViewer = { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}), ...(patch ?? {}) };
   await writeAppConfig(ctx, config);
 }

@@ -1,36 +1,212 @@
-<!-- === src/ui/log-viewer/index.html === -->
 <!doctype html>
 <html lang="ko">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none';
-                 style-src 'unsafe-inline' %CSP_SOURCE%;
-                 script-src 'nonce-%NONCE%';"
+      content="default-src 'none'; img-src %CSP_SOURCE% data:;
+               style-src %CSP_SOURCE% 'unsafe-inline';
+               script-src 'nonce-%NONCE%';"
     />
-    <title>Homey Log Viewer</title>
-    <style>
-      body {
-        margin: 0;
-        background: #0b0b0b;
-        color: #eaeaea;
-        font:
-          12px/1.4 ui-monospace,
-          Consolas,
-          monospace;
-      }
-      #log {
-        white-space: pre-wrap;
-        padding: 8px;
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+    <title>Log Viewer</title>
   </head>
   <body>
-    <div id="log">loading...</div>
-    <script nonce="%NONCE%">
-      const vscode = acquireVsCodeApi();
-    </script>
-    <script nonce="%NONCE%" src="./app.js"></script>
+    <div id="app" class="lv-root">
+      <!-- 상단 툴바 (정적 DOM) -->
+      <header id="toolbar" class="lv-toolbar" aria-label="toolbar">
+        <div class="group">
+          <button id="btnHighlight" class="btn">하이라이트</button>
+          <span class="sep"></span>
+
+          <label><input id="chkTime" type="checkbox" checked /> 시간</label>
+          <label><input id="chkProc" type="checkbox" checked /> 프로세스</label>
+          <label><input id="chkPid"  type="checkbox" checked /> PID</label>
+          <label><input id="chkMsg"  type="checkbox" checked /> 메시지</label>
+        </div>
+
+        <!-- 가운데: 진행률 표시 -->
+        <div class="group grow">
+          <div id="mergeProgress" class="lv-progress" hidden>
+            <div class="bar" aria-hidden="true">
+              <div id="mergeProgressFill" class="fill" style="width:0%"></div>
+            </div>
+            <span id="mergeProgressLabel" class="label" aria-live="polite">(0/0)</span>
+          </div>
+        </div>
+
+        <div class="group">
+          <input id="searchInput" type="text" placeholder="검색어" />
+          <button id="btnSearchClose" class="btn ghost">검색 닫기</button>
+          <button id="btnToggleBookmarks" class="btn ghost">북마크 보기</button>
+        </div>
+
+        <!-- 하이라이트 팝오버 -->
+        <div id="hlPop" class="hl-pop" hidden>
+          <h4>하이라이트 단어 (최대 5개) — 각 칸 왼쪽에서 색상을 선택하세요</h4>
+
+          <!-- 5개의 슬롯 -->
+          <!-- 슬롯 템플릿: 색 팔레트(12) + 텍스트 -->
+          <!-- slot 1 -->
+          <div class="hl-row">
+            <div>
+              <div class="hl-palette">
+                <!-- 12 swatches -->
+                <div id="hl1-c1"  class="hl-swatch" style="background:#ffe066"></div>
+                <div id="hl1-c2"  class="hl-swatch" style="background:#ffd43b"></div>
+                <div id="hl1-c3"  class="hl-swatch" style="background:#ffa94d"></div>
+                <div id="hl1-c4"  class="hl-swatch" style="background:#ff8787"></div>
+                <div id="hl1-c5"  class="hl-swatch" style="background:#ff6b6b"></div>
+                <div id="hl1-c6"  class="hl-swatch" style="background:#f06595"></div>
+                <div id="hl1-c7"  class="hl-swatch" style="background:#b197fc"></div>
+                <div id="hl1-c8"  class="hl-swatch" style="background:#74c0fc"></div>
+                <div id="hl1-c9"  class="hl-swatch" style="background:#63e6be"></div>
+                <div id="hl1-c10" class="hl-swatch" style="background:#a9e34b"></div>
+                <div id="hl1-c11" class="hl-swatch" style="background:#ffd8a8"></div>
+                <div id="hl1-c12" class="hl-swatch" style="background:#d0bfff"></div>
+              </div>
+              <input id="hl1-picked" type="hidden" value="c1" />
+            </div>
+            <input id="hl1-text" type="text" placeholder="단어 1" />
+          </div>
+
+          <!-- slot 2 -->
+          <div class="hl-row">
+            <div>
+              <div class="hl-palette">
+                <div id="hl2-c1"  class="hl-swatch" style="background:#ffe066"></div>
+                <div id="hl2-c2"  class="hl-swatch" style="background:#ffd43b"></div>
+                <div id="hl2-c3"  class="hl-swatch" style="background:#ffa94d"></div>
+                <div id="hl2-c4"  class="hl-swatch" style="background:#ff8787"></div>
+                <div id="hl2-c5"  class="hl-swatch" style="background:#ff6b6b"></div>
+                <div id="hl2-c6"  class="hl-swatch" style="background:#f06595"></div>
+                <div id="hl2-c7"  class="hl-swatch" style="background:#b197fc"></div>
+                <div id="hl2-c8"  class="hl-swatch" style="background:#74c0fc"></div>
+                <div id="hl2-c9"  class="hl-swatch" style="background:#63e6be"></div>
+                <div id="hl2-c10" class="hl-swatch" style="background:#a9e34b"></div>
+                <div id="hl2-c11" class="hl-swatch" style="background:#ffd8a8"></div>
+                <div id="hl2-c12" class="hl-swatch" style="background:#d0bfff"></div>
+              </div>
+              <input id="hl2-picked" type="hidden" value="c1" />
+            </div>
+            <input id="hl2-text" type="text" placeholder="단어 2" />
+          </div>
+
+          <!-- slot 3 -->
+          <div class="hl-row">
+            <div>
+              <div class="hl-palette">
+                <div id="hl3-c1"  class="hl-swatch" style="background:#ffe066"></div>
+                <div id="hl3-c2"  class="hl-swatch" style="background:#ffd43b"></div>
+                <div id="hl3-c3"  class="hl-swatch" style="background:#ffa94d"></div>
+                <div id="hl3-c4"  class="hl-swatch" style="background:#ff8787"></div>
+                <div id="hl3-c5"  class="hl-swatch" style="background:#ff6b6b"></div>
+                <div id="hl3-c6"  class="hl-swatch" style="background:#f06595"></div>
+                <div id="hl3-c7"  class="hl-swatch" style="background:#b197fc"></div>
+                <div id="hl3-c8"  class="hl-swatch" style="background:#74c0fc"></div>
+                <div id="hl3-c9"  class="hl-swatch" style="background:#63e6be"></div>
+                <div id="hl3-c10" class="hl-swatch" style="background:#a9e34b"></div>
+                <div id="hl3-c11" class="hl-swatch" style="background:#ffd8a8"></div>
+                <div id="hl3-c12" class="hl-swatch" style="background:#d0bfff"></div>
+              </div>
+              <input id="hl3-picked" type="hidden" value="c1" />
+            </div>
+            <input id="hl3-text" type="text" placeholder="단어 3" />
+          </div>
+
+          <!-- slot 4 -->
+          <div class="hl-row">
+            <div>
+              <div class="hl-palette">
+                <div id="hl4-c1"  class="hl-swatch" style="background:#ffe066"></div>
+                <div id="hl4-c2"  class="hl-swatch" style="background:#ffd43b"></div>
+                <div id="hl4-c3"  class="hl-swatch" style="background:#ffa94d"></div>
+                <div id="hl4-c4"  class="hl-swatch" style="background:#ff8787"></div>
+                <div id="hl4-c5"  class="hl-swatch" style="background:#ff6b6b"></div>
+                <div id="hl4-c6"  class="hl-swatch" style="background:#f06595"></div>
+                <div id="hl4-c7"  class="hl-swatch" style="background:#b197fc"></div>
+                <div id="hl4-c8"  class="hl-swatch" style="background:#74c0fc"></div>
+                <div id="hl4-c9"  class="hl-swatch" style="background:#63e6be"></div>
+                <div id="hl4-c10" class="hl-swatch" style="background:#a9e34b"></div>
+                <div id="hl4-c11" class="hl-swatch" style="background:#ffd8a8"></div>
+                <div id="hl4-c12" class="hl-swatch" style="background:#d0bfff"></div>
+              </div>
+              <input id="hl4-picked" type="hidden" value="c1" />
+            </div>
+            <input id="hl4-text" type="text" placeholder="단어 4" />
+          </div>
+
+          <!-- slot 5 -->
+          <div class="hl-row">
+            <div>
+              <div class="hl-palette">
+                <div id="hl5-c1"  class="hl-swatch" style="background:#ffe066"></div>
+                <div id="hl5-c2"  class="hl-swatch" style="background:#ffd43b"></div>
+                <div id="hl5-c3"  class="hl-swatch" style="background:#ffa94d"></div>
+                <div id="hl5-c4"  class="hl-swatch" style="background:#ff8787"></div>
+                <div id="hl5-c5"  class="hl-swatch" style="background:#ff6b6b"></div>
+                <div id="hl5-c6"  class="hl-swatch" style="background:#f06595"></div>
+                <div id="hl5-c7"  class="hl-swatch" style="background:#b197fc"></div>
+                <div id="hl5-c8"  class="hl-swatch" style="background:#74c0fc"></div>
+                <div id="hl5-c9"  class="hl-swatch" style="background:#63e6be"></div>
+                <div id="hl5-c10" class="hl-swatch" style="background:#a9e34b"></div>
+                <div id="hl5-c11" class="hl-swatch" style="background:#ffd8a8"></div>
+                <div id="hl5-c12" class="hl-swatch" style="background:#d0bfff"></div>
+              </div>
+              <input id="hl5-picked" type="hidden" value="c1" />
+            </div>
+            <input id="hl5-text" type="text" placeholder="단어 5" />
+          </div>
+
+          <div class="hl-actions">
+            <button id="hlCancel" class="btn ghost">취소</button>
+            <button id="hlApply" class="btn">적용</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 툴바/본문 사이 스플리터 -->
+      <div id="topSplitter" class="lv-splitter" role="separator" aria-orientation="horizontal" tabindex="0"></div>
+
+      <!-- 본문(좌: 로그뷰 + (가운데 스플리터) + 우: 북마크) + 하단: 검색결과  -->
+      <main id="main" class="lv-main">
+        <section id="centerPane" class="lv-center">
+          <div id="logHeader" class="lv-log-header"></div>
+          <div id="logGrid" class="lv-log-grid" tabindex="0" role="grid" aria-label="logs"></div>
+        </section>
+
+        <!-- ⬇ DOM 순서: center → midSplitter → bookmarkPane (레이아웃과 일치) -->
+        <div id="midSplitter" class="lv-splitter-vert" role="separator" aria-orientation="vertical" tabindex="0" hidden></div>
+        <aside id="bookmarkPane" class="lv-bookmarks" aria-label="bookmarks" hidden>
+          <div class="bm-header">Bookmarks</div>
+          <div id="bookmarkList" class="bm-list"></div>
+        </aside>
+      </main>
+
+      <div id="bottomSplitter" class="lv-splitter" role="separator" aria-orientation="horizontal" tabindex="0" hidden></div>
+
+      <section id="searchResults" class="lv-search-results" aria-label="search results" hidden></section>
+    </div>
+
+    <!-- 메시지 전체보기 모달 -->
+    <div id="msgModal" class="lv-modal" hidden>
+      <div class="lv-modal-card" role="dialog" aria-modal="true" aria-labelledby="msgModalTitle">
+        <div class="lv-modal-head">
+          <div id="msgModalTitle" class="lv-modal-title">로그 메시지</div>
+          <div class="lv-modal-actions">
+            <button id="msgCopyBtn" class="btn sm">복사</button>
+            <button id="msgCloseBtn" class="btn sm">닫기</button>
+          </div>
+        </div>
+        <pre id="msgModalBody" class="lv-modal-body"></pre>
+      </div>
+    </div>
+
+    <noscript>JavaScript가 필요합니다.</noscript>
+    <script nonce="%NONCE%" src="app.bundle.js"></script>
   </body>
 </html>

@@ -6,13 +6,13 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { globalProfiler } from '../../core/logging/perf.js';
 import {
   FETCH_BUFFER_TIMEOUT_MS,
   FETCH_JSON_TIMEOUT_MS,
   LATEST_JSON_URL,
 } from '../../shared/const.js';
-import { XError, ErrorCategory } from '../../shared/errors.js';
-import { globalProfiler } from '../../core/logging/perf.js';
+import { ErrorCategory,XError } from '../../shared/errors.js';
 
 const log = getLogger('updater');
 
@@ -96,7 +96,7 @@ export async function checkLatestVersion(
 
       const hasUpdate = !!latest && isNewerVersion(latest, currentVersion);
       log.info(
-        `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`,
+        `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`
       );
 
       if (hasUpdate && !url) {
@@ -106,7 +106,13 @@ export async function checkLatestVersion(
 
       return { hasUpdate, latest, url, sha256: sha256 || undefined };
     } catch (err) {
-      log.error(`checkLatestVersion failed: ${(err as Error).message}`);
+      const msg = (err as Error)?.message ?? String(err);
+      // 마켓플레이스 등 404는 정보 없음으로 간주(기능엔 영향 없음)
+      if (/HTTP\s+404\b/i.test(msg)) {
+        log.warn(`checkLatestVersion: latest.json not found (404) - skipping update check`);
+        return { hasUpdate: false };
+      }
+      log.error(`checkLatestVersion failed: ${msg}`);
       return { hasUpdate: false };
     }
   });

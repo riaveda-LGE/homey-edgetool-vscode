@@ -1,8 +1,9 @@
 // === src/extension/commands/CommandHandlersUpdate.ts ===
 import * as vscode from 'vscode';
-import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
+import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
 
 const log = getLogger('cmd.update');
 

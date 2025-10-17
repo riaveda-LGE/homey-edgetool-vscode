@@ -1,9 +1,9 @@
-import type { AppState, PanelStatePersist, SectionDTO, TreeNode } from '../types/model.js';
-import { ensureExplorerContainer, ensureContentSplitter } from './Layout/Panel.js';
-import { bindVerticalSplitter, bindContentSplitter } from './Layout/Splitter.js';
-import { ExplorerView } from './Explorer/ExplorerView.js';
-import { LogsView } from './Logs/LogsView.js';
 import { LogService } from '../services/LogService.js';
+import type { AppState, PanelStatePersist, SectionDTO, TreeNode } from '../types/model.js';
+import { ExplorerView } from './Explorer/ExplorerView.js';
+import { ensureContentSplitter,ensureExplorerContainer } from './Layout/Panel.js';
+import { bindContentSplitter,bindVerticalSplitter } from './Layout/Splitter.js';
+import { LogsView } from './Logs/LogsView.js';
 
 export class AppView {
   private splitter: HTMLElement;

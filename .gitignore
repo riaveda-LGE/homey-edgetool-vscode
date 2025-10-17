@@ -16,6 +16,7 @@ edgetool.exe
 
 # TEMP files
 *.tmp
+*.tmp.*
 *.txt
 
 # OS generated files

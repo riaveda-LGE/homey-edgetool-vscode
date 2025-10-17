@@ -1,0 +1,79 @@
+/* toolbar controls */
+.lv-toolbar .group{ display:flex; align-items:center; gap:8px; }
+.lv-toolbar .sep{ width:1px; height:24px; background: var(--border); margin: 0 6px; }
+.lv-toolbar .grow{ flex:1; }
+
+/* progress (merge) */
+.lv-progress{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-width: 180px;
+  max-width: 420px;
+}
+.lv-progress .bar{
+  position:relative;
+  flex:1 1 auto;
+  height:8px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--border) 70%, transparent 30%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+  overflow:hidden;
+}
+.lv-progress .fill{
+  position:absolute; left:0; top:0; bottom:0;
+  width:0%;
+  background: var(--accent);
+  border-radius: 6px;
+  transition: width .15s ease-out;
+}
+.lv-progress .label{
+  font-variant-numeric: tabular-nums;
+  opacity:.9;
+  min-width: 120px;
+  text-align: right;
+}
+
+/* highlight popover (정적 DOM, 기본 hidden) */
+.hl-pop{
+  position:absolute; top: calc(var(--toolbar-h));
+  left: 10px;
+  background: var(--panel); border:1px solid var(--border); border-radius: 10px; padding: 10px; z-index: 10;
+  min-width: 360px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+}
+.hl-pop[hidden]{ display:none; }
+.hl-pop h4{ margin: 0 0 10px 0; font-size: 12px; opacity: .9; }
+.hl-row{ display:grid; grid-template-columns: auto 1fr; gap:10px; align-items:center; margin-bottom: 8px; }
+.hl-row input[type="text"]{ width:100%; }
+.hl-actions{ display:flex; gap:6px; justify-content:flex-end; margin-top: 6px; }
+
+/* 12색 팔레트 */
+.hl-palette{ display:grid; grid-template-columns: repeat(12, 18px); gap:6px; }
+.hl-swatch{
+  width:18px; height:18px; border-radius:4px; border:1px solid rgba(0,0,0,.25); cursor:pointer;
+}
+.hl-swatch.sel{ outline:2px solid var(--fg); outline-offset: 1px; }
+
+/* mark 색상(하이라이트 적용용) */
+mark{ background: rgba(255, 214, 0, .35); padding: 0 2px; border-radius: 3px; }
+.hl-c1{ background: #ffe066 !important; }
+.hl-c2{ background: #ffd43b !important; }
+.hl-c3{ background: #ffa94d !important; }
+.hl-c4{ background: #ff8787 !important; }
+.hl-c5{ background: #ff6b6b !important; }
+.hl-c6{ background: #f06595 !important; }
+.hl-c7{ background: #b197fc !important; }
+.hl-c8{ background: #74c0fc !important; }
+.hl-c9{ background: #63e6be !important; }
+.hl-c10{ background: #a9e34b !important; }
+.hl-c11{ background: #ffd8a8 !important; }
+.hl-c12{ background: #d0bfff !important; }
+
+/* search results */
+.lv-search-results .sr-item{
+  padding: 6px 8px; border-bottom:1px solid rgba(255,255,255,.06); cursor:pointer;
+}
+.lv-search-results .sr-item:hover{ background: var(--row-hover); }
+.lv-search-results .sr-path{ opacity:.8; }
+.lv-search-results mark{ background: rgba(255, 214, 0, .35); padding: 0 2px; border-radius: 3px; }

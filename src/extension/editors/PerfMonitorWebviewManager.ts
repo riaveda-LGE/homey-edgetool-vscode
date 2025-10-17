@@ -1,5 +1,6 @@
 // === src/extension/editors/PerfMonitorWebviewManager.ts ===
 import * as vscode from 'vscode';
+
 import type { IPerfMonitorDataManager } from './IPerfMonitorComponents.js';
 
 export class PerfMonitorWebviewManager {

@@ -1,0 +1,31 @@
+:root{
+  --bg: var(--vscode-editor-background);
+  --fg: var(--vscode-foreground);
+  --muted: var(--vscode-descriptionForeground);
+  --panel: var(--vscode-editorWidget-background);
+  --border: var(--vscode-panel-border, #3c3c3c);
+  --border-strong: color-mix(in oklab, var(--border) 75%, black 25%);
+  --link: var(--vscode-textLink-foreground);
+
+  --accent: var(--vscode-button-background);
+  --accent-fg: var(--vscode-button-foreground);
+  --accent-hover: var(--vscode-button-hoverBackground);
+
+  --row-hover: var(--vscode-list-hoverBackground, rgba(128,128,128,.16));
+  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14,99,156,.35));
+  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+
+  --splitter-h: 10px;
+  --toolbar-h: 44px;
+
+  --col-time-w: 160px;
+  --col-proc-w: 160px;
+  --col-pid-w: 80px;
+  --col-src-w: 180px;  /* 파일 컬럼 기본 너비 */
+  --col-msg-w: 1fr;    /* 남은 공간 */
+
+  --bookmark-w: 260px;
+
+  --radius: 10px;
+  --shadow-inset: inset 0 0 0 1px rgba(0,0,0,.02);
+}

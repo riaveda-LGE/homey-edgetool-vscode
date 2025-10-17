@@ -2,6 +2,7 @@
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { paginationService } from '../../core/logs/PaginationService.js';
 import type { H2W, W2H } from './messageTypes.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
@@ -15,13 +16,42 @@ export class HostWebviewBridge {
   constructor(private readonly host: vscode.WebviewView | vscode.WebviewPanel) {}
 
   start() {
-    this.host.webview.onDidReceiveMessage((raw: any) => {
+    this.host.webview.onDidReceiveMessage(async (raw: any) => {
       const msg = this.validateIncoming(raw);
       if (!msg) return;
+
+      // ── 온디맨드 페이지 로딩: 웹뷰가 스크롤 범위를 요청 ──
+      if (msg.type === 'logs.page.request') {
+        try {
+          const { startIdx, endIdx } = msg.payload || {};
+          const s = Number(startIdx) || 1;
+          const e = Number(endIdx) || s;
+          this.log.debug?.(`bridge: logs.page.request ${s}-${e}`);
+          const logs = await paginationService.readRangeByIdx(s, e);
+          this.send({ v: 1, type: 'logs.page.response', payload: { startIdx: s, endIdx: e, logs } });
+          this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length}`);
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          this.log.error(`bridge: PAGE_READ_ERROR ${message}`);
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: {
+              code: 'PAGE_READ_ERROR',
+              message,
+              detail: err,
+              inReplyTo: msg.id,
+            },
+          });
+        }
+        return;
+      }
+      // ──────────────────────────────────────────────
+
       const h = this.handlers.get(msg.type);
       if (!h) return this.warnUnknown(msg.type);
       try {
-        h(msg, this.api());
+        await h(msg, this.api());
       } catch (e) {
         this.sendError(e, msg.id);
       }
@@ -86,6 +116,7 @@ export class HostWebviewBridge {
   private sendError(e: unknown, inReplyTo?: string) {
     const message = e instanceof Error ? e.message : String(e);
     const detail = e instanceof Error ? e.stack : e;
+    this.log.error(`bridge: HOST_ERROR ${message}`);
     this.send({ v: 1, type: 'error', payload: { code: 'HOST_ERROR', message, detail, inReplyTo } });
   }
 }

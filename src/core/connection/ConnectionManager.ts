@@ -1,8 +1,8 @@
-import { adbShell, adbStream } from './adbClient.js';
-import { sshRun, sshStream } from './sshClient.js';
+import { ErrorCategory,XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure, measureIO } from '../logging/perf.js';
-import { XError, ErrorCategory } from '../../shared/errors.js';
+import { adbShell, adbStream } from './adbClient.js';
+import { sshRun, sshStream } from './sshClient.js';
 
 export type HostConfig =
   | {

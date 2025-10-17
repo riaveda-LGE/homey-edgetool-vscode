@@ -1,11 +1,12 @@
-// === src/extension/panels/EdgePanelConnectionManager.ts ===
+// === src/extension/panels/LogConnectionPicker.ts ===
 import * as vscode from 'vscode';
-import { readDeviceList, addDevice, updateDeviceById, type DeviceEntry } from '../../core/config/userdata.js';
-import { promptText, promptNumber } from '../../shared/ui-input.js';
-import { DEFAULT_SSH_PORT, MAX_SSH_PORT, MIN_SSH_PORT } from '../../shared/const.js';
-import type { HostConfig } from '../../core/connection/ConnectionManager.js';
 
-export class EdgePanelConnectionManager {
+import { addDevice, type DeviceEntry,readDeviceList, updateDeviceById } from '../../core/config/userdata.js';
+import type { HostConfig } from '../../core/connection/ConnectionManager.js';
+import { DEFAULT_SSH_PORT, MAX_SSH_PORT, MIN_SSH_PORT } from '../../shared/const.js';
+import { promptNumber,promptText } from '../../shared/ui-input.js';
+
+export class LogConnectionPicker {
   constructor(private _context: vscode.ExtensionContext) {}
 
   async pickConnection(): Promise<HostConfig | undefined> {

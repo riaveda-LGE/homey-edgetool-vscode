@@ -1,5 +1,6 @@
 // === src/core/logging/perf.ts ===
 import * as fs from 'fs';
+
 import { LOG_TOTAL_CALLS_THRESHOLD } from '../../shared/const.js';
 
 export function perfNow() {

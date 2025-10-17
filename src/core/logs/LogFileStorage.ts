@@ -1,8 +1,9 @@
 // === src/core/logs/LogFileStorage.ts ===
 import * as fs from 'fs';
+
 import type { LogEntry } from '../../extension/messaging/messageTypes.js';
-import { globalProfiler, measureIO } from '../logging/perf.js';
 import { safeParseJson } from '../../shared/utils.js';
+import { globalProfiler, measureIO } from '../logging/perf.js';
 
 export interface ILogFileStorage {
   append(entry: LogEntry, options?: AppendOptions): Promise<void>;
