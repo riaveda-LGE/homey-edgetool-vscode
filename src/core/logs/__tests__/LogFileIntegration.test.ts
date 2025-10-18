@@ -3,24 +3,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { LogEntry } from '@ipc/messages';
 import { mergeDirectory, countTotalLinesInDir } from '../LogFileIntegration.js';
+import { cleanAndEnsureDir, drainNextTicks, prepareUniqueOutDir, cleanDir } from './helpers/testFs.js';
 
 // 전역 타임아웃(파일 상단, describe 밖)
 jest.setTimeout(600_000); // 10분
 
-// 테스트 산출물/중간물을 모두 모을 고정 디렉터리
-const OUT_ROOT = path.join(__dirname, 'out');
-
-function cleanOutDir() {
-  // 매 테스트 시작 전에 out 폴더를 깔끔하게 비움
-  try { fs.rmSync(OUT_ROOT, { recursive: true, force: true }); } catch {}
-  fs.mkdirSync(OUT_ROOT, { recursive: true });
-}
-
-async function drainNextTicks() {
-  // 즉시 예약/타이머 큐를 한 번씩 비워 늦은 로그/flush 소진
-  await new Promise<void>(resolve => setImmediate(resolve));
-  await new Promise<void>(resolve => setTimeout(resolve, 0));
-}
+// 각 테스트마다 out/ 아래 고유 경로를 할당받아 사용(OUT_ROOT는 테스트가 몰라도 됨)
+let OUT_DIR: string;
 
 async function runMergeTest(testName: string, testSuiteDir: string, outputFileName: string) {
   const testDir = path.resolve(__dirname, 'test_log', testSuiteDir);
@@ -38,13 +27,13 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
   console.log(`📊 ${testName} - Expected lines: ${expectedLines.length}, first line: "${expectedLines[0]}"`);
 
   // out/merged 디렉터리 준비
-  const outDir = OUT_ROOT;
-  const mergedDir = path.join(outDir, 'merged');
+  const outDir = OUT_DIR;
+  const mergedDir = path.join(OUT_DIR, 'merged');
   fs.mkdirSync(mergedDir, { recursive: true });
 
   // 실제 병합 결과 수집 및 파일 저장
   const actualResults: LogEntry[] = [];
-  const outputPath = path.join(outDir, outputFileName);
+  const outputPath = path.join(OUT_DIR, outputFileName);
   const outputStream = fs.createWriteStream(outputPath, { encoding: 'utf8' });
 
   const onBatch = (logs: LogEntry[]) => {
@@ -95,9 +84,14 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
 }
 
 describe('LogFileIntegration', () => {
-  // 모든 테스트는 시작 전에 out 폴더 삭제 후 재생성
   beforeEach(() => {
-    cleanOutDir();
+    // 테스트 전용 고유 out 경로를 생성하고 비움
+    OUT_DIR = prepareUniqueOutDir('lfi');
+    cleanAndEnsureDir(OUT_DIR);
+  });
+  afterEach(() => {
+    // 각 테스트가 끝나면 자신에게 할당된 고유 경로만 제거
+    cleanDir(OUT_DIR);
   });
 
   describe('mergeDirectory 함수', () => {
@@ -111,13 +105,12 @@ describe('LogFileIntegration', () => {
 
     it('빈 디렉터리를 gracefully 처리해야 함', async () => {
   // out/temp_empty 를 사용
-  const tempDir = path.join(OUT_ROOT, 'temp_empty');
-  try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
-  fs.mkdirSync(tempDir, { recursive: true });
+  const tempDir = path.join(OUT_DIR, 'temp_empty');
+  cleanAndEnsureDir(tempDir);
 
   // ⬇️ out/merged 를 항상 테스트 중간물 위치로 사용
-  const mergedDir = path.join(OUT_ROOT, 'merged');
-  fs.mkdirSync(mergedDir, { recursive: true });
+  const mergedDir = path.join(OUT_DIR, 'merged');
+  cleanAndEnsureDir(mergedDir);
 
   const onBatch = jest.fn((logs: LogEntry[]) => {
     // 호출되면 빈 배열이어야 함
@@ -139,8 +132,8 @@ it('중단 신호를 제대로 처리해야 함', async () => {
   const inputDir = path.join(testDir, 'before_merge');
 
   // ⬇️ out/merged 를 항상 테스트 중간물 위치로 사용
-  const mergedDir = path.join(OUT_ROOT, 'merged');
-  fs.mkdirSync(mergedDir, { recursive: true });
+  const mergedDir = path.join(OUT_DIR, 'merged');
+  cleanAndEnsureDir(mergedDir);
 
   const abortController = new AbortController();
   let batchCount = 0;               // Abort 전까지 onBatch 호출 횟수

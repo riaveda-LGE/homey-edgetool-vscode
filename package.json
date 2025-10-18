@@ -60,6 +60,7 @@
     "format:prettier": "prettier --write \"{src,scripts,media}/**/*.{ts,tsx,js,jsx,css,html,json,md}\"",
     "format": "npm run lint:fix && npm run format:prettier",
     "test": "jest",
+    "test:write-raw": "cross-env HOMEY_WRITE_RAW=1 npm test",
     "test:watch": "jest --watch",
     "perf:merge": "node --expose-gc dist/extension/scripts/perf/run-merge-bench.js",
     "webpack": "webpack --mode production",
@@ -69,6 +70,7 @@
     "package": "npm run build && vsce package",
     "deploy": "node scripts/deploy.js",
     "dev": "node scripts/deploy.js --dev",
+    "dev:write-raw": "cross-env HOMEY_WRITE_RAW=1 npm run dev",
     "now": "node scripts/deploy.js"
   },
   "devDependencies": {

@@ -24,9 +24,16 @@ export type MergeOptions = {
   reverse?: boolean;
   signal?: AbortSignal;
   onBatch: (logs: LogEntry[]) => void;
+  onWarmupBatch?: (logs: LogEntry[]) => void;
   batchSize?: number;
   mergedDirPath?: string; // 중간 산출물(JSONL) 저장 위치
   rawDirPath?: string;    // (옵션) 보정 전 RAW 저장 위치
+  /** warmup 선행패스 사용 여부 (기본: false, 상위 FeatureFlags로 채워짐) */
+  warmup?: boolean;
+  /** warmup 모드일 때 타입별 최대 선행 읽기 라인수 (기본: 500 등) */
+  warmupPerTypeLimit?: number;
+  /** warmup 모드일 때 최초 즉시 방출 목표치 (기본: 500) */
+  warmupTarget?: number;
 };
 
 /**
@@ -38,6 +45,24 @@ export async function mergeDirectory(opts: MergeOptions) {
   try {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
 
+    // ───────────────────────────────────────────────────────────────────────────
+    // 0) 워밍업 선행패스: 각 "타입의 최신 파일" 꼬리에서 조금만 읽어 500줄 ASAP 방출
+    //    - 디스크 쓰기/manifest 갱신 없음
+    //    - 실패/중단 시에도 본 패스로 안전하게 폴백
+    if (opts.warmup && (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')) {
+      try {
+        const delivered = await warmupTailPrepass(opts);
+        if (delivered) {
+          log.info('warmup: delivered initial batch (memory-only)');
+        } else {
+          log.debug?.('warmup: skipped or not enough lines');
+        }
+      } catch (e: any) {
+        log.warn(`warmup: failed (${e?.message ?? e}) — fallback to full merge`);
+      }
+    }
+
+    // ── 2) 기존 k-way/표준 패스 그대로 ───────────────────────────────────
     // 입력 로그(.log/.log.N/.txt) 수집
     const files = await listInputLogFiles(opts.dir);
     log.info(
@@ -602,4 +627,154 @@ function lineToEntry(filePath: string, line: string): LogEntry {
     source: path.basename(filePath),
     text: line,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 워밍업 선행패스 구현
+// - 각 타입별 "최신 파일"만 대상으로 tail에서 최대 N줄만 읽어 메모리에 모음
+// - 엄밀한 k-way 정렬 대신 경량 interleave(라운드로빈)로 혼합 → 목표치에 도달하면 즉시 onBatch
+// - manifest/청크 파일 갱신 없음 (I/O 최소화)
+async function warmupTailPrepass(opts: MergeOptions): Promise<boolean> {
+  const { dir, signal } = opts;
+  const log = getLogger('LogFileIntegration');
+  const perType = Math.max(1, Number(opts.warmupPerTypeLimit ?? 500));
+  const target = Math.max(1, Number(opts.warmupTarget ?? 500));
+
+  if (!opts.onWarmupBatch && !opts.onBatch) return false;
+
+  // 중단 체크 헬퍼
+  const aborted = () => !!signal?.aborted;
+  if (aborted()) return false;
+
+  // 입력 디렉토리의 파일 나열(하위 폴더는 무시)
+  let files: string[] = [];
+  try {
+    const names = await fs.promises.readdir(dir, { withFileTypes: true });
+    files = names
+      .filter((d) => d.isFile())
+      .map((d) => path.join(dir, d.name));
+  } catch (e) {
+    log.warn(`warmup: readdir failed: ${String(e)}`);
+    return false;
+  }
+  if (files.length === 0) return false;
+
+  // 타입 추론: 파일명 키워드 기반(간단 휴리스틱)
+  const inferType = (p: string): string => {
+    const b = path.basename(p).toLowerCase();
+    if (b.includes('kernel')) return 'kernel';
+    if (b.includes('homey')) return 'homey-pro';
+    if (b.includes('matter')) return 'matter';
+    if (b.includes('z3')) return 'z3gateway';
+    if (b.includes('cpcd')) return 'cpcd';
+    return 'other';
+  };
+
+  // 타입별 최신 파일만 선택
+  const groups = new Map<string, { file: string; mtime: number }>();
+  await Promise.all(files.map(async (f) => {
+    try {
+      const st = await fs.promises.stat(f);
+      if (!st.isFile()) return;
+      const t = inferType(f);
+      const cur = groups.get(t);
+      if (!cur || st.mtimeMs > cur.mtime) groups.set(t, { file: f, mtime: st.mtimeMs });
+    } catch {}
+  }));
+
+  const picks = [...groups.values()].map(x => x.file);
+  if (picks.length === 0) return false;
+  log.info(`warmup: picked latest files per type: ${picks.map(p=>path.basename(p)).join(', ')}`);
+  if (aborted()) return false;
+
+  // 각 파일 꼬리에서 최대 perType 줄만 tail
+  const perTypeLines: LogEntry[][] = [];
+  for (const f of picks) {
+    if (aborted()) return false;
+    try {
+      const raw = await tailLines(f, perType);
+      // 최신이 뒤쪽이라고 가정 → 뒤→앞 역순으로 최신우선화
+      raw.reverse();
+      const src = path.basename(f);
+      const type = inferType(f) as any;
+      const items: LogEntry[] = raw.map((line, i) => ({
+        id: Date.now() + i,
+        ts: Date.now(),        // 엄밀한 정렬은 본 패스에서 수행 (여긴 표시용)
+        type,
+        source: src,
+        text: line,
+      }));
+      perTypeLines.push(items);
+      log.debug?.(`warmup: tail ${src} -> ${items.length} lines`);
+    } catch (e) {
+      log.warn(`warmup: tail failed for ${path.basename(f)}: ${String(e)}`);
+    }
+  }
+  if (perTypeLines.length === 0) return false;
+
+  // 라운드로빈 interleave로 혼합 → target까지 자름
+  const mixed: LogEntry[] = [];
+  let idx = 0;
+  while (mixed.length < target) {
+    let advanced = false;
+    for (const arr of perTypeLines) {
+      if (arr[idx]) {
+        mixed.push(arr[idx]);
+        advanced = true;
+        if (mixed.length >= target) break;
+      }
+    }
+    if (!advanced) break; // 더 뽑을 게 없음
+    idx++;
+    if (aborted()) return false;
+  }
+
+  if (mixed.length === 0) return false;
+  const out = mixed.slice(0, Math.min(target, mixed.length));
+  try {
+    // ✅ 워밍업 전용 콜백이 있으면 그것만 호출(디스크/manifest 기록 금지)
+    if (opts.onWarmupBatch) {
+      opts.onWarmupBatch(out);
+    } else if (opts.onBatch) {
+      // ⛳️ 하위호환: onWarmupBatch 미구현인 호출자에 한해 onBatch로 전달
+      // (LogSessionManager 경로에서는 onWarmupBatch를 사용하므로 중복기록 없음)
+      opts.onBatch(out);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
+async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 1024): Promise<string[]> {
+  const fh = await fs.promises.open(filePath, 'r');
+  try {
+    const stat = await fh.stat();
+    let pos = Math.max(0, stat.size);
+    let buf = '';
+    const lines: string[] = [];
+    while (pos > 0 && lines.length <= maxLines) {
+      const readSize = Math.min(chunkSize, pos);
+      pos -= readSize;
+      const b = Buffer.allocUnsafe(readSize);
+      await fh.read(b, 0, readSize, pos);
+      buf = b.toString('utf8') + buf;
+      // 줄 단위로 분해(너무 많이 쌓이지 않게 중간중간 잘라내기)
+      const parts = buf.split(/\r?\n/);
+      // 마지막 조각은 다음 루프에서 이어붙일 수 있도록 유지
+      buf = parts.shift() || '';
+      // 맨 뒤쪽(파일 끝쪽)부터 수집
+      for (let i = parts.length - 1; i >= 0; i--) {
+        if (parts[i].length === 0) continue;
+        lines.push(parts[i]);
+        if (lines.length >= maxLines) break;
+      }
+    }
+    // 남은 buf가 의미 있는 한 줄이면 추가
+    if (buf && lines.length < maxLines) lines.push(buf);
+    return lines.slice(0, maxLines);
+  } finally {
+    await fh.close();
+  }
 }

@@ -10,9 +10,10 @@ import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { ChunkWriter } from '../logs/ChunkWriter.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
-import { countTotalLinesInDir,mergeDirectory } from '../logs/LogFileIntegration.js';
+import { countTotalLinesInDir, mergeDirectory } from '../logs/LogFileIntegration.js';
 import { ManifestWriter } from '../logs/ManifestWriter.js';
 import { paginationService } from '../logs/PaginationService.js';
+import { Flags as FF, __setWarmupFlagsForTests } from '../../shared/featureFlags.js';
 
 export type SessionCallbacks = {
   onBatch: (logs: LogEntry[], total?: number, seq?: number) => void;
@@ -142,12 +143,17 @@ export class LogSessionManager {
     const initialBuffer: LogEntry[] = [];
     let paginationOpened = false;      // ✅ T0 시점에만 1회 open
 
+    // (워밍업은 mergeDirectory의 warmup 옵션으로만 처리)
+
     // 중간 산출물 위치를 워크스페이스 산출물 폴더 하위로 고정
     //  - __jsonl : 타입별 정렬된 JSONL (k-way 병합 입력)
     //  - __raw   : (옵션) 보정 전 RAW JSONL
     const jsonlDir = path.join(outDir, '__jsonl');
-    const rawDir   = path.join(outDir, '__raw');
-    this.log.debug?.(`merge: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir}`);
+    // 🔹 FF.writeRaw 가 true일 때만 RAW 스냅샷 경로 활성화
+    const rawDir   = FF.writeRaw ? path.join(outDir, '__raw') : undefined;
+    this.log.debug?.(
+      `merge: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir ?? '(disabled)'}`
+    );
 
     await mergeDirectory({
       dir: opts.dir,
@@ -155,8 +161,31 @@ export class LogSessionManager {
       signal: opts.signal,
       batchSize: DEFAULT_BATCH_SIZE,
       mergedDirPath: jsonlDir,
-      rawDirPath: rawDir,
-      onBatch: async (logs) => {
+      // RAW 기록은 플래그가 true일 때만 활성화
+      rawDirPath: FF.writeRaw ? rawDir : undefined,
+      // ⬇️ 워밍업 선행패스 옵션 전달(프로덕트는 기본값, 테스트는 setter로 오버라이드 가능)
+      warmup: FF.warmupEnabled,
+      warmupPerTypeLimit: FF.warmupPerTypeLimit,
+      warmupTarget: FF.warmupTarget,
+      /** 🔹 워밍업 전용 콜백: UI로만 즉시 전달, 디스크/manifest 기록 금지 */
+      onWarmupBatch: (logs: LogEntry[]) => {
+        if (sentInitial || !logs?.length) return;
+        // 임시 전역 idx 할당(하드리프레시 후 교체될 예정)
+        for (const e of logs) {
+          nextIdx += 1;
+          (e as any).idx = nextIdx;
+        }
+        // 메모리 메트릭 업데이트(선택)
+        this.hb.addBatch(logs);
+        // UI로 즉시 송신
+        this.log.info(`warmup: deliver ${logs.length} lines`);
+        opts.onBatch(logs, total, ++seq);
+        // 최초 배치 보낸 것으로 간주
+        sentInitial = true;
+        // 디스크/manifest 기록은 하지 않음(본 패스 산출물만 기록)
+      },
+
+      onBatch: async (logs: LogEntry[]) => {
         // 0) 전역 인덱스 부여
         for (const e of logs) {
           nextIdx += 1;
@@ -300,4 +329,10 @@ export class LogSessionManager {
       return baseOutDir;
     }
   }
+}
+
+// ⬇️ 테스트에서만 사용: 런타임 모드/리밋 주입 API (제품 코드에서 호출 금지)
+export function __setLogMergeModeForTests(mode: 'warmup'|'kway', limit?: number) {
+  const enabled = mode === 'warmup';
+  __setWarmupFlagsForTests({ warmupEnabled: enabled, warmupPerTypeLimit: limit });
 }

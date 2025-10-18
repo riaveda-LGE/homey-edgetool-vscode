@@ -71,7 +71,7 @@ export type H2W =
   | Envelope<'ack', { inReplyTo?: string }>
   /** 정식 병합 완료 후 UI 하드리프레시 트리거(중복/정렬 반영) */
   | Envelope<'logs.refresh', {
-      reason: 'full-reindex' | 'manifest-updated'; total?: number; version?: number
+      reason?: 'full-reindex' | 'manifest-updated'; total?: number; version?: number
     }>;
 
 // Webview → Host

@@ -52,6 +52,8 @@ export const MERGED_CHUNK_MAX_LINES = 5000;
 /** PagedReader 기본 페이지 크기(웹뷰가 별도 지정하지 않으면) */
 export const PAGED_READER_DEFAULT_PAGE_SIZE = 500;
 
+// (warmup 관련 플래그/리밋은 featureFlags.ts로 일원화)
+
 /* ──────────────────────────────────────────────────────────────
  * Log Viewer 공통 상수(Host/Webview 공용) — 가상 스크롤 윈도우
  * ────────────────────────────────────────────────────────────── */
