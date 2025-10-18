@@ -10,13 +10,12 @@ export function parseTs(line: string): number | undefined {
     const t = Date.parse(iso[0]);
     if (!Number.isNaN(t)) return t;
   }
-  
-  // "[Mon DD HH:MM:SS.mmmm] " 포맷 (테스트 데이터용 - 닫는 대괄호 포함)
+
+  // "[Mon DD HH:MM:SS.mmmm]" 포맷 (테스트 데이터용)
   const syslog = line.match(/\[([A-Za-z]{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?\]/);
   if (syslog) {
     const now = new Date();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const month = monthNames.indexOf(syslog[1]);
     if (month >= 0) {
       const d = new Date(
@@ -31,7 +30,7 @@ export function parseTs(line: string): number | undefined {
       return d.getTime();
     }
   }
-  
+
   // "MM-DD HH:MM:SS.mmm" (연도는 올해 가정)
   const md = line.match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?/);
   if (md) {

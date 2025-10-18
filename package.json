@@ -88,16 +88,10 @@
     "webpack": "^5.102.0",
     "webpack-cli": "^5.1.4"
   },
-  "files": [
-    "dist/**",
-    "media/**",
-    "package.json",
-    "LICENSE"
-  ],
   "jest": {
-    "preset": "ts-jest",
+    "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.ts"],
+    "setupFilesAfterEnv": ["./jest.setup.ts"],
     "testMatch": [
       "**/__tests__/**/*.test.ts",
       "**/?(*.)+(spec|test).ts"
@@ -108,23 +102,31 @@
       "!src/**/__tests__/**"
     ],
     "moduleFileExtensions": ["ts", "js"],
-    "transform": {
-      "^.+\\.ts$": ["ts-jest", {
-        "useESM": true,
-        "tsconfig": {
-          "module": "ESNext",
-          "target": "ES2022",
-          "moduleResolution": "Bundler",
-          "esModuleInterop": true,
-          "allowSyntheticDefaultImports": true,
-          "verbatimModuleSyntax": false
-        }
-      }]
-    },
     "extensionsToTreatAsEsm": [".ts"],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
-    }
+    },
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "useESM": true,
+          "tsconfig": "<rootDir>/tsconfig.jest.json"
+        }
+      ]
+    },
+    "watchPathIgnorePatterns": [
+      "[/\\\\]src[/\\\\]core[/\\\\]logs[/\\\\]__tests__[/\\\\]out([/\\\\].*)?$"
+    ],
+    "testPathIgnorePatterns": [
+      "[/\\\\]src[/\\\\]core[/\\\\]logs[/\\\\]__tests__[/\\\\]out([/\\\\].*)?$"
+    ]
   },
+  "files": [
+    "dist/**",
+    "media/**",
+    "package.json",
+    "LICENSE"
+  ],
   "dependencies": {}
 }
