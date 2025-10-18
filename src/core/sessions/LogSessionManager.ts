@@ -21,6 +21,8 @@ export type SessionCallbacks = {
   onSaved?: (info: { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }) => void;
   /** 병합 진행률(증분/상태) 전달 */
   onProgress?: (p: { inc?: number; total?: number; done?: number; active?: boolean }) => void;
+  /** 정식 병합(T1) 완료 후 하드리프레시 지시 */
+  onRefresh?: (p: { total?: number; version?: number }) => void;
 };
 
 export class LogSessionManager {
@@ -138,6 +140,7 @@ export class LogSessionManager {
     let mergedSoFar = manifest.data.mergedLines;
     let sentInitial = false;           // ✅ 최초 500줄만 보낼 가드
     const initialBuffer: LogEntry[] = [];
+    let paginationOpened = false;      // ✅ T0 시점에만 1회 open
 
     // 중간 산출물 위치를 워크스페이스 산출물 폴더 하위로 고정
     //  - __jsonl : 타입별 정렬된 JSONL (k-way 병합 입력)
@@ -186,6 +189,17 @@ export class LogSessionManager {
         // 4) manifest 스냅샷
         await manifest.save();
 
+        // 4-1) T0: 첫 청크 생성/manifest 저장 직후, Pagination을 즉시 오픈해 스크롤 요청 가능하게 함
+        if (!paginationOpened && manifest.data.chunkCount > 0) {
+          try {
+            await paginationService.setManifestDir(outDir);
+            this.log.info(`merge: pagination opened early (T0) dir=${outDir}`);
+          } catch (e) {
+            this.log.warn(`merge: early pagination open failed: ${String(e)}`);
+          }
+          paginationOpened = true;
+        }
+
         // 5) 진행률 증분 알림 (스로틀 적용)
         this.throttledOnProgress(opts, { inc: logs.length, total, active: true });
 
@@ -208,11 +222,14 @@ export class LogSessionManager {
       // (최종 done/total 신호로 바를 고정)
     }
 
-    // ✅ 페이지네이션 서비스에 현재 결과 등록(스크롤 요청 대비)
-    await paginationService.setManifestDir(outDir);
-    this.log.info(
-      `merge: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`
-    );
+    // ✅ T1: 최종 완료 시점에 최신 manifest로 리더 리로드
+    if (!paginationOpened) {
+      // (예외: 앞에서 열지 못한 경우 보정)
+      await paginationService.setManifestDir(outDir);
+    } else {
+      await paginationService.reload();
+    }
+    this.log.info(`merge: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`);
 
     // 완료 알림(바 고정 목적)
     opts.onProgress?.({
@@ -228,6 +245,9 @@ export class LogSessionManager {
       total: manifest.data.totalLines,
       merged: manifest.data.mergedLines,
     });
+
+    // ✅ 웹뷰에 하드리프레시 지시(중복 제거/정렬 갱신 반영용)
+    opts.onRefresh?.({ total: manifest.data.totalLines, version: paginationService.getVersion() });
   }
 
   @measure()

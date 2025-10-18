@@ -1,5 +1,4 @@
 // src/webviewers/log-viewer/app/index.ts
-// src/webviewers/log-viewer/app/index.ts
 // === src/webviewers/log-viewer/app/index.ts ===
 import { createUiLog } from '../../shared/utils';
 import { mountSplitters, render } from '../views/AppView';
@@ -8,6 +7,7 @@ import { initModel } from './model';
 import { parseLogLine } from './parse';
 import type { Model, Msg } from './types';
 import { update } from './update';
+import { LOG_WINDOW_SIZE } from '../../../shared/const';
 
 // VS Code Webview API
 declare const acquireVsCodeApi: () => {
@@ -88,6 +88,25 @@ window.addEventListener('message', (ev) => {
       return { id: nextId++, ...p, src: String(e?.source ?? '') };
     });
     dispatch({ type: 'ReceiveRows', startIdx: 1, rows });
+
+    return;
+  }
+
+  // 2.5) 병합 리프레시: 로컬 버퍼 리셋 + 첫 페이지 재요청
+  if (m.type === 'logs.refresh') {
+    const total = Number(m?.payload?.total ?? 0) || 0;
+
+    // 1) 전체 총행 갱신
+    dispatch({ type: 'SetTotalRows', total });
+
+    // 2) 로컬 버퍼 ‘하드리셋’ (ReceiveRows가 창을 통째로 교체)
+    dispatch({ type: 'ReceiveRows', startIdx: 1, rows: [] });
+
+    // 3) 첫 페이지 다시 요청(최신=1 기준 windowSize)
+    const startIdx = 1;
+    const endIdx = Math.max(1, Math.min(total || LOG_WINDOW_SIZE, LOG_WINDOW_SIZE));
+    uiLog.info(`refresh: request first page ${startIdx}-${endIdx} total=${total}`);
+    vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
 
     return;
   }

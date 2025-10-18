@@ -68,7 +68,11 @@ export type H2W =
   /** 사용자 환경설정 전달 */
   | Envelope<'logviewer.prefs', { prefs: any }>
   /** 단순 확인 응답(예: saveUserPrefs ack) */
-  | Envelope<'ack', { inReplyTo?: string }>;
+  | Envelope<'ack', { inReplyTo?: string }>
+  /** 정식 병합 완료 후 UI 하드리프레시 트리거(중복/정렬 반영) */
+  | Envelope<'logs.refresh', {
+      reason: 'full-reindex' | 'manifest-updated'; total?: number; version?: number
+    }>;
 
 // Webview → Host
 export type W2H =

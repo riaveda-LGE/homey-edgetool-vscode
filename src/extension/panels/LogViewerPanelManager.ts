@@ -202,6 +202,16 @@ export class LogViewerPanelManager {
       },
       onMetrics: (m) => this._send('metrics.update', m),
 
+      // 정식 병합(T1) 완료 → UI 하드리프레시
+      onRefresh: ({ total, version }) => {
+        this.appendLog?.(
+          `[info] merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`
+        );
+        this._send('logs.refresh', {
+          reason: 'full-reindex', total, version
+        });
+      },
+
       // ── 진행률: 로그는 샘플링해서 출력, 메시지 전달은 매번 유지 ─────────
       onProgress: (p) => {
         const { inc, total, done, active } = p ?? {};
@@ -263,6 +273,8 @@ export class LogViewerPanelManager {
       } else if (type === 'logs.page.response') {
         const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
         this.appendLog?.(`[debug] host→ui: ${type} (${payload?.startIdx}-${payload?.endIdx}, len=${len})`);
+      } else if (type === 'logs.refresh') {
+        this.appendLog?.(`[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`);
       }
       this.panel?.webview.postMessage({ v: 1, type, payload });
     } catch {}

@@ -7,18 +7,32 @@ class PaginationService {
   private manifestDir?: string;
   private reader?: PagedReader;
   private log = getLogger('PaginationService');
+  private version = 0; // manifest/리더 재로딩 버전
 
   async setManifestDir(dir: string) {
     if (this.manifestDir !== dir) {
       this.log.info(`pagination: open dir=${dir}`);
       this.reader = await PagedReader.open(dir);
       this.manifestDir = dir;
+      this.version++;
     } else {
       this.log.debug?.(`pagination: already set dir=${dir}`);
     }
   }
 
+  /** T1 완료 후 최신 manifest로 다시 열기 */
+  async reload() {
+    if (!this.manifestDir) {
+      this.log.warn('pagination: reload requested without manifestDir');
+      return;
+    }
+    this.log.info(`pagination: reload dir=${this.manifestDir}`);
+    this.reader = await PagedReader.open(this.manifestDir);
+    this.version++;
+  }
+
   getManifestDir() { return this.manifestDir; }
+  getVersion() { return this.version; }
 
   /** 1-based inclusive 인덱스 범위를 읽어온다. */
   async readRangeByIdx(startIdx: number, endIdx: number): Promise<LogEntry[]> {
