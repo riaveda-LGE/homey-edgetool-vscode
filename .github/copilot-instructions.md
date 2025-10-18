@@ -315,11 +315,19 @@ export async function doWork() {
 ```
 homey-edgetool/
 ├─ .github/                               # GitHub 관련 설정 및 문서
-│  └─ copilot-instructions.md             # Copilot 지침 문서
+│  ├─ copilot-instructions.md             # Copilot 지침 문서
+│  └─ workflows/                          # GitHub Actions 워크플로우
 ├─ doc/                                   # 프로젝트 문서
 │  ├─ button_command_add_rule.md          # 버튼 명령 추가 규칙
 │  ├─ development-notes.md                # 개발 노트
-│  └─ homey_logging_architect.md          # Homey 로깅 아키텍처
+│  ├─ homey_logging_architect.md          # Homey 로깅 아키텍처
+│  └─ log-viewer.md                       # 로그 뷰어 문서
+├─ edge-go-go/                            # Go 기반 Edge 툴 (별도 프로젝트)
+│  ├─ doc/                                # Go 프로젝트 문서
+│  ├─ lib/                                # Go 라이브러리
+│  ├─ main.go                             # Go 메인 파일
+│  ├─ util/                               # Go 유틸리티
+│  └─ TODO.md                             # Go 프로젝트 TODO
 ├─ media/                                 # 아이콘/정적자원
 │  └─ resources/
 │     ├─ edge-icon.svg                    # 확장 아이콘
@@ -328,8 +336,10 @@ homey-edgetool/
 │  ├─ clean-reinstall.ps1                 # 클린 재설치 스크립트
 │  ├─ deploy.js                           # 배포 스크립트
 │  ├─ get_source/                         # 소스 가져오기
+│  │  ├─ export_source_list.ps1           # 소스 목록 내보내기 스크립트
 │  │  ├─ get_source.ps1                   # 소스 가져오기 스크립트
-│  │  └─ source_list.txt                  # 소스 목록
+│  │  ├─ source_list.txt                  # 소스 목록
+│  │  └─ source.tmp                       # 임시 소스 파일
 │  └─ perf/
 │     └─ run-merge-bench.ts               # 병합 벤치마크
 ├─ src/
@@ -387,10 +397,26 @@ homey-edgetool/
 │  │  │  ├─ extension-logger.ts           # OutputChannel + 로깅 싱크
 │  │  │  └─ perf.ts                       # 성능 계측 데코레이터
 │  │  ├─ logs/
+│  │  │  ├─ ChunkWriter.ts                # 청크 쓰기 유틸리티
 │  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼
+│  │  │  ├─ IndexedLogStore.ts            # 인덱스된 로그 저장소
 │  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합
 │  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기
-│  │  │  └─ LogSearch.ts                  # 로그 검색
+│  │  │  ├─ LogSearch.ts                  # 로그 검색
+│  │  │  ├─ ManifestTypes.ts              # 매니페스트 타입
+│  │  │  ├─ ManifestWriter.ts             # 매니페스트 쓰기
+│  │  │  ├─ PagedReader.ts                # 페이지드 리더
+│  │  │  ├─ PaginationService.ts          # 페이지네이션 서비스
+│  │  │  ├─ time/                         # 시간 관련 유틸리티
+│  │  │  │  ├─ TimeParser.ts              # 시간 파서
+│  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱
+│  │  │  └─ __tests__/                    # 테스트 파일들
+│  │  │     ├─ helpers/                   # 테스트 헬퍼
+│  │  │     ├─ LogFileIntegration.test.ts # 로그 파일 통합 테스트
+│  │  │     ├─ MergeMode.test.ts          # 병합 모드 테스트
+│  │  │     ├─ out/                       # 테스트 출력
+│  │  │     ├─ test_log/                  # 테스트 로그
+│  │  │     └─ WarmupVsFull.test.ts       # 워밍업 vs 전체 테스트
 │  │  ├─ sessions/
 │  │  │  └─ LogSessionManager.ts          # 로그 세션 관리
 │  │  └─ transfer/
@@ -398,10 +424,14 @@ homey-edgetool/
 │  │
 │  ├─ shared/                             # 공용 유틸/타입
 │  │  ├─ const.ts                         # 상수 정의
-│  │  ├─ types.ts                         # 공용 타입 정의
+│  │  ├─ env.ts                           # 환경 변수 관리
 │  │  ├─ errors.ts                        # 에러 처리
-│  │  ├─ utils.ts                         # 공용 유틸리티
-│  │  └─ ui-input.ts                      # UI 입력 유틸리티
+│  │  ├─ featureFlags.ts                  # 기능 플래그
+│  │  ├─ ipc/                             # IPC 메시지
+│  │  │  └─ messages.ts                   # IPC 메시지 정의
+│  │  ├─ types.ts                         # 공용 타입 정의
+│  │  ├─ ui-input.ts                      # UI 입력 유틸리티
+│  │  └─ utils.ts                         # 공용 유틸리티
 │  │
 │  ├─ types/                              # 타입 정의
 │  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입
@@ -470,8 +500,13 @@ homey-edgetool/
 │     └─ shared/
 │        └─ utils.ts                      # 공용 유틸리티
 │
+├─ jest.setup.ts                          # Jest 설정
+├─ package-lock.json                      # 패키지 잠금 파일
 ├─ package.json                           # 프로젝트 설정
+├─ tsconfig.jest.json                     # Jest용 TypeScript 설정
 ├─ tsconfig.json                          # TypeScript 설정
+├─ tsconfig.webview.json                  # Webview용 TypeScript 설정
+├─ webpack.config.js                      # Webpack 설정
 ├─ eslint.config.js                       # ESLint 설정
 ├─ .prettierrc                            # Prettier 설정
 ├─ .prettierignore                        # Prettier 제외 파일
