@@ -10,7 +10,7 @@ import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { ChunkWriter } from '../logs/ChunkWriter.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
-import { countTotalLinesInDir, mergeDirectory } from '../logs/LogFileIntegration.js';
+import { countTotalLinesInDir, mergeDirectory, warmupTailPrepass } from '../logs/LogFileIntegration.js';
 import { ManifestWriter } from '../logs/ManifestWriter.js';
 import { paginationService } from '../logs/PaginationService.js';
 import { Flags as FF, __setWarmupFlagsForTests } from '../../shared/featureFlags.js';
@@ -122,6 +122,41 @@ export class LogSessionManager {
     // 진행률: 시작 알림(0/total, active)
     opts.onProgress?.({ inc: 0, total, active: true });
 
+    // ── T0: Manager 선행 웜업 ───────────────────────────────────────────────
+    if (FF.warmupEnabled) {
+      try {
+        const warmLogs = await warmupTailPrepass({
+          dir: opts.dir,
+          signal: opts.signal,
+          warmupPerTypeLimit: FF.warmupPerTypeLimit,
+          warmupTarget: FF.warmupTarget,
+        });
+        if (warmLogs.length) {
+          // idx(최신=1) 임시 부여 — 웜업 구간은 파일 쓰기 전이므로 로컬 인덱스 사용
+          for (let i = 0; i < warmLogs.length; i++) (warmLogs[i] as any).idx = i + 1;
+          // 메모리/웹뷰 준비
+          paginationService.seedWarmupBuffer(warmLogs, warmLogs.length);
+          this.hb.addBatch(warmLogs);
+          const first = warmLogs.slice(0, Math.min(500, warmLogs.length));
+          if (first.length) {
+            this.log.info(`warmup(T0): deliver first ${first.length}/${warmLogs.length} (virtual total=${warmLogs.length})`);
+            opts.onBatch(first, warmLogs.length, ++seq);
+          }
+          // Short-circuit: 웜업 수가 총합 이상이면 T1 스킵
+          if (typeof total === 'number' && warmLogs.length >= total) {
+            opts.onProgress?.({ done: total, total, active: false });
+            this.log.info(`merge: short-circuit after warmup (warm=${warmLogs.length} >= total=${total}) — skip T1`);
+            return;
+          }
+        } else {
+          this.log.debug?.('warmup(T0): no lines collected — continue to T1');
+        }
+      } catch (e: any) {
+        this.log.warn(`warmup(T0): failed (${e?.message ?? e}) — continue to T1`);
+      }
+    }
+
+    // ── T1: 파일 병합 준비 (웜업으로 커버되지 않은 경우에만) ──────────────
     // 출력 디렉터리 결정
     //   - PanelManager가 넘겨준 indexOutDir(= <workspace>/raw/merge_log)을 최우선 사용
     //   - 없으면 기존 규칙(<선택폴더>/merge_log) 사용
@@ -164,31 +199,8 @@ export class LogSessionManager {
       mergedDirPath: jsonlDir,
       // RAW 기록은 플래그가 true일 때만 활성화
       rawDirPath: FF.writeRaw ? rawDir : undefined,
-      // ⬇️ 워밍업 선행패스 옵션 전달(프로덕트는 기본값, 테스트는 setter로 오버라이드 가능)
-      warmup: FF.warmupEnabled,
-      warmupPerTypeLimit: FF.warmupPerTypeLimit,
-      warmupTarget: FF.warmupTarget,
-      /** 🔹 워밍업 전용 콜백: UI로만 즉시 전달, 디스크/manifest 기록 금지 */
-      onWarmupBatch: (logs: LogEntry[]) => {
-        if (!logs?.length) return;
-        // 워밍업 2000개(또는 설정값) 시드 → PaginationService가 메모리에서 슬라이스 제공
-        // 요구: "일단 2,000으로 가상 스크롤 동작"
-        const virtualTotal = (FF.warmupTarget ?? logs.length);
-        // 임시 idx 부여(최신=1). 워밍업 기간 중 UI는 이 idx로 스크롤
-        for (const e of logs) { nextIdx += 1; (e as any).idx = nextIdx; }
-        paginationService.seedWarmupBuffer(logs, virtualTotal);
-        this.hb.addBatch(logs);
-        this.log.info(`warmup: seeded warm buffer entries=${virtualTotal}; send first 500 to UI (virtualTotal used for scroll)`);
-
-        // 첫 500줄만 즉시 전송
-        const first = logs.slice(0, Math.min(500, logs.length));
-        if (!sentInitial && first.length) {
-          opts.onBatch(first, virtualTotal, ++seq);
-          sentInitial = true; // 이후 onBatch(본 패스)에서 초기 전송 금지
-        }
-        // 디스크/manifest 기록은 하지 않음 — 본 패스에서만 파일 기록
-      },
-
+      // Manager가 T0 웜업을 수행했으므로 여기서는 비활성화
+      warmup: false,
       onBatch: async (logs: LogEntry[]) => {
         // 0) 전역 인덱스 부여
         for (const e of logs) {
@@ -200,7 +212,7 @@ export class LogSessionManager {
         this.hb.addBatch(logs);
 
         // 2) 최초 500줄만 UI에 전달 (그 이후는 전달 금지)
-        if (!sentInitial) {
+        if (!sentInitial && !paginationService.isWarmupActive()) {
           initialBuffer.push(...logs);
           if (initialBuffer.length >= 500) {
             const slice = initialBuffer.slice(0, 500);
@@ -270,7 +282,7 @@ export class LogSessionManager {
     if (!paginationService.isWarmupActive()) {
       this.log.info(`merge: switched to file-backed pagination (warm buffer cleared)`);
     }
-    // (옵션) 파일 기반으로 재정렬된 최신 500줄을 즉시 푸시해 UI를 깔끔히 맞춰줌
+    // 파일 기반 최신 500 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
     try {
       const freshHead = await paginationService.readRangeByIdx(1, 500);
       if (freshHead.length) {

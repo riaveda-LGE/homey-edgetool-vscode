@@ -16,6 +16,9 @@ const log = getLogger('LogFileIntegration');
  * 공개 API
  * ────────────────────────────────────────────────────────────────────────── */
 
+// Manager 선행 웜업 호출을 위해 필요한 필드만 분리
+export type WarmupOptions = Pick<MergeOptions, 'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget'>;
+
 export type MergeOptions = {
   dir: string;
   /** false(기본) = 최신→오래된 순으로 병합
@@ -45,15 +48,21 @@ export async function mergeDirectory(opts: MergeOptions) {
   try {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
 
-    // ───────────────────────────────────────────────────────────────────────────
-    // 0) 워밍업 선행패스: 각 "타입의 최신 파일" 꼬리에서 조금만 읽어 500줄 ASAP 방출
-    //    - 디스크 쓰기/manifest 갱신 없음
-    //    - 실패/중단 시에도 본 패스로 안전하게 폴백
+    // ─────────────────────────────────────────────────────────────────────────
+    // 0) (호환) 워밍업 선행패스
+    //    Manager-선행 웜업 경로에서는 mergeDirectory를 warmup:false로 호출하므로 여기 미실행
     if (opts.warmup && (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')) {
       try {
-        const delivered = await warmupTailPrepass(opts);
-        if (delivered) {
-          log.info('warmup: delivered initial batch (memory-only)');
+        const warmLogs = await warmupTailPrepass({
+          dir: opts.dir,
+          signal: opts.signal,
+          warmupPerTypeLimit: opts.warmupPerTypeLimit,
+          warmupTarget: opts.warmupTarget,
+        });
+        if (warmLogs.length) {
+          if (opts.onWarmupBatch) opts.onWarmupBatch(warmLogs);
+          else opts.onBatch(warmLogs);
+          log.info(`warmup: delivered initial batch (n=${warmLogs.length})`);
         } else {
           log.debug?.('warmup: skipped or not enough lines');
         }
@@ -635,24 +644,26 @@ function lineToEntry(filePath: string, line: string): LogEntry {
 // - 어떤 타입이 모자라면 잔여 할당을 다른 타입으로 "재분배"
 // - 타입별 버퍼는 최신→오래된 순으로 수집 후 타임존 보정, 보정 후 최신순(ts desc) 정렬
 // - 최종 k-way 병합으로 정확히 target개만 반환
-async function warmupTailPrepass(opts: MergeOptions): Promise<boolean> {
+// ⬇️ Manager에서 직접 호출할 수 있도록 export + LogEntry[] 반환
+export async function warmupTailPrepass(
+  opts: WarmupOptions
+): Promise<LogEntry[]> {
   const { dir, signal } = opts;
   const logger = getLogger('LogFileIntegration');
   const target = Math.max(1, Number(opts.warmupTarget ?? 500));
   const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
     ? Math.max(1, Number(opts.warmupPerTypeLimit))
     : Number.POSITIVE_INFINITY;
-  if (!opts.onWarmupBatch && !opts.onBatch) return false;
   const aborted = () => !!signal?.aborted;
-  if (aborted()) return false;
+  if (aborted()) return [];
 
   // 1) 입력 로그 파일 수집 → 타입별 그룹화(회전 파일 포함)
   const names = await listInputLogFiles(dir);
-  if (!names.length) return false;
+  if (!names.length) return [];
   const grouped = groupByType(names); // key: type, val: ['x.log', 'x.log.1', ...]
   const typeKeys = [...grouped.keys()];
   const T = typeKeys.length;
-  if (!T) return false;
+  if (!T) return [];
 
   // 2) 균등 + remainder 분배 (cap 고려)
   const base = Math.floor(target / T);
@@ -779,7 +790,7 @@ async function warmupTailPrepass(opts: MergeOptions): Promise<boolean> {
     }
   }
 
-  if (total === 0) return false;
+  if (total === 0) return [];
 
   logger.info(`warmup: collected total=${total} (before TZ correction)`);
   // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
@@ -827,16 +838,8 @@ async function warmupTailPrepass(opts: MergeOptions): Promise<boolean> {
       heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
     }
   }
-  if (!out.length) return false;
-
-  logger.info(`warmup: deliver lines=${out.length}`);
-  try {
-    if (opts.onWarmupBatch) opts.onWarmupBatch(out);
-    else if (opts.onBatch) opts.onBatch(out);
-    return true;
-  } catch {
-    return false;
-  }
+  logger.info(`warmup: prepared lines=${out.length}`);
+  return out;
 }// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
 async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 1024): Promise<string[]> {
   const fh = await fs.promises.open(filePath, 'r');

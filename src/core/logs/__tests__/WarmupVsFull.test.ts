@@ -56,7 +56,7 @@ async function runOnce(useWarmup: boolean, limit = 10000): Promise<{ initialMs: 
 describe('Warmup vs Full merge', () => {
   it('초기 배치 시간/크기 비교', async () => {
     const full = await runOnce(false, 0);      // 워밍업 OFF
-    const warm = await runOnce(true, 500);     // 워밍업 ON
+    const warm = await runOnce(true, 500);     // 워밍업 ON (limit=500, target=2000)
 
     // ── 사람이 읽기 쉬운 비교 출력 ────────────────────────────────────────────────
     const diffMs = (full.initialMs ?? 0) - (warm.initialMs ?? 0);
