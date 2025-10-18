@@ -1,5 +1,6 @@
 // webpack.config.js
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import webpack from 'webpack';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -37,7 +38,18 @@ export default {
 
   module: {
     rules: [
-      { test: /\.ts$/, use: 'ts-loader', exclude: /node_modules/ },
+      {
+        test: /\.ts$/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            // 웹뷰 전용 TS 설정(ESM 확장자 강제 경고/implicit any 등 해소)
+            configFile: path.resolve(__dirname, 'tsconfig.webview.json'),
+            transpileOnly: true, // 속도↑ (타입체크는 IDE/빌드 단계에서 별도)
+          },
+        },
+        exclude: /node_modules/,
+      },
     ],
   },
 
@@ -53,6 +65,12 @@ export default {
   cache: isProd ? false : { type: 'filesystem' },
 
   plugins: [
+    // 웹뷰/번들에서 모드 분기를 쉽게 하도록 주입
+    new webpack.DefinePlugin({
+      __ESD__: JSON.stringify(!isProd),
+      'process.env.NODE_ENV': JSON.stringify(isProd ? 'production' : 'development'),
+      'process.env.EXT_MODE': JSON.stringify(isProd ? 'prod' : 'esd'),
+    }),
     new CopyWebpackPlugin({
       patterns: [
         // ── edge-panel ─────────────────────────────────────────────
