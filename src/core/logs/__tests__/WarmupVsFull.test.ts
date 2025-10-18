@@ -58,6 +58,19 @@ describe('Warmup vs Full merge', () => {
     const full = await runOnce(false, 0);      // 워밍업 OFF
     const warm = await runOnce(true, 500);     // 워밍업 ON
 
+    // ── 사람이 읽기 쉬운 비교 출력 ────────────────────────────────────────────────
+    const diffMs = (full.initialMs ?? 0) - (warm.initialMs ?? 0);
+    const pct = full.initialMs > 0 ? Math.round((diffMs / full.initialMs) * 100) : 0;
+    // 표 한 줄 요약
+    console.log('\n[WarmupVsFull]');
+    console.log(
+      `  First batch latency  |  OFF: ${full.initialMs} ms (n=${full.firstLen})  ` +
+      `ON: ${warm.initialMs} ms (n=${warm.firstLen})  Δ: ${diffMs} ms (~${pct}%)`
+    );
+    console.log(
+      `  Final merged totals  |  OFF: ${full.total}  ON: ${warm.total}\n`
+    );
+
     // 둘 다 500줄을 첫 배치로 제공해야 함
     expect(full.firstLen).toBe(500);
     expect(warm.firstLen).toBe(500);
