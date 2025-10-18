@@ -36,6 +36,7 @@ cts_suite/result/
 # Node modules
 node_modules/
 dist/
+edge-go-go/
 
 # test results
 .homey-perf/

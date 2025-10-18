@@ -11,8 +11,8 @@ export function parseTs(line: string): number | undefined {
     if (!Number.isNaN(t)) return t;
   }
   
-  // "[Mon DD HH:MM:SS.mmmm" 포맷 (테스트 데이터용)
-  const syslog = line.match(/\[([A-Za-z]{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?/);
+  // "[Mon DD HH:MM:SS.mmmm] " 포맷 (테스트 데이터용 - 닫는 대괄호 포함)
+  const syslog = line.match(/\[([A-Za-z]{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?\]/);
   if (syslog) {
     const now = new Date();
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
