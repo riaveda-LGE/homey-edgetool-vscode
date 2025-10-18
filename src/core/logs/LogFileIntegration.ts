@@ -158,7 +158,7 @@ export async function mergeDirectory(opts: MergeOptions) {
       cursors.set(typeKey, cursor);
     }
 
-    // k-way max-heap: ts 큰 것(최신) 우선
+        // k-way max-heap: ts 큰 것(최신) 우선
     const heap = new MaxHeap<HeapItem>((a, b) => {
       if (a.ts !== b.ts) return a.ts - b.ts;
       if (a.typeKey !== b.typeKey) return a.typeKey < b.typeKey ? -1 : 1;
@@ -194,9 +194,15 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
     }
 
-    if (outBatch.length) {
+    // Abort 직후에는 부분 배치(outBatch)를 UI로 내보내지 않음
+    if (!opts.signal?.aborted && outBatch.length) {
       emitted += outBatch.length;
       opts.onBatch(outBatch);
+    }
+
+    // Abort 시 열려 있는 리더 자원 정리
+    if (opts.signal?.aborted) {
+      for (const [, cursor] of cursors) await cursor.close();
     }
     log.info(`mergeDirectory: done emitted=${emitted}`);
   } catch (e) {
@@ -354,7 +360,8 @@ async function streamFileForward(
         const e = lineToEntry(filePath, residual);
         batch.push(e);
       }
-      if (batch.length) emit(batch.splice(0, batch.length));
+      // Abort 되었다면 끝부분 잔여 배치도 내보내지 않음
+      if (!signal?.aborted && batch.length) emit(batch.splice(0, batch.length));
       signal?.removeEventListener('abort', onAbort);
       resolve();
     });
@@ -513,6 +520,11 @@ class MergedCursor {
   public isExhausted = false;
 
   private constructor(public typeKey: string) {}
+
+  async close() {
+    if (this.reader) { await this.reader.close(); this.reader = null; }
+    this.isExhausted = true;
+  }
 
   static async create(filePath: string, typeKey: string): Promise<MergedCursor> {
     const c = new MergedCursor(typeKey);

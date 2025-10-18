@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LogEntry } from '../../../extension/messaging/messageTypes.js';
-import { mergeDirectory } from '../LogFileIntegration.js';
+import { mergeDirectory, countTotalLinesInDir } from '../LogFileIntegration.js';
 
 // 전역 타임아웃(파일 상단, describe 밖)
 jest.setTimeout(600_000); // 10분
@@ -143,25 +143,46 @@ it('중단 신호를 제대로 처리해야 함', async () => {
   fs.mkdirSync(mergedDir, { recursive: true });
 
   const abortController = new AbortController();
-  let batchCount = 0;
+  let batchCount = 0;               // Abort 전까지 onBatch 호출 횟수
+  let abortedAt: number | null = null; // Abort 트리거된 배치 번호
+  let postAbortBatches = 0;         // Abort 이후 onBatch 호출 횟수(0이어야 함)
+  let emittedLines = 0;             // 내보낸 총 라인수(전체보다 작아야 함)
+
   const onBatch = (logs: LogEntry[]) => {
+    // Abort 이후에는 더 이상 방출되면 안 됨
+    if (abortedAt !== null) {
+      postAbortBatches++;
+      return;
+    }
     batchCount++;
-    if (batchCount >= 3) { // 세 번째 배치에서 중단
+    emittedLines += logs.length;
+    // 세 번째 배치에서 중단 트리거
+    if (batchCount >= 3 && !abortController.signal.aborted) {
+      abortedAt = batchCount;
       abortController.abort();
     }
   };
 
-  await expect(async () => {
-    await mergeDirectory({
+  // Abort 시 예외 없이 resolve 되어야 함
+  await expect(
+    mergeDirectory({
       dir: inputDir,
       onBatch,
       signal: abortController.signal,
       batchSize: 1,              // 매우 작은 배치로 여러 번 호출되게 함
       mergedDirPath: mergedDir,  // ✅ out/merged 고정
-    });
-  }).rejects.toThrow(/aborted/i);
+    })
+  ).resolves.toBeUndefined();
 
-  expect(batchCount).toBeGreaterThanOrEqual(3);
+  // ✅ 정말로 Abort가 트리거되었는지
+  expect(abortedAt).not.toBeNull();
+  // ✅ Abort 이후 추가 onBatch 호출이 전혀 없었는지
+  expect(postAbortBatches).toBe(0);
+  // ✅ Abort 시점 이후 batchCount가 증가하지 않았는지
+  expect(batchCount).toBe(abortedAt);
+  // ✅ 전체 라인 수보다 적게 방출되었는지(중간에서 끊겼음을 간접 검증)
+  const { total } = await countTotalLinesInDir(inputDir);
+  expect(emittedLines).toBeLessThan(total);
 }, 60_000);
   });
 });
