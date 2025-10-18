@@ -693,13 +693,16 @@ export async function warmupTailPrepass(
     private idx = 0;
     private rr: ReverseLineReader | null = null;
     private exhausted = false;
-    constructor(private baseDir: string, private files: string[]) {}
+    constructor(private baseDir: string, private files: string[], private typeKey: string) {}
     get isExhausted() { return this.exhausted; }
     private async ensureReader() {
       while (!this.rr && this.idx < this.files.length) {
         const fp = path.join(this.baseDir, this.files[this.idx]);
         try {
           this.rr = await ReverseLineReader.open(fp);
+          logger.debug?.(
+            `warmup(T0): [${this.typeKey}] open file=${path.basename(fp)} (idx=${this.idx}/${this.files.length-1})`
+          );
         } catch {
           // 파일 오픈 실패 시 다음 파일로
           this.idx++;
@@ -719,6 +722,9 @@ export async function warmupTailPrepass(
           try { await this.rr.close(); } catch {}
           this.rr = null;
           this.idx++;
+          logger.debug?.(
+            `warmup(T0): [${this.typeKey}] file exhausted, move next (idx=${this.idx}/${this.files.length})`
+          );
           await this.ensureReader();
           continue;
         }
@@ -733,7 +739,7 @@ export async function warmupTailPrepass(
   const buffers = new Map<string, LogEntry[]>();
   for (const k of typeKeys) {
     const files = grouped.get(k)!.slice().sort(compareLogOrderDesc);
-    walkers.set(k, new TypeTailWalker(dir, files));
+    walkers.set(k, new TypeTailWalker(dir, files, k));
     buffers.set(k, []);
   }
   logger.info(`warmup(T0): walkers ready for ${typeKeys.length} types`);
@@ -765,7 +771,11 @@ export async function warmupTailPrepass(
   let total = 0;
   for (const k of typeKeys) {
     const want = alloc.get(k)!;
-    total += await batchRead(k, want);
+    const gotK = await batchRead(k, want);
+    total += gotK;
+    logger.info(
+      `warmup(T0): primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`
+    );
   }
 
   // 5) 재분배: target까지 부족하면 남은 타입에서 추가 로딩
@@ -775,24 +785,55 @@ export async function warmupTailPrepass(
     // 현재 각 타입이 cap에 도달했는지 계산
     const room = () =>
       typeKeys
-        .map(k => ({ k, room: Math.max(0, (perTypeCap === Number.POSITIVE_INFINITY ? Number.MAX_SAFE_INTEGER : perTypeCap) - buffers.get(k)!.length) }))
+        .filter(k => !walkers.get(k)!.isExhausted) // ❗ exhausted 제외
+        .map(k => ({
+          k,
+          room: Math.max(
+            0,
+            (perTypeCap === Number.POSITIVE_INFINITY
+              ? Number.MAX_SAFE_INTEGER
+              : perTypeCap) - buffers.get(k)!.length
+          ),
+        }))
         .filter(x => x.room > 0);
     let slots = room();
     // 라운드로빈으로 1~CHUNK씩 분배
     let i = 0;
     const CHUNK = 64;
+    let lastProgressTotal = total;
     while (deficit > 0 && slots.length && !aborted()) {
       const { k, room: r } = slots[i % slots.length];
+      const w = walkers.get(k)!;
+      if (w.isExhausted) { i++; slots = room(); continue; }
       const take = Math.min(CHUNK, r, deficit);
       if (take > 0) {
+        const before = buffers.get(k)!.length;
         const got = await batchRead(k, take);
+        const after = buffers.get(k)!.length;
         deficit -= got;
         total += got;
-        logger.debug?.(`warmup(T0): rebalanced ${k} +=${got}, remain deficit=${deficit}`);
+        logger.debug?.(
+          `warmup(T0): rebalance type=${k} +${got} (buf ${before}->${after}), remain deficit=${deficit}`
+        );
+      }
+      // 정체(진전 없음) 탐지 → 모두 소진이면 탈출
+      if (total === lastProgressTotal) {
+        const anyActive = typeKeys.some(tk => !walkers.get(tk)!.isExhausted);
+        if (!anyActive) {
+          logger.warn(
+            `warmup(T0): rebalancing stalled — all types exhausted; total=${total}, target=${target}`
+          );
+          break;
+        }
+      } else {
+        lastProgressTotal = total;
       }
       i++;
       slots = room();
     }
+    logger.info(
+      `warmup(T0): after rebalance total=${total}, unmet=${Math.max(0, target - total)}`
+    );
   }
 
   if (total === 0) return [];
@@ -848,9 +889,11 @@ export async function warmupTailPrepass(
   }
   logger.info(`warmup(T0): prepared lines=${out.length}`);
   if (out.length < target) {
-    logger.info(`warmup(T0): dataset smaller than target (out=${out.length} < target=${target}) — will short-circuit T1 if total is known and ≤ out`);
+    logger.info(
+      `warmup(T0): dataset smaller than target (out=${out.length} < target=${target}); ` +
+      `will short-circuit T1 if total is known and ≤ out`
+    );
   }
-  logger.info(`warmup(T0): prepared lines=${out.length}`);
   return out;
 }// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
 async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 1024): Promise<string[]> {
