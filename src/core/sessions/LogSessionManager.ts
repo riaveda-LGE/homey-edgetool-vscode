@@ -30,7 +30,28 @@ export class LogSessionManager {
   private rtAbort?: AbortController;
   private cm?: ConnectionManager;
 
+  // 진행률 스로틀 관련
+  private lastProgressUpdate = 0;
+  private lastProgressPercent = 0;
+  private readonly PROGRESS_THROTTLE_MS = 250; // 250ms 간격
+  private readonly PROGRESS_PERCENT_THRESHOLD = 1; // 1% 변화
+
   constructor(private conn?: HostConfig) {}
+
+  // 진행률 스로틀 메서드
+  private throttledOnProgress(opts: SessionCallbacks, current: {inc?: number, total?: number, done?: number, active?: boolean}) {
+    const now = Date.now();
+    const newPercent = current.total ? Math.round(((current.done || 0) / current.total) * 100) : 0;
+    
+    // 퍼센트 변화 ≥1% 또는 250ms 경과 또는 완료 시에만 업데이트
+    if (Math.abs(newPercent - this.lastProgressPercent) >= this.PROGRESS_PERCENT_THRESHOLD || 
+        now - this.lastProgressUpdate > this.PROGRESS_THROTTLE_MS || 
+        !current.active) {
+      this.lastProgressPercent = newPercent;
+      this.lastProgressUpdate = now;
+      opts.onProgress?.(current);
+    }
+  }
 
   @measure()
   async startRealtimeSession(opts: { signal?: AbortSignal; filter?: string } & SessionCallbacks) {
@@ -165,8 +186,8 @@ export class LogSessionManager {
         // 4) manifest 스냅샷
         await manifest.save();
 
-        // 5) 진행률 증분 알림
-        opts.onProgress?.({ inc: logs.length, total, active: true });
+        // 5) 진행률 증분 알림 (스로틀 적용)
+        this.throttledOnProgress(opts, { inc: logs.length, total, active: true });
 
         // 6) 메트릭
         opts.onMetrics?.({

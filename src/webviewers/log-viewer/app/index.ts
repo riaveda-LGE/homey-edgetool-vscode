@@ -112,7 +112,6 @@ window.addEventListener('message', (ev) => {
     const inc = typeof m?.payload?.inc === 'number' ? m.payload.inc : undefined;
     const total = typeof m?.payload?.total === 'number' ? m.payload.total : undefined;
     const active = typeof m?.payload?.active === 'boolean' ? m.payload.active : undefined;
-    uiLog.debug(`progress: inc=${inc ?? 0} total=${total ?? ''} active=${String(active)}`);
     dispatch({ type: 'MergeProgress', inc, total, active });
     return;
   }
