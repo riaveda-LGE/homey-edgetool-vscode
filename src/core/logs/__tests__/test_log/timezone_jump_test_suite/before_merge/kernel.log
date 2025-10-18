@@ -1,774 +1,258 @@
-[Sep 30 08:00:04.7023 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:00:15.6207 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:00:24.0103 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:00:38.0684 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:00:40.3369 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:00:43.1298 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:00:48.8595 kernel: Memory: 512MB total
-[Sep 30 08:01:13.6015 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:01:21.7677 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:01:27.2708 kernel: Kernel initialization complete
-[Sep 30 08:01:29.5695 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:01:32.0162 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:01:45.4931 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:01:48.1864 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:01:59.5010 kernel: NET: Registered protocol family 17
-[Sep 30 08:02:28.5555 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:02:41.9518 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:02:47.9654 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:02:50.7046 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:03:00.8805 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:03:03.3279 kernel: Memory: 512MB total
-[Sep 30 08:03:19.7809 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:03:35.7938 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:03:38.4921 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:03:56.9933 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:04:20.9361 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:04:53.0003 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:05:03.2271 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:05:17.0573 kernel: NET: Registered protocol family 17
-[Sep 30 08:05:27.4477 kernel: Memory: 512MB total
-[Sep 30 08:05:43.4886 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:06:18.6315 kernel: Kernel initialization complete
-[Sep 30 08:06:21.1012 kernel: NET: Registered protocol family 17
-[Sep 30 08:06:23.9086 kernel: NET: Registered protocol family 17
-[Sep 30 08:06:29.5407 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:06:51.0215 kernel: Kernel initialization complete
-[Sep 30 08:07:40.9341 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:08:04.0025 kernel: NET: Registered protocol family 17
-[Sep 30 08:08:48.8689 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:09:20.4424 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:09:25.7332 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:09:39.4734 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:09:47.2398 kernel: Memory: 512MB total
-[Sep 30 08:10:25.9503 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:10:37.3269 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:10:40.2563 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:10:45.8648 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:11:05.1691 kernel: Kernel initialization complete
-[Sep 30 08:11:48.9443 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:12:11.0032 kernel: Memory: 512MB total
-[Sep 30 08:12:17.2676 kernel: Kernel initialization complete
-[Sep 30 08:12:36.4190 kernel: NET: Registered protocol family 17
-[Sep 30 08:12:55.9959 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:12:59.0937 kernel: Memory: 512MB total
-[Sep 30 08:13:01.3770 kernel: Kernel initialization complete
-[Sep 30 08:13:14.3537 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:13:37.5280 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:13:39.8794 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:13:44.8808 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:13:58.2404 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:14:14.2146 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:14:19.8246 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:14:29.2294 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:14:36.8776 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:14:41.8779 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:15:13.1592 kernel: Kernel initialization complete
-[Sep 30 08:15:25.2950 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:15:27.8267 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:15:30.7789 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:15:53.3759 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:15:57.6968 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:16:36.8509 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:16:39.9645 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:16:42.8540 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:16:45.7916 kernel: NET: Registered protocol family 17
-[Sep 30 08:16:51.3520 kernel: NET: Registered protocol family 17
-[Sep 30 08:17:23.3122 kernel: NET: Registered protocol family 17
-[Sep 30 08:17:25.7013 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:17:28.1373 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:17:33.6587 kernel: NET: Registered protocol family 17
-[Sep 30 08:17:39.1661 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:17:42.2556 kernel: Memory: 512MB total
-[Sep 30 08:17:50.1626 kernel: NET: Registered protocol family 17
-[Sep 30 08:18:05.6199 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:18:14.3182 kernel: Memory: 512MB total
-[Sep 30 08:18:42.5146 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:18:50.6263 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:19:13.4638 kernel: Kernel initialization complete
-[Sep 30 08:19:19.5661 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:19:28.1411 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:19:30.9658 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:19:36.5211 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:19:47.6376 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:20:02.8168 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:20:23.6836 kernel: NET: Registered protocol family 17
-[Sep 30 08:20:47.7285 kernel: Memory: 512MB total
-[Sep 30 08:20:55.3166 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:21:00.9045 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:21:16.6443 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:21:50.4474 kernel: NET: Registered protocol family 17
-[Sep 30 08:22:18.7093 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:22:37.0770 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:22:45.6595 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:22:57.2984 kernel: Memory: 512MB total
-[Sep 30 08:23:23.3721 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:23:32.1470 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:23:37.1812 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:24:30.7418 kernel: Kernel initialization complete
-[Sep 30 08:25:23.7506 kernel: NET: Registered protocol family 17
-[Sep 30 08:25:58.4901 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:26:04.0849 kernel: Memory: 512MB total
-[Sep 30 08:26:11.4559 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:26:30.4853 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:26:40.8789 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:27:31.3427 kernel: NET: Registered protocol family 17
-[Sep 30 08:27:53.6969 kernel: NET: Registered protocol family 17
-[Sep 30 08:28:13.5112 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:28:18.0240 kernel: Kernel initialization complete
-[Sep 30 08:28:20.4992 kernel: Kernel initialization complete
-[Sep 30 08:28:25.4852 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:28:31.2793 kernel: Kernel initialization complete
-[Sep 30 08:28:34.3805 kernel: NET: Registered protocol family 17
-[Sep 30 08:29:05.6495 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:29:07.9940 kernel: Memory: 512MB total
-[Sep 30 08:29:21.7659 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:29:59.1984 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:30:02.1606 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:30:17.4755 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:30:28.5360 kernel: Memory: 512MB total
-[Sep 30 08:30:30.9582 kernel: Memory: 512MB total
-[Sep 30 08:30:45.7741 kernel: Memory: 512MB total
-[Sep 30 08:31:35.5276 kernel: Kernel initialization complete
-[Sep 30 08:31:59.5696 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:32:02.3912 kernel: Memory: 512MB total
-[Sep 30 08:32:07.7366 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:32:27.3386 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:32:29.5295 kernel: Kernel initialization complete
-[Sep 30 08:32:58.0647 kernel: NET: Registered protocol family 17
-[Sep 30 08:33:12.7450 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:33:18.2375 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:33:26.1010 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:33:46.9959 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:33:51.9091 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:34:00.7486 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:34:03.2476 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:34:05.8900 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:34:53.7462 kernel: Kernel initialization complete
-[Sep 30 08:35:17.9136 kernel: Kernel initialization complete
-[Sep 30 08:35:26.0510 kernel: Kernel initialization complete
-[Sep 30 08:35:31.6578 kernel: Kernel initialization complete
-[Sep 30 08:36:08.4328 kernel: Kernel initialization complete
-[Sep 30 08:36:38.4310 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:36:52.3310 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:37:59.1706 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:38:13.4547 kernel: Memory: 512MB total
-[Sep 30 08:38:50.0285 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:39:06.0517 kernel: Kernel initialization complete
-[Sep 30 08:39:09.0715 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:39:11.8715 kernel: Kernel initialization complete
-[Sep 30 08:39:19.8888 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:39:41.1885 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:39:43.8737 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:39:50.9621 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:40:04.0126 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:40:10.7679 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:40:16.3755 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:40:21.6124 kernel: Kernel initialization complete
-[Sep 30 08:40:27.9675 kernel: Kernel initialization complete
-[Sep 30 08:40:33.3457 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:40:41.2404 kernel: Memory: 512MB total
-[Sep 30 08:40:53.1729 kernel: Kernel initialization complete
-[Sep 30 08:41:20.2935 kernel: Memory: 512MB total
-[Sep 30 08:41:28.3538 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:41:41.4420 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:41:54.3901 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:42:07.0969 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:42:12.7736 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:42:15.3844 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:42:17.9111 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:42:23.3874 kernel: Kernel initialization complete
-[Sep 30 08:42:58.3967 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:43:11.6119 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:43:32.8508 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:43:51.8717 kernel: Memory: 512MB total
-[Sep 30 08:44:13.2724 kernel: Kernel initialization complete
-[Sep 30 08:44:19.0037 kernel: Kernel initialization complete
-[Sep 30 08:44:30.6623 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:44:39.3331 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:44:44.5714 kernel: Memory: 512MB total
-[Sep 30 08:44:47.6120 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:44:55.9679 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:45:07.7715 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:45:10.2737 kernel: Kernel initialization complete
-[Sep 30 08:45:13.4449 kernel: Kernel initialization complete
-[Sep 30 08:45:15.7988 kernel: Memory: 512MB total
-[Sep 30 08:45:23.7637 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:46:03.0696 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:46:05.9015 kernel: Memory: 512MB total
-[Sep 30 08:46:59.3097 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:47:01.6469 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:47:03.9620 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:47:12.4629 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:47:14.8137 kernel: Memory: 512MB total
-[Sep 30 08:47:17.5787 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:47:41.0411 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:48:32.2076 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:48:48.5571 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:48:51.1889 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:49:30.4377 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:49:45.1001 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:49:54.2900 kernel: Memory: 512MB total
-[Sep 30 08:49:59.7356 kernel: Memory: 512MB total
-[Sep 30 08:50:07.5122 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:50:25.7605 kernel: NET: Registered protocol family 17
-[Sep 30 08:50:44.6667 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:51:27.0041 kernel: NET: Registered protocol family 17
-[Sep 30 08:52:05.3480 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:52:13.2223 kernel: NET: Registered protocol family 17
-[Sep 30 08:52:18.4244 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:52:49.7136 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:53:10.6249 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:53:24.0637 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:53:34.6473 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:53:37.1837 kernel: Memory: 512MB total
-[Sep 30 08:53:59.4515 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:54:24.8821 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:54:27.6690 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:54:36.0625 kernel: NET: Registered protocol family 17
-[Sep 30 08:54:41.6223 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:54:43.8978 kernel: NET: Registered protocol family 17
-[Sep 30 08:54:51.6167 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 08:54:59.4768 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:55:02.6054 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:55:14.0402 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:55:19.1848 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:55:22.1185 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:55:25.3406 kernel: NET: Registered protocol family 17
-[Sep 30 08:55:36.3953 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:55:41.9223 kernel: Kernel initialization complete
-[Sep 30 08:55:52.2247 kernel: Memory: 512MB total
-[Sep 30 08:56:05.1782 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 08:56:31.9580 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:56:34.5278 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:56:58.5352 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:57:12.7142 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:57:15.0452 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 08:57:21.0529 kernel: NET: Registered protocol family 17
-[Sep 30 08:57:36.6795 kernel: Memory: 512MB total
-[Sep 30 08:57:47.7189 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:57:50.5441 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:57:55.5513 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:58:18.6216 kernel: NET: Registered protocol family 17
-[Sep 30 08:58:27.2866 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:58:37.8918 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:59:01.7719 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 08:59:04.4120 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:59:07.0400 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 08:59:16.0929 kernel: Kernel initialization complete
-[Sep 30 08:59:19.2298 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 08:59:38.8109 kernel: Initializing cgroup subsys cpuset
-[Sep 30 08:59:52.6443 kernel: NET: Registered protocol family 17
-[Sep 30 09:00:03.2745 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:00:20.1843 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:00:23.3382 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:00:39.8304 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:01:01.8893 kernel: NET: Registered protocol family 17
-[Sep 30 09:01:04.0641 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:01:06.9669 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:01:20.4124 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:01:28.3628 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:01:37.3150 kernel: NET: Registered protocol family 17
-[Sep 30 09:02:11.6519 kernel: Kernel initialization complete
-[Sep 30 09:02:23.4721 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:02:34.5770 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:02:43.8805 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:03:09.8527 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:03:12.8005 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:03:29.8729 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:03:32.7439 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:03:37.9586 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:03:43.3415 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:03:48.5326 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:03:50.8723 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:03:53.4491 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:03:59.1945 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:04:05.2247 kernel: Kernel initialization complete
-[Sep 30 09:04:13.8080 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:04:19.2994 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:04:37.3122 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:04:56.2305 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:05:01.7050 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:05:43.7869 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:05:48.6809 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:06:02.6319 kernel: Memory: 512MB total
-[Sep 30 09:06:44.0220 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:06:53.3828 kernel: Kernel initialization complete
-[Sep 30 09:06:55.6814 kernel: NET: Registered protocol family 17
-[Sep 30 09:06:58.0749 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:07:06.1220 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:07:37.8962 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:07:51.1507 kernel: Memory: 512MB total
-[Sep 30 09:08:22.0939 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:08:40.3643 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:09:15.8957 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:09:21.7362 kernel: Kernel initialization complete
-[Sep 30 09:09:29.5871 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:09:35.3192 kernel: NET: Registered protocol family 17
-[Sep 30 09:09:46.6385 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:09:52.3321 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:09:57.4643 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:10:18.3371 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:11:35.3717 kernel: Memory: 512MB total
-[Sep 30 09:12:08.6831 kernel: NET: Registered protocol family 17
-[Sep 30 09:12:14.4058 kernel: NET: Registered protocol family 17
-[Sep 30 09:12:22.8758 kernel: Kernel initialization complete
-[Sep 30 09:12:26.0522 kernel: Memory: 512MB total
-[Sep 30 09:12:44.2671 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:12:57.2334 kernel: Kernel initialization complete
-[Sep 30 09:13:03.2624 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:13:43.8065 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:14:37.4732 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:14:45.2748 kernel: NET: Registered protocol family 17
-[Sep 30 09:14:58.6904 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:15:13.4373 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:15:16.3586 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:15:32.0809 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:16:12.7469 kernel: Kernel initialization complete
-[Sep 30 09:16:31.9679 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:16:35.1740 kernel: Kernel initialization complete
-[Sep 30 09:16:54.9901 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:17:05.7292 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:17:17.2013 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:17:20.3403 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:17:49.0651 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:17:57.0644 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:17:59.7746 kernel: Memory: 512MB total
-[Sep 30 09:18:05.3497 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:18:21.9024 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:18:30.3372 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:18:33.0503 kernel: Memory: 512MB total
-[Sep 30 09:18:44.1493 kernel: NET: Registered protocol family 17
-[Sep 30 09:18:49.6377 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:18:56.8986 kernel: NET: Registered protocol family 17
-[Sep 30 09:19:35.4350 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:19:49.8672 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:20:08.2961 kernel: Memory: 512MB total
-[Sep 30 09:20:15.6713 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:20:21.1249 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:20:28.2859 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 18:20:46.6117 kernel: Initializing cgroup subsys cpuset
-[Sep 30 18:20:52.4988 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:21:11.4843 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:21:13.8337 kernel: NET: Registered protocol family 17
-[Sep 30 09:21:35.6760 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:21:44.9147 kernel: Memory: 512MB total
-[Sep 30 09:21:53.2683 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:22:02.1328 kernel: NET: Registered protocol family 17
-[Sep 30 09:22:17.5475 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:23:04.5528 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:23:12.6044 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:23:17.4162 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:23:22.6648 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:23:39.3211 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:23:44.6027 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:24:09.3540 kernel: NET: Registered protocol family 17
-[Sep 30 09:24:11.8171 kernel: NET: Registered protocol family 17
-[Sep 30 09:24:14.9473 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:24:19.5828 kernel: NET: Registered protocol family 17
-[Sep 30 09:24:30.8951 kernel: Memory: 512MB total
-[Sep 30 09:24:50.2279 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:24:56.6083 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:25:12.7852 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:25:23.9500 kernel: NET: Registered protocol family 17
-[Sep 30 09:25:33.8917 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:25:48.0176 kernel: Memory: 512MB total
-[Sep 30 09:25:56.2307 kernel: NET: Registered protocol family 17
-[Sep 30 09:26:19.4234 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:26:29.0632 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:26:45.2272 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:26:54.0360 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:27:06.4443 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:27:28.9808 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:27:31.2122 kernel: Memory: 512MB total
-[Sep 30 09:28:51.5157 kernel: Kernel initialization complete
-[Sep 30 09:28:54.5908 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:29:01.9641 kernel: NET: Registered protocol family 17
-[Sep 30 09:29:20.2685 kernel: NET: Registered protocol family 17
-[Sep 30 09:29:52.9885 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:30:08.9976 kernel: NET: Registered protocol family 17
-[Sep 30 09:30:20.0100 kernel: Kernel initialization complete
-[Sep 30 09:30:28.8882 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:30:36.5922 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:30:55.9301 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:31:19.0174 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:31:27.3641 kernel: NET: Registered protocol family 17
-[Sep 30 09:31:42.1998 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:31:52.3431 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:32:28.3315 kernel: Memory: 512MB total
-[Sep 30 09:32:35.6866 kernel: Memory: 512MB total
-[Sep 30 09:32:56.8885 kernel: NET: Registered protocol family 17
-[Sep 30 09:33:01.2532 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:33:23.3803 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:33:27.8535 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:33:35.7879 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:33:48.6791 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:33:53.7891 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:34:20.0435 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:34:31.6178 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:34:37.4989 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:34:40.4494 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:34:47.9736 kernel: NET: Registered protocol family 17
-[Sep 30 09:35:25.7360 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:35:44.0097 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:35:49.2060 kernel: Memory: 512MB total
-[Sep 30 09:36:28.0755 kernel: Memory: 512MB total
-[Sep 30 09:37:02.4816 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:37:17.5542 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:37:23.3433 kernel: Memory: 512MB total
-[Sep 30 09:37:25.7226 kernel: NET: Registered protocol family 17
-[Sep 30 09:37:36.0509 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:37:50.0849 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:37:59.1403 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:38:01.5192 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:38:12.2793 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:38:25.9759 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:38:28.2951 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:38:33.5694 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:38:36.1256 kernel: Kernel initialization complete
-[Sep 30 09:38:49.6261 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:39:06.2970 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:39:27.3144 kernel: Memory: 512MB total
-[Sep 30 09:39:32.2666 kernel: Kernel initialization complete
-[Sep 30 09:39:42.4443 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:39:57.7611 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:40:06.2663 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:40:08.9641 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:40:17.5610 kernel: NET: Registered protocol family 17
-[Sep 30 09:40:36.1083 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:40:38.7212 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:40:51.6132 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:41:07.7321 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:41:10.4418 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:41:36.7448 kernel: Memory: 512MB total
-[Sep 30 09:41:41.9276 kernel: NET: Registered protocol family 17
-[Sep 30 09:42:38.5200 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:42:50.5089 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:42:58.6634 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:43:03.6514 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:43:08.8232 kernel: NET: Registered protocol family 17
-[Sep 30 09:43:23.2857 kernel: Kernel initialization complete
-[Sep 30 09:44:08.6760 kernel: NET: Registered protocol family 17
-[Sep 30 09:44:18.3565 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:44:46.1442 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:44:59.4424 kernel: Kernel initialization complete
-[Sep 30 09:45:02.1300 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:45:56.5826 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:46:20.1551 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:46:37.8742 kernel: Kernel initialization complete
-[Sep 30 09:46:45.5373 kernel: Memory: 512MB total
-[Sep 30 09:46:50.4767 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:46:52.8038 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:47:01.8613 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:47:07.3390 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:47:48.8628 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:47:59.2905 kernel: Kernel initialization complete
-[Sep 30 09:48:22.5937 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:48:30.1789 kernel: Kernel initialization complete
-[Sep 30 09:48:59.0434 kernel: NET: Registered protocol family 17
-[Sep 30 09:49:01.5460 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:49:04.2807 kernel: NET: Registered protocol family 17
-[Sep 30 09:49:15.2679 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:49:31.9252 kernel: NET: Registered protocol family 17
-[Sep 30 09:49:35.0899 kernel: NET: Registered protocol family 17
-[Sep 30 09:49:37.3429 kernel: Memory: 512MB total
-[Sep 30 09:49:46.1077 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:50:00.3161 kernel: Memory: 512MB total
-[Sep 30 09:50:08.6361 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:50:14.0318 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:50:44.2254 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:51:00.2401 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:51:13.2470 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:51:15.8567 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:51:30.0228 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:51:40.7331 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:51:51.1464 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:52:08.7005 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:52:16.7286 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:53:08.2088 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:53:30.7872 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:53:48.2179 kernel: NET: Registered protocol family 17
-[Sep 30 09:53:54.3283 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:53:59.7480 kernel: Memory: 512MB total
-[Sep 30 09:54:10.7178 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:55:01.8880 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:55:04.0496 kernel: Memory: 512MB total
-[Sep 30 09:55:42.4787 kernel: Memory: 512MB total
-[Sep 30 09:55:51.7493 kernel: NET: Registered protocol family 17
-[Sep 30 09:56:00.7867 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:56:05.6151 kernel: Memory: 512MB total
-[Sep 30 09:56:16.2134 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:56:44.3138 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:56:55.3390 kernel: NET: Registered protocol family 17
-[Sep 30 09:57:14.4800 kernel: Memory: 512MB total
-[Sep 30 09:57:22.9202 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:57:28.9273 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 09:57:34.1508 kernel: Initializing cgroup subsys cpuset
-[Sep 30 09:57:39.6244 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 09:57:50.2822 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:58:20.2827 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 09:58:30.4239 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:58:38.7039 kernel: NET: Registered protocol family 17
-[Sep 30 09:58:46.4105 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 09:59:02.7888 kernel: Memory: 512MB total
-[Sep 30 09:59:30.7024 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 09:59:38.8147 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 09:59:47.4627 kernel: Kernel initialization complete
-[Sep 30 09:59:55.2892 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:00:03.1300 kernel: NET: Registered protocol family 17
-[Sep 30 10:00:05.9444 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:00:41.8450 kernel: Kernel initialization complete
-[Sep 30 10:01:09.6358 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:01:20.8269 kernel: Memory: 512MB total
-[Sep 30 10:01:31.6024 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:01:53.8084 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:01:59.7588 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:02:20.4935 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:02:31.0645 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:03:02.5303 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:03:15.8432 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:03:23.8922 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:03:32.7961 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:03:45.6028 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:03:59.3199 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:04:01.8928 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:04:24.9121 kernel: Kernel initialization complete
-[Sep 30 10:04:32.8507 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:05:17.4142 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:05:20.0628 kernel: Kernel initialization complete
-[Sep 30 10:05:25.2156 kernel: NET: Registered protocol family 17
-[Sep 30 10:05:36.8306 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:05:39.1673 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:05:45.0263 kernel: NET: Registered protocol family 17
-[Sep 30 10:05:49.5805 kernel: Kernel initialization complete
-[Sep 30 10:05:59.6542 kernel: Kernel initialization complete
-[Sep 30 10:06:24.9764 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:06:47.7874 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:07:05.4169 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:07:10.4019 kernel: Kernel initialization complete
-[Sep 30 10:07:25.0626 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:07:37.8261 kernel: Kernel initialization complete
-[Sep 30 10:07:48.2176 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:07:58.3120 kernel: Kernel initialization complete
-[Sep 30 10:08:04.4790 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:08:06.6585 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:08:09.7318 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:08:17.7110 kernel: Memory: 512MB total
-[Sep 30 10:08:42.7037 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:08:51.0284 kernel: Kernel initialization complete
-[Sep 30 10:08:56.5461 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:09:01.5912 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:09:06.8292 kernel: Memory: 512MB total
-[Sep 30 10:09:11.9236 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:09:14.8663 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:09:36.3495 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:10:12.8350 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:10:15.3774 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:10:39.9165 kernel: NET: Registered protocol family 17
-[Sep 30 10:10:47.7752 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:10:58.3701 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:11:00.9534 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:11:13.1154 kernel: Memory: 512MB total
-[Sep 30 10:11:15.8327 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:11:29.1351 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:11:53.7242 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:12:13.5784 kernel: Kernel initialization complete
-[Sep 30 10:12:30.3509 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:12:33.0870 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:12:35.6869 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:13:00.3466 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:13:03.1701 kernel: Kernel initialization complete
-[Sep 30 10:13:05.3855 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:13:13.8398 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:13:41.4521 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:14:26.0736 kernel: Memory: 512MB total
-[Sep 30 10:14:28.4785 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:15:39.5264 kernel: NET: Registered protocol family 17
-[Sep 30 10:15:59.6575 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:16:02.2609 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:16:18.1439 kernel: Memory: 512MB total
-[Sep 30 10:16:40.0870 kernel: NET: Registered protocol family 17
-[Sep 30 10:16:47.4356 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:16:49.9936 kernel: Kernel initialization complete
-[Sep 30 10:16:57.8912 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:17:06.2175 kernel: Memory: 512MB total
-[Sep 30 10:17:14.7312 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:17:38.4418 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:17:46.7207 kernel: Memory: 512MB total
-[Sep 30 10:17:52.1118 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:17:59.8164 kernel: Memory: 512MB total
-[Sep 30 10:18:03.0416 kernel: NET: Registered protocol family 17
-[Sep 30 10:18:07.7317 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:18:15.8690 kernel: NET: Registered protocol family 17
-[Sep 30 10:18:33.2059 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:18:38.9158 kernel: Memory: 512MB total
-[Sep 30 10:18:48.8762 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:19:04.9117 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:19:17.6952 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:19:20.0375 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:19:23.0578 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:19:26.1996 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:19:59.2910 kernel: Kernel initialization complete
-[Sep 30 10:20:17.7235 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:20:28.4591 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:21:02.8573 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:21:25.1847 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:21:45.7306 kernel: Kernel initialization complete
-[Sep 30 10:21:57.2292 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:22:09.8484 kernel: Memory: 512MB total
-[Sep 30 10:22:25.8495 kernel: Memory: 512MB total
-[Sep 30 10:22:31.9088 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:22:34.9368 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:22:53.9146 kernel: NET: Registered protocol family 17
-[Sep 30 10:22:59.6597 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:23:13.6241 kernel: NET: Registered protocol family 17
-[Sep 30 10:23:24.4351 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:23:38.8896 kernel: NET: Registered protocol family 17
-[Sep 30 10:23:43.9518 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:23:50.0397 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:24:22.9810 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:24:39.3430 kernel: Memory: 512MB total
-[Sep 30 10:24:55.3589 kernel: NET: Registered protocol family 17
-[Sep 30 10:25:05.9146 kernel: Kernel initialization complete
-[Sep 30 10:25:33.4216 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:25:38.2960 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:25:41.4607 kernel: Kernel initialization complete
-[Sep 30 10:25:49.2016 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:26:00.0678 kernel: Kernel initialization complete
-[Sep 30 10:26:05.1466 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:26:13.9470 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:26:16.1449 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:26:18.8519 kernel: Kernel initialization complete
-[Sep 30 10:26:23.7736 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:26:38.2137 kernel: NET: Registered protocol family 17
-[Sep 30 10:26:56.1652 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:27:04.5109 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:27:39.2671 kernel: Memory: 512MB total
-[Sep 30 10:27:58.6605 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:28:08.0200 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:28:11.0511 kernel: Memory: 512MB total
-[Sep 30 10:28:13.9713 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:28:21.6685 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:28:26.7251 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:28:48.9072 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:28:54.4022 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:28:57.6380 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:29:19.1011 kernel: Memory: 512MB total
-[Sep 30 10:29:21.8706 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:29:32.7937 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:30:06.4267 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:30:37.9594 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:30:48.4972 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:31:08.8009 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:31:41.5180 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:31:58.0429 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:32:29.0096 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:32:34.4081 kernel: Memory: 512MB total
-[Sep 30 10:33:02.9320 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:33:05.7404 kernel: Kernel initialization complete
-[Sep 30 10:33:11.2659 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:33:22.2941 kernel: Kernel initialization complete
-[Sep 30 10:33:51.5281 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:34:05.7622 kernel: Kernel initialization complete
-[Sep 30 10:34:11.3037 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:34:13.9145 kernel: Kernel initialization complete
-[Sep 30 10:34:19.1147 kernel: Kernel initialization complete
-[Sep 30 10:34:31.6866 kernel: NET: Registered protocol family 17
-[Sep 30 10:34:36.3054 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:34:41.7970 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:34:45.0038 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:34:58.6633 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:35:21.8847 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:35:24.3777 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:35:36.0357 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:35:41.3890 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:35:43.9337 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:37:21.3543 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:38:11.9930 kernel: Kernel initialization complete
-[Sep 30 10:38:32.3396 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:38:58.9095 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:39:09.6602 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:39:14.5458 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:39:17.0177 kernel: Memory: 512MB total
-[Sep 30 10:39:36.4503 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:39:57.3477 kernel: Memory: 512MB total
-[Sep 30 10:40:09.9249 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:41:06.5326 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:41:12.1499 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:41:20.4152 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:41:23.0093 kernel: Kernel initialization complete
-[Sep 30 10:41:28.7835 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:41:37.0618 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:41:55.8068 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:42:23.6753 kernel: Kernel initialization complete
-[Sep 30 10:42:42.6388 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:43:04.4005 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:43:23.7199 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:43:26.3398 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:44:01.9057 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:44:39.8991 kernel: Kernel initialization complete
-[Sep 30 10:44:42.6481 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:44:49.9606 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:45:18.3871 kernel: Kernel initialization complete
-[Sep 30 10:45:20.7789 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:45:25.5292 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:45:35.7458 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:45:51.7658 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:46:17.4334 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:46:23.2967 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:46:34.0712 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:46:39.2922 kernel: NET: Registered protocol family 17
-[Sep 30 10:47:02.4788 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:47:35.3215 kernel: NET: Registered protocol family 17
-[Sep 30 10:47:44.7351 kernel: Memory: 512MB total
-[Sep 30 10:48:05.5614 kernel: Kernel initialization complete
-[Sep 30 10:48:16.2856 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:48:21.4525 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:49:05.4951 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:49:25.0114 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:49:27.5786 kernel: Kernel initialization complete
-[Sep 30 10:49:44.2613 kernel: Kernel initialization complete
-[Sep 30 10:50:26.1385 kernel: Memory: 512MB total
-[Sep 30 10:50:49.4224 kernel: NET: Registered protocol family 17
-[Sep 30 10:51:10.4885 kernel: NET: Registered protocol family 17
-[Sep 30 10:51:22.4587 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:51:24.9617 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:51:45.9566 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:52:02.6556 kernel: Memory: 512MB total
-[Sep 30 10:52:05.5377 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:52:08.0585 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:52:41.4606 kernel: Kernel initialization complete
-[Sep 30 10:52:44.6694 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:53:00.4754 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:53:08.1002 kernel: Memory: 512MB total
-[Sep 30 10:53:13.6647 kernel: Memory: 512MB total
-[Sep 30 10:53:34.1517 kernel: Kernel initialization complete
-[Sep 30 10:54:43.0717 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:54:50.3141 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:55:05.5727 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:55:08.3634 kernel: Memory: 512MB total
-[Sep 30 10:55:15.7383 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:55:23.7923 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:56:05.6420 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:56:08.5118 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:56:11.3732 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:56:17.4390 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:56:23.0613 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:56:25.7011 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:56:33.2389 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:56:40.2869 kernel: Memory: 512MB total
-[Sep 30 10:56:42.5097 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:56:54.5353 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:57:14.7680 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:57:20.5608 kernel: Initializing cgroup subsys cpuset
-[Sep 30 10:57:52.0497 kernel: Linux version 5.10.0 (gcc version 9.3.0)
-[Sep 30 10:58:20.0360 kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
-[Sep 30 10:58:37.9103 kernel: CPU: ARMv7 Processor rev 5 (v7l)
-[Sep 30 10:58:51.7562 kernel: mmc0: new high speed SDHC card at address 0001
-[Sep 30 10:58:54.0973 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:59:09.2371 kernel: Freeing unused kernel memory: 1024K
-[Sep 30 10:59:25.3341 kernel: usb 1-1: new high-speed USB device number 2
-[Sep 30 10:59:27.5670 kernel: Memory: 512MB total
-[Sep 30 10:59:30.4403 kernel: Memory: 512MB total
-[Sep 30 10:59:38.1017 kernel: NET: Registered protocol family 17
-[Sep 30 11:00:00.0000 kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 09:59:55.2892] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:00:03.1300] kernel: NET: Registered protocol family 17
+[Sep 30 10:00:05.9444] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:00:41.8450] kernel: Kernel initialization complete
+[Sep 30 10:01:09.6358] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:01:20.8269] kernel: Memory: 512MB total
+[Sep 30 10:01:31.6024] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:01:53.8084] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:01:59.7588] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:02:20.4935] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:02:31.0645] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:03:02.5303] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:03:15.8432] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:03:23.8922] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:03:32.7961] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:03:45.6028] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:03:59.3199] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:04:01.8928] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:04:24.9121] kernel: Kernel initialization complete
+[Sep 30 10:04:32.8507] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:05:17.4142] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:05:20.0628] kernel: Kernel initialization complete
+[Sep 30 10:05:25.2156] kernel: NET: Registered protocol family 17
+[Sep 30 10:05:36.8306] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:05:39.1673] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:05:45.0263] kernel: NET: Registered protocol family 17
+[Sep 30 10:05:49.5805] kernel: Kernel initialization complete
+[Sep 30 10:05:59.6542] kernel: Kernel initialization complete
+[Sep 30 10:06:24.9764] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:06:47.7874] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:07:05.4169] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:07:10.4019] kernel: Kernel initialization complete
+[Sep 30 10:07:25.0626] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:07:37.8261] kernel: Kernel initialization complete
+[Sep 30 10:07:48.2176] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:07:58.3120] kernel: Kernel initialization complete
+[Sep 30 10:08:04.4790] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:08:06.6585] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:08:09.7318] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:08:17.7110] kernel: Memory: 512MB total
+[Sep 30 10:08:42.7037] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:08:51.0284] kernel: Kernel initialization complete
+[Sep 30 10:08:56.5461] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:09:01.5912] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:09:06.8292] kernel: Memory: 512MB total
+[Sep 30 10:09:11.9236] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:09:14.8663] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:09:36.3495] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:10:12.8350] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:10:15.3774] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:10:39.9165] kernel: NET: Registered protocol family 17
+[Sep 30 10:10:47.7752] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:10:58.3701] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:11:00.9534] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:11:13.1154] kernel: Memory: 512MB total
+[Sep 30 10:11:15.8327] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:11:29.1351] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:11:53.7242] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:12:13.5784] kernel: Kernel initialization complete
+[Sep 30 10:12:30.3509] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:12:33.0870] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:12:35.6869] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:13:00.3466] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:13:03.1701] kernel: Kernel initialization complete
+[Sep 30 10:13:05.3855] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:13:13.8398] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:13:41.4521] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:14:26.0736] kernel: Memory: 512MB total
+[Sep 30 10:14:28.4785] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:15:39.5264] kernel: NET: Registered protocol family 17
+[Sep 30 10:15:59.6575] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:16:02.2609] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:16:18.1439] kernel: Memory: 512MB total
+[Sep 30 10:16:40.0870] kernel: NET: Registered protocol family 17
+[Sep 30 10:16:47.4356] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:16:49.9936] kernel: Kernel initialization complete
+[Sep 30 10:16:57.8912] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:17:06.2175] kernel: Memory: 512MB total
+[Sep 30 10:17:14.7312] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:17:38.4418] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:17:46.7207] kernel: Memory: 512MB total
+[Sep 30 10:17:52.1118] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:17:59.8164] kernel: Memory: 512MB total
+[Sep 30 10:18:03.0416] kernel: NET: Registered protocol family 17
+[Sep 30 10:18:07.7317] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:18:15.8690] kernel: NET: Registered protocol family 17
+[Sep 30 10:18:33.2059] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:18:38.9158] kernel: Memory: 512MB total
+[Sep 30 10:18:48.8762] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:19:04.9117] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:19:17.6952] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:19:20.0375] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:19:23.0578] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:19:26.1996] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:19:59.2910] kernel: Kernel initialization complete
+[Sep 30 10:20:17.7235] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:20:28.4591] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:21:02.8573] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:21:25.1847] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:21:45.7306] kernel: Kernel initialization complete
+[Sep 30 10:21:57.2292] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:22:09.8484] kernel: Memory: 512MB total
+[Sep 30 10:22:25.8495] kernel: Memory: 512MB total
+[Sep 30 10:22:31.9088] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:22:34.9368] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:22:53.9146] kernel: NET: Registered protocol family 17
+[Sep 30 10:22:59.6597] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:23:13.6241] kernel: NET: Registered protocol family 17
+[Sep 30 10:23:24.4351] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:23:38.8896] kernel: NET: Registered protocol family 17
+[Sep 30 10:23:43.9518] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:23:50.0397] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:24:22.9810] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:24:39.3430] kernel: Memory: 512MB total
+[Sep 30 10:24:55.3589] kernel: NET: Registered protocol family 17
+[Sep 30 10:25:05.9146] kernel: Kernel initialization complete
+[Sep 30 10:25:33.4216] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:25:38.2960] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:25:41.4607] kernel: Kernel initialization complete
+[Sep 30 10:25:49.2016] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:26:00.0678] kernel: Kernel initialization complete
+[Sep 30 10:26:05.1466] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:26:13.9470] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:26:16.1449] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:26:18.8519] kernel: Kernel initialization complete
+[Sep 30 10:26:23.7736] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:26:38.2137] kernel: NET: Registered protocol family 17
+[Sep 30 10:26:56.1652] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:27:04.5109] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:27:39.2671] kernel: Memory: 512MB total
+[Sep 30 10:27:58.6605] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:28:08.0200] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:28:11.0511] kernel: Memory: 512MB total
+[Sep 30 10:28:13.9713] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:28:21.6685] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:28:26.7251] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:28:48.9072] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:28:54.4022] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:28:57.6380] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:29:19.1011] kernel: Memory: 512MB total
+[Sep 30 10:29:21.8706] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:29:32.7937] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:30:06.4267] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:30:37.9594] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:30:48.4972] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:31:08.8009] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:31:41.5180] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:31:58.0429] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:32:29.0096] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:32:34.4081] kernel: Memory: 512MB total
+[Sep 30 10:33:02.9320] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:33:05.7404] kernel: Kernel initialization complete
+[Sep 30 10:33:11.2659] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:33:22.2941] kernel: Kernel initialization complete
+[Sep 30 10:33:51.5281] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:34:05.7622] kernel: Kernel initialization complete
+[Sep 30 10:34:11.3037] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:34:13.9145] kernel: Kernel initialization complete
+[Sep 30 10:34:19.1147] kernel: Kernel initialization complete
+[Sep 30 10:34:31.6866] kernel: NET: Registered protocol family 17
+[Sep 30 10:34:36.3054] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:34:41.7970] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:34:45.0038] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:34:58.6633] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:35:21.8847] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:35:24.3777] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:35:36.0357] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:35:41.3890] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:35:43.9337] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:37:21.3543] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:38:11.9930] kernel: Kernel initialization complete
+[Sep 30 10:38:32.3396] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:38:58.9095] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:39:09.6602] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:39:14.5458] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:39:17.0177] kernel: Memory: 512MB total
+[Sep 30 10:39:36.4503] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:39:57.3477] kernel: Memory: 512MB total
+[Sep 30 10:40:09.9249] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:41:06.5326] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:41:12.1499] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:41:20.4152] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:41:23.0093] kernel: Kernel initialization complete
+[Sep 30 10:41:28.7835] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:41:37.0618] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:41:55.8068] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:42:23.6753] kernel: Kernel initialization complete
+[Sep 30 10:42:42.6388] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:43:04.4005] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:43:23.7199] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:43:26.3398] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:44:01.9057] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:44:39.8991] kernel: Kernel initialization complete
+[Sep 30 10:44:42.6481] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:44:49.9606] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:45:18.3871] kernel: Kernel initialization complete
+[Sep 30 10:45:20.7789] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:45:25.5292] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:45:35.7458] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:45:51.7658] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:46:17.4334] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:46:23.2967] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:46:34.0712] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:46:39.2922] kernel: NET: Registered protocol family 17
+[Sep 30 10:47:02.4788] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:47:35.3215] kernel: NET: Registered protocol family 17
+[Sep 30 10:47:44.7351] kernel: Memory: 512MB total
+[Sep 30 10:48:05.5614] kernel: Kernel initialization complete
+[Sep 30 10:48:16.2856] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:48:21.4525] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:49:05.4951] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:49:25.0114] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:49:27.5786] kernel: Kernel initialization complete
+[Sep 30 10:49:44.2613] kernel: Kernel initialization complete
+[Sep 30 10:50:26.1385] kernel: Memory: 512MB total
+[Sep 30 10:50:49.4224] kernel: NET: Registered protocol family 17
+[Sep 30 10:51:10.4885] kernel: NET: Registered protocol family 17
+[Sep 30 10:51:22.4587] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:51:24.9617] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:51:45.9566] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:52:02.6556] kernel: Memory: 512MB total
+[Sep 30 10:52:05.5377] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:52:08.0585] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:52:41.4606] kernel: Kernel initialization complete
+[Sep 30 10:52:44.6694] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:53:00.4754] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:53:08.1002] kernel: Memory: 512MB total
+[Sep 30 10:53:13.6647] kernel: Memory: 512MB total
+[Sep 30 10:53:34.1517] kernel: Kernel initialization complete
+[Sep 30 10:54:43.0717] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:54:50.3141] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:55:05.5727] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:55:08.3634] kernel: Memory: 512MB total
+[Sep 30 10:55:15.7383] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:55:23.7923] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:56:05.6420] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:56:08.5118] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:56:11.3732] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:56:17.4390] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:56:23.0613] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:56:25.7011] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:56:33.2389] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:56:40.2869] kernel: Memory: 512MB total
+[Sep 30 10:56:42.5097] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:56:54.5353] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:57:14.7680] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:57:20.5608] kernel: Initializing cgroup subsys cpuset
+[Sep 30 10:57:52.0497] kernel: Linux version 5.10.0 (gcc version 9.3.0)
+[Sep 30 10:58:20.0360] kernel: Command line: root=/dev/mmcblk0p2 rw console=ttyS0,115200
+[Sep 30 10:58:37.9103] kernel: CPU: ARMv7 Processor rev 5 (v7l)
+[Sep 30 10:58:51.7562] kernel: mmc0: new high speed SDHC card at address 0001
+[Sep 30 10:58:54.0973] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:59:09.2371] kernel: Freeing unused kernel memory: 1024K
+[Sep 30 10:59:25.3341] kernel: usb 1-1: new high-speed USB device number 2
+[Sep 30 10:59:27.5670] kernel: Memory: 512MB total
+[Sep 30 10:59:30.4403] kernel: Memory: 512MB total
+[Sep 30 10:59:38.1017] kernel: NET: Registered protocol family 17
+[Sep 30 11:00:00.0000] kernel: CPU: ARMv7 Processor rev 5 (v7l)
