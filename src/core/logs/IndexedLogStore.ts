@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { getLogger } from '../logging/extension-logger.js';
 
 type FileSeg = { name: string; from: number; lines: number };

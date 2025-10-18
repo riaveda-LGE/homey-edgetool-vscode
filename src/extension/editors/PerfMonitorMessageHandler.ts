@@ -1,6 +1,6 @@
 // === src/extension/editors/PerfMonitorMessageHandler.ts ===
 import { getLogger } from '../../core/logging/extension-logger.js';
-import type { W2H } from '../messaging/messageTypes.js';
+import type { W2H } from '@ipc/messages';
 import type { IPerfMonitorCaptureManager, IPerfMonitorExportManager,IPerfMonitorMessageHandler } from './IPerfMonitorPanelComponents.js';
 
 export class PerfMonitorMessageHandler implements IPerfMonitorMessageHandler {

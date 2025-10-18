@@ -7,6 +7,10 @@ export function ensureExplorerContainer(root: HTMLElement) {
     el.innerHTML = `
       <div id="explorerBar">
         <div id="explorerTitle">Explorer</div>
+        <div id="explorerActions" aria-label="explorer actions">
+          <button id="explorerRefresh" title="Refresh (F5)" aria-label="Refresh"></button>
+          <span id="explorerBusy" aria-hidden="true"></span>
+        </div>
         <div id="explorerPath"></div>
       </div>
       <div id="explorerTree" role="tree" tabindex="0"></div>

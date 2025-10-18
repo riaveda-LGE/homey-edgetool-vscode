@@ -7,11 +7,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const isProd = process.env.NODE_ENV === 'production';
+// argv.mode를 신뢰해 모드/분기 일관화
+export default (_env, argv) => {
+  const mode = argv?.mode ?? 'production';
+  const isProd = mode === 'production';
 
-export default {
-  // DEV/PROD 전환
-  mode: isProd ? 'production' : 'development',
+  return {
+    // DEV/PROD 전환
+    mode,
 
   // DEV: 인라인 소스맵(외부 .map 파일 없이 VS Code에서 바로 매핑)
   // PROD: 소스맵 제거
@@ -34,6 +37,9 @@ export default {
   resolve: {
     extensions: ['.ts', '.js'],
     extensionAlias: { '.js': ['.ts', '.js'] },
+    alias: {
+      '@ipc': path.resolve(__dirname, 'src/shared/ipc'),
+    },
   },
 
   module: {
@@ -68,7 +74,8 @@ export default {
     // 웹뷰/번들에서 모드 분기를 쉽게 하도록 주입
     new webpack.DefinePlugin({
       __ESD__: JSON.stringify(!isProd),
-      'process.env.NODE_ENV': JSON.stringify(isProd ? 'production' : 'development'),
+      // ⛔️ 중복 정의 제거: webpack이 mode에 따라 자동 주입함
+      // 'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.EXT_MODE': JSON.stringify(isProd ? 'prod' : 'esd'),
     }),
     new CopyWebpackPlugin({
@@ -118,4 +125,5 @@ export default {
       ],
     }),
   ],
+  };
 };

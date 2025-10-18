@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { safeParseJson } from '../../shared/utils.js';
 import type { LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';

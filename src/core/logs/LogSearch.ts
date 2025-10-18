@@ -1,5 +1,5 @@
 // === src/core/logs/LogSearch.ts ===
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 
 export type SearchQuery = { q?: string; regex?: boolean; range?: [number, number]; top?: number };
 

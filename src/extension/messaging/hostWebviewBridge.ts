@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
-import type { H2W, W2H } from './messageTypes.js';
+import type { H2W, W2H } from '@ipc/messages';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 

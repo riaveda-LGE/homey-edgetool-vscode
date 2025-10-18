@@ -1,7 +1,7 @@
 // === src/core/logs/__tests__/LogFileIntegration.test.ts ===
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LogEntry } from '../../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { mergeDirectory, countTotalLinesInDir } from '../LogFileIntegration.js';
 
 // 전역 타임아웃(파일 상단, describe 밖)

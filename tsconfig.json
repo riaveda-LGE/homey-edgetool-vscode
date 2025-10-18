@@ -12,6 +12,11 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "verbatimModuleSyntax": true,
+    // ⬇️ 공용 IPC 타입 경로 별칭 (SSOT)
+    "baseUrl": ".",
+    "paths": {
+      "@ipc/messages": ["src/shared/ipc/messages.ts"]
+    },
     "sourceMap": true,
     "inlineSources": true,
     "types": ["node", "vscode"]

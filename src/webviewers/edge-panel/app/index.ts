@@ -2,7 +2,7 @@ import { createUiLog } from '../../shared/utils.js';
 import { ExplorerService } from '../services/ExplorerService.js';
 import { HostBridge } from '../services/HostBridge.js';
 import { PersistService } from '../services/PersistService.js';
-import type { H2W } from '../types/messages.js';
+import type { H2W } from '@ipc/messages';
 import type { TreeNode } from '../types/model.js';
 import { AppView } from '../views/AppView.js';
 import { createInitialState,reducer } from './reducer.js';

@@ -1,7 +1,7 @@
 // === src/core/logs/LogFileStorage.ts ===
 import * as fs from 'fs';
 
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { safeParseJson } from '../../shared/utils.js';
 import { globalProfiler, measureIO } from '../logging/perf.js';
 

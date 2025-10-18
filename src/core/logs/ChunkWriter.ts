@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 
 export type ChunkWriteResult = {
   /** 새로 만들어진 파일명(상대) */

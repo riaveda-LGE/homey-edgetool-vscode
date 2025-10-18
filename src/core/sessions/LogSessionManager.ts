@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { DEFAULT_BATCH_SIZE, MERGED_CHUNK_MAX_LINES, MERGED_DIR_NAME, MERGED_MANIFEST_FILENAME } from '../../shared/const.js';
 import { ErrorCategory,XError } from '../../shared/errors.js';
 import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';

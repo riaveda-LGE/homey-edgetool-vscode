@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import type { FileHandle } from 'fs/promises';
 import * as path from 'path';
 
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';

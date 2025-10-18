@@ -1,5 +1,5 @@
 // === src/core/logs/PaginationService.ts ===
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
+import type { LogEntry } from '@ipc/messages';
 import { getLogger } from '../logging/extension-logger.js';
 import { PagedReader } from './PagedReader.js';
 

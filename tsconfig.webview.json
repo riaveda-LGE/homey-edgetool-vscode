@@ -16,7 +16,10 @@
     "noImplicitAny": false,        // 웹뷰 소스의 암시적 any 경고 완화
     "skipLibCheck": true,
 
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@ipc/*": ["src/shared/ipc/*"]
+    }
   },
   "include": [
     "src/webviewers/**/*",

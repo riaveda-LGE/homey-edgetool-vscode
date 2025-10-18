@@ -67,6 +67,43 @@
   border-bottom: 1px solid var(--border); z-index: 1;
 }
 #explorerTitle { font-weight: 700; opacity: .9; }
+#explorerActions {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+#explorerRefresh {
+  width: 22px; height: 22px; border: 1px solid var(--border);
+  border-radius: 6px; background: transparent; cursor: pointer;
+  position: relative;
+}
+#explorerRefresh::before {
+  /* refresh 아이콘 (폰트 의존 없이 SVG 마스크) */
+  content:""; display:block; width: 16px; height: 16px; margin: 0 auto;
+  background-color: var(--vscode-foreground);
+  -webkit-mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+   <path d='M17.65 6.35A7.95 7.95 0 0 0 12 4 8 8 0 1 0 20 12h-2a6 6 0 1 1-6-6c1.48 0 2.83.54 3.87 1.43L13 10h7V3l-2.35 3.35z' fill='black'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+   <path d='M17.65 6.35A7.95 7.95 0 0 0 12 4 8 8 0 1 0 20 12h-2a6 6 0 1 1-6-6c1.48 0 2.83.54 3.87 1.43L13 10h7V3l-2.35 3.35z' fill='black'/></svg>") center/contain no-repeat;
+}
+#explorerRefresh:hover { background: rgba(255,255,255,.06); }
+#explorerRefresh:active { transform: translateY(1px); }
+#explorerRefresh:disabled {
+  opacity: .5; cursor: default; background: rgba(255,255,255,.03);
+}
+#explorerBusy {
+  width: 14px; height: 14px; display: inline-block;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: var(--focus);
+  border-radius: 50%;
+  opacity: 0; transform: scale(.9);
+}
+#explorerBusy.spinning {
+  opacity: 1;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 #explorerPath { color: var(--muted); }
 #explorerPath .crumb { color: var(--link); cursor: pointer; }
 #explorerPath .sep { opacity: .6; margin: 0 6px; }
