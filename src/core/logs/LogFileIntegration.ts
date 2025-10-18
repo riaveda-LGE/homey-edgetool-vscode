@@ -75,7 +75,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     // 입력 로그(.log/.log.N/.txt) 수집
     const files = await listInputLogFiles(opts.dir);
     log.info(
-      `mergeDirectory: start dir=${opts.dir} files=${files.length} reverse=${!!opts.reverse} batchSize=${batchSize}`,
+      `T1: mergeDirectory start dir=${opts.dir} files=${files.length} reverse=${!!opts.reverse} batchSize=${batchSize}`,
     );
     if (!files.length) {
       log.warn('mergeDirectory: no log files to merge');
@@ -112,17 +112,17 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (fs.existsSync(rawDir)) fs.rmSync(rawDir, { recursive: true, force: true });
       await fs.promises.mkdir(rawDir, { recursive: true });
     }
-    log.info(`mergeDirectory: created merged dir=${mergedDir}${rawDir ? ` raw dir=${rawDir}` : ''}`);
+    log.info(`T1: created intermediates merged=${mergedDir}${rawDir ? ` raw=${rawDir}` : ''}`);
 
     // 1) 타입 그룹화(.log 전용)
     const grouped = groupByType(files);
-    log.info(`mergeDirectory: type groups=${grouped.size}`);
+    log.info(`T1: type groups=${grouped.size}`);
 
     // 2) 타입별 메모리 로딩(최신→오래된), 타임존 보정(국소), merged(JSONL) 저장(최신순)
     for (const [typeKey, fileList] of grouped) {
       if (opts.signal?.aborted) break;
 
-      log.debug(`mergeDirectory: processing type=${typeKey} files=${fileList.length}`);
+      log.debug(`T1: processing type=${typeKey} files=${fileList.length}`);
       const logs: LogEntry[] = [];
 
       // 최신 파일부터( *.log → *.log.1 → *.log.2 … )
@@ -139,7 +139,7 @@ export async function mergeDirectory(opts: MergeOptions) {
         }
         await rr.close();
       }
-      log.info(`mergeDirectory: loaded ${logs.length} logs for type=${typeKey}`);
+      log.info(`T1: loaded ${logs.length} logs for type=${typeKey}`);
 
       // (옵션) RAW 저장 — 최신→오래된 그대로
       if (rawDir && logs.length) {
@@ -151,6 +151,7 @@ export async function mergeDirectory(opts: MergeOptions) {
 
       // 타임존 보정 (국소 소급 보정 지원)
       const tzc = new TimezoneCorrector(typeKey);
+      let tzRetroSegmentsApplied = 0;
       for (let i = 0; i < logs.length; i++) {
         const corrected = tzc.adjust(logs[i].ts, i);
         logs[i].ts = corrected;
@@ -158,6 +159,7 @@ export async function mergeDirectory(opts: MergeOptions) {
         // 복귀가 확정되면 방금까지의 suspected 구간만 Δoffset 적용
         const segs = tzc.drainRetroSegments();
         if (segs.length) {
+          tzRetroSegmentsApplied += segs.length;
           for (const seg of segs) {
             for (let j = seg.start; j <= Math.min(seg.end, logs.length - 1); j++) {
               logs[j].ts += seg.deltaMs;
@@ -167,6 +169,7 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
       // 파일 끝에서 suspected가 남아있으면 폐기(복귀 증거 없음)
       tzc.finalizeSuspected();
+      log.debug?.(`T1: timezone correction type=${typeKey} retroSegmentsApplied=${tzRetroSegmentsApplied}`);
 
       // ⬇️ JSONL 저장은 "최신→오래된(내림차순)"으로 저장
       logs.sort((a, b) => b.ts - a.ts);
@@ -174,13 +177,13 @@ export async function mergeDirectory(opts: MergeOptions) {
       for (const logEntry of logs) {
         await fs.promises.appendFile(mergedFile, JSON.stringify(logEntry) + '\n');
       }
-      log.info(`mergeDirectory: saved ${logs.length} logs to ${mergedFile} (desc ts)`);
+      log.info(`T1: saved ${logs.length} logs to ${mergedFile} (desc ts)`);
     }
 
     // 3) merged(JSONL)에서 타입별로 **순방향** 100줄씩 읽어 k-way 병합(최신→오래된)
     const mergedFiles = await listMergedJsonlFiles(mergedDir); // ← .jsonl 전용
     if (!mergedFiles.length) {
-      log.warn(`mergeDirectory: no merged jsonl files in ${mergedDir}`);
+      log.warn(`T1: no merged jsonl files in ${mergedDir}`);
     }
 
     // 파일명에서 타입키 추출( clip.jsonl → clip )
@@ -191,6 +194,7 @@ export async function mergeDirectory(opts: MergeOptions) {
       const cursor = await MergedCursor.create(fullPath, typeKey);
       cursors.set(typeKey, cursor);
     }
+    log.info(`T1: cursors ready types=${cursors.size}`);
 
         // k-way max-heap: ts 큰 것(최신) 우선
     const heap = new MaxHeap<HeapItem>((a, b) => {
@@ -238,7 +242,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     if (opts.signal?.aborted) {
       for (const [, cursor] of cursors) await cursor.close();
     }
-    log.info(`mergeDirectory: done emitted=${emitted}`);
+    log.info(`T1: done emitted=${emitted}`);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     log.error(`mergeDirectory: error dir=${opts.dir} ${msg}`);
@@ -650,6 +654,7 @@ export async function warmupTailPrepass(
 ): Promise<LogEntry[]> {
   const { dir, signal } = opts;
   const logger = getLogger('LogFileIntegration');
+  logger.info(`warmup(T0): start dir=${dir}`);
   const target = Math.max(1, Number(opts.warmupTarget ?? 500));
   const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
     ? Math.max(1, Number(opts.warmupPerTypeLimit))
@@ -676,10 +681,10 @@ export async function warmupTailPrepass(
     alloc.set(k, Math.min(want, perTypeCap));
   }
   logger.info(
-    `warmup: plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`
+    `warmup(T0): plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`
   );
   logger.debug?.(
-    `warmup: per-type allocation → ` +
+    `warmup(T0): per-type allocation → ` +
     typeKeys.map(k => `${k}:${alloc.get(k)}`).join(', ')
   );
 
@@ -731,7 +736,7 @@ export async function warmupTailPrepass(
     walkers.set(k, new TypeTailWalker(dir, files));
     buffers.set(k, []);
   }
-  logger.info(`warmup: walkers ready for ${typeKeys.length} types`);
+  logger.info(`warmup(T0): walkers ready for ${typeKeys.length} types`);
 
   // 헬퍼: 라인 -> LogEntry (파일명을 source로)
   const toEntry = (fileName: string, line: string): LogEntry => {
@@ -764,7 +769,7 @@ export async function warmupTailPrepass(
   }
 
   // 5) 재분배: target까지 부족하면 남은 타입에서 추가 로딩
-  logger.debug?.(`warmup: primary load total=${total}, target=${target}`);
+  logger.debug?.(`warmup(T0): primary load total=${total}, target=${target}`);
   let deficit = Math.max(0, target - total);
   if (deficit > 0) {
     // 현재 각 타입이 cap에 도달했는지 계산
@@ -783,7 +788,7 @@ export async function warmupTailPrepass(
         const got = await batchRead(k, take);
         deficit -= got;
         total += got;
-        logger.debug?.(`warmup: rebalanced ${k} +=${got}, remain deficit=${deficit}`);
+        logger.debug?.(`warmup(T0): rebalanced ${k} +=${got}, remain deficit=${deficit}`);
       }
       i++;
       slots = room();
@@ -792,17 +797,19 @@ export async function warmupTailPrepass(
 
   if (total === 0) return [];
 
-  logger.info(`warmup: collected total=${total} (before TZ correction)`);
+  logger.info(`warmup(T0): collected total=${total} (before TZ correction)`);
   // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
   for (const k of typeKeys) {
     const arr = buffers.get(k)!;
     if (!arr.length) continue;
     const tzc = new TimezoneCorrector(k);
+    let tzRetroSegmentsApplied = 0;
     for (let i = 0; i < arr.length; i++) {
       const corrected = tzc.adjust(arr[i].ts, i);
       arr[i].ts = corrected;
       const segs = tzc.drainRetroSegments();
       if (segs.length) {
+        tzRetroSegmentsApplied += segs.length;
         for (const seg of segs) {
           for (let j = seg.start; j <= Math.min(seg.end, arr.length - 1); j++) {
             arr[j].ts += seg.deltaMs;
@@ -811,13 +818,14 @@ export async function warmupTailPrepass(
       }
     }
     tzc.finalizeSuspected();
+    logger.debug?.(`warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`);
     arr.sort((a, b) => b.ts - a.ts); // 최신순
     // 파일 기반(JSONL) 경로와 동일하게 source를 typeKey로 통일
     for (const e of arr) (e as any).source = k;
   }
 
   // 7) k-way 병합으로 정확히 target개만 추출
-  logger.info(`warmup: k-way merge to emit=${target}`);
+  logger.info(`warmup(T0): k-way merge to emit=${target}`);
   type WarmItem = { ts: number; entry: LogEntry; typeKey: string; idx: number };
   const heap = new MaxHeap<WarmItem>((a, b) => {
     if (a.ts !== b.ts) return a.ts - b.ts; // 큰 ts 우선
@@ -838,7 +846,11 @@ export async function warmupTailPrepass(
       heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
     }
   }
-  logger.info(`warmup: prepared lines=${out.length}`);
+  logger.info(`warmup(T0): prepared lines=${out.length}`);
+  if (out.length < target) {
+    logger.info(`warmup(T0): dataset smaller than target (out=${out.length} < target=${target}) — will short-circuit T1 if total is known and ≤ out`);
+  }
+  logger.info(`warmup(T0): prepared lines=${out.length}`);
   return out;
 }// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
 async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 1024): Promise<string[]> {

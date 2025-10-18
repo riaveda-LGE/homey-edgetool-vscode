@@ -111,13 +111,13 @@ export class LogSessionManager {
   async startFileMergeSession(
     opts: { dir: string; signal?: AbortSignal; indexOutDir?: string } & SessionCallbacks,
   ) {
-    this.log.info(`merge: session start dir=${opts.dir}`);
+    this.log.info(`T*: merge session start dir=${opts.dir}`);
     let seq = 0;
-    this.log.info(`merge: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`);
+    this.log.info(`T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`);
 
     // 총 라인 수 추정 (실패 시 undefined)
     const total = await this.estimateTotalLinesSafe(opts.dir);
-    this.log.info(`merge: estimated total lines=${total ?? 'unknown'}`);
+    this.log.info(`T*: estimated total lines=${total ?? 'unknown'}`);
 
     // 진행률: 시작 알림(0/total, active)
     opts.onProgress?.({ inc: 0, total, active: true });
@@ -145,7 +145,7 @@ export class LogSessionManager {
           // Short-circuit: 웜업 수가 총합 이상이면 T1 스킵
           if (typeof total === 'number' && warmLogs.length >= total) {
             opts.onProgress?.({ done: total, total, active: false });
-            this.log.info(`merge: short-circuit after warmup (warm=${warmLogs.length} >= total=${total}) — skip T1`);
+            this.log.info(`T*: short-circuit after warmup (warm=${warmLogs.length} >= total=${total}) — skip T1`);
             return;
           }
         } else {
@@ -162,14 +162,14 @@ export class LogSessionManager {
     //   - 없으면 기존 규칙(<선택폴더>/merge_log) 사용
     const baseOut = opts.indexOutDir || path.join(opts.dir, MERGED_DIR_NAME);
     const outDir = await this.prepareCleanOutputDir(baseOut);
-    this.log.info(`merge: outDir=${outDir}`);
+    this.log.info(`T1: outDir=${outDir}`);
 
     // manifest / chunk writer 준비
     const manifest = await ManifestWriter.loadOrCreate(outDir);
     manifest.setTotal(total);
     const chunkWriter = new ChunkWriter(outDir, MERGED_CHUNK_MAX_LINES, manifest.data.chunkCount);
     this.log.debug?.(
-      `merge: manifest loaded chunks=${manifest.data.chunkCount} mergedLines=${manifest.data.mergedLines ?? 0}`
+      `T1: manifest loaded chunks=${manifest.data.chunkCount} mergedLines=${manifest.data.mergedLines ?? 0}`
     );
 
     // 전역 인덱스 부여(최신=1). 과거에 이어쓸 수 있으므로 기저값은 mergedLines.
@@ -188,7 +188,7 @@ export class LogSessionManager {
     // 🔹 FF.writeRaw 가 true일 때만 RAW 스냅샷 경로 활성화
     const rawDir   = FF.writeRaw ? path.join(outDir, '__raw') : undefined;
     this.log.debug?.(
-      `merge: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir ?? '(disabled)'}`
+      `T1: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir ?? '(disabled)'}`
     );
 
     await mergeDirectory({
@@ -217,7 +217,7 @@ export class LogSessionManager {
           if (initialBuffer.length >= 500) {
             const slice = initialBuffer.slice(0, 500);
             const t = paginationService.isWarmupActive() ? paginationService.getWarmTotal() : total;
-            this.log.info(`merge: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()})`);
+            this.log.info(`T1: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()})`);
             // 워밍업이 이미 초기 500을 보냈다면 보통 여긴 실행되지 않지만,
             // 안전하게 가드 없이도 동일 total로 동작하도록 유지
             opts.onBatch(slice, t, ++seq);
@@ -228,7 +228,7 @@ export class LogSessionManager {
         // 3) 청크 파일 쓰기
         const createdParts = await chunkWriter.appendBatch(logs);
         if (createdParts.length) {
-          this.log.debug?.(`merge: chunk append parts=${createdParts.length}`);
+          this.log.debug?.(`T1: chunk append parts=${createdParts.length}`);
         }
         for (const p of createdParts) {
           manifest.addChunk(p.file, p.lines, mergedSoFar);
@@ -241,9 +241,9 @@ export class LogSessionManager {
         if (!paginationOpened && manifest.data.chunkCount > 0) {
           try {
             await paginationService.setManifestDir(outDir);
-            this.log.info(`merge: pagination opened early (T0) dir=${outDir}`);
+            this.log.info(`T1: pagination opened early (T0 checkpoint) dir=${outDir}`);
           } catch (e) {
-            this.log.warn(`merge: early pagination open failed: ${String(e)}`);
+            this.log.warn(`T1: early pagination open failed: ${String(e)}`);
           }
           paginationOpened = true;
         }
@@ -264,7 +264,7 @@ export class LogSessionManager {
     if (remainder) {
       manifest.addChunk(remainder.file, remainder.lines, mergedSoFar);
       mergedSoFar += remainder.lines;
-      this.log.debug?.(`merge: remainder flushed lines=${remainder.lines}`);
+      this.log.debug?.(`T1: remainder flushed lines=${remainder.lines}`);
       await manifest.save();
       // ❌ 중복 누적 방지를 위해 여기서는 진행률 inc 전송하지 않음
       // (최종 done/total 신호로 바를 고정)
@@ -277,20 +277,20 @@ export class LogSessionManager {
     } else {
       await paginationService.reload();
     }
-    this.log.info(`merge: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`);
+    this.log.info(`T1: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`);
     // 파일 기반으로 스위치되면 워밍업 버퍼는 내부적으로 clear됨(reload에서 처리)
     if (!paginationService.isWarmupActive()) {
-      this.log.info(`merge: switched to file-backed pagination (warm buffer cleared)`);
+      this.log.info(`T1: switched to file-backed pagination (warm buffer cleared)`);
     }
     // 파일 기반 최신 500 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
     try {
       const freshHead = await paginationService.readRangeByIdx(1, 500);
       if (freshHead.length) {
-        this.log.info(`merge: deliver refreshed head=${freshHead.length} (file-backed)`);
+        this.log.info(`T1: deliver refreshed head=${freshHead.length} (file-backed)`);
         opts.onBatch(freshHead, manifest.data.totalLines ?? total, ++seq);
       }
     } catch (e) {
-      this.log.warn(`merge: failed to deliver refreshed head: ${String(e)}`);
+      this.log.warn(`T1: failed to deliver refreshed head: ${String(e)}`);
     }
 
     // 완료 알림(바 고정 목적)
