@@ -63,7 +63,7 @@
 #explorerBar {
   position: sticky; top: 0;
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px; background: var(--panel);
+  padding: 3px 10px; background: var(--panel);
   border-bottom: 1px solid var(--border); z-index: 1;
 }
 #explorerTitle { font-weight: 700; opacity: .9; }
@@ -72,13 +72,23 @@
   display: inline-flex; align-items: center; gap: 6px;
 }
 #explorerRefresh {
-  width: 22px; height: 22px; border: 1px solid var(--border);
-  border-radius: 6px; background: transparent; cursor: pointer;
+  width: 26px; height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;  /* 아이콘 수직/수평 중앙정렬 */
+  box-sizing: border-box;
 }
 #explorerRefresh::before {
   /* refresh 아이콘 (폰트 의존 없이 SVG 마스크) */
-  content:""; display:block; width: 16px; height: 16px; margin: 0 auto;
+  content:"";
+  display:block;
+  width: 18px; height: 18px;  /* 버튼 커진 만큼 아이콘도 확대 */
+  margin: 0;
   background-color: var(--vscode-foreground);
   -webkit-mask: url("data:image/svg+xml;utf8,\
   <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
@@ -104,7 +114,16 @@
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-#explorerPath { color: var(--muted); }
+#explorerPath {
+  color: var(--muted);
+  flex: 1 1 auto;        /* 타이틀 옆에서 확장 */
+  min-width: 0;          /* ellipsis 동작 보장 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: inline-flex;  /* crumb 정렬 */
+  align-items: center;
+}
 #explorerPath .crumb { color: var(--link); cursor: pointer; }
 #explorerPath .sep { opacity: .6; margin: 0 6px; }
 #explorerTree { padding: 6px 8px 12px 6px; outline: none; font-size: 13px; }
