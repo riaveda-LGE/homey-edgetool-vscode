@@ -118,11 +118,20 @@ export class LogSessionManager {
     let sentInitial = false;           // ✅ 최초 500줄만 보낼 가드
     const initialBuffer: LogEntry[] = [];
 
+    // 중간 산출물 위치를 워크스페이스 산출물 폴더 하위로 고정
+    //  - __jsonl : 타입별 정렬된 JSONL (k-way 병합 입력)
+    //  - __raw   : (옵션) 보정 전 RAW JSONL
+    const jsonlDir = path.join(outDir, '__jsonl');
+    const rawDir   = path.join(outDir, '__raw');
+    this.log.debug?.(`merge: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir}`);
+
     await mergeDirectory({
       dir: opts.dir,
       reverse: false,
       signal: opts.signal,
       batchSize: DEFAULT_BATCH_SIZE,
+      mergedDirPath: jsonlDir,
+      rawDirPath: rawDir,
       onBatch: async (logs) => {
         // 0) 전역 인덱스 부여
         for (const e of logs) {
