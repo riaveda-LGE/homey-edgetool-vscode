@@ -113,6 +113,7 @@ export class LogSessionManager {
   ) {
     this.log.info(`merge: session start dir=${opts.dir}`);
     let seq = 0;
+    this.log.info(`merge: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`);
 
     // 총 라인 수 추정 (실패 시 undefined)
     const total = await this.estimateTotalLinesSafe(opts.dir);
@@ -169,20 +170,23 @@ export class LogSessionManager {
       warmupTarget: FF.warmupTarget,
       /** 🔹 워밍업 전용 콜백: UI로만 즉시 전달, 디스크/manifest 기록 금지 */
       onWarmupBatch: (logs: LogEntry[]) => {
-        if (sentInitial || !logs?.length) return;
-        // 임시 전역 idx 할당(하드리프레시 후 교체될 예정)
-        for (const e of logs) {
-          nextIdx += 1;
-          (e as any).idx = nextIdx;
-        }
-        // 메모리 메트릭 업데이트(선택)
+        if (!logs?.length) return;
+        // 워밍업 2000개(또는 설정값) 시드 → PaginationService가 메모리에서 슬라이스 제공
+        // 요구: "일단 2,000으로 가상 스크롤 동작"
+        const virtualTotal = (FF.warmupTarget ?? logs.length);
+        // 임시 idx 부여(최신=1). 워밍업 기간 중 UI는 이 idx로 스크롤
+        for (const e of logs) { nextIdx += 1; (e as any).idx = nextIdx; }
+        paginationService.seedWarmupBuffer(logs, virtualTotal);
         this.hb.addBatch(logs);
-        // UI로 즉시 송신
-        this.log.info(`warmup: deliver ${logs.length} lines`);
-        opts.onBatch(logs, total, ++seq);
-        // 최초 배치 보낸 것으로 간주
-        sentInitial = true;
-        // 디스크/manifest 기록은 하지 않음(본 패스 산출물만 기록)
+        this.log.info(`warmup: seeded warm buffer entries=${virtualTotal}; send first 500 to UI (virtualTotal used for scroll)`);
+
+        // 첫 500줄만 즉시 전송
+        const first = logs.slice(0, Math.min(500, logs.length));
+        if (!sentInitial && first.length) {
+          opts.onBatch(first, virtualTotal, ++seq);
+          sentInitial = true; // 이후 onBatch(본 패스)에서 초기 전송 금지
+        }
+        // 디스크/manifest 기록은 하지 않음 — 본 패스에서만 파일 기록
       },
 
       onBatch: async (logs: LogEntry[]) => {
@@ -200,8 +204,11 @@ export class LogSessionManager {
           initialBuffer.push(...logs);
           if (initialBuffer.length >= 500) {
             const slice = initialBuffer.slice(0, 500);
-            this.log.info(`merge: initial deliver len=${slice.length} total=${total ?? 'unknown'}`);
-            opts.onBatch(slice, total, ++seq);
+            const t = paginationService.isWarmupActive() ? paginationService.getWarmTotal() : total;
+            this.log.info(`merge: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()})`);
+            // 워밍업이 이미 초기 500을 보냈다면 보통 여긴 실행되지 않지만,
+            // 안전하게 가드 없이도 동일 total로 동작하도록 유지
+            opts.onBatch(slice, t, ++seq);
             sentInitial = true;
           }
         }
@@ -259,6 +266,20 @@ export class LogSessionManager {
       await paginationService.reload();
     }
     this.log.info(`merge: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`);
+    // 파일 기반으로 스위치되면 워밍업 버퍼는 내부적으로 clear됨(reload에서 처리)
+    if (!paginationService.isWarmupActive()) {
+      this.log.info(`merge: switched to file-backed pagination (warm buffer cleared)`);
+    }
+    // (옵션) 파일 기반으로 재정렬된 최신 500줄을 즉시 푸시해 UI를 깔끔히 맞춰줌
+    try {
+      const freshHead = await paginationService.readRangeByIdx(1, 500);
+      if (freshHead.length) {
+        this.log.info(`merge: deliver refreshed head=${freshHead.length} (file-backed)`);
+        opts.onBatch(freshHead, manifest.data.totalLines ?? total, ++seq);
+      }
+    } catch (e) {
+      this.log.warn(`merge: failed to deliver refreshed head: ${String(e)}`);
+    }
 
     // 완료 알림(바 고정 목적)
     opts.onProgress?.({

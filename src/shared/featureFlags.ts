@@ -2,8 +2,8 @@
 // 프로덕트 기본값(빌드 타임 고정). 테스트에서는 아래 setter로만 오버라이드 허용.
 
 export const LOG_WARMUP_ENABLED_DEFAULT = true;   // 프로덕트 기본: 워밍업 사용
-export const LOG_WARMUP_PER_TYPE_LIMIT_DEFAULT = 500;
-export const LOG_WARMUP_TARGET_DEFAULT = 500;     // 최초 방출 목표치
+export const LOG_WARMUP_PER_TYPE_LIMIT_DEFAULT = 10000;
+export const LOG_WARMUP_TARGET_DEFAULT = 2000;    // 최초 방출 목표치(가상 스크롤용 2,000)
 export const LOG_WRITE_RAW_DEFAULT = false;       // 프로덕트 기본: RAW(JSONL) 기록 비활성화
 
 let _warmupEnabled = LOG_WARMUP_ENABLED_DEFAULT;

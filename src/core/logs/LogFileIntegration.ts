@@ -630,123 +630,214 @@ function lineToEntry(filePath: string, line: string): LogEntry {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 워밍업 선행패스 구현
-// - 각 타입별 "최신 파일"만 대상으로 tail에서 최대 N줄만 읽어 메모리에 모음
-// - 엄밀한 k-way 정렬 대신 경량 interleave(라운드로빈)로 혼합 → 목표치에 도달하면 즉시 onBatch
-// - manifest/청크 파일 갱신 없음 (I/O 최소화)
+// 워밍업 선행패스 구현 (균등+재분배 / 타임존 보정 / 정확히 target개 방출)
+// - 타입 수에 맞춰 균등 할당 후 남는 몫(remainder) 분배
+// - 어떤 타입이 모자라면 잔여 할당을 다른 타입으로 "재분배"
+// - 타입별 버퍼는 최신→오래된 순으로 수집 후 타임존 보정, 보정 후 최신순(ts desc) 정렬
+// - 최종 k-way 병합으로 정확히 target개만 반환
 async function warmupTailPrepass(opts: MergeOptions): Promise<boolean> {
   const { dir, signal } = opts;
-  const log = getLogger('LogFileIntegration');
-  const perType = Math.max(1, Number(opts.warmupPerTypeLimit ?? 500));
+  const logger = getLogger('LogFileIntegration');
   const target = Math.max(1, Number(opts.warmupTarget ?? 500));
-
+  const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
+    ? Math.max(1, Number(opts.warmupPerTypeLimit))
+    : Number.POSITIVE_INFINITY;
   if (!opts.onWarmupBatch && !opts.onBatch) return false;
-
-  // 중단 체크 헬퍼
   const aborted = () => !!signal?.aborted;
   if (aborted()) return false;
 
-  // 입력 디렉토리의 파일 나열(하위 폴더는 무시)
-  let files: string[] = [];
-  try {
-    const names = await fs.promises.readdir(dir, { withFileTypes: true });
-    files = names
-      .filter((d) => d.isFile())
-      .map((d) => path.join(dir, d.name));
-  } catch (e) {
-    log.warn(`warmup: readdir failed: ${String(e)}`);
-    return false;
-  }
-  if (files.length === 0) return false;
+  // 1) 입력 로그 파일 수집 → 타입별 그룹화(회전 파일 포함)
+  const names = await listInputLogFiles(dir);
+  if (!names.length) return false;
+  const grouped = groupByType(names); // key: type, val: ['x.log', 'x.log.1', ...]
+  const typeKeys = [...grouped.keys()];
+  const T = typeKeys.length;
+  if (!T) return false;
 
-  // 타입 추론: 파일명 키워드 기반(간단 휴리스틱)
-  const inferType = (p: string): string => {
-    const b = path.basename(p).toLowerCase();
-    if (b.includes('kernel')) return 'kernel';
-    if (b.includes('homey')) return 'homey-pro';
-    if (b.includes('matter')) return 'matter';
-    if (b.includes('z3')) return 'z3gateway';
-    if (b.includes('cpcd')) return 'cpcd';
-    return 'other';
+  // 2) 균등 + remainder 분배 (cap 고려)
+  const base = Math.floor(target / T);
+  let rem = target % T;
+  const alloc = new Map<string, number>();
+  for (let i = 0; i < T; i++) {
+    const k = typeKeys[i];
+    const want = base + (rem > 0 ? 1 : 0);
+    if (rem > 0) rem--;
+    alloc.set(k, Math.min(want, perTypeCap));
+  }
+  logger.info(
+    `warmup: plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`
+  );
+  logger.debug?.(
+    `warmup: per-type allocation → ` +
+    typeKeys.map(k => `${k}:${alloc.get(k)}`).join(', ')
+  );
+
+  // 3) 타입별 tail walker 준비
+  class TypeTailWalker {
+    private idx = 0;
+    private rr: ReverseLineReader | null = null;
+    private exhausted = false;
+    constructor(private baseDir: string, private files: string[]) {}
+    get isExhausted() { return this.exhausted; }
+    private async ensureReader() {
+      while (!this.rr && this.idx < this.files.length) {
+        const fp = path.join(this.baseDir, this.files[this.idx]);
+        try {
+          this.rr = await ReverseLineReader.open(fp);
+        } catch {
+          // 파일 오픈 실패 시 다음 파일로
+          this.idx++;
+        }
+      }
+      if (!this.rr && this.idx >= this.files.length) this.exhausted = true;
+    }
+    async next(n: number): Promise<{ line: string; file: string }[]> {
+      if (this.exhausted) return [];
+      await this.ensureReader();
+      const out: { line: string; file: string }[] = [];
+      while (out.length < n && !this.exhausted) {
+        if (!this.rr) { this.exhausted = true; break; }
+        const line = await this.rr.nextLine();
+        if (line === null) {
+          // 현재 파일 끝 → 닫고 다음 파일
+          try { await this.rr.close(); } catch {}
+          this.rr = null;
+          this.idx++;
+          await this.ensureReader();
+          continue;
+        }
+        out.push({ line, file: this.files[this.idx] });
+      }
+      return out;
+    }
+  }
+
+  // 타입별 워커/버퍼 초기화
+  const walkers = new Map<string, TypeTailWalker>();
+  const buffers = new Map<string, LogEntry[]>();
+  for (const k of typeKeys) {
+    const files = grouped.get(k)!.slice().sort(compareLogOrderDesc);
+    walkers.set(k, new TypeTailWalker(dir, files));
+    buffers.set(k, []);
+  }
+  logger.info(`warmup: walkers ready for ${typeKeys.length} types`);
+
+  // 헬퍼: 라인 -> LogEntry (파일명을 source로)
+  const toEntry = (fileName: string, line: string): LogEntry => {
+    const full = path.join(dir, fileName);
+    return lineToEntry(full, line);
   };
 
-  // 타입별 최신 파일만 선택
-  const groups = new Map<string, { file: string; mtime: number }>();
-  await Promise.all(files.map(async (f) => {
-    try {
-      const st = await fs.promises.stat(f);
-      if (!st.isFile()) return;
-      const t = inferType(f);
-      const cur = groups.get(t);
-      if (!cur || st.mtimeMs > cur.mtime) groups.set(t, { file: f, mtime: st.mtimeMs });
-    } catch {}
-  }));
+  // 4) 1차 수집: 균등 할당만큼 per-type 로딩
+  const batchRead = async (typeKey: string, need: number) => {
+    if (need <= 0) return 0;
+    const w = walkers.get(typeKey)!;
+    let got = 0;
+    // 한 번에 너무 큰 I/O를 피하려고 소형 청크로 읽음
+    const CHUNK = 64;
+    while (got < need && !w.isExhausted && !aborted()) {
+      const n = Math.min(CHUNK, need - got);
+      const part = await w.next(n);
+      if (!part.length) break;
+      const buf = buffers.get(typeKey)!;
+      for (const { line, file } of part) buf.push(toEntry(file, line));
+      got += part.length;
+    }
+    return got;
+  };
 
-  const picks = [...groups.values()].map(x => x.file);
-  if (picks.length === 0) return false;
-  log.info(`warmup: picked latest files per type: ${picks.map(p=>path.basename(p)).join(', ')}`);
-  if (aborted()) return false;
+  let total = 0;
+  for (const k of typeKeys) {
+    const want = alloc.get(k)!;
+    total += await batchRead(k, want);
+  }
 
-  // 각 파일 꼬리에서 최대 perType 줄만 tail
-  const perTypeLines: LogEntry[][] = [];
-  for (const f of picks) {
-    if (aborted()) return false;
-    try {
-      const raw = await tailLines(f, perType);
-      // 최신이 뒤쪽이라고 가정 → 뒤→앞 역순으로 최신우선화
-      raw.reverse();
-      const src = path.basename(f);
-      const type = inferType(f) as any;
-      const items: LogEntry[] = raw.map((line, i) => ({
-        id: Date.now() + i,
-        ts: Date.now(),        // 엄밀한 정렬은 본 패스에서 수행 (여긴 표시용)
-        type,
-        source: src,
-        text: line,
-      }));
-      perTypeLines.push(items);
-      log.debug?.(`warmup: tail ${src} -> ${items.length} lines`);
-    } catch (e) {
-      log.warn(`warmup: tail failed for ${path.basename(f)}: ${String(e)}`);
+  // 5) 재분배: target까지 부족하면 남은 타입에서 추가 로딩
+  logger.debug?.(`warmup: primary load total=${total}, target=${target}`);
+  let deficit = Math.max(0, target - total);
+  if (deficit > 0) {
+    // 현재 각 타입이 cap에 도달했는지 계산
+    const room = () =>
+      typeKeys
+        .map(k => ({ k, room: Math.max(0, (perTypeCap === Number.POSITIVE_INFINITY ? Number.MAX_SAFE_INTEGER : perTypeCap) - buffers.get(k)!.length) }))
+        .filter(x => x.room > 0);
+    let slots = room();
+    // 라운드로빈으로 1~CHUNK씩 분배
+    let i = 0;
+    const CHUNK = 64;
+    while (deficit > 0 && slots.length && !aborted()) {
+      const { k, room: r } = slots[i % slots.length];
+      const take = Math.min(CHUNK, r, deficit);
+      if (take > 0) {
+        const got = await batchRead(k, take);
+        deficit -= got;
+        total += got;
+        logger.debug?.(`warmup: rebalanced ${k} +=${got}, remain deficit=${deficit}`);
+      }
+      i++;
+      slots = room();
     }
   }
-  if (perTypeLines.length === 0) return false;
 
-  // 라운드로빈 interleave로 혼합 → target까지 자름
-  const mixed: LogEntry[] = [];
-  let idx = 0;
-  while (mixed.length < target) {
-    let advanced = false;
-    for (const arr of perTypeLines) {
-      if (arr[idx]) {
-        mixed.push(arr[idx]);
-        advanced = true;
-        if (mixed.length >= target) break;
+  if (total === 0) return false;
+
+  logger.info(`warmup: collected total=${total} (before TZ correction)`);
+  // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
+  for (const k of typeKeys) {
+    const arr = buffers.get(k)!;
+    if (!arr.length) continue;
+    const tzc = new TimezoneCorrector(k);
+    for (let i = 0; i < arr.length; i++) {
+      const corrected = tzc.adjust(arr[i].ts, i);
+      arr[i].ts = corrected;
+      const segs = tzc.drainRetroSegments();
+      if (segs.length) {
+        for (const seg of segs) {
+          for (let j = seg.start; j <= Math.min(seg.end, arr.length - 1); j++) {
+            arr[j].ts += seg.deltaMs;
+          }
+        }
       }
     }
-    if (!advanced) break; // 더 뽑을 게 없음
-    idx++;
-    if (aborted()) return false;
+    tzc.finalizeSuspected();
+    arr.sort((a, b) => b.ts - a.ts); // 최신순
+    // 파일 기반(JSONL) 경로와 동일하게 source를 typeKey로 통일
+    for (const e of arr) (e as any).source = k;
   }
 
-  if (mixed.length === 0) return false;
-  const out = mixed.slice(0, Math.min(target, mixed.length));
-  try {
-    // ✅ 워밍업 전용 콜백이 있으면 그것만 호출(디스크/manifest 기록 금지)
-    if (opts.onWarmupBatch) {
-      opts.onWarmupBatch(out);
-    } else if (opts.onBatch) {
-      // ⛳️ 하위호환: onWarmupBatch 미구현인 호출자에 한해 onBatch로 전달
-      // (LogSessionManager 경로에서는 onWarmupBatch를 사용하므로 중복기록 없음)
-      opts.onBatch(out);
+  // 7) k-way 병합으로 정확히 target개만 추출
+  logger.info(`warmup: k-way merge to emit=${target}`);
+  type WarmItem = { ts: number; entry: LogEntry; typeKey: string; idx: number };
+  const heap = new MaxHeap<WarmItem>((a, b) => {
+    if (a.ts !== b.ts) return a.ts - b.ts; // 큰 ts 우선
+    if (a.typeKey !== b.typeKey) return a.typeKey < b.typeKey ? -1 : 1;
+    return b.idx - a.idx;
+  });
+  for (const k of typeKeys) {
+    const arr = buffers.get(k)!;
+    if (arr.length) heap.push({ ts: arr[0].ts, entry: arr[0], typeKey: k, idx: 0 });
+  }
+  const out: LogEntry[] = [];
+  while (!heap.isEmpty() && out.length < target && !aborted()) {
+    const top = heap.pop()!;
+    out.push(top.entry);
+    const arr = buffers.get(top.typeKey)!;
+    const nextIdx = top.idx + 1;
+    if (nextIdx < arr.length) {
+      heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
     }
+  }
+  if (!out.length) return false;
+
+  logger.info(`warmup: deliver lines=${out.length}`);
+  try {
+    if (opts.onWarmupBatch) opts.onWarmupBatch(out);
+    else if (opts.onBatch) opts.onBatch(out);
     return true;
   } catch {
     return false;
   }
-}
-
-// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
+}// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
 async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 1024): Promise<string[]> {
   const fh = await fs.promises.open(filePath, 'r');
   try {
@@ -764,7 +855,7 @@ async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 10
       const parts = buf.split(/\r?\n/);
       // 마지막 조각은 다음 루프에서 이어붙일 수 있도록 유지
       buf = parts.shift() || '';
-      // 맨 뒤쪽(파일 끝쪽)부터 수집
+      // 맨 뒤쪽(파일 끝쪽)부터 수집 → 결과는 "최신이 앞" 순서가 됨
       for (let i = parts.length - 1; i >= 0; i--) {
         if (parts[i].length === 0) continue;
         lines.push(parts[i]);

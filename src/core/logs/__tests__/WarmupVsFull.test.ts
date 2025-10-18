@@ -24,10 +24,10 @@ afterEach(() => {
   cleanDir(INPUT_DIR);
 });
 
-async function runOnce(useWarmup: boolean, limit = 500): Promise<{ initialMs: number; firstLen: number; total?: number }> {
+async function runOnce(useWarmup: boolean, limit = 10000): Promise<{ initialMs: number; firstLen: number; total?: number }> {
   // 테스트에서 RAW 기록은 항상 OFF (네트워크 드라이브/권한 이슈 회피)
   __setWarmupFlagsForTests({
-    warmupEnabled: useWarmup, warmupPerTypeLimit: limit, warmupTarget: 500, writeRaw: false
+    warmupEnabled: useWarmup, warmupPerTypeLimit: limit, warmupTarget: 2000, writeRaw: false
   });
 
   const mgr = new LogSessionManager(undefined);
