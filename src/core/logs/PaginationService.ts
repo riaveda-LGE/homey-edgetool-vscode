@@ -232,12 +232,20 @@ class PaginationService {
     const msg  = String(parsed.msg  || '').toLowerCase();
     const proc = String(parsed.proc || '').toLowerCase();
     const pid  = String(parsed.pid  || '').toLowerCase();
-    const src  = String(e.source    || '').toLowerCase();
+    // 파일/경로/소스 중 하나라도 매칭되면 통과
+    const srcCands = [
+      (e as any).file,
+      (e as any).path,
+      e.source,
+    ].map(v => String(v ?? '').toLowerCase()).filter(Boolean);
     const has = (s?: string) => !!(s && s.trim());
     if (has(f.msg)  && !msg.includes(String(f.msg).toLowerCase()))   return false;
     if (has(f.proc) && !proc.includes(String(f.proc).toLowerCase())) return false;
     if (has(f.pid)  && !pid.includes(String(f.pid).toLowerCase()))   return false;
-    if (has(f.src)  && !src.includes(String(f.src).toLowerCase()))    return false;
+    if (has(f.src)) {
+      const needle = String(f.src).toLowerCase();
+      if (!srcCands.some(s => s.includes(needle))) return false;
+    }
     return true;
   }
 

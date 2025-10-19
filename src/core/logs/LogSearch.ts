@@ -37,7 +37,12 @@ export class LogSearch implements ILogSearch {
       out = out.filter(e => {
         const parsed = parseLine(e.text || '');
         const pidOk  = wantPid  ? String(parsed.pid).toLowerCase().includes(wantPid) : true;
-        const fileOk = wantFile ? String(e.source || '').toLowerCase().includes(wantFile) : true;
+        // 파일/경로/소스 중 하나라도 포함되면 통과
+        const fileOk = wantFile
+          ? [ (e as any).file, (e as any).path, e.source ]
+              .map(v => String(v ?? '').toLowerCase())
+              .some(s => s.includes(wantFile))
+          : true;
         const prOk   = wantProc ? String(parsed.proc).toLowerCase().includes(wantProc) : true;
         const msgOk  = wantMsg  ? String(parsed.msg).toLowerCase().includes(wantMsg) : true;
         return pidOk && fileOk && prOk && msgOk;

@@ -8,7 +8,16 @@ export type LogEntry = {
   ts: number; // epoch ms
   level?: 'D' | 'I' | 'W' | 'E';
   type?: 'system' | 'homey' | 'application' | 'other';
+  /**
+   * 표시/검색용 소스 정보(과거 호환):
+   * - 이전엔 파일 타입키나 파일명을 혼용해 담겼음
+   * - 이제는 파일명이 `file`에 들어가므로, `source`는 보조 정보(백워드 호환)
+   */
   source?: string;
+  /** 파일 basename (예: 'homey-pro.log' / 'kernel.log.1') */
+  file?: string;
+  /** 파일 경로(알 수 없으면 basename 또는 상대경로가 들어갈 수 있음) */
+  path?: string;
   /** (선택) 파싱된 필드 – 일부 소스에만 존재 */
   pid?: string | number;
   process?: string;

@@ -19,7 +19,11 @@ const ZLogEntry = z.object({
   ts: z.number().optional(),
   level: z.enum(['D','I','W','E']).optional(),
   type: z.string().optional(),
+  /** 호스트가 주는 표시용 소스(기존). e.g. 'kernel' */
   source: z.string().optional(),
+  /** 실제 파일명(또는 경로) — 최신 호스트에서 내려올 수 있음 */
+  file: z.string().optional(),
+  path: z.string().optional(),
   text: z.string(),
 });
 
@@ -87,7 +91,8 @@ export function setupIpc() {
         const rows = logs.map(e => {
           const raw = String(e.text ?? '');
           const p = parseLine(raw);
-          return { id: nextId++, idx: e.idx, ...p, src: String(e?.source ?? ''), raw };
+          const src = pickSrcName(e);
+          return { id: nextId++, idx: e.idx, ...p, src, raw };
         });
         ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'}`);
         useLogStore.getState().receiveRows(1, rows);
@@ -122,7 +127,8 @@ export function setupIpc() {
         const rows = items.map(e => {
           const raw = String(e.text ?? '');
           const p = parseLine(raw);
-          return { id: nextId++, idx: e.idx, ...p, src: String(e?.source ?? ''), raw };
+          const src = pickSrcName(e);
+          return { id: nextId++, idx: e.idx, ...p, src, raw };
         });
         ui.debug(`page: response ${startIdx}-${payload?.endIdx} count=${rows.length}`);
         useLogStore.getState().receiveRows(startIdx, rows);
@@ -173,6 +179,26 @@ function parseLine(line: string){
   let proc='', pid='', msg=rest;
   if (procMatch){ proc = procMatch[1]; pid = procMatch[2]; msg = procMatch[3] ?? ''; }
   return { time, proc, pid, msg };
+}
+
+/**
+ * 파일/경로/소스 중에서 "파일명"을 우선적으로 고르고, 경로가 오면 basename만 반환.
+ * 호스트가 file/path를 주지 않는 구버전이라면 기존 source를 그대로 사용.
+ */
+function pickSrcName(e: any): string {
+  const cand =
+    (typeof e?.file === 'string' && e.file) ||
+    (typeof e?.path === 'string' && e.path) ||
+    (typeof e?.source === 'string' && e.source) ||
+    '';
+  const bn = basename(cand);
+  return bn || cand;
+}
+
+function basename(p: string): string {
+  if (!p) return '';
+  const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
+  return i >= 0 ? p.slice(i + 1) : p;
 }
 
 // 호스트로 필터 변경을 보냅니다(필요 시 컴포넌트에서 호출).

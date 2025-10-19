@@ -583,7 +583,12 @@ class MergedCursor {
     for (const line of lines) {
       try {
         const entry: LogEntry = JSON.parse(line);
-        entry.source = this.typeKey; // source를 typeKey로 통일
+        // ⬇︎ 구버전 JSONL 호환: file/path가 없으면 source에서 유도
+        if (!(entry as any).file) {
+          const cand = (entry as any).path || entry.source || '';
+          (entry as any).file = path.basename(String(cand));
+        }
+        // source는 덮어쓰지 않음 — 파일명 소실 방지(표시/필터 모두 file/path 우선)
         batch.push({ ts: entry.ts, entry });
       } catch {
         // malformed 라인은 건너뜀
@@ -632,12 +637,16 @@ class MaxHeap<T> {
 }
 
 function lineToEntry(filePath: string, line: string): LogEntry {
+  const bn = path.basename(filePath);
   return {
     id: Date.now(), // 간단 id
     ts: parseTs(line) ?? Date.now(),
     level: guessLevel(line),
     type: 'system',
-    source: path.basename(filePath),
+    // 과거 호환 위해 source는 유지(대개 파일명). 실제 표시/검색은 file/path 우선.
+    source: bn,
+    file: bn,
+    path: filePath,
     text: line,
   };
 }
@@ -861,8 +870,14 @@ export async function warmupTailPrepass(
     tzc.finalizeSuspected();
     logger.debug?.(`warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`);
     arr.sort((a, b) => b.ts - a.ts); // 최신순
-    // 파일 기반(JSONL) 경로와 동일하게 source를 typeKey로 통일
-    for (const e of arr) (e as any).source = k;
+    // ⬇︎ 파일명은 그대로 유지. 구버전 엔트리엔 file을 보강.
+    for (const e of arr) {
+      if (!(e as any).file) {
+        const cand = (e as any).path || e.source || '';
+        (e as any).file = path.basename(String(cand));
+      }
+      // source는 덮어쓰지 않음(표시·필터 모두 file/path 우선 사용)
+    }
   }
 
   // 7) k-way 병합으로 정확히 target개만 추출
