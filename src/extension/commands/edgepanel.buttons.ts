@@ -58,10 +58,10 @@ export function getSections(): SectionDef[] {
     // panel 조작
     {
       id: 'panel',
-      title: 'panel 조작',
+      title: '패널 조작',
       items: [
-        { id: 'panel.toggleExplorer', label: '작업뷰',   op: { kind: 'post', event: 'ui.toggleExplorer' } },
-        { id: 'panel.toggleLogs',     label: '디버깅로그',   op: { kind: 'post', event: 'ui.toggleLogs' } },
+        { id: 'panel.toggleExplorer', label: '작업패널',   op: { kind: 'post', event: 'ui.toggleExplorer' } },
+        { id: 'panel.toggleLogs',     label: '디버깅패널',   op: { kind: 'post', event: 'ui.toggleLogs' } },
         {
           id: 'panel.updateNow',
           label: 'Update Now',
