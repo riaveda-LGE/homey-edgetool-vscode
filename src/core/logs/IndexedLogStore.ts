@@ -1,7 +1,7 @@
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { LogEntry } from '@ipc/messages';
 import { getLogger } from '../logging/extension-logger.js';
 
 type FileSeg = { name: string; from: number; lines: number };
@@ -74,7 +74,9 @@ export class IndexedLogStore {
     await this.writeIndex();
   }
 
-  getTotal() { return this.total; }
+  getTotal() {
+    return this.total;
+  }
 
   private async writeIndex() {
     const sum = this.total || this.segments.reduce((a, b) => a + b.lines, 0);

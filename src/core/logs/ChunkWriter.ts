@@ -1,8 +1,7 @@
 // === src/core/logs/ChunkWriter.ts ===
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
-
-import type { LogEntry } from '@ipc/messages';
 
 export type ChunkWriteResult = {
   /** 새로 만들어진 파일명(상대) */

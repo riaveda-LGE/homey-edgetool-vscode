@@ -1,10 +1,10 @@
 // === src/extension/editors/PerfMonitorPanel.ts ===
+import type { H2W, W2H } from '@ipc/messages';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { globalProfiler, measure } from '../../core/logging/perf.js';
 import { PERF_UPDATE_INTERVAL_MS } from '../../shared/const.js';
-import type { H2W, W2H } from '@ipc/messages';
 import type { PerfData } from './IPerfMonitorPanelComponents.js';
 import { PerfMonitorCaptureManager } from './PerfMonitorCaptureManager.js';
 import { PerfMonitorExportManager } from './PerfMonitorExportManager.js';
@@ -27,13 +27,17 @@ export class PerfMonitorPanel {
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _context: vscode.ExtensionContext
+    private readonly _context: vscode.ExtensionContext,
   ) {
     this._exportManager = new PerfMonitorExportManager(_context, (filePath) => {
       // 파일 생성 후 Homey Edge Tool의 Explorer 패널 갱신
       if (this._panel) {
         const relPath = vscode.workspace.asRelativePath(filePath);
-        this._panel.webview.postMessage({ v: 1, type: 'explorer.fs.changed', payload: { path: relPath } });
+        this._panel.webview.postMessage({
+          v: 1,
+          type: 'explorer.fs.changed',
+          payload: { path: relPath },
+        });
       }
     });
     this._htmlGenerator = new PerfMonitorHtmlGenerator(_extensionUri);
@@ -73,7 +77,7 @@ export class PerfMonitorPanel {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [this._extensionUri],
-      }
+      },
     );
 
     // 컴포넌트 초기화
@@ -82,17 +86,21 @@ export class PerfMonitorPanel {
 
     this._panel.webview.html = this._htmlGenerator.getHtmlForWebview(this._panel.webview);
 
-    this._trackDisposable(this._panel.webview.onDidReceiveMessage(
-      (message: W2H) => {
-        this._messageHandler!.handleMessage(message);
-      },
-      undefined,
-      []
-    ));
+    this._trackDisposable(
+      this._panel.webview.onDidReceiveMessage(
+        (message: W2H) => {
+          this._messageHandler!.handleMessage(message);
+        },
+        undefined,
+        [],
+      ),
+    );
 
-    this._trackDisposable(this._panel.onDidDispose(() => {
-      this.dispose();
-    }));
+    this._trackDisposable(
+      this._panel.onDidDispose(() => {
+        this.dispose();
+      }),
+    );
   }
 
   @measure()

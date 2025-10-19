@@ -1,9 +1,9 @@
 // webpack.config.js
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-import webpack from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import webpack from 'webpack';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

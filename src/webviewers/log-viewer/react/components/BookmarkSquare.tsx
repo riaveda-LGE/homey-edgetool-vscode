@@ -1,6 +1,6 @@
 type Props = {
   checked?: boolean;
-  size?: number;              // px
+  size?: number; // px
   title?: string;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   /** 시각 톤: 그리드(기본) / 북마크 패널 */
@@ -14,7 +14,13 @@ type Props = {
  * - checked: ★ / unchecked: ☆
  * - 크기는 size로 지정(미지정 시 24px)
  */
-export function BookmarkSquare({ checked=false, size=24, title, onClick, variant='grid' }: Props){
+export function BookmarkSquare({
+  checked = false,
+  size = 24,
+  title,
+  onClick,
+  variant = 'grid',
+}: Props) {
   // 버튼 대비 별 아이콘 비율(작게 → 시각적 중심 안정)
   const icon = Math.max(10, Math.round(size * 0.54));
   return (
@@ -23,7 +29,7 @@ export function BookmarkSquare({ checked=false, size=24, title, onClick, variant
       title={title}
       aria-pressed={checked}
       data-checked={checked ? 1 : 0}
-      className={`lv-bm-btn ${variant==='panel' ? 'lv-bm--panel' : 'lv-bm--grid'}`}
+      className={`lv-bm-btn ${variant === 'panel' ? 'lv-bm--panel' : 'lv-bm--grid'}`}
       style={{ width: size, height: size }}
       onClick={onClick}
     >

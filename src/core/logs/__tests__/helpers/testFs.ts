@@ -5,7 +5,9 @@ import * as path from 'path';
 export const OUT_ROOT = path.resolve(__dirname, '..', 'out');
 
 export function cleanDir(p: string) {
-  try { fs.rmSync(p, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(p, { recursive: true, force: true });
+  } catch {}
 }
 
 export function ensureDir(p: string) {
@@ -29,23 +31,25 @@ export async function writeIsoLogs(
   spec: Record<string, number>, // { type: lineCount }
 ): Promise<void> {
   ensureDir(dir);
-  await Promise.all(Object.entries(spec).map(([type, n]) => new Promise<void>((resolve, reject) => {
-    const file = path.join(dir, `${type}.log`);
-    const ws = fs.createWriteStream(file, { encoding: 'utf8' });
-    ws.on('error', reject);
-    ws.on('finish', resolve);
-    for (let i = 0; i < n; i++) {
-      ws.write(`${iso(i)} ${type} message ${i}\n`);
-    }
-    ws.end();
-  })));
+  await Promise.all(
+    Object.entries(spec).map(
+      ([type, n]) =>
+        new Promise<void>((resolve, reject) => {
+          const file = path.join(dir, `${type}.log`);
+          const ws = fs.createWriteStream(file, { encoding: 'utf8' });
+          ws.on('error', reject);
+          ws.on('finish', resolve);
+          for (let i = 0; i < n; i++) {
+            ws.write(`${iso(i)} ${type} message ${i}\n`);
+          }
+          ws.end();
+        }),
+    ),
+  );
 }
 
 /** 임시 입력 디렉터리를 초기화하고 spec에 맞춰 로그들을 생성한 뒤 그 경로를 반환 */
-export async function setupTempInput(
-  dir: string,
-  spec: Record<string, number>,
-): Promise<string> {
+export async function setupTempInput(dir: string, spec: Record<string, number>): Promise<string> {
   cleanAndEnsureDir(dir);
   await writeIsoLogs(dir, spec);
   return dir;
@@ -65,8 +69,8 @@ export function cleanOutputs(dir: string) {
 
 /** 즉시 예약/타이머 큐를 한 번씩 비워 늦은 로그/flush 소진 */
 export async function drainNextTicks() {
-  await new Promise<void>(r => setImmediate(r));
-  await new Promise<void>(r => setTimeout(r, 0));
+  await new Promise<void>((r) => setImmediate(r));
+  await new Promise<void>((r) => setTimeout(r, 0));
 }
 
 /** 파일시스템 안전한 타임스탬프(경로명용) */
@@ -78,7 +82,9 @@ function tsForPath() {
 
 /** 간단 랜덤 suffix */
 function randSuffix(len = 5) {
-  return Math.random().toString(36).slice(2, 2 + len);
+  return Math.random()
+    .toString(36)
+    .slice(2, 2 + len);
 }
 
 /** out/ 내부에 항상 고유한 하위 경로를 생성해 반환 (ex: out/run-20250101-101530-123-A1b2c[-label]) */

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { parentDir,relFromBase, toPosix } from '../../shared/utils.js';
+import { parentDir, relFromBase, toPosix } from '../../shared/utils.js';
 
 export type ExplorerBridge = {
   handleMessage(msg: any): Promise<boolean>;
@@ -50,11 +50,16 @@ class RefreshCoalescer {
     );
   }
   private async execute(scope: string) {
-    if (this.inflight.has(scope)) { this.pending.add(scope); return; }
+    if (this.inflight.has(scope)) {
+      this.pending.add(scope);
+      return;
+    }
     this.inflight.add(scope);
-    try { await this.run(scope); }
-    catch (e) { this.log.warn(`list(${scope}) failed: ${e instanceof Error ? e.message : String(e)}`); }
-    finally {
+    try {
+      await this.run(scope);
+    } catch (e) {
+      this.log.warn(`list(${scope}) failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
       this.inflight.delete(scope);
       if (this.pending.has(scope)) {
         this.pending.delete(scope);
@@ -78,14 +83,20 @@ class WatcherManager {
   private context: vscode.ExtensionContext;
   public info?: { wsDirUri: vscode.Uri };
   private disposed = false;
-  private onFsHandler?: (relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') => void;
+  private onFsHandler?: (
+    relPath: string,
+    uri: vscode.Uri,
+    eventType: 'create' | 'change' | 'delete',
+  ) => void;
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
     this.state = {};
   }
 
-  setOnFsHandler(handler: (relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') => void) {
+  setOnFsHandler(
+    handler: (relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') => void,
+  ) {
     this.onFsHandler = handler;
   }
 
@@ -100,7 +111,9 @@ class WatcherManager {
 
   /** 상대 경로를 URI로 변환 */
   toChildUri(base: vscode.Uri, rel: string) {
-    const clean = String(rel || '').replace(/^[\\/]+/, '').replace(/\\/g, '/');
+    const clean = String(rel || '')
+      .replace(/^[\\/]+/, '')
+      .replace(/\\/g, '/');
     const parts = clean.split('/').filter(Boolean);
     return vscode.Uri.joinPath(base, ...parts);
   }
@@ -110,7 +123,12 @@ class WatcherManager {
     if (this.disposed || this.state.root) return;
     const pattern = new vscode.RelativePattern(baseUri.fsPath, '**/*');
     // create, delete만 받는다(변경 이벤트는 무시)
-    const w = vscode.workspace.createFileSystemWatcher(pattern, /*ignoreCreate*/false, /*ignoreChange*/true, /*ignoreDelete*/false);
+    const w = vscode.workspace.createFileSystemWatcher(
+      pattern,
+      /*ignoreCreate*/ false,
+      /*ignoreChange*/ true,
+      /*ignoreDelete*/ false,
+    );
     this.state.root = w;
     this.log.info('[WatcherManager] adding root watcher for workspace');
     if (this.onFsHandler) {
@@ -128,7 +146,9 @@ class WatcherManager {
     const baseUri = this.info.wsDirUri;
     const baseFsPath = baseUri.fsPath;
     // 기존 루트 워처 해제
-    try { this.state.root?.dispose(); } catch {}
+    try {
+      this.state.root?.dispose();
+    } catch {}
     this.state.root = undefined;
     // 루트 워처만 재등록
     this.addRootWatcher(baseUri);
@@ -158,15 +178,23 @@ class WatcherManager {
     }
     if (this.state.root) {
       this.log.info('[WatcherManager] disposing root watcher on dispose');
-      try { this.state.root.dispose(); } catch (e) { this.log.error('[WatcherManager] watcher dispose error', e); }
+      try {
+        this.state.root.dispose();
+      } catch (e) {
+        this.log.error('[WatcherManager] watcher dispose error', e);
+      }
       this.state.root = undefined;
     }
     this.log.info('[WatcherManager] all watchers disposed');
   }
 
   // 하위 호환(더 이상 사용하지 않음)
-  get watchers() { return new Map<string, vscode.FileSystemWatcher>(); }
-  get wsDirUri() { return this.info?.wsDirUri; }
+  get watchers() {
+    return new Map<string, vscode.FileSystemWatcher>();
+  }
+  get wsDirUri() {
+    return this.info?.wsDirUri;
+  }
 }
 
 /** UI 관리 클래스 */
@@ -199,7 +227,16 @@ class ExplorerUI {
     const top = dir.split('/').filter(Boolean)[0] ?? rel.split('/').filter(Boolean)[0] ?? '';
     if (HIDE_DIRS.has(top)) return;
 
-    this.log.info('[ExplorerUI] fs event', eventType, 'in folder', relPath, ':', uri.fsPath, 'rel:', rel);
+    this.log.info(
+      '[ExplorerUI] fs event',
+      eventType,
+      'in folder',
+      relPath,
+      ':',
+      uri.fsPath,
+      'rel:',
+      rel,
+    );
     // create/delete → 해당 디렉터리 스코프만 갱신
     const scope = parentDir(rel);
     this.coalescer.schedule(scope);
@@ -232,8 +269,15 @@ class ExplorerUI {
         await this.createFolder(String(msg.payload?.path || ''));
         return true;
       case 'explorer.delete':
-        this.log.info('[ExplorerUI] <- delete', msg.payload?.path, { recursive: !!msg.payload?.recursive, useTrash: !!msg.payload?.useTrash });
-        await this.remove(String(msg.payload?.path || ''), !!msg.payload?.recursive, !!msg.payload?.useTrash);
+        this.log.info('[ExplorerUI] <- delete', msg.payload?.path, {
+          recursive: !!msg.payload?.recursive,
+          useTrash: !!msg.payload?.useTrash,
+        });
+        await this.remove(
+          String(msg.payload?.path || ''),
+          !!msg.payload?.recursive,
+          !!msg.payload?.useTrash,
+        );
         return true;
     }
     return false;
@@ -251,16 +295,28 @@ class ExplorerUI {
       const entries = await vscode.workspace.fs.readDirectory(dirUri);
       const items = entries
         .filter(([name, t]) => {
-          const kind = t === vscode.FileType.Directory ? 'folder' : (t === vscode.FileType.File ? 'file' : 'other');
+          const kind =
+            t === vscode.FileType.Directory
+              ? 'folder'
+              : t === vscode.FileType.File
+                ? 'file'
+                : 'other';
           if (kind === 'other') return false;
           return !shouldHideEntry(name, kind as 'file' | 'folder');
         })
-        .map(([name, t]) => ({ name, kind: t === vscode.FileType.Directory ? 'folder' : ('file' as const) }));
+        .map(([name, t]) => ({
+          name,
+          kind: t === vscode.FileType.Directory ? 'folder' : ('file' as const),
+        }));
       this.log.info('[ExplorerUI] list', rel, '->', items.length, 'items');
       this.post({ v: 1, type: 'explorer.list.result', payload: { path: rel || '', items } });
     } catch (e: any) {
       this.log.error(`list error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ v: 1, type: 'explorer.error', payload: { op: 'list', message: e?.message || String(e) } });
+      this.post({
+        v: 1,
+        type: 'explorer.error',
+        payload: { op: 'list', message: e?.message || String(e) },
+      });
     }
   }
 
@@ -278,7 +334,11 @@ class ExplorerUI {
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'open', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`open error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ v: 1, type: 'explorer.error', payload: { op: 'open', message: e?.message || String(e) } });
+      this.post({
+        v: 1,
+        type: 'explorer.error',
+        payload: { op: 'open', message: e?.message || String(e) },
+      });
     }
   }
 
@@ -295,7 +355,11 @@ class ExplorerUI {
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'createFile', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`createFile error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ v: 1, type: 'explorer.error', payload: { op: 'createFile', message: e?.message || String(e) } });
+      this.post({
+        v: 1,
+        type: 'explorer.error',
+        payload: { op: 'createFile', message: e?.message || String(e) },
+      });
     }
   }
 
@@ -312,7 +376,11 @@ class ExplorerUI {
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'createFolder', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`createFolder error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ v: 1, type: 'explorer.error', payload: { op: 'createFolder', message: e?.message || String(e) } });
+      this.post({
+        v: 1,
+        type: 'explorer.error',
+        payload: { op: 'createFolder', message: e?.message || String(e) },
+      });
     }
   }
 
@@ -330,7 +398,11 @@ class ExplorerUI {
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'delete', path: rel || '' } });
     } catch (e: any) {
       this.log.error(`delete error for ${rel}: ${e?.message || String(e)}`);
-      this.post({ v: 1, type: 'explorer.error', payload: { op: 'delete', message: e?.message || String(e) } });
+      this.post({
+        v: 1,
+        type: 'explorer.error',
+        payload: { op: 'delete', message: e?.message || String(e) },
+      });
     }
   }
 

@@ -1,10 +1,15 @@
 // === src/extension/panels/LogConnectionPicker.ts ===
 import * as vscode from 'vscode';
 
-import { addDevice, type DeviceEntry,readDeviceList, updateDeviceById } from '../../core/config/userdata.js';
+import {
+  addDevice,
+  type DeviceEntry,
+  readDeviceList,
+  updateDeviceById,
+} from '../../core/config/userdata.js';
 import type { HostConfig } from '../../core/connection/ConnectionManager.js';
 import { DEFAULT_SSH_PORT, MAX_SSH_PORT, MIN_SSH_PORT } from '../../shared/const.js';
-import { promptNumber,promptText } from '../../shared/ui-input.js';
+import { promptNumber, promptText } from '../../shared/ui-input.js';
 
 export class LogConnectionPicker {
   constructor(private _context: vscode.ExtensionContext) {}
@@ -21,7 +26,10 @@ export class LogConnectionPicker {
       return {
         label,
         description: desc,
-        detail: d.type === 'ssh' ? `${d.host ?? ''} ${(d as any).user ?? ''}` : `${(d as any).serial ?? ''}`,
+        detail:
+          d.type === 'ssh'
+            ? `${d.host ?? ''} ${(d as any).user ?? ''}`
+            : `${(d as any).serial ?? ''}`,
         device: d,
         alwaysShow: true,
       } as vscode.QuickPickItem & { device: DeviceEntry };
@@ -33,7 +41,10 @@ export class LogConnectionPicker {
     ];
 
     const pick = await vscode.window.showQuickPick([...deviceItems, ...addItems], {
-      placeHolder: deviceItems.length > 0 ? '최근 연결을 선택하거나, 새 연결을 추가하세요' : '저장된 연결이 없습니다. 새 연결을 추가하세요',
+      placeHolder:
+        deviceItems.length > 0
+          ? '최근 연결을 선택하거나, 새 연결을 추가하세요'
+          : '저장된 연결이 없습니다. 새 연결을 추가하세요',
       matchOnDescription: true,
       matchOnDetail: true,
     });

@@ -81,7 +81,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
       }
     } catch (e: unknown) {
       this._appendLog(
-        `[error] button "${def.label}" failed: ${e instanceof Error ? e.message : String(e)}`
+        `[error] button "${def.label}" failed: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }

@@ -27,8 +27,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
-import { mergeDirectory } from '../../core/logs/LogFileIntegration.js';
 import type { LogEntry } from '@ipc/messages';
+
+import { mergeDirectory } from '../../core/logs/LogFileIntegration.js';
 
 // ────────────────────────────────────────────────────────────
 // 간단한 인자 파서

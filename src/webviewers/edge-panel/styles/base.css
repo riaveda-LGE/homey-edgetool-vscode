@@ -1,7 +1,10 @@
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 /* ✅ 웹뷰 전체 스크롤 금지 */
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
 }
@@ -23,17 +26,46 @@ body {
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  transition: background-color .15s ease, transform .05s ease, box-shadow .15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.05s ease,
+    box-shadow 0.15s ease;
 }
-.btn:hover { background: var(--accent-hover); }
-.btn:active { transform: translateY(1px); }
-.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.btn.small { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
-.btn.ghost { background: transparent; color: var(--vscode-foreground); border: 1px solid var(--border); }
-.btn.danger { background: #b3261e; color: #fff; }
-.btn.danger:hover { filter: brightness(1.1); }
-.btn.btn-on { background: #4caf50; color: #fff; }
+.btn:hover {
+  background: var(--accent-hover);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.btn.small {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.btn.ghost {
+  background: transparent;
+  color: var(--vscode-foreground);
+  border: 1px solid var(--border);
+}
+.btn.danger {
+  background: #b3261e;
+  color: #fff;
+}
+.btn.danger:hover {
+  filter: brightness(1.1);
+}
+.btn.btn-on {
+  background: #4caf50;
+  color: #fff;
+}
 
 @media (forced-colors: active) {
-  .btn { border: 1px solid ButtonText; box-shadow: none; }
+  .btn {
+    border: 1px solid ButtonText;
+    box-shadow: none;
+  }
 }

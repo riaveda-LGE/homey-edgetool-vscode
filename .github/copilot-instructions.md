@@ -428,6 +428,7 @@ homey-edgetool/
 │  │  └─ utils.ts                         # 공용 유틸리티
 │  │
 │  ├─ types/                              # 타입 정의
+│  │  ├─ style.d.ts                       # 스타일 타입 정의
 │  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입
 │  │
 │  └─ webviewers/                         # Webview 리소스 (ES 모듈 기반)
@@ -462,7 +463,6 @@ homey-edgetool/
 │     │  │  ├─ layout.css                 # #root Grid, 패널 배치
 │     │  │  └─ components.css             # Panel/Titlebar/Tree/ContextMenu 등
 │     │  └─ types/
-│     │     ├─ messages.ts                # Host ↔ Webview 메시지 DTO
 │     │     └─ model.ts                   # State/TreeNode/Section 등 타입
 │     ├─ log-viewer/
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰
@@ -470,6 +470,7 @@ homey-edgetool/
 │     │  │  ├─ components/
 │     │  │  │  ├─ App.tsx                 # 메인 앱 컴포넌트
 │     │  │  │  ├─ Bookmarks.tsx           # 북마크 컴포넌트
+│     │  │  │  ├─ BookmarkSquare.tsx      # 북마크 사각형 컴포넌트
 │     │  │  │  ├─ FilterBar.tsx           # 필터 바 컴포넌트
 │     │  │  │  ├─ Grid.tsx                # 로그 그리드 컴포넌트
 │     │  │  │  ├─ GridHeader.tsx          # 그리드 헤더 컴포넌트
@@ -482,6 +483,7 @@ homey-edgetool/
 │     │  │  └─ types.ts                   # React 앱 타입 정의
 │     │  └─ styles/
 │     │     ├─ tailwind.css               # Tailwind CSS 스타일
+│     │     ├─ theme.css                  # 공통 UI 컴포넌트 테마
 │     │     └─ tokens.css                 # 테마 토큰 및 하이라이트 스타일
 │     └─ perf-monitor/
 │        ├─ app.js                        # 성능 모니터 앱 (Chart.js 기반)

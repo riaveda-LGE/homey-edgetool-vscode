@@ -82,9 +82,18 @@ export async function activate(context: vscode.ExtensionContext) {
       const perfMonitor = PerfMonitorPanel.register(context, context.extensionUri);
 
       // ✅ constructor 시그니처: (extensionUri, context, version, latestInfo)
-      const provider = new EdgePanelProvider(context.extensionUri, context, version, latestInfo, perfMonitor);
+      const provider = new EdgePanelProvider(
+        context.extensionUri,
+        context,
+        version,
+        latestInfo,
+        perfMonitor,
+      );
       try {
-        const disp = vscode.window.registerWebviewViewProvider(EdgePanelProvider.viewType, provider);
+        const disp = vscode.window.registerWebviewViewProvider(
+          EdgePanelProvider.viewType,
+          provider,
+        );
         context.subscriptions.push(disp);
       } catch (e) {
         log.info('registerWebviewViewProvider already registered, skipping', e as any);

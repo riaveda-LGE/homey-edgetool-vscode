@@ -1,9 +1,15 @@
 // === src/core/logs/__tests__/LogFileIntegration.test.ts ===
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LogEntry } from '@ipc/messages';
-import { mergeDirectory, countTotalLinesInDir } from '../LogFileIntegration.js';
-import { cleanAndEnsureDir, drainNextTicks, prepareUniqueOutDir, cleanDir } from './helpers/testFs.js';
+
+import { countTotalLinesInDir, mergeDirectory } from '../LogFileIntegration.js';
+import {
+  cleanAndEnsureDir,
+  cleanDir,
+  drainNextTicks,
+  prepareUniqueOutDir,
+} from './helpers/testFs.js';
 
 // 전역 타임아웃(파일 상단, describe 밖)
 jest.setTimeout(600_000); // 10분
@@ -21,10 +27,12 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
   const expectedLines = expectedContent
     .trim()
     .split('\n')
-    .map(line => line.replace(/\r$/, ''))
-    .filter(line => line.length > 0);
+    .map((line) => line.replace(/\r$/, ''))
+    .filter((line) => line.length > 0);
 
-  console.log(`📊 ${testName} - Expected lines: ${expectedLines.length}, first line: "${expectedLines[0]}"`);
+  console.log(
+    `📊 ${testName} - Expected lines: ${expectedLines.length}, first line: "${expectedLines[0]}"`,
+  );
 
   // out/merged 디렉터리 준비
   const outDir = OUT_DIR;
@@ -64,18 +72,20 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
   expect(actualResults.length).toBe(expectedLines.length);
 
   // 텍스트 비교 (상위 20건까지만 mismatch 표출)
-  const actualTexts = actualResults.map(entry => entry.text);
+  const actualTexts = actualResults.map((entry) => entry.text);
   const mismatches: string[] = [];
   for (let i = 0; i < expectedLines.length; i++) {
     if (actualTexts[i] !== expectedLines[i]) {
       mismatches.push(
-        `Line ${i + 1}:\n  Expected: "${expectedLines[i]}"\n  Actual:   "${actualTexts[i]}"`
+        `Line ${i + 1}:\n  Expected: "${expectedLines[i]}"\n  Actual:   "${actualTexts[i]}"`,
       );
       if (mismatches.length >= 20) break;
     }
   }
   if (mismatches.length > 0) {
-    throw new Error(`Test failed with ${mismatches.length} line mismatches\n` + mismatches.join('\n'));
+    throw new Error(
+      `Test failed with ${mismatches.length} line mismatches\n` + mismatches.join('\n'),
+    );
   }
 
   console.log(`✅ ${testName} passed: ${actualResults.length} lines merged correctly`);
@@ -104,78 +114,78 @@ describe('LogFileIntegration', () => {
     }, 600_000); // 10분
 
     it('빈 디렉터리를 gracefully 처리해야 함', async () => {
-  // out/temp_empty 를 사용
-  const tempDir = path.join(OUT_DIR, 'temp_empty');
-  cleanAndEnsureDir(tempDir);
+      // out/temp_empty 를 사용
+      const tempDir = path.join(OUT_DIR, 'temp_empty');
+      cleanAndEnsureDir(tempDir);
 
-  // ⬇️ out/merged 를 항상 테스트 중간물 위치로 사용
-  const mergedDir = path.join(OUT_DIR, 'merged');
-  cleanAndEnsureDir(mergedDir);
+      // ⬇️ out/merged 를 항상 테스트 중간물 위치로 사용
+      const mergedDir = path.join(OUT_DIR, 'merged');
+      cleanAndEnsureDir(mergedDir);
 
-  const onBatch = jest.fn((logs: LogEntry[]) => {
-    // 호출되면 빈 배열이어야 함
-    expect(Array.isArray(logs)).toBe(true);
-    expect(logs.length).toBe(0);
-  });
+      const onBatch = jest.fn((logs: LogEntry[]) => {
+        // 호출되면 빈 배열이어야 함
+        expect(Array.isArray(logs)).toBe(true);
+        expect(logs.length).toBe(0);
+      });
 
-  await mergeDirectory({
-    dir: tempDir,
-    onBatch,
-    mergedDirPath: mergedDir,   // ✅ out/merged 고정
-  });
+      await mergeDirectory({
+        dir: tempDir,
+        onBatch,
+        mergedDirPath: mergedDir, // ✅ out/merged 고정
+      });
 
-  expect(onBatch).not.toHaveBeenCalled(); // 이상적: 아예 호출되지 않음
-}, 60_000);
+      expect(onBatch).not.toHaveBeenCalled(); // 이상적: 아예 호출되지 않음
+    }, 60_000);
 
-it('중단 신호를 제대로 처리해야 함', async () => {
-  const testDir = path.resolve(__dirname, 'test_log', 'normal_test_suite');
-  const inputDir = path.join(testDir, 'before_merge');
+    it('중단 신호를 제대로 처리해야 함', async () => {
+      const testDir = path.resolve(__dirname, 'test_log', 'normal_test_suite');
+      const inputDir = path.join(testDir, 'before_merge');
 
-  // ⬇️ out/merged 를 항상 테스트 중간물 위치로 사용
-  const mergedDir = path.join(OUT_DIR, 'merged');
-  cleanAndEnsureDir(mergedDir);
+      // ⬇️ out/merged 를 항상 테스트 중간물 위치로 사용
+      const mergedDir = path.join(OUT_DIR, 'merged');
+      cleanAndEnsureDir(mergedDir);
 
-  const abortController = new AbortController();
-  let batchCount = 0;               // Abort 전까지 onBatch 호출 횟수
-  let abortedAt: number | null = null; // Abort 트리거된 배치 번호
-  let postAbortBatches = 0;         // Abort 이후 onBatch 호출 횟수(0이어야 함)
-  let emittedLines = 0;             // 내보낸 총 라인수(전체보다 작아야 함)
+      const abortController = new AbortController();
+      let batchCount = 0; // Abort 전까지 onBatch 호출 횟수
+      let abortedAt: number | null = null; // Abort 트리거된 배치 번호
+      let postAbortBatches = 0; // Abort 이후 onBatch 호출 횟수(0이어야 함)
+      let emittedLines = 0; // 내보낸 총 라인수(전체보다 작아야 함)
 
-  const onBatch = (logs: LogEntry[]) => {
-    // Abort 이후에는 더 이상 방출되면 안 됨
-    if (abortedAt !== null) {
-      postAbortBatches++;
-      return;
-    }
-    batchCount++;
-    emittedLines += logs.length;
-    // 세 번째 배치에서 중단 트리거
-    if (batchCount >= 3 && !abortController.signal.aborted) {
-      abortedAt = batchCount;
-      abortController.abort();
-    }
-  };
+      const onBatch = (logs: LogEntry[]) => {
+        // Abort 이후에는 더 이상 방출되면 안 됨
+        if (abortedAt !== null) {
+          postAbortBatches++;
+          return;
+        }
+        batchCount++;
+        emittedLines += logs.length;
+        // 세 번째 배치에서 중단 트리거
+        if (batchCount >= 3 && !abortController.signal.aborted) {
+          abortedAt = batchCount;
+          abortController.abort();
+        }
+      };
 
-  // Abort 시 예외 없이 resolve 되어야 함
-  await expect(
-    mergeDirectory({
-      dir: inputDir,
-      onBatch,
-      signal: abortController.signal,
-      batchSize: 1,              // 매우 작은 배치로 여러 번 호출되게 함
-      mergedDirPath: mergedDir,  // ✅ out/merged 고정
-    })
-  ).resolves.toBeUndefined();
+      // Abort 시 예외 없이 resolve 되어야 함
+      await expect(
+        mergeDirectory({
+          dir: inputDir,
+          onBatch,
+          signal: abortController.signal,
+          batchSize: 1, // 매우 작은 배치로 여러 번 호출되게 함
+          mergedDirPath: mergedDir, // ✅ out/merged 고정
+        }),
+      ).resolves.toBeUndefined();
 
-  // ✅ 정말로 Abort가 트리거되었는지
-  expect(abortedAt).not.toBeNull();
-  // ✅ Abort 이후 추가 onBatch 호출이 전혀 없었는지
-  expect(postAbortBatches).toBe(0);
-  // ✅ Abort 시점 이후 batchCount가 증가하지 않았는지
-  expect(batchCount).toBe(abortedAt);
-  // ✅ 전체 라인 수보다 적게 방출되었는지(중간에서 끊겼음을 간접 검증)
-  const { total } = await countTotalLinesInDir(inputDir);
-  expect(emittedLines).toBeLessThan(total);
-}, 60_000);
+      // ✅ 정말로 Abort가 트리거되었는지
+      expect(abortedAt).not.toBeNull();
+      // ✅ Abort 이후 추가 onBatch 호출이 전혀 없었는지
+      expect(postAbortBatches).toBe(0);
+      // ✅ Abort 시점 이후 batchCount가 증가하지 않았는지
+      expect(batchCount).toBe(abortedAt);
+      // ✅ 전체 라인 수보다 적게 방출되었는지(중간에서 끊겼음을 간접 검증)
+      const { total } = await countTotalLinesInDir(inputDir);
+      expect(emittedLines).toBeLessThan(total);
+    }, 60_000);
   });
 });

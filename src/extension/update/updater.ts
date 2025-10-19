@@ -12,7 +12,7 @@ import {
   FETCH_JSON_TIMEOUT_MS,
   LATEST_JSON_URL,
 } from '../../shared/const.js';
-import { ErrorCategory,XError } from '../../shared/errors.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
 
 const log = getLogger('updater');
 
@@ -96,7 +96,7 @@ export async function checkLatestVersion(
 
       const hasUpdate = !!latest && isNewerVersion(latest, currentVersion);
       log.info(
-        `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`
+        `checkLatestVersion: current=${currentVersion}, latest=${latest || '(none)'}, hasUpdate=${hasUpdate}, url=${url || '(none)'}, sha256=${sha256 ? sha256.slice(0, 8) + '…' : '(none)'}`,
       );
 
       if (hasUpdate && !url) {
@@ -139,7 +139,10 @@ export async function downloadAndInstall(
 
       log.info(`downloadAndInstall: SHA256 verified, installing ${tempFile}`);
 
-      await vscode.commands.executeCommand('workbench.extensions.installExtension', vscode.Uri.file(tempFile));
+      await vscode.commands.executeCommand(
+        'workbench.extensions.installExtension',
+        vscode.Uri.file(tempFile),
+      );
 
       log.info('downloadAndInstall: installation command executed, waiting for reload prompt');
 

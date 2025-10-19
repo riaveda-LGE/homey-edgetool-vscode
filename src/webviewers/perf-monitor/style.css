@@ -5,7 +5,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   /* 혹시라도 남는 1~2px 오버플로를 막기 위한 안전핀 */

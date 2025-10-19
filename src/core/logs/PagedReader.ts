@@ -1,9 +1,9 @@
 // === src/core/logs/PagedReader.ts ===
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 
-import type { LogEntry } from '@ipc/messages';
 import { safeParseJson } from '../../shared/utils.js';
 import type { LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
@@ -14,7 +14,10 @@ export type PageReadOptions = {
 };
 
 export class PagedReader {
-  private constructor(private dir: string, private manifest: LogManifest) {}
+  private constructor(
+    private dir: string,
+    private manifest: LogManifest,
+  ) {}
 
   static async open(manifestDir: string): Promise<PagedReader> {
     const mf = path.join(manifestDir, 'manifest.json');
@@ -43,7 +46,11 @@ export class PagedReader {
   }
 
   /** 전역 라인 기준 page를 읽는다 (0-based pageIndex) */
-  async readPage(pageIndex: number, pageSize: number, opts: PageReadOptions = {}): Promise<LogEntry[]> {
+  async readPage(
+    pageIndex: number,
+    pageSize: number,
+    opts: PageReadOptions = {},
+  ): Promise<LogEntry[]> {
     const size = Math.max(1, pageSize);
     const start = pageIndex * size;
     const endExcl = start + size;
@@ -51,7 +58,11 @@ export class PagedReader {
   }
 
   /** 전역 라인 인덱스 기준 [start, end) 범위를 읽기 */
-  async readLineRange(start: number, endExcl: number, opts: PageReadOptions = {}): Promise<LogEntry[]> {
+  async readLineRange(
+    start: number,
+    endExcl: number,
+    opts: PageReadOptions = {},
+  ): Promise<LogEntry[]> {
     const out: LogEntry[] = [];
     if (endExcl <= start) return out;
 
@@ -91,7 +102,9 @@ export class PagedReader {
     const rl = readline.createInterface({ input: rs });
 
     const onAbort = () => {
-      try { rs.close(); } catch {}
+      try {
+        rs.close();
+      } catch {}
     };
     opts.signal?.addEventListener('abort', onAbort);
 

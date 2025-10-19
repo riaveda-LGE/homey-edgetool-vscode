@@ -1,11 +1,12 @@
+import type { H2W } from '@ipc/messages';
+
 import { createUiLog } from '../../shared/utils.js';
 import { ExplorerService } from '../services/ExplorerService.js';
 import { HostBridge } from '../services/HostBridge.js';
 import { PersistService } from '../services/PersistService.js';
-import type { H2W } from '@ipc/messages';
 import type { TreeNode } from '../types/model.js';
 import { AppView } from '../views/AppView.js';
-import { createInitialState,reducer } from './reducer.js';
+import { createInitialState, reducer } from './reducer.js';
 import { createStore } from './store.js';
 
 (function () {
@@ -19,7 +20,8 @@ import { createStore } from './store.js';
   const splitter = document.getElementById('splitter') as HTMLElement | null;
   const contentEl = document.getElementById('content') as HTMLElement | null;
   if (!rootEl || !controlsEl || !sectionsEl || !splitter || !contentEl) {
-    uiLog.error('[edge-panel] missing required elements'); return;
+    uiLog.error('[edge-panel] missing required elements');
+    return;
   }
 
   const store = createStore(createInitialState(), reducer);
@@ -32,7 +34,9 @@ import { createStore } from './store.js';
   const registerNode = (n: TreeNode) => nodesByPath().set(n.path, n);
 
   const appView = new AppView(
-    rootEl, controlsEl, sectionsEl,
+    rootEl,
+    controlsEl,
+    sectionsEl,
     (id) => host.post({ v: 1, type: 'button.click', payload: { id } }),
     () => host.post({ v: 1, type: 'ui.requestButtons', payload: {} }),
     (path) => explorer.list(path),
@@ -56,8 +60,8 @@ import { createStore } from './store.js';
     },
 
     (n, multi) => store.dispatch({ type: 'EXPLORER_SELECT', node: n, multi } as any),
-    (full, isFile) => isFile ? explorer.createFile(full) : explorer.createFolder(full),
-    (nodes) => nodes.forEach(node => explorer.delete(node.path, node.kind === 'folder', true)),
+    (full, isFile) => (isFile ? explorer.createFile(full) : explorer.createFolder(full)),
+    (nodes) => nodes.forEach((node) => explorer.delete(node.path, node.kind === 'folder', true)),
     (p) => persist.save(p),
   );
 
@@ -171,7 +175,9 @@ import { createStore } from './store.js';
       }
       case 'explorer.fs.changed': {
         const changedRel = String(msg.payload.path || '');
-        const parent = changedRel.includes('/') ? changedRel.slice(0, changedRel.lastIndexOf('/')) : '';
+        const parent = changedRel.includes('/')
+          ? changedRel.slice(0, changedRel.lastIndexOf('/'))
+          : '';
         explorer.list(parent);
         break;
       }
@@ -192,7 +198,9 @@ import { createStore } from './store.js';
 
   // bootstrap
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => host.post({ v: 1, type: 'ui.ready', payload: {} }));
+    document.addEventListener('DOMContentLoaded', () =>
+      host.post({ v: 1, type: 'ui.ready', payload: {} }),
+    );
   } else {
     host.post({ v: 1, type: 'ui.ready', payload: {} });
   }

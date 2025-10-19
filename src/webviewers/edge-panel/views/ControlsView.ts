@@ -1,15 +1,21 @@
 import type { SectionDTO } from '../types/model.js';
 
 export class ControlsView {
-  constructor(private el: HTMLElement, private onClick: (id: string) => void) {}
+  constructor(
+    private el: HTMLElement,
+    private onClick: (id: string) => void,
+  ) {}
 
   render(sections: SectionDTO[], toggles: { showLogs: boolean; showExplorer: boolean }) {
     this.el.innerHTML = '';
     sections.forEach((sec) => {
       const card = document.createElement('div');
       card.className = 'section-card';
-      const h = document.createElement('h4'); h.textContent = sec.title; card.appendChild(h);
-      const body = document.createElement('div'); body.className = 'section-body';
+      const h = document.createElement('h4');
+      h.textContent = sec.title;
+      card.appendChild(h);
+      const body = document.createElement('div');
+      body.className = 'section-body';
       sec.items.forEach((it) => {
         const b = document.createElement('button');
         b.className = 'btn';

@@ -1,5 +1,6 @@
 // === src/core/logging/perf.ts ===
 import * as fs from 'fs';
+import * as v8 from 'v8';
 
 import { LOG_TOTAL_CALLS_THRESHOLD } from '../../shared/const.js';
 
@@ -47,7 +48,10 @@ export async function measureFileRead(filePath: string): Promise<IOPerformanceMe
   }
 }
 
-export async function measureFileWrite(filePath: string, data: Buffer | string): Promise<IOPerformanceMetrics> {
+export async function measureFileWrite(
+  filePath: string,
+  data: Buffer | string,
+): Promise<IOPerformanceMetrics> {
   const startTime = perfNow();
 
   try {
@@ -107,7 +111,12 @@ export class PerformanceProfiler {
   private startTime = 0;
   private functionCalls: FunctionCall[] = [];
   private isEnabled = false;
-  private lastCaptureResult: { duration: number; samples: ProfileSample[]; functionCalls: FunctionCall[]; analysis: any } | null = null;
+  private lastCaptureResult: {
+    duration: number;
+    samples: ProfileSample[];
+    functionCalls: FunctionCall[];
+    analysis: any;
+  } | null = null;
   private ioMetrics: IOPerformanceMetrics[] = [];
 
   public enable() {
@@ -144,8 +153,16 @@ export class PerformanceProfiler {
     }, 100);
   }
 
-  public stopCapture(): { duration: number; samples: ProfileSample[]; functionCalls: FunctionCall[]; analysis: any } {
-    if (!this.isCapturing) return this.lastCaptureResult || { duration: 0, samples: [], functionCalls: [], analysis: {} };
+  public stopCapture(): {
+    duration: number;
+    samples: ProfileSample[];
+    functionCalls: FunctionCall[];
+    analysis: any;
+  } {
+    if (!this.isCapturing)
+      return (
+        this.lastCaptureResult || { duration: 0, samples: [], functionCalls: [], analysis: {} }
+      );
     this.isCapturing = false;
     if (this.interval) {
       clearInterval(this.interval);
@@ -158,7 +175,12 @@ export class PerformanceProfiler {
     return result;
   }
 
-  public getLastCaptureResult(): { duration: number; samples: ProfileSample[]; functionCalls: FunctionCall[]; analysis: any } {
+  public getLastCaptureResult(): {
+    duration: number;
+    samples: ProfileSample[];
+    functionCalls: FunctionCall[];
+    analysis: any;
+  } {
     return this.lastCaptureResult || { duration: 0, samples: [], functionCalls: [], analysis: {} };
   }
 
@@ -168,12 +190,8 @@ export class PerformanceProfiler {
     }
   }
 
-  public async measureIO<T>(
-    operation: string,
-    path: string,
-    fn: () => Promise<T>
-  ): Promise<T> {
-    if (!this.isEnabled) return fn();  // ✅ Off면 그냥 실행 (오버헤드 없음)
+  public async measureIO<T>(operation: string, path: string, fn: () => Promise<T>): Promise<T> {
+    if (!this.isEnabled) return fn(); // ✅ Off면 그냥 실행 (오버헤드 없음)
     const startTime = perfNow();
     try {
       const result = await fn();
@@ -208,17 +226,20 @@ export class PerformanceProfiler {
 
   private analyzeSamples() {
     if (this.samples.length === 0) return {};
-    const cpuUser = this.samples.map(s => s.cpu.user);
-    const cpuSystem = this.samples.map(s => s.cpu.system);
-    const memory = this.samples.map(s => s.memory.heapUsed);
-    const functionSummary = this.functionCalls.reduce((acc, call) => {
-      if (!acc[call.name]) acc[call.name] = { count: 0, totalTime: 0, avgTime: 0, maxTime: 0 };
-      acc[call.name].count++;
-      acc[call.name].totalTime += call.duration;
-      acc[call.name].maxTime = Math.max(acc[call.name].maxTime, call.duration);
-      acc[call.name].avgTime = acc[call.name].totalTime / acc[call.name].count;
-      return acc;
-    }, {} as Record<string, { count: number; totalTime: number; avgTime: number; maxTime: number }>);
+    const cpuUser = this.samples.map((s) => s.cpu.user);
+    const cpuSystem = this.samples.map((s) => s.cpu.system);
+    const memory = this.samples.map((s) => s.memory.heapUsed);
+    const functionSummary = this.functionCalls.reduce(
+      (acc, call) => {
+        if (!acc[call.name]) acc[call.name] = { count: 0, totalTime: 0, avgTime: 0, maxTime: 0 };
+        acc[call.name].count++;
+        acc[call.name].totalTime += call.duration;
+        acc[call.name].maxTime = Math.max(acc[call.name].maxTime, call.duration);
+        acc[call.name].avgTime = acc[call.name].totalTime / acc[call.name].count;
+        return acc;
+      },
+      {} as Record<string, { count: number; totalTime: number; avgTime: number; maxTime: number }>,
+    );
 
     // I/O 성능 분석
     const ioAnalysis = this.analyzeIOMetrics();
@@ -246,7 +267,11 @@ export class PerformanceProfiler {
     };
   }
 
-  private detectBottlenecks(functionSummary: Record<string, any>, memory: number[], ioAnalysis: any) {
+  private detectBottlenecks(
+    functionSummary: Record<string, any>,
+    memory: number[],
+    ioAnalysis: any,
+  ) {
     const bottlenecks = { slowFunctions: [] as string[], highMemoryUsage: false, slowIO: false };
     const avgMemory = memory.reduce((a, b) => a + b, 0) / memory.length;
     const maxMemory = Math.max(...memory);
@@ -272,18 +297,18 @@ export class PerformanceProfiler {
   private analyzeIOMetrics() {
     if (this.ioMetrics.length === 0) return {};
 
-    const readOps = this.ioMetrics.filter(m => m.operation === 'readFile');
-    const writeOps = this.ioMetrics.filter(m => m.operation === 'writeFile');
+    const readOps = this.ioMetrics.filter((m) => m.operation === 'readFile');
+    const writeOps = this.ioMetrics.filter((m) => m.operation === 'writeFile');
 
     const analyzeOps = (ops: IOPerformanceMetrics[]) => {
       if (ops.length === 0) return {};
-      const durations = ops.map(op => op.duration);
+      const durations = ops.map((op) => op.duration);
       return {
         count: ops.length,
         avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
         maxDuration: Math.max(...durations),
         totalTime: durations.reduce((a, b) => a + b, 0),
-        errors: ops.filter(op => op.error).length,
+        errors: ops.filter((op) => op.error).length,
       };
     };
 
@@ -295,7 +320,11 @@ export class PerformanceProfiler {
     };
   }
 
-  private generateInsights(functionSummary: Record<string, any>, bottlenecks: any, ioAnalysis: any) {
+  private generateInsights(
+    functionSummary: Record<string, any>,
+    bottlenecks: any,
+    ioAnalysis: any,
+  ) {
     const insights = [];
     if (bottlenecks.slowFunctions.length > 0) {
       insights.push(`병목 함수들: ${bottlenecks.slowFunctions.join(', ')} - 최적화 필요`);
@@ -309,8 +338,10 @@ export class PerformanceProfiler {
 
     // I/O 성능 인사이트
     if (ioAnalysis.totalOperations > 0) {
-      const totalTime = this.samples.length > 0 ?
-        (this.samples[this.samples.length - 1].timestamp - this.samples[0].timestamp) : 0;
+      const totalTime =
+        this.samples.length > 0
+          ? this.samples[this.samples.length - 1].timestamp - this.samples[0].timestamp
+          : 0;
       const ioTimePercentage = totalTime > 0 ? (ioAnalysis.totalIOTime / totalTime) * 100 : 0;
 
       if (ioTimePercentage > 50) {
@@ -322,13 +353,15 @@ export class PerformanceProfiler {
       }
     }
 
-    const totalCalls = Object.values(functionSummary).reduce((sum: number, s: any) => sum + s.count, 0);
+    const totalCalls = Object.values(functionSummary).reduce(
+      (sum: number, s: any) => sum + s.count,
+      0,
+    );
     if (totalCalls > LOG_TOTAL_CALLS_THRESHOLD) {
       insights.push('함수 호출 수가 많음 - 캐싱 고려');
     }
     return insights;
   }
-
 }
 
 export const globalProfiler = new PerformanceProfiler();
@@ -350,9 +383,11 @@ export function measureIO(operation: string, pathGetter: (instance: any) => stri
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
     descriptor.value = async function (...args: any[]) {
-      if (!globalProfiler['isEnabled']) return originalMethod.apply(this, args);  // ✅ Off면 그냥 실행 (오버헤드 없음)
+      if (!globalProfiler['isEnabled']) return originalMethod.apply(this, args); // ✅ Off면 그냥 실행 (오버헤드 없음)
       const path = pathGetter(this);
-      return await globalProfiler.measureIO(operation, path, () => originalMethod.apply(this, args));
+      return await globalProfiler.measureIO(operation, path, () =>
+        originalMethod.apply(this, args),
+      );
     };
     return descriptor;
   };
@@ -378,13 +413,14 @@ export function takeMemorySnapshot(label?: string): MemorySnapshot {
     rss: memUsage.rss,
   };
 
-  // V8 heap statistics if available
+  // V8 heap statistics if available (Node 환경)
   try {
-    const v8 = require('v8');
-    const heapStats = v8.getHeapStatistics();
-    snapshot.arrayBuffers = heapStats.total_array_buffer_size || 0;
-  } catch (e) {
-    // v8 module not available or heap stats not supported
+    const heapStats = v8.getHeapStatistics?.();
+    if (heapStats) {
+      snapshot.arrayBuffers = (heapStats as any).total_array_buffer_size || 0;
+    }
+  } catch {
+    // ignore if not available
   }
 
   // Add stack trace for debugging

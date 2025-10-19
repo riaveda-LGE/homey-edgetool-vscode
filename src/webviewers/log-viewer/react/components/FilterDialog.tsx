@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLogStore } from '../store';
-import type { Filter } from '../types';
+
 import { createUiLog } from '../../../shared/utils';
 import { vscode } from '../ipc';
+import { useLogStore } from '../store';
+import type { Filter } from '../types';
 
 export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const storeFilter = useLogStore(s => s.filter);
-  const applyFilter = useLogStore(s => s.applyFilter);
-  const resetFilters = useLogStore(s => s.resetFilters);
-  const ui = useMemo(()=>createUiLog(vscode,'log-viewer.filter'),[]);
+  const storeFilter = useLogStore((s) => s.filter);
+  const applyFilter = useLogStore((s) => s.applyFilter);
+  const resetFilters = useLogStore((s) => s.resetFilters);
+  const ui = useMemo(() => createUiLog(vscode, 'log-viewer.filter'), []);
 
   const [local, setLocal] = useState(storeFilter);
   useEffect(() => {
@@ -26,19 +27,25 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (!open) return;
     // 살짝 지연 후 측정(Transition 적용 직후 레이아웃 안정화)
     const t = setTimeout(() => {
-      const overlay = document.querySelector('[data-testid="filter-overlay"]') as HTMLElement | null;
+      const overlay = document.querySelector(
+        '[data-testid="filter-overlay"]',
+      ) as HTMLElement | null;
       const panel = document.querySelector('[data-testid="filter-panel"]') as HTMLElement | null;
       if (overlay) {
         const zi = getComputedStyle(overlay).zIndex;
         const r = overlay.getBoundingClientRect();
-        ui.info(`filterDialog.dom.overlay z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`);
+        ui.info(
+          `filterDialog.dom.overlay z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
+        );
       } else {
         ui.warn('filterDialog.dom.overlay not found');
       }
       if (panel) {
         const zi = getComputedStyle(panel).zIndex;
         const r = panel.getBoundingClientRect();
-        ui.info(`filterDialog.dom.panel z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`);
+        ui.info(
+          `filterDialog.dom.panel z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
+        );
       } else {
         ui.warn('filterDialog.dom.panel not found');
       }
@@ -49,7 +56,9 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
   // Esc로 닫기(외부 클릭은 닫지 않음)
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   }, [open, onClose]);
@@ -62,7 +71,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
     applyFilter(normalize(cleaned));
     onClose();
   };
-  const onCancel = () => { ui.info('filterDialog.cancel'); onClose(); };
+  const onCancel = () => {
+    ui.info('filterDialog.cancel');
+    onClose();
+  };
 
   // ── OR 그룹 UI: "wlan host, deauth" → [["wlan","host"],["deauth"]] ─────────────
   const parseGroups = (s?: string): string[][] => {
@@ -70,13 +82,18 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (!src.trim()) return [];
     return src
       .split(',')
-      .map(g => g.trim())
+      .map((g) => g.trim())
       .filter(Boolean)
-      .map(g => g.split(/\s+/g).map(t => t.trim()).filter(Boolean));
+      .map((g) =>
+        g
+          .split(/\s+/g)
+          .map((t) => t.trim())
+          .filter(Boolean),
+      );
   };
   const serializeGroups = (groups: string[][]) =>
     groups
-      .map(g => {
+      .map((g) => {
         const uniq: string[] = [];
         for (const t of g) if (t && !uniq.includes(t)) uniq.push(t);
         return uniq.join(' ');
@@ -86,10 +103,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   // 모든 필드 정규화(빈 그룹/빈 칩/중복 제거)
   const normalizeAll = (f: Filter): Filter => ({
-    pid : serializeGroups(parseGroups(f?.pid)),
-    src : serializeGroups(parseGroups(f?.src)),
+    pid: serializeGroups(parseGroups(f?.pid)),
+    src: serializeGroups(parseGroups(f?.src)),
     proc: serializeGroups(parseGroups(f?.proc)),
-    msg : serializeGroups(parseGroups(f?.msg)),
+    msg: serializeGroups(parseGroups(f?.msg)),
   });
 
   const setGroupsFor = (k: keyof Filter, groups: string[][]) => {
@@ -98,7 +115,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
   const removeTokenAt = (k: keyof Filter, gIdx: number, token: string) => {
     const groups = parseGroups((local as any)[k]);
     if (!groups[gIdx]) return;
-    groups[gIdx] = groups[gIdx].filter(t => t !== token);
+    groups[gIdx] = groups[gIdx].filter((t) => t !== token);
     if (groups[gIdx].length === 0) groups.splice(gIdx, 1);
     setGroupsFor(k, groups);
   };
@@ -128,8 +145,8 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           alignItems: 'center',
         }}
       >
-        {/* 라벨 */}
-        <div style={{ fontSize: 12, opacity: 0.75 }}>{label}</div>
+        {/* 라벨: 항상 밝은 전경색 사용 */}
+        <div style={{ fontSize: 12, color: 'var(--fg, #e6e6e6)' }}>{label}</div>
 
         {/* 입력 */}
         <input
@@ -138,10 +155,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
             width: '100%',
             boxSizing: 'border-box',
             padding: '6px 8px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border, rgba(255,255,255,0.15))',
             borderRadius: 8,
-            background: 'var(--bg)',
-            color: 'var(--fg)',
+            background: 'var(--bg, #121212)',
+            color: 'var(--fg, #e6e6e6)',
             fontSize: 13,
           }}
           placeholder={ph}
@@ -167,9 +184,12 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
         />
 
         {/* 필터된 항목(그룹 칩) */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', minHeight: 28 }}>
+        <div
+          style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', minHeight: 28 }}
+        >
           {groups.length === 0 ? (
-            <span style={{ fontSize: 12, opacity: 0.5 }}>없음</span>
+            /* "없음"도 밝은 전경색으로 명확히 */
+            <span style={{ fontSize: 12, color: 'var(--fg, #e6e6e6)' }}>없음</span>
           ) : (
             groups.map((g, gi) => (
               <div
@@ -206,7 +226,14 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
                         cursor: 'pointer',
                       }}
                     >
-                      <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span
+                        style={{
+                          maxWidth: 160,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {t}
                       </span>
                       <span aria-hidden>×</span>
@@ -228,14 +255,24 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
                 >
                   ×
                 </button>
-                {gi < groups.length - 1 && <span style={{ fontSize: 12, opacity: 0.6, padding: '0 2px' }}>OR</span>}
+                {gi < groups.length - 1 && (
+                  <span style={{ fontSize: 12, opacity: 0.6, padding: '0 2px' }}>OR</span>
+                )}
               </div>
             ))
           )}
           <button
             onClick={() => addOrGroup(k)}
             className="tw-text-xs tw-px-2 tw-py-[3px] tw-rounded tw-border tw-border-[var(--border)]"
-            style={{ fontSize: 12, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{
+              fontSize: 12,
+              padding: '4px 8px',
+              border: '1px solid var(--border, rgba(255,255,255,0.15))',
+              borderRadius: 8,
+              background: 'transparent',
+              color: 'var(--fg, #e6e6e6)',
+              whiteSpace: 'nowrap',
+            }}
           >
             + OR 그룹
           </button>
@@ -249,10 +286,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           style={{
             fontSize: 12,
             padding: '6px 10px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border, rgba(255,255,255,0.15))',
             borderRadius: 8,
             background: 'transparent',
-            color: 'inherit',
+            color: 'var(--fg, #e6e6e6)',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
           }}
@@ -277,8 +314,12 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           zIndex: 2147483646,
           background: 'rgba(0,0,0,0.40)',
         }}
-        onMouseDown={(e)=>{ e.stopPropagation(); }}
-        onClick={(e)=>{ e.stopPropagation(); }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       />
 
       {/* Container (센터링) */}
@@ -294,8 +335,12 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           padding: '1rem',
           overflowY: 'auto',
         }}
-        onMouseDown={(e)=>{ e.stopPropagation(); }}
-        onClick={(e)=>{ e.stopPropagation(); }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         <div
           data-testid="filter-panel"
@@ -303,44 +348,85 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           style={{
             width: 640,
             maxWidth: 'min(96vw, 860px)',
-            background: 'var(--panel)',
-            color: 'var(--fg)',
-            border: '1px solid var(--border)',
+            background: 'var(--panel, #1b1b1b)',
+            color: 'var(--fg, #e6e6e6)',
+            border: '1px solid var(--border, rgba(255,255,255,0.15))',
             borderRadius: 16,
             boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
             padding: 16,
           }}
           className="tw-w-[520px] tw-rounded-2xl tw-border tw-border-[var(--border)] tw-bg-[var(--panel)] tw-shadow-xl tw-p-4"
         >
-          <div className="tw-text-base tw-mb-3" style={{ fontSize:14, marginBottom:12, fontWeight:600 }}>필터 설정</div>
+          <div
+            className="tw-text-base tw-mb-3"
+            style={{ fontSize: 14, marginBottom: 12, fontWeight: 600 }}
+          >
+            필터 설정
+          </div>
           {/* 세로(Vertical) 필드 영역 */}
-          <div style={{ display:'grid', gap:12 }}>
-            {FieldRow('pid',  'PID',     '예: 1234 5678, 9012')}
-            {FieldRow('src',  '파일',    '예: kernel.log, matter')}
-            {FieldRow('proc', '프로세스','예: wlan0 hostapd, cpcd')}
-            {FieldRow('msg',  '메시지',  '예: wlan host, deauth')}
+          <div style={{ display: 'grid', gap: 12 }}>
+            {FieldRow('pid', 'PID', '예: 1234 5678, 9012')}
+            {FieldRow('src', '파일', '예: kernel.log, matter')}
+            {FieldRow('proc', '프로세스', '예: wlan0 hostapd, cpcd')}
+            {FieldRow('msg', '메시지', '예: wlan host, deauth')}
           </div>
 
-          <div className="tw-flex tw-justify-between tw-items-center tw-mt-4" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:16 }}>
+          <div
+            className="tw-flex tw-justify-between tw-items-center tw-mt-4"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: 16,
+            }}
+          >
             <button
               className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
-              style={{ fontSize:12, padding:'6px 10px', border:'1px solid var(--border)', borderRadius:8, background:'transparent', color:'inherit', cursor:'pointer' }}
-              onClick={() => { ui.info('filterDialog.reset'); resetFilters(); onClose(); }}
+              style={{
+                fontSize: 12,
+                padding: '6px 10px',
+                border: '1px solid var(--border, rgba(255,255,255,0.15))',
+                borderRadius: 8,
+                background: 'transparent',
+                color: 'var(--fg, #e6e6e6)',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                ui.info('filterDialog.reset');
+                resetFilters();
+                onClose();
+              }}
             >
               전체 초기화
             </button>
-            <div className="tw-flex tw-gap-2" style={{ display:'flex', gap:8 }}>
+            <div className="tw-flex tw-gap-2" style={{ display: 'flex', gap: 8 }}>
               {/* ⬅ 요청: 적용이 왼쪽, 취소가 오른쪽 */}
               <button
                 className="tw-text-sm tw-px-3 tw-py-1 tw-rounded tw-bg-[var(--accent)] tw-text-[var(--accent-fg)] hover:tw-bg-[var(--accent-hover)]"
-                style={{ fontSize:12, padding:'6px 12px', borderRadius:8, background:'var(--accent)', color:'var(--accent-fg)', border:'none', cursor:'pointer' }}
+                style={{
+                  fontSize: 12,
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  background: 'var(--accent, #2e7dd7)',
+                  color: 'var(--accent-fg, #ffffff)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
                 onClick={onApply}
               >
                 적용
               </button>
               <button
                 className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
-                style={{ fontSize:12, padding:'6px 12px', border:'1px solid var(--border)', borderRadius:8, background:'transparent', color:'inherit', cursor:'pointer' }}
+                style={{
+                  fontSize: 12,
+                  padding: '6px 12px',
+                  border: '1px solid var(--border, rgba(255,255,255,0.15))',
+                  borderRadius: 8,
+                  background: 'transparent',
+                  color: 'var(--fg, #e6e6e6)',
+                  cursor: 'pointer',
+                }}
                 onClick={onCancel}
               >
                 취소
@@ -350,7 +436,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
         </div>
       </div>
     </>,
-    document.body
+    document.body,
   );
 }
 

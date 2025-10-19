@@ -4,7 +4,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { getCurrentWorkspacePathFs, readLogViewerPrefs, writeLogViewerPrefs } from '../../core/config/userdata.js';
+import {
+  getCurrentWorkspacePathFs,
+  readLogViewerPrefs,
+  writeLogViewerPrefs,
+} from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
@@ -20,12 +24,12 @@ export class LogViewerPanelManager {
   private initialSent = false;
 
   // ── 진행률 로그 샘플링 상태 ─────────────────────────────────────────────
-  private progAcc = 0;                           // inc 누적(라인 수)
-  private progDoneAcc = 0;                       // 진행 누적(라인 수)
-  private progTotal?: number;                    // 총 라인 수
-  private progLastLogMs = 0;                     // 마지막 로그 시각(ms)
-  private readonly PROG_LINES_THRESHOLD = 1000;  // 누적 라인 임계치
-  private readonly PROG_LOG_INTERVAL_MS = 800;   // 최소 간격(ms)
+  private progAcc = 0; // inc 누적(라인 수)
+  private progDoneAcc = 0; // 진행 누적(라인 수)
+  private progTotal?: number; // 총 라인 수
+  private progLastLogMs = 0; // 마지막 로그 시각(ms)
+  private readonly PROG_LINES_THRESHOLD = 1000; // 누적 라인 임계치
+  private readonly PROG_LOG_INTERVAL_MS = 800; // 최소 간격(ms)
   // ──────────────────────────────────────────────────────────────────────
 
   constructor(
@@ -35,7 +39,9 @@ export class LogViewerPanelManager {
   ) {}
 
   dispose() {
-    try { this.session?.dispose(); } catch {}
+    try {
+      this.session?.dispose();
+    } catch {}
     this.session = undefined;
     if (this.panel) this.panel.dispose();
   }
@@ -69,7 +75,7 @@ export class LogViewerPanelManager {
           localResourceRoots: [
             vscode.Uri.joinPath(this.extensionUri, 'dist', 'webviewers', 'log-viewer'),
           ],
-        }
+        },
       );
       this.panel.onDidDispose(() => {
         this.appendLog?.('[info] viewer: panel disposed');
@@ -93,10 +99,17 @@ export class LogViewerPanelManager {
         const src = String(msg?.payload?.source ?? 'ui');
         const line = `[${lvl}] [${src}] ${text}`;
         switch (lvl) {
-          case 'debug': this.log.debug?.(line); break;
-          case 'warn': this.log.warn(line); break;
-          case 'error': this.log.error(line); break;
-          default: this.log.info(line);
+          case 'debug':
+            this.log.debug?.(line);
+            break;
+          case 'warn':
+            this.log.warn(line);
+            break;
+          case 'error':
+            this.log.error(line);
+            break;
+          default:
+            this.log.info(line);
         }
         this.appendLog?.(line);
       });
@@ -117,7 +130,7 @@ export class LogViewerPanelManager {
 
       this.bridge.on('logviewer.saveUserPrefs' as any, async (msg: any) => {
         try {
-          const patch = (msg?.payload?.prefs) ?? {};
+          const patch = msg?.payload?.prefs ?? {};
           await writeLogViewerPrefs(this.context, patch);
           this.bridge!.send({ v: 1, type: 'ack', payload: { inReplyTo: msg?.id } } as any);
           this.appendLog?.('[debug] viewer: prefs saved');
@@ -173,9 +186,7 @@ export class LogViewerPanelManager {
 
     // ✅ 병합 결과 저장 위치를 workspace/raw/merge_log 로 고정
     const wsRoot = await this._resolveWorkspaceRoot();
-    const indexOutDir = wsRoot
-      ? path.join(wsRoot, RAW_DIR_NAME, MERGED_DIR_NAME)
-      : undefined;
+    const indexOutDir = wsRoot ? path.join(wsRoot, RAW_DIR_NAME, MERGED_DIR_NAME) : undefined;
     if (!wsRoot) {
       this.appendLog?.('[warn] merge: no workspace folder, fallback to default outDir');
     }
@@ -189,14 +200,14 @@ export class LogViewerPanelManager {
       onBatch: (logs, total, seq) => {
         if (this.initialSent) return;
         this.appendLog?.(
-          `[info] merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`
+          `[info] merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`,
         );
         this._send('logs.batch', { logs, total, seq });
         this.initialSent = true;
       },
       onSaved: (info) => {
         this.appendLog?.(
-          `[info] merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`
+          `[info] merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`,
         );
         this._send('logmerge.saved', info);
       },
@@ -205,10 +216,12 @@ export class LogViewerPanelManager {
       // 정식 병합(T1) 완료 → UI 하드리프레시
       onRefresh: ({ total, version }) => {
         this.appendLog?.(
-          `[info] merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`
+          `[info] merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`,
         );
         this._send('logs.refresh', {
-          reason: 'full-reindex', total, version
+          reason: 'full-reindex',
+          total,
+          version,
         });
       },
 
@@ -227,13 +240,16 @@ export class LogViewerPanelManager {
           this.progDoneAcc += add;
 
           // 조건: 누적 라인 임계 + 최소 간격 충족 시에만 1줄 로그
-          if (this.progAcc >= this.PROG_LINES_THRESHOLD &&
-              (now - this.progLastLogMs) >= this.PROG_LOG_INTERVAL_MS) {
-            const pct = (this.progTotal && this.progTotal > 0)
-              ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
-              : undefined;
+          if (
+            this.progAcc >= this.PROG_LINES_THRESHOLD &&
+            now - this.progLastLogMs >= this.PROG_LOG_INTERVAL_MS
+          ) {
+            const pct =
+              this.progTotal && this.progTotal > 0
+                ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
+                : undefined;
             this.appendLog?.(
-              `[debug] host→ui: merge.progress ~${pct ?? '?'}% (≈${this.progDoneAcc}/${this.progTotal ?? '?'})`
+              `[debug] host→ui: merge.progress ~${pct ?? '?'}% (≈${this.progDoneAcc}/${this.progTotal ?? '?'})`,
             );
             this.progAcc = 0;
             this.progLastLogMs = now;
@@ -242,11 +258,12 @@ export class LogViewerPanelManager {
           // 완료 시에는 정확 수치 1회만 출력
           if (typeof total === 'number') this.progTotal = total;
           if (typeof done === 'number') this.progDoneAcc = done;
-          const pct = (this.progTotal && this.progTotal > 0)
-            ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
-            : 100;
+          const pct =
+            this.progTotal && this.progTotal > 0
+              ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
+              : 100;
           this.appendLog?.(
-            `[debug] host→ui: merge.progress done=${this.progDoneAcc}/${this.progTotal ?? '?'} (${pct}%)`
+            `[debug] host→ui: merge.progress done=${this.progDoneAcc}/${this.progTotal ?? '?'} (${pct}%)`,
           );
           // 상태 초기화
           this.progAcc = 0;
@@ -269,12 +286,18 @@ export class LogViewerPanelManager {
         const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
         const total = payload?.total;
         const seq = payload?.seq;
-        this.appendLog?.(`[debug] host→ui: ${type} (len=${len}, total=${total ?? ''}, seq=${seq ?? ''})`);
+        this.appendLog?.(
+          `[debug] host→ui: ${type} (len=${len}, total=${total ?? ''}, seq=${seq ?? ''})`,
+        );
       } else if (type === 'logs.page.response') {
         const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
-        this.appendLog?.(`[debug] host→ui: ${type} (${payload?.startIdx}-${payload?.endIdx}, len=${len})`);
+        this.appendLog?.(
+          `[debug] host→ui: ${type} (${payload?.startIdx}-${payload?.endIdx}, len=${len})`,
+        );
       } else if (type === 'logs.refresh') {
-        this.appendLog?.(`[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`);
+        this.appendLog?.(
+          `[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`,
+        );
       }
       this.panel?.webview.postMessage({ v: 1, type, payload });
     } catch {}
@@ -321,7 +344,9 @@ export class LogViewerPanelManager {
 
   private async _cleanupRaw(wsRoot: string) {
     const rawDir = path.join(wsRoot, RAW_DIR_NAME);
-    try { await fs.promises.rm(rawDir, { recursive: true, force: true }); } catch {}
+    try {
+      await fs.promises.rm(rawDir, { recursive: true, force: true });
+    } catch {}
     await fs.promises.mkdir(rawDir, { recursive: true });
   }
 
@@ -350,7 +375,10 @@ export class LogViewerPanelManager {
       // 2) 리소스 경로 재작성 (script/link/img - src/href)
       const ATTR_RE = /(<(script|link|img)\b[^>]*?\s(?:src|href)=)(['"])([^'"]+)\3/gi;
       html = html.replace(ATTR_RE, (_m, p1, _tag, q, url) => {
-        const abs = /^(?:https?:|data:|blob:|vscode-)/i.test(url) || url.startsWith('#') || url.startsWith('//');
+        const abs =
+          /^(?:https?:|data:|blob:|vscode-)/i.test(url) ||
+          url.startsWith('#') ||
+          url.startsWith('//');
         if (abs) return `${p1}${q}${url}${q}`;
         const rewritten = webview.asWebviewUri(vscode.Uri.joinPath(root, url)).toString();
         return `${p1}${q}${rewritten}${q}`;

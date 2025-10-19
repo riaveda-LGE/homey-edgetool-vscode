@@ -1,18 +1,18 @@
 // === src/extension/editors/PerfMonitorCaptureManager.ts ===
+import type { H2W } from '@ipc/messages';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { globalProfiler, PerformanceProfiler } from '../../core/logging/perf.js';
 import { PERF_UPDATE_INTERVAL_MS } from '../../shared/const.js';
-import type { H2W } from '@ipc/messages';
-import type { IPerfMonitorCaptureManager,PerfData } from './IPerfMonitorPanelComponents.js';
+import type { IPerfMonitorCaptureManager, PerfData } from './IPerfMonitorPanelComponents.js';
 
 export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   private _profiler = globalProfiler;
   private _captureInterval?: NodeJS.Timeout;
   private _captureData: PerfData[] = [];
   private _isCapturing = false;
-  private _webviewPerfData: Array<{name: string, duration: number}> = [];
+  private _webviewPerfData: Array<{ name: string; duration: number }> = [];
   private _panel?: vscode.WebviewPanel;
 
   constructor(panel: vscode.WebviewPanel) {
@@ -36,7 +36,7 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
       this._panel.webview.postMessage({
         v: 1,
         type: 'perf.captureStarted',
-        payload: {}
+        payload: {},
       } as H2W);
       log.info('captureStarted message sent');
     } else {
@@ -57,7 +57,7 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
         this._panel.webview.postMessage({
           v: 1,
           type: 'perf.updateData',
-          payload: { data: this._captureData }
+          payload: { data: this._captureData },
         } as H2W);
       }
     }, PERF_UPDATE_INTERVAL_MS);
@@ -73,7 +73,10 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
       this._captureInterval = undefined;
     }
 
-    const combinedFunctionCalls = [...(result.functionCalls || []), ...this._webviewPerfData.map((d: any) => ({ name: d.name, start: 0, duration: d.duration }))];
+    const combinedFunctionCalls = [
+      ...(result.functionCalls || []),
+      ...this._webviewPerfData.map((d: any) => ({ name: d.name, start: 0, duration: d.duration })),
+    ];
     const combinedResult = { ...result, functionCalls: combinedFunctionCalls };
 
     if (this._panel) {
@@ -82,7 +85,7 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
       this._panel.webview.postMessage({
         v: 1,
         type: 'perf.captureStopped',
-        payload: { result: combinedResult, htmlReport: webviewHtml, exportHtml }
+        payload: { result: combinedResult, htmlReport: webviewHtml, exportHtml },
       } as H2W);
     }
   }
@@ -152,22 +155,36 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   <h2>Function Calls</h2>
   <table>
     <tr><th>Function</th><th>Calls</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th></tr>
-    ${Object.entries(a.functionSummary || {}).map(([name, stats]: [string, any]) =>
-      `<tr class="${(a.bottlenecks?.slowFunctions || []).includes(name) ? 'bottleneck' : ''}">
+    ${Object.entries(a.functionSummary || {})
+      .map(
+        ([name, stats]: [string, any]) =>
+          `<tr class="${(a.bottlenecks?.slowFunctions || []).includes(name) ? 'bottleneck' : ''}">
         <td>${name}</td><td>${stats?.count || 0}</td><td>${(stats?.avgTime || 0).toFixed(2)}</td><td>${(stats?.maxTime || 0).toFixed(2)}</td><td>${(stats?.totalTime || 0).toFixed(2)}</td>
-      </tr>`).join('')}
+      </tr>`,
+      )
+      .join('')}
   </table>
 
-  ${a.ioAnalysis && a.ioAnalysis.totalOperations > 0 ? `
+  ${
+    a.ioAnalysis && a.ioAnalysis.totalOperations > 0
+      ? `
   <h2>I/O Operations</h2>
   <table>
     <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Errors</th></tr>
-    ${a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0 ?
-      `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>` : ''}
-    ${a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0 ?
-      `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>` : ''}
+    ${
+      a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0
+        ? `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>`
+        : ''
+    }
+    ${
+      a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0
+        ? `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>`
+        : ''
+    }
   </table>
-  ` : ''}
+  `
+      : ''
+  }
 
 </body>
 </html>`;

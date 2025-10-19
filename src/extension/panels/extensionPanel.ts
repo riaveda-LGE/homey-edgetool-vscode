@@ -68,7 +68,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
   private _disposeTracked() {
     for (const dispose of this._disposables) {
-      try { dispose(); } catch (e) { this.log.warn(`dispose error: ${e}`); }
+      try {
+        dispose();
+      } catch (e) {
+        this.log.warn(`dispose error: ${e}`);
+      }
     }
     this._disposables.clear();
   }
@@ -101,14 +105,14 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
     // Explorer 브리지
     this._explorer = createExplorerBridge(this._context, (m) => {
-      try { webviewView.webview.postMessage(m); } catch {}
+      try {
+        webviewView.webview.postMessage(m);
+      } catch {}
     });
 
     // 로그 뷰어
-    this._logViewer = new LogViewerPanelManager(
-      this._context,
-      this._extensionUri,
-      (line) => this.appendLog(line)
+    this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri, (line) =>
+      this.appendLog(line),
     );
 
     // 버튼 실행 라우터(ActionRouter)
@@ -120,11 +124,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       {
         updateAvailable: this._state.updateAvailable,
         updateUrl: this._state.updateUrl,
-        latestSha: this._state.latestSha
+        latestSha: this._state.latestSha,
       },
       this,
       this._perfMonitor,
-      this._explorer
+      this._explorer,
     );
 
     // Webview → Extension
@@ -152,8 +156,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
           const panelState = await readEdgePanelState(this._context);
           const state = { ...this._state, logs: getBufferedLogs() };
-          webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
-          webviewView.webview.postMessage({ v: 1, type: 'setUpdateVisible', payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) } });
+          webviewView.webview.postMessage({
+            v: 1,
+            type: 'initState',
+            payload: { state, panelState },
+          });
+          webviewView.webview.postMessage({
+            v: 1,
+            type: 'setUpdateVisible',
+            payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) },
+          });
           this._actionRouter?.sendButtonSections();
 
           if (panelState.showExplorer) {
@@ -166,7 +178,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
           return;
-        } else if (msg?.type === 'button.click' && msg?.v === 1 && typeof msg.payload.id === 'string') {
+        } else if (
+          msg?.type === 'button.click' &&
+          msg?.v === 1 &&
+          typeof msg.payload.id === 'string'
+        ) {
           await this._actionRouter?.dispatchButton(msg.payload.id);
           return;
         }
@@ -203,7 +219,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         }
         const state = { ...this._state, logs: getBufferedLogs() };
         const panelState = await readEdgePanelState(this._context);
-        webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
+        webviewView.webview.postMessage({
+          v: 1,
+          type: 'initState',
+          payload: { state, panelState },
+        });
         this._actionRouter?.sendButtonSections();
         if (panelState.showExplorer) {
           await this._explorer?.refreshWorkspaceRoot();
@@ -213,25 +233,33 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._trackDisposable(() => visibilityDisposable.dispose());
 
     const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
-      try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
+      try {
+        webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+      } catch {}
     });
     this._trackDisposable(() => activeEditorDisposable.dispose());
 
     const activeTerminalDisposable = vscode.window.onDidChangeActiveTerminal(() => {
-      try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
+      try {
+        webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+      } catch {}
     });
     this._trackDisposable(() => activeTerminalDisposable.dispose());
 
     const winStateDisposable = vscode.window.onDidChangeWindowState((state) => {
       if (!state.focused) {
-        try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
+        try {
+          webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+        } catch {}
       }
     });
     this._trackDisposable(() => winStateDisposable.dispose());
 
     // OutputChannel -> EdgePanel
     this._sink = (line: string) => {
-      try { webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } }); } catch {}
+      try {
+        webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
+      } catch {}
     };
     addLogSink(this._sink);
 
@@ -241,7 +269,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       if (this._sink) removeLogSink(this._sink);
       this._sink = undefined;
 
-      try { this._explorer?.dispose(); } catch {}
+      try {
+        this._explorer?.dispose();
+      } catch {}
       this._explorer = undefined;
 
       this._actionRouter?.dispose();
@@ -269,7 +299,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._logViewer?.stop();
   }
 
-  private _randomNonce(len = (RANDOM_STRING_LENGTH || 32)) {
+  private _randomNonce(len = RANDOM_STRING_LENGTH || 32) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let out = '';
     for (let i = 0; i < len; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -324,14 +354,25 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 }
 
 // ⬇️ 명령 등록 (QuickPick 포함)
-export function registerEdgePanelCommands(context: vscode.ExtensionContext, provider: EdgePanelProvider) {
+export function registerEdgePanelCommands(
+  context: vscode.ExtensionContext,
+  provider: EdgePanelProvider,
+) {
   const regs = [
     // QuickPick으로 모드 선택
     vscode.commands.registerCommand('homey.logging.openViewer', async () => {
       const pick = await vscode.window.showQuickPick(
         [
-          { label: '$(debug-start) 실시간 로그 보기', description: 'ADB / journalctl 스트리밍', id: 'realtime' },
-          { label: '$(folder) 파일 병합 보기', description: '폴더 로그 병합 + 페이징', id: 'filemerge' },
+          {
+            label: '$(debug-start) 실시간 로그 보기',
+            description: 'ADB / journalctl 스트리밍',
+            id: 'realtime',
+          },
+          {
+            label: '$(folder) 파일 병합 보기',
+            description: '폴더 로그 병합 + 페이징',
+            id: 'filemerge',
+          },
         ],
         {
           title: 'Homey Log Viewer - 모드 선택',
@@ -364,7 +405,9 @@ export function registerEdgePanelCommands(context: vscode.ExtensionContext, prov
       }
     }),
 
-    vscode.commands.registerCommand('homey.logging.startRealtime', (filter?: string) => provider.startRealtime(filter)),
+    vscode.commands.registerCommand('homey.logging.startRealtime', (filter?: string) =>
+      provider.startRealtime(filter),
+    ),
 
     vscode.commands.registerCommand('homey.logging.startFileMerge', async (dir?: string) => {
       if (dir && typeof dir === 'string') {
@@ -384,5 +427,5 @@ export function registerEdgePanelCommands(context: vscode.ExtensionContext, prov
 
     vscode.commands.registerCommand('homey.logging.stop', () => provider.stopLogging()),
   ];
-  regs.forEach(d => context.subscriptions.push(d));
+  regs.forEach((d) => context.subscriptions.push(d));
 }

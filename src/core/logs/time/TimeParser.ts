@@ -3,9 +3,7 @@
 /** 라인에서 타임스탬프(epoch ms)를 추출; 실패 시 undefined */
 export function parseTs(line: string): number | undefined {
   // ISO-like 먼저
-  const iso = line.match(
-    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?/,
-  );
+  const iso = line.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?/);
   if (iso) {
     const t = Date.parse(iso[0]);
     if (!Number.isNaN(t)) return t;
@@ -15,7 +13,20 @@ export function parseTs(line: string): number | undefined {
   const syslog = line.match(/\[([A-Za-z]{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?\]/);
   if (syslog) {
     const now = new Date();
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const month = monthNames.indexOf(syslog[1]);
     if (month >= 0) {
       const d = new Date(

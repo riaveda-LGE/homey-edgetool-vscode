@@ -1,5 +1,6 @@
 // === src/core/logs/HybridLogBuffer.ts ===
 import type { LogEntry } from '@ipc/messages';
+
 import { REALTIME_BUFFER_MAX } from '../../shared/const.js';
 import { getLogger } from '../logging/extension-logger.js';
 

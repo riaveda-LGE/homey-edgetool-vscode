@@ -42,12 +42,7 @@ export class LogService {
     const ms = m[4] ? parseInt(m[4].padEnd(3, '0').slice(0, 3), 10) : 0;
 
     const now = new Date();
-    const d = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      hh, mm, ss, ms
-    );
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, ss, ms);
     return d.getTime();
   }
 
@@ -99,5 +94,7 @@ export class LogService {
     this.container!.scrollTop = this.container!.scrollHeight;
   }
 
-  get element() { return this.container; }
+  get element() {
+    return this.container;
+  }
 }
