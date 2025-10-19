@@ -62,16 +62,60 @@ export function Grid(){
   // 프리뷰 상태 변경 로그
   useEffect(()=>{ ui.info(`Grid.preview state open=${preview.open} rowId=${preview.logRow?.id ?? 'none'}`); }, [preview.open, preview.logRow?.id]);
 
-  const gridCols =
-    `${m.showCols.time?`${m.colW.time}px`:'0px'} ` +
-    `${m.showCols.proc?`${m.colW.proc}px`:'0px'} ` +
-    `${m.showCols.pid ?`${m.colW.pid }px`:'0px'} ` +
-    `${m.showCols.src ?`${m.colW.src }px`:'0px'} ` +
-    `${m.showCols.msg ? '1fr' : '0px'}`;
+  // 마지막 보이는 컬럼이 항상 1fr이 되도록 그리드 트랙을 구성
+  const buildGridTemplate = () => {
+    const tracks: string[] = [];
+    const order: Array<keyof typeof m.showCols> = ['time','proc','pid','src','msg'];
+    for (const id of order) {
+      if (!m.showCols[id]) {
+        // 숨김이면 0px 트랙(실질적으로 사라짐)
+        tracks.push('0px');
+      } else {
+        if (id === 'time') tracks.push(`${m.colW.time}px`);
+        else if (id === 'proc') tracks.push(`${m.colW.proc}px`);
+        else if (id === 'pid') tracks.push(`${m.colW.pid}px`);
+        else if (id === 'src') tracks.push(`${m.colW.src}px`);
+        else if (id === 'msg') tracks.push('1fr');
+      }
+    }
+    // msg가 꺼져 있으면 오른쪽에서부터 마지막 보이는 고정폭을 1fr로 승격
+    if (!m.showCols.msg) {
+      for (let i = tracks.length - 1; i >= 0; i--) {
+        if (tracks[i] !== '0px') { tracks[i] = '1fr'; break; }
+      }
+    }
+    // 모든 컬럼이 숨겨졌을 때 안전장치
+    if (!tracks.some(t => t !== '0px')) tracks[0] = '1fr';
+    return tracks.join(' ');
+  };
+  const gridCols = buildGridTemplate();
   const anyHidden = !(m.showCols.time && m.showCols.proc && m.showCols.pid && m.showCols.src && m.showCols.msg);
+
+  // 현재 행 렌더에서 "가장 오른쪽 보이는 컬럼"을 구해 경계선을 지우기 위해 전달
+  const lastVisibleCol: 'time'|'proc'|'pid'|'src'|'msg' | undefined =
+    m.showCols.msg ? 'msg'
+    : m.showCols.src ? 'src'
+    : m.showCols.pid ? 'pid'
+    : m.showCols.proc ? 'proc'
+    : m.showCols.time ? 'time'
+    : undefined;
 
   const totalSize = rowVirtualizer.getTotalSize();
   const virtualItems = rowVirtualizer.getVirtualItems();
+
+  // ── 인덱스 점프 처리(북마크/검색 등) ────────────────────────────────
+  useEffect(()=>{
+    const idx = m.pendingJumpIdx;
+    if (!idx || !parentRef.current) return;
+    const half = Math.floor(m.windowSize/2);
+    const startIdx = Math.max(1, Math.min(Math.max(1, m.totalRows - m.windowSize + 1), idx - half));
+    const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
+    ui.info(`Grid.jumpToIdx idx=${idx} → request ${startIdx}-${endIdx}`);
+    parentRef.current.scrollTop = Math.max(0, (idx - 1) * m.rowH);
+    vscode?.postMessage({ v:1, type:'logs.page.request', payload:{ startIdx, endIdx }});
+    // 점프 1회 소진
+    useLogStore.setState({ pendingJumpIdx: undefined });
+  }, [m.pendingJumpIdx, m.windowSize, m.totalRows, m.rowH]);
 
   return (
     <>
@@ -117,14 +161,14 @@ export function Grid(){
                 openPreview(r);
               }}
             >
-              <Cell kind="time" hidden={!m.showCols.time} mono={false}>
+              <Cell kind="time" hidden={!m.showCols.time} mono={false} last={lastVisibleCol==='time'}>
                 <span className="tw-mr-1 tw-cursor-pointer" onClick={(e)=>{ e.stopPropagation(); useLogStore.getState().toggleBookmark(r.id); }}> {r.bookmarked ? '★' : '☆'} </span>
                 {hi(r.time, m.highlights)}
               </Cell>
-              <Cell kind="proc" hidden={!m.showCols.proc}>{hi(r.proc, m.highlights)}</Cell>
-              <Cell kind="pid" hidden={!m.showCols.pid} align="right">{hi(r.pid, m.highlights)}</Cell>
-              <Cell kind="src" hidden={!m.showCols.src} mono>{hi(r.src ?? '', m.highlights)}</Cell>
-              <Cell kind="msg" hidden={!m.showCols.msg}>{hi(r.msg, m.highlights)}</Cell>
+              <Cell kind="proc" hidden={!m.showCols.proc} last={lastVisibleCol==='proc'}>{hi(r.proc, m.highlights)}</Cell>
+              <Cell kind="pid" hidden={!m.showCols.pid} align="right" last={lastVisibleCol==='pid'}>{hi(r.pid, m.highlights)}</Cell>
+              <Cell kind="src" hidden={!m.showCols.src} mono last={lastVisibleCol==='src'}>{hi(r.src ?? '', m.highlights)}</Cell>
+              <Cell kind="msg" hidden={!m.showCols.msg} last={lastVisibleCol==='msg'}>{hi(r.msg, m.highlights)}</Cell>
             </div>
           );
         })}
@@ -140,23 +184,26 @@ export function Grid(){
   );
 }
 
-function Cell({ children, hidden, mono, align, kind, onDoubleClick }:{
+function Cell({ children, hidden, mono, align, kind, last, onDoubleClick }:{
   children: React.ReactNode;
   hidden?: boolean;
   mono?: boolean;
   align?: 'left'|'right';
   kind:'time'|'proc'|'pid'|'src'|'msg';
+  /** 이 셀이 마지막 보이는 컬럼인지(오른쪽 경계선/구분선 제거) */
+  last?: boolean;
   onDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }){
   return (
     <div
       onDoubleClick={onDoubleClick}
       className={`tw-min-w-0 tw-px-2 tw-py-[3px] tw-border-b tw-border-[var(--row-divider)]
-      ${kind!=='msg'?'tw-border-r tw-border-r-[var(--divider)]':''}
-      ${hidden?'tw-p-0 tw-border-0':''}
+      ${!last ? 'tw-border-r tw-border-r-[var(--divider)]' : ''}
+      ${hidden ? 'tw-p-0 tw-border-0 tw-invisible tw-pointer-events-none' : ''}
       ${mono?'tw-font-mono':''}
       ${align==='right'?'tw-text-right':''}
       tw-whitespace-nowrap tw-overflow-hidden tw-text-ellipsis`}
+      aria-hidden={hidden || undefined}
     >
       {children}
     </div>

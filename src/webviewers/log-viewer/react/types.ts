@@ -6,6 +6,8 @@ export interface HighlightRule { text: string; color?: HighlightColor; }
 
 export interface LogRow {
   id: number;
+  /** 전역 인덱스(최신=1). 페이징 점프에 사용 */
+  idx?: number;
   time: string;
   proc: string;
   pid: string;
@@ -35,7 +37,7 @@ export interface Model {
   highlights: HighlightRule[];
   searchQuery: string;
   searchOpen: boolean;
-  searchHits: { rowId: number; col: ColumnId; excerpt: string }[];
+  searchHits: { idx: number; text: string }[];
   showBookmarks: boolean;
   selectedRowId?: number;
 
@@ -44,4 +46,5 @@ export interface Model {
   mergeTotal: number;
 
   filter: Filter;
+  pendingJumpIdx?: number;
 }

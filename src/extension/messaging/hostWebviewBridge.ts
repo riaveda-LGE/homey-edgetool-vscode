@@ -12,6 +12,8 @@ export class HostWebviewBridge {
   private pendings = new Map<string, AbortController>(); // abortKey -> controller
   private seq = 0;
   private kickedOnce = false; // 초기 리프레시 신호를 중복 발사하지 않도록 가드
+  // ── Search buffer (host-held) ────────────────────────────────────────
+  private searchHits: { idx: number; text: string }[] = [];
 
   constructor(private readonly host: vscode.WebviewView | vscode.WebviewPanel) {}
 
@@ -119,6 +121,45 @@ export class HostWebviewBridge {
         return;
       }
       // ──────────────────────────────────────────────
+
+      // ── 전체 검색(노트패드++ 스타일): Enter 시 실행 ───────────────
+      if (msg.type === 'search.query') {
+        try {
+          const q: string = String(msg?.payload?.q || '').trim();
+          this.log.info(`bridge: search.query q="${q}"`);
+          this.searchHits = [];
+          if (q) {
+            const total = await paginationService.getFilteredTotal();
+            const N = Math.max(0, total || 0);
+            const WINDOW = 2000;
+            const ql = q.toLowerCase();
+            for (let start = 1; start <= N; start += WINDOW) {
+              const end = Math.min(N, start + WINDOW - 1);
+              const part = await paginationService.readRangeByIdx(start, end);
+              for (const e of part) {
+                const txt = String(e.text || '');
+                if (txt.toLowerCase().includes(ql)) {
+                  this.searchHits.push({ idx: Number((e as any).idx) || start, text: txt });
+                }
+              }
+            }
+          }
+          this.log.info(`bridge: search.results hits=${this.searchHits.length}`);
+          this.send({ v:1, type:'search.results', payload:{ hits: this.searchHits, q } } as any);
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          this.log.error(`bridge: SEARCH_ERROR ${message}`);
+          this.send({ v:1, type:'error', payload:{ code:'SEARCH_ERROR', message, inReplyTo: msg.id } });
+        }
+        return;
+      }
+
+      if (msg.type === 'search.clear') {
+        this.log.info('bridge: search.clear');
+        this.searchHits = [];
+        this.send({ v:1, type:'search.results', payload:{ hits: [], q: '' } } as any);
+        return;
+      }
 
       const h = this.handlers.get(msg.type);
       if (!h) return this.warnUnknown(msg.type);

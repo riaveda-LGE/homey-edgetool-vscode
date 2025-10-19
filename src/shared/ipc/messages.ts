@@ -86,7 +86,8 @@ export type H2W =
   | Envelope<'logs.refresh', {
       reason?: 'full-reindex' | 'manifest-updated' | 'filter-changed' | 'bridge.start' | 'viewer.ready';
       total?: number; version?: number; warm?: boolean
-    }>;
+    }>
+  | Envelope<'search.results', { hits: { idx: number; text: string }[]; q: string }>;
 
 // Webview → Host
 export type W2H =
@@ -104,6 +105,7 @@ export type W2H =
   | Envelope<'logs.filter.clear', Empty>
   | Envelope<'logs.filter.update', { filter: LogFilter }>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
+  | Envelope<'search.clear', Empty>
   | Envelope<'homey.command.run', { name: string; args?: string[] }>
   | Envelope<'button.click', { id: string }>
   | Envelope<'perfMeasure', { name: string; duration: number }>

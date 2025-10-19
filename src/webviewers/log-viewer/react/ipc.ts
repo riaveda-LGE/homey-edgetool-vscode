@@ -85,7 +85,7 @@ export function setupIpc() {
         const rows = logs.map(e => {
           const raw = String(e.text ?? '');
           const p = parseLine(raw);
-          return { id: nextId++, ...p, src: String(e?.source ?? ''), raw };
+          return { id: nextId++, idx: e.idx, ...p, src: String(e?.source ?? ''), raw };
         });
         ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'}`);
         useLogStore.getState().receiveRows(1, rows);
@@ -120,7 +120,7 @@ export function setupIpc() {
         const rows = items.map(e => {
           const raw = String(e.text ?? '');
           const p = parseLine(raw);
-          return { id: nextId++, ...p, src: String(e?.source ?? ''), raw };
+          return { id: nextId++, idx: e.idx, ...p, src: String(e?.source ?? ''), raw };
         });
         ui.debug(`page: response ${startIdx}-${payload?.endIdx} count=${rows.length}`);
         useLogStore.getState().receiveRows(startIdx, rows);
@@ -145,6 +145,12 @@ export function setupIpc() {
         } else {
           useLogStore.getState().mergeProgress({ inc: 0, active: false });
         }
+        return;
+      }
+      case 'search.results': {
+        const hits = (payload?.hits ?? []).map((h: any)=>({ idx: Number(h?.idx)||0, text: String(h?.text||'') }));
+        ui.info(`search.results recv hits=${hits.length}`);
+        useLogStore.getState().setSearchResults(hits);
         return;
       }
       case 'error': {

@@ -12,6 +12,7 @@ const initial: Model = {
   highlights: [],
   searchQuery: '', searchOpen: false, searchHits: [],
   showBookmarks: false, selectedRowId: undefined,
+  pendingJumpIdx: undefined,
   mergeActive: false, mergeDone: 0, mergeTotal: 0,
   filter: { pid:'', src:'', proc:'', msg:'' },
 };
@@ -23,9 +24,11 @@ type Actions = {
   setHighlights(rules: HighlightRule[]): void;
   setSearch(q: string): void;
   closeSearch(): void;
+  setSearchResults(hits: { idx: number; text: string }[]): void;
   toggleBookmark(rowId: number): void;
   toggleBookmarksPane(): void;
   jumpToRow(rowId: number): void;
+  jumpToIdx(idx: number): void;
   resizeColumn(col: 'time'|'proc'|'pid'|'src', dx: number): void;
   mergeProgress(args: { inc?: number; total?: number; reset?: boolean; active?: boolean }): void;
   setFilterField(f: keyof Filter, v: string): void;
@@ -51,23 +54,12 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   },
 
   setSearch(q){
+    // 이제 검색 실행은 Enter→host(search.query)에서 처리
     if (!q.trim()) return set({ searchQuery:'', searchOpen:false, searchHits:[] });
-    const regex = new RegExp(escapeRegExp(q), 'i');
-    const hits = get().rows.flatMap((r) => {
-      const cols: ColumnId[] = ['time','proc','pid','src','msg'];
-      const out: {rowId:number; col:ColumnId; excerpt:string}[] = [];
-      for (const c of cols){
-        const text = String((r as any)[c] ?? '');
-        if (regex.test(text)){
-          const ex = buildExcerpt(text, q);
-          out.push({ rowId: r.id, col: c, excerpt: ex });
-        }
-      }
-      return out;
-    });
-    set({ searchQuery:q, searchOpen:true, searchHits:hits });
+    set({ searchQuery:q, searchOpen:true });
   },
   closeSearch(){ set({ searchOpen:false, searchQuery:'', searchHits:[] }); },
+  setSearchResults(hits){ set({ searchOpen:true, searchHits:hits }); },
 
   toggleBookmark(rowId){
     const rows = get().rows.map(r=> r.id===rowId ? {...r, bookmarked: !r.bookmarked } : r);
@@ -77,6 +69,7 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
 
   toggleBookmarksPane(){ set({ showBookmarks: !get().showBookmarks }); },
   jumpToRow(rowId){ set({ selectedRowId: rowId }); },
+  jumpToIdx(idx){ set({ pendingJumpIdx: Math.max(1, idx|0) }); },
 
   resizeColumn(col, dx){
     const next = { ...get().colW };
@@ -112,9 +105,4 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
 }));
 
 function escapeRegExp(s:string){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
-function buildExcerpt(text:string, q:string){
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx<0) return text.slice(0,120);
-  const start = Math.max(0, idx-30), end = Math.min(text.length, idx+q.length+30);
-  return text.slice(start, end).replace(new RegExp(escapeRegExp(q),'ig'), m=>`<<${m}>>`);
-}
+// (클라이언트 검색은 제거되었습니다 — 서버 검색 사용)
