@@ -79,6 +79,10 @@ export class LogViewerPanelManager {
       );
       this.panel.onDidDispose(() => {
         this.appendLog?.('[info] viewer: panel disposed');
+        try {
+          this.bridge?.dispose?.();
+        } catch {}
+        this.bridge = undefined;
         this.panel = undefined;
       });
 
@@ -88,58 +92,38 @@ export class LogViewerPanelManager {
       this.panel.webview.html = await this._getHtmlFromFiles(this.panel.webview, uiRoot);
       this.appendLog?.('[info] viewer: UI html loaded');
 
-      this.bridge = new HostWebviewBridge(this.panel);
-      this.bridge.start();
-      this.appendLog?.('[debug] viewer: host-webview bridge started');
-
-      // Webview → Host: UI 로그를 Edge Panel 로그로 연결
-      this.bridge.on('ui.log' as any, (msg: any) => {
-        const lvl = (msg?.payload?.level || 'info').toLowerCase();
-        const text = String(msg?.payload?.text ?? '');
-        const src = String(msg?.payload?.source ?? 'ui');
-        const line = `[${lvl}] [${src}] ${text}`;
-        switch (lvl) {
-          case 'debug':
-            this.log.debug?.(line);
-            break;
-          case 'warn':
-            this.log.warn(line);
-            break;
-          case 'error':
-            this.log.error(line);
-            break;
-          default:
-            this.log.info(line);
-        }
-        this.appendLog?.(line);
-      });
-
-      // Log Viewer 사용자 환경설정 연결
-      this.bridge.on('logviewer.getUserPrefs' as any, async (_msg: any) => {
-        try {
+      // 메시지 라우팅을 bridge로 일원화
+      this.bridge = new HostWebviewBridge(this.panel, {
+        onUiLog: ({ level, text, source, line }) => {
+          // Host 로그 + Output 채널 동시 연결
+          switch (level) {
+            case 'debug':
+              this.log.debug?.(line);
+              break;
+            case 'warn':
+              this.log.warn(line);
+              break;
+            case 'error':
+              this.log.error(line);
+              break;
+            default:
+              this.log.info(line);
+          }
+          this.appendLog?.(line);
+        },
+        readUserPrefs: async () => {
           this.appendLog?.('[debug] viewer: getUserPrefs requested');
           const prefs = await readLogViewerPrefs(this.context);
-          this.bridge!.send({ v: 1, type: 'logviewer.prefs', payload: { prefs } } as any);
           this.appendLog?.('[debug] viewer: getUserPrefs responded');
-        } catch (err: any) {
-          const msg = String(err?.message ?? err);
-          this.appendLog?.(`[error] viewer: prefs.read_failed ${msg}`);
-          this._send('error', { code: 'prefs.read_failed', message: msg });
-        }
-      });
-
-      this.bridge.on('logviewer.saveUserPrefs' as any, async (msg: any) => {
-        try {
-          const patch = msg?.payload?.prefs ?? {};
-          await writeLogViewerPrefs(this.context, patch);
-          this.bridge!.send({ v: 1, type: 'ack', payload: { inReplyTo: msg?.id } } as any);
+          return prefs;
+        },
+        writeUserPrefs: async (patch: any) => {
+          await writeLogViewerPrefs(this.context, patch ?? {});
           this.appendLog?.('[debug] viewer: prefs saved');
-        } catch (err: any) {
-          const e = String(err?.message ?? err);
-          this.appendLog?.(`[error] viewer: prefs.write_failed ${e}`);
-          this._send('error', { code: 'prefs.write_failed', message: e, inReplyTo: msg?.id });
-        }
+        },
       });
+      this.bridge.start();
+      this.appendLog?.('[debug] viewer: host-webview bridge started');
 
       this.appendLog?.('[info] Homey Log Viewer opened');
       await vscode.commands.executeCommand('homey.logging.openViewer');
@@ -299,7 +283,7 @@ export class LogViewerPanelManager {
           `[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`,
         );
       }
-      this.panel?.webview.postMessage({ v: 1, type, payload });
+      this.bridge?.send({ v: 1, type, payload } as any);
     } catch {}
   }
 

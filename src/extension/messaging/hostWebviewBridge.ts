@@ -7,6 +7,20 @@ import { paginationService } from '../../core/logs/PaginationService.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
+export type BridgeOptions = {
+  /** UI가 보낸 로그를 호스트 채널/출력에 연결하고 싶을 때 */
+  onUiLog?: (args: {
+    level: 'debug' | 'info' | 'warn' | 'error';
+    text: string;
+    source?: string;
+    line: string;
+  }) => void;
+  /** 사용자 환경설정 읽기 (필요 시 주입) */
+  readUserPrefs?: () => Promise<any>;
+  /** 사용자 환경설정 저장 (필요 시 주입) */
+  writeUserPrefs?: (patch: any) => Promise<void>;
+};
+
 export class HostWebviewBridge {
   private log = getLogger('bridge');
   private handlers = new Map<string, Handler>();
@@ -16,7 +30,10 @@ export class HostWebviewBridge {
   // ── Search buffer (host-held) ────────────────────────────────────────
   private searchHits: { idx: number; text: string }[] = [];
 
-  constructor(private readonly host: vscode.WebviewView | vscode.WebviewPanel) {}
+  constructor(
+    private readonly host: vscode.WebviewView | vscode.WebviewPanel,
+    private readonly options: BridgeOptions = {},
+  ) {}
 
   start() {
     this.host.webview.onDidReceiveMessage(async (raw: any) => {
@@ -26,6 +43,71 @@ export class HostWebviewBridge {
       // ── 웹뷰가 준비 신호를 보낼 수 있는 경우(선행 핸드셰이크) ──
       if (msg.type === 'viewer.ready') {
         this.kickIfReady('viewer.ready');
+        return;
+      }
+
+      // ── UI 로그 브리지: webview → host ───────────────────────────────
+      if (msg.type === 'ui.log') {
+        const lvl = String(msg?.payload?.level ?? 'info').toLowerCase() as
+          | 'debug'
+          | 'info'
+          | 'warn'
+          | 'error';
+        const text = String(msg?.payload?.text ?? '');
+        const source = String(msg?.payload?.source ?? 'ui');
+        const line = `[${lvl}] [${source}] ${text}`;
+        try {
+          switch (lvl) {
+            case 'debug':
+              this.log.debug?.(line);
+              break;
+            case 'warn':
+              this.log.warn(line);
+              break;
+            case 'error':
+              this.log.error(line);
+              break;
+            default:
+              this.log.info(line);
+          }
+          this.options.onUiLog?.({ level: lvl, text, source, line });
+        } catch {}
+        return;
+      }
+
+      // ── 사용자 환경설정 라우팅(옵션 주입 기반) ────────────────────────
+      if (msg.type === 'logviewer.getUserPrefs') {
+        try {
+          if (!this.options.readUserPrefs) throw new Error('readUserPrefs not provided');
+          const prefs = await this.options.readUserPrefs();
+          this.send({ v: 1, type: 'logviewer.prefs', payload: { prefs } } as any);
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          this.log.error(`bridge: PREFS_READ_ERROR ${message}`);
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'prefs.read_failed', message, inReplyTo: msg.id },
+          });
+        }
+        return;
+      }
+
+      if (msg.type === 'logviewer.saveUserPrefs') {
+        try {
+          if (!this.options.writeUserPrefs) throw new Error('writeUserPrefs not provided');
+          const patch = msg?.payload?.prefs ?? {};
+          await this.options.writeUserPrefs(patch);
+          this.send({ v: 1, type: 'ack', payload: { inReplyTo: msg?.id } } as any);
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          this.log.error(`bridge: PREFS_WRITE_ERROR ${message}`);
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'prefs.write_failed', message, inReplyTo: msg.id },
+          });
+        }
         return;
       }
       // ── 필터 업데이트: "호스트가 head 500줄을 즉시 푸시" ──
@@ -206,26 +288,20 @@ export class HostWebviewBridge {
       if (msg.type === 'search.query') {
         try {
           const q: string = String(msg?.payload?.q || '').trim();
-          this.log.info(`bridge: search.query q="${q}"`);
-          this.searchHits = [];
-          if (q) {
-            const total = await paginationService.getFilteredTotal();
-            const N = Math.max(0, total || 0);
-            const WINDOW = 2000;
-            const ql = q.toLowerCase();
-            for (let start = 1; start <= N; start += WINDOW) {
-              const end = Math.min(N, start + WINDOW - 1);
-              const part = await paginationService.readRangeByIdx(start, end);
-              for (const e of part) {
-                const txt = String(e.text || '');
-                if (txt.toLowerCase().includes(ql)) {
-                  this.searchHits.push({ idx: Number((e as any).idx) || start, text: txt });
-                }
-              }
-            }
-          }
+          const regex = !!msg?.payload?.regex;
+          const range = msg?.payload?.range as [number, number] | undefined;
+          const top = typeof msg?.payload?.top === 'number' ? msg.payload.top : undefined;
+
+          this.log.info(`bridge: search.query q="${q}" regex=${regex} range=${range ?? '-'} top=${top ?? '-'}`);
+          // 단일 패스 검색으로 변경(필터 공간 기준)
+          this.searchHits = await paginationService.searchAll(q, { regex, range, top });
+
           this.log.info(`bridge: search.results hits=${this.searchHits.length}`);
-          this.send({ v: 1, type: 'search.results', payload: { hits: this.searchHits, q } } as any);
+          this.send({
+            v: 1,
+            type: 'search.results',
+            payload: { hits: this.searchHits, q },
+          } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: SEARCH_ERROR ${message}`);
@@ -354,6 +430,17 @@ export class HostWebviewBridge {
       }
     } catch (e) {
       this.log.warn(`bridge: kickIfReady failed: ${String(e)}`);
+    }
+  }
+
+  /** 리스너/대기중 컨트롤러 정리용 */
+  dispose() {
+    try {
+      this.pendings.forEach((c) => c.abort());
+    } finally {
+      this.pendings.clear();
+      this.handlers.clear();
+      this.kickedOnce = false;
     }
   }
 }

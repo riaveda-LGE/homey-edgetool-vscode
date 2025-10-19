@@ -25,6 +25,7 @@ class PaginationService {
       this.reader = await PagedReader.open(dir);
       this.manifestDir = dir;
       this.version++;
+      this.invalidateFilterCache();
     } else {
       this.log.debug?.(`pagination: already set dir=${dir}`);
     }
@@ -188,9 +189,16 @@ class PaginationService {
       this.log.warn(`pagination: invalid range ${startIdx}-${endIdx}`);
       return [];
     }
-    const start0 = Math.max(0, startIdx - 1);
-    const endExcl = Math.max(start0, endIdx); // [S-1, E) (E inclusive → exclusive로 사용)
+    const total = this.reader.getTotalLines() ?? 0;
+    const start0 = Math.max(0, Math.min(total, startIdx - 1));
+    const endExcl = Math.min(total, Math.max(start0, endIdx)); // [S-1, E) (E inclusive → exclusive)
+    if (endExcl <= start0) return [];
     const rows = await this.reader.readLineRange(start0, endExcl, { skipInvalid: true });
+    // idx 보정(파일 메타가 없다면 1-based로 보장)
+    for (let i = 0; i < rows.length; i++) {
+      const e = rows[i] as any;
+      if (typeof e.idx !== 'number') e.idx = start0 + 1 + i;
+    }
     this.log.debug?.(`pagination: read ${startIdx}-${endIdx} -> ${rows.length}`);
     return rows;
   }
@@ -206,7 +214,15 @@ class PaginationService {
     if (this.warmActive) {
       const buf = (this.warmBuffer ?? []).filter(matches);
       const s0 = Math.max(0, startIdx - 1);
-      return buf.slice(s0, s0 + want);
+      const slice = buf.slice(s0, s0 + want);
+      // 필터 가상 인덱스를 보장
+      for (let i = 0; i < slice.length; i++) {
+        const e = slice[i] as any;
+        // 원본 파일 인덱스가 있으면 보존
+        if (typeof e._fileIdx !== 'number' && typeof e.idx === 'number') e._fileIdx = e.idx;
+        e.idx = startIdx + i;
+      }
+      return slice;
     }
 
     // 2) 파일 기반: 전체를 창(window) 단위로 순회하며 필요한 슬라이스만 수집
@@ -226,10 +242,10 @@ class PaginationService {
         virtualCount++;
         if (virtualCount < startIdx) continue; // 아직 시작 전
         out.push(e);
-        if (out.length >= want) return out; // 충분히 모았으면 종료
+        if (out.length >= want) return this.reindexFiltered(out, startIdx);
       }
     }
-    return out;
+    return this.reindexFiltered(out, startIdx);
   }
 
   private normalizeFilter(f: any) {
@@ -316,17 +332,80 @@ class PaginationService {
     return { proc, pid, msg };
   }
 
-  // ── Back-compat: 과거 호출명 호환용 래퍼 ────────────────────────────────
-  /** 옛 호출자를 위한 호환 래퍼. 현재 필터 기준 상단 N개와 총계를 반환 */
-  async readHeadFiltered(limit = 500): Promise<{ rows: LogEntry[]; total: number }> {
-    const total = await this.getFilteredTotal();
-    const endIdx = Math.max(1, Math.min(limit, total || limit));
-    const rows = await this.readRangeByIdx(1, endIdx);
-    return { rows, total: total ?? 0 };
+  /** 필터 결과에 대해 가상 인덱스를 연속적으로 매겨 UI와 공간을 일치시킴 */
+  private reindexFiltered(rows: LogEntry[], startIdx: number): LogEntry[] {
+    for (let i = 0; i < rows.length; i++) {
+      const e = rows[i] as any;
+      if (typeof e._fileIdx !== 'number' && typeof e.idx === 'number') e._fileIdx = e.idx;
+      e.idx = startIdx + i;
+    }
+    return rows;
   }
   /** 옛 호출자를 위한 호환 래퍼. 현재 필터 해제 */
   clearFilter() {
     this.setFilter(null);
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // 전체 검색(필터 적용 공간 기준) — 단일 패스로 선형 스캔 (warm/file 공용)
+  // - 기존 HostWebviewBridge.search.query의 O(N^2) 접근을 대체
+  // - 반환 idx는 "필터 결과 인덱스(1-based)" 공간 기준
+  // - 옵션: regex / range / top (필요 시 확장)
+  // ────────────────────────────────────────────────────────────────────
+  async searchAll(
+    q: string,
+    opts?: { regex?: boolean; range?: [number, number]; top?: number },
+  ): Promise<{ idx: number; text: string }[]> {
+    const hits: { idx: number; text: string }[] = [];
+    const regex = opts?.regex && q ? new RegExp(q, 'i') : null;
+    const ql = (q || '').toLowerCase();
+    const inRange = (k: number) =>
+      !opts?.range || (k >= Math.max(1, opts.range[0]) && k <= Math.max(1, opts.range[1]));
+    const wantMore = () => !opts?.top || hits.length < opts.top!;
+
+    const test = (txt: string) => {
+      if (!q) return true;
+      return regex ? regex.test(txt) : txt.toLowerCase().includes(ql);
+    };
+
+    // 1) 워밍업 메모리 버퍼
+    if (this.warmActive) {
+      const buf = (this.warmBuffer ?? []).filter((e) => this.matchesFilter(e));
+      for (let i = 0; i < buf.length; i++) {
+        const e = buf[i];
+        const idx = i + 1; // 필터 결과 공간 기준
+        if (!inRange(idx)) continue;
+        if (test(String(e.text || ''))) {
+          hits.push({ idx, text: String(e.text || '') });
+          if (!wantMore()) break;
+        }
+      }
+      return hits;
+    }
+
+    // 2) 파일 기반 모드 — 한 번의 선형 스캔
+    if (!this.reader) return hits;
+    const total = this.reader.getTotalLines() ?? 0;
+    if (total <= 0) return hits;
+    const WINDOW = 4000;
+    let virtualCount = 0;
+
+    for (let from = 0; from < total && wantMore(); from += WINDOW) {
+      const part = await this.reader.readLineRange(from, Math.min(total, from + WINDOW), {
+        skipInvalid: true,
+      });
+      for (const e of part) {
+        if (!this.matchesFilter(e)) continue;
+        virtualCount++;
+        if (!inRange(virtualCount)) continue;
+        const txt = String(e.text || '');
+        if (test(txt)) {
+          hits.push({ idx: virtualCount, text: txt });
+          if (!wantMore()) break;
+        }
+      }
+    }
+    return hits;
   }
 }
 

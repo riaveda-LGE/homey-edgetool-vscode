@@ -1,11 +1,13 @@
 # Logging 1: 데이터 준비 (실시간 모드 / 파일 병합 모드)
 
 ## 📁 관련 파일
-- `src/core/connection/ConnectionManager.ts`
-- `src/core/logs/LogFileIntegration.ts`
-- `src/core/logging/extension-logger.ts`
-- `src/extension/commands/CommandHandlersLogging.ts`
-- `src/extension/panels/LogViewerPanelManager.ts`
+```bash
+src/core/connection/ConnectionManager.ts
+src/core/logs/LogFileIntegration.ts
+src/core/logging/extension-logger.ts
+src/extension/commands/CommandHandlersLogging.ts
+src/extension/panels/LogViewerPanelManager.ts
+```
 
 ## 🔄 로직 플로우
 

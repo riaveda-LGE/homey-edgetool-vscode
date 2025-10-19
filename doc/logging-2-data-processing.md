@@ -1,11 +1,13 @@
 # Logging 2: 데이터 처리 및 버퍼링 (코어 로직)
 
 ## 📁 관련 파일
-- `src/core/logs/LogFileStorage.ts`
-- `src/core/logs/HybridLogBuffer.ts`
-- `src/core/logs/PaginationService.ts`
-- `src/core/logging/perf.ts`
-- `src/core/sessions/LogSessionManager.ts`
+```bash
+src/core/logs/LogFileStorage.ts
+src/core/logs/HybridLogBuffer.ts
+src/core/logs/PaginationService.ts
+src/core/logging/perf.ts
+src/core/sessions/LogSessionManager.ts
+```
 
 ## 🔄 로직 플로우
 

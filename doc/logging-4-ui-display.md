@@ -1,11 +1,13 @@
 # Logging 4: 웹뷰어 표시 및 기능 (UI 컴포넌트)
 
 ## 📁 관련 파일
-- `src/webviewers/log-viewer/react/store.ts`
-- `src/webviewers/log-viewer/react/components/Grid.tsx`
-- `src/webviewers/log-viewer/react/components/SearchPanel.tsx`
-- `src/webviewers/log-viewer/react/components/FilterBar.tsx`
-- `src/webviewers/log-viewer/react/ipc.ts`
+```bash
+src/webviewers/log-viewer/react/store.ts
+src/webviewers/log-viewer/react/components/Grid.tsx
+src/webviewers/log-viewer/react/components/SearchPanel.tsx
+src/webviewers/log-viewer/react/components/FilterBar.tsx
+src/webviewers/log-viewer/react/ipc.ts
+```
 
 ## 🔄 로직 플로우
 

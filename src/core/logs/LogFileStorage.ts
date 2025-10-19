@@ -27,7 +27,14 @@ export class LogFileStorage implements ILogFileStorage {
   async append(e: LogEntry, options?: AppendOptions) {
     const data = JSON.stringify(e) + '\n';
     if (options?.flush) {
-      await fs.promises.appendFile(this.filePath, data, { flush: true });
+      // Node의 appendFile에는 flush 옵션이 없음 → 파일핸들 열고 sync로 보장
+      const fh = await fs.promises.open(this.filePath, 'a');
+      try {
+        await fh.appendFile(data);
+        await fh.sync(); // 디스크 동기화
+      } finally {
+        await fh.close();
+      }
     } else {
       await fs.promises.appendFile(this.filePath, data);
     }
@@ -35,26 +42,66 @@ export class LogFileStorage implements ILogFileStorage {
 
   @measureIO('readFile', (instance) => instance.filePath)
   async range(fromTs: number, toTs: number, options?: RangeOptions): Promise<LogEntry[]> {
-    const data = await fs.promises.readFile(this.filePath, 'utf8');
-    const lines = data.split('\n').filter((line) => line.trim());
-    const entries: LogEntry[] = [];
+    // 대용량에서도 안전하게 동작하도록 스트리밍으로 변경
     const limit = options?.limit ?? Infinity;
     const skipInvalid = options?.skipInvalid ?? true;
+    const out: LogEntry[] = [];
 
-    for (const line of lines) {
-      if (entries?.length >= limit) break;
-      try {
-        const entry = safeParseJson<LogEntry>(line);
-        if (entry && entry.ts >= fromTs && entry.ts <= toTs) {
-          entries.push(entry);
+    await new Promise<void>((resolve, reject) => {
+      const rs = fs.createReadStream(this.filePath, { encoding: 'utf8' });
+      let residual = '';
+      const closeEarly = () => {
+        try {
+          // destroy/close 중 하나만 호출
+          (rs as any).destroy?.();
+          (rs as any).close?.();
+        } catch {}
+      };
+
+      rs.on('data', (chunk: string | Buffer) => {
+        if (out.length >= limit) return;
+        const text = residual + (Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk);
+        const parts = text.split(/\r?\n/);
+        residual = parts.pop() ?? '';
+        for (const line of parts) {
+          if (out.length >= limit) break;
+          if (!line.trim()) continue;
+          try {
+            const entry = safeParseJson<LogEntry>(line);
+            if (entry && entry.ts >= fromTs && entry.ts <= toTs) {
+              out.push(entry);
+              if (out.length >= limit) {
+                closeEarly();
+                break;
+              }
+            }
+          } catch (e) {
+            if (!skipInvalid) {
+              closeEarly();
+              reject(e);
+              return;
+            }
+            // invalid line skip
+          }
         }
-      } catch (e) {
-        if (!skipInvalid) {
-          throw e;
+      });
+      rs.on('end', () => {
+        if (out.length < limit && residual.trim()) {
+          try {
+            const entry = safeParseJson<LogEntry>(residual);
+            if (entry && entry.ts >= fromTs && entry.ts <= toTs) out.push(entry);
+          } catch (e) {
+            if (!skipInvalid) {
+              reject(e);
+              return;
+            }
+          }
         }
-        // Skip invalid lines
-      }
-    }
-    return entries;
+        resolve();
+      });
+      rs.on('error', (err) => reject(err));
+    });
+
+    return out;
   }
 }

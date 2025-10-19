@@ -1,10 +1,12 @@
 # Logging 3: 데이터 전송 및 IPC (호스트 ↔ 웹뷰어)
 
 ## 📁 관련 파일
-- `src/extension/messaging/hostWebviewBridge.ts`
-- `src/shared/ipc/messages.ts`
-- `src/core/logs/LogSearch.ts`
-- `src/extension/panels/LogViewerPanelManager.ts`
+```bash
+src/extension/messaging/hostWebviewBridge.ts
+src/shared/ipc/messages.ts
+src/core/logs/LogSearch.ts
+src/extension/panels/LogViewerPanelManager.ts
+```
 
 ## 🔄 로직 플로우
 
