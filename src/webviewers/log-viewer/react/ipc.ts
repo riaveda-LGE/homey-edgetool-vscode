@@ -63,7 +63,9 @@ export function setupIpc() {
         const warm = !!payload?.warm;
         CURRENT_SESSION_VERSION = version ?? CURRENT_SESSION_VERSION;
         ui.info(`logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`);
-        if (warm) setReadyForFilter();
+        // ⚠️ 과거엔 warm 일 때만 ready. 파일 기반( warm=false ) 초기 클릭이 묵살되는 이슈가 있어
+        // 호스트가 살아있다는 신호(logs.state)를 받는 즉시 필터 전송을 허용한다.
+        setReadyForFilter();
         if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
         return;
       }

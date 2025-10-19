@@ -14,11 +14,18 @@ export function Toolbar(){
   const openSearchPanel = useLogStore(s=>s.openSearchPanel);
   const toggleBookmarksPane = useLogStore(s=>s.toggleBookmarksPane);
   const progress = useLogStore(s=>({active:s.mergeActive, done:s.mergeDone, total:s.mergeTotal}));
+  const filter = useLogStore(s=>s.filter);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchDlgOpen, setSearchDlgOpen] = useState(false);
   const ui = useMemo(()=>createUiLog(vscode,'log-viewer.toolbar'),[]);
 
   const savePref = (k:string, v:boolean) => vscode?.postMessage({ v:1, type:'logviewer.saveUserPrefs', payload:{ prefs: { [k]: v } } });
+
+  // ── 활성 필드 개수 표시(버튼의 필터(x) 용) ───────────────────────────
+  const activeCount = (()=>{
+    const t = (v?: string)=> String(v ?? '').trim();
+    return ['pid','src','proc','msg'].reduce((n, k)=> n + (t((filter as any)[k]) ? 1 : 0), 0);
+  })();
 
   return (
     <>
@@ -67,6 +74,7 @@ export function Toolbar(){
       <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
         onClick={()=>{ setSearchDlgOpen(true); }}
+        data-testid="btn-search"
       >
         검색
       </button>
@@ -85,10 +93,18 @@ export function Toolbar(){
       />
 
       <button
-        className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
-        onClick={()=>setFilterOpen(true)}
+        className={[
+          'tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-relative',
+          activeCount>0 ? 'tw-bg-[var(--accent)] tw-text-[var(--accent-fg)] hover:tw-bg-[var(--accent-hover)]' : ''
+        ].join(' ')}
+        onClick={()=>{
+          ui.info(`toolbar.filter.click activeCount=${activeCount}`);
+          setFilterOpen(true);
+        }}
+        title={activeCount>0 ? `활성 필드 ${activeCount}개` : '필터'}
+        data-testid="btn-filter"
       >
-        필터링
+        {`필터${activeCount>0 ? `(${activeCount})` : ''}`}
       </button>
       <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
@@ -103,7 +119,10 @@ export function Toolbar(){
       >
         북마크
       </button>
-      <FilterDialog open={filterOpen} onClose={()=>setFilterOpen(false)} />
+      <FilterDialog open={filterOpen} onClose={()=>{
+        ui.info('toolbar.filter.close');
+        setFilterOpen(false);
+      }} />
     </>
   );
 }

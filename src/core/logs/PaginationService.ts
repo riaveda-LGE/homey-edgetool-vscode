@@ -16,6 +16,7 @@ class PaginationService {
   private filter: { pid?: string; src?: string; proc?: string; msg?: string } | null = null;
   private filteredTotalCache?: number;
   private filteredCacheKey?: string;
+  // (참고) 기능 변경 없음. 로깅/버전 관리/캐시 무효화는 Host에서 refresh를 보냄으로써 보완됨.
 
   async setManifestDir(dir: string) {
     if (this.manifestDir !== dir) {
@@ -225,27 +226,57 @@ class PaginationService {
     this.filteredCacheKey = this.filter ? JSON.stringify(this.filter) : undefined;
   }
 
+  // ── 필터 매칭 유틸: "wlan host, deauth" → [["wlan","host"],["deauth"]] ─────────
+  private parseGroups(q?: string): string[][] {
+    const s = String(q ?? '').toLowerCase();
+    if (!s.trim()) return [];
+    return s
+      .split(',')
+      .map(g => g.trim())
+      .filter(Boolean)
+      .map(g =>
+        g
+          .split(/\s+/g)
+          .map(t => t.trim())
+          .filter(Boolean),
+      );
+  }
+  /** 단일 문자열 대상: 그룹 중 하나라도(OR) 해당 문자열이 모든 토큰(AND)을 포함하면 true */
+  private matchTextByGroups(haystack: string, q?: string): boolean {
+    const groups = this.parseGroups(q);
+    if (groups.length === 0) return true;
+    const s = String(haystack || '').toLowerCase();
+    return groups.some(andTokens => andTokens.every(tok => s.includes(tok)));
+  }
+  /** 여러 후보 문자열 대상(src용): 후보 중 하나라도 그룹을 만족하면 true */
+  private matchAnyCandidateByGroups(candidates: string[], q?: string): boolean {
+    const groups = this.parseGroups(q);
+    if (groups.length === 0) return true;
+    const cands = (candidates || []).map(v => String(v || '').toLowerCase()).filter(Boolean);
+    if (cands.length === 0) return false;
+    return groups.some(andTokens =>
+      cands.some(c => andTokens.every(tok => c.includes(tok))),
+    );
+  }
+
   private matchesFilter(e: LogEntry): boolean {
     if (!this.filter) return true;
     const f = this.filter;
     const parsed = this.parseLine(String(e.text || ''));
-    const msg  = String(parsed.msg  || '').toLowerCase();
-    const proc = String(parsed.proc || '').toLowerCase();
-    const pid  = String(parsed.pid  || '').toLowerCase();
+    const msg  = String(parsed.msg  || '');
+    const proc = String(parsed.proc || '');
+    const pid  = String(parsed.pid  || '');
     // 파일/경로/소스 중 하나라도 매칭되면 통과
     const srcCands = [
       (e as any).file,
       (e as any).path,
       e.source,
-    ].map(v => String(v ?? '').toLowerCase()).filter(Boolean);
-    const has = (s?: string) => !!(s && s.trim());
-    if (has(f.msg)  && !msg.includes(String(f.msg).toLowerCase()))   return false;
-    if (has(f.proc) && !proc.includes(String(f.proc).toLowerCase())) return false;
-    if (has(f.pid)  && !pid.includes(String(f.pid).toLowerCase()))   return false;
-    if (has(f.src)) {
-      const needle = String(f.src).toLowerCase();
-      if (!srcCands.some(s => s.includes(needle))) return false;
-    }
+    ].map(v => String(v ?? ''));
+    const has = (s?: string) => !!(s && String(s).trim());
+    if (has(f.msg)  && !this.matchTextByGroups(msg,  f.msg))  return false;
+    if (has(f.proc) && !this.matchTextByGroups(proc, f.proc)) return false;
+    if (has(f.pid)  && !this.matchTextByGroups(pid,  f.pid))  return false;
+    if (has(f.src)  && !this.matchAnyCandidateByGroups(srcCands, f.src)) return false;
     return true;
   }
 

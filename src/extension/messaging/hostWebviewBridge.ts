@@ -44,6 +44,13 @@ export class HostWebviewBridge {
             warm: paginationService.isWarmupActive(),
             manifestDir: paginationService.getManifestDir()
           }} as any);
+          // ③ UI가 이전 요청/버퍼를 정리하고 새 페이지를 확정적으로 요청하도록 트리거
+          this.send({ v:1, type:'logs.refresh', payload:{
+            reason:'filter-changed',
+            total,
+            version: paginationService.getVersion(),
+            warm: paginationService.isWarmupActive()
+          }} as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: FILTER_UPDATE_ERROR ${message}`);
@@ -95,6 +102,7 @@ export class HostWebviewBridge {
           this.send({ v:1, type:'logs.batch', payload:{ logs: head, total, seq: ++this.seq } } as any);
           // 상태도 함께 브로드캐스트
           this.send({ v:1, type:'logs.state', payload:{ total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive(), manifestDir: paginationService.getManifestDir() } } as any);
+          this.send({ v:1, type:'logs.refresh', payload:{ reason:'filter-changed', total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive() } } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: FILTER_SET_ERROR ${message}`);
@@ -113,6 +121,7 @@ export class HostWebviewBridge {
           const head = await paginationService.readRangeByIdx(1, 500);
           this.send({ v:1, type:'logs.batch', payload:{ logs: head, total, seq: ++this.seq } } as any);
           this.send({ v:1, type:'logs.state', payload:{ total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive(), manifestDir: paginationService.getManifestDir() } } as any);
+          this.send({ v:1, type:'logs.refresh', payload:{ reason:'filter-changed', total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive() } } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: FILTER_CLEAR_ERROR ${message}`);
