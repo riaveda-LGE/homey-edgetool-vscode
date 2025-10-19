@@ -36,7 +36,7 @@ export function HighlightPopover() {
     setRules((r) => r.map((x, idx) => (idx === i ? { ...x, color: c } : x)));
 
   return (
-    <div className="tw-space-y-2">
+    <div className="tw-space-y-2" style={{ color: 'var(--fg, #e6e6e6)' }}>
       <div className="tw-text-xs tw-opacity-80">하이라이트 단어 (최대 5개)</div>
       {rules.map((r, i) => (
         <div key={i} className="tw-grid tw-grid-cols-[auto_1fr] tw-gap-2 tw-items-center">
@@ -46,13 +46,14 @@ export function HighlightPopover() {
                 key={c.id}
                 title={c.id}
                 className={`tw-w-4 tw-h-4 tw-rounded tw-border ${r.color === c.id ? 'tw-outline' : 'tw-outline-none'}`}
-                style={{ background: c.hex, borderColor: 'rgba(0,0,0,.25)' }}
+                style={{ background: c.hex, borderColor: 'var(--border, rgba(255,255,255,.15))' }}
                 onClick={() => pick(i, c.id)}
               />
             ))}
           </div>
           <input
-            className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-bg-[var(--bg)]"
+            className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-bg-[var(--bg)] tw-text-[var(--fg)] placeholder:tw-text-[var(--muted)] focus:tw-outline-none focus:tw-ring-1 focus:tw-ring-[var(--accent)]"
+            style={{ color: 'var(--fg, #e6e6e6)' }}
             placeholder={`단어 ${i + 1}`}
             value={r.text}
             onChange={(e) => setText(i, e.currentTarget.value)}
@@ -61,7 +62,7 @@ export function HighlightPopover() {
       ))}
       <div className="tw-flex tw-justify-end tw-gap-2">
         <button
-          className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
+          className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-text-[var(--fg)]"
           onClick={() => setRules(Array.from({ length: 5 }, () => ({ text: '', color: 'c1' })))}
         >
           초기화

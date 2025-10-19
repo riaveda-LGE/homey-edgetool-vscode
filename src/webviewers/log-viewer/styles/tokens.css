@@ -1,19 +1,21 @@
 :root {
-  --bg: var(--vscode-editor-background);
-  --fg: var(--vscode-foreground);
-  --muted: var(--vscode-descriptionForeground);
-  --panel: var(--vscode-editorWidget-background);
+  /* VS Code → 앱 공용 토큰 (안전한 기본값 포함) */
+  --bg: var(--vscode-editor-background, #121212);
+  /* ⚠ foreground는 편집기 전경을 사용해야 다크 테마에서 흐리지 않음 */
+  --fg: var(--vscode-editor-foreground, #e6e6e6);
+  --muted: var(--vscode-descriptionForeground, #9aa0a6);
+  --panel: var(--vscode-editorWidget-background, #1b1b1b);
   --border: var(--vscode-panel-border, #3c3c3c);
   --border-strong: color-mix(in oklab, var(--border) 75%, black 25%);
-  --link: var(--vscode-textLink-foreground);
+  --link: var(--vscode-textLink-foreground, #4ea1ff);
 
-  --accent: var(--vscode-button-background);
-  --accent-fg: var(--vscode-button-foreground);
-  --accent-hover: var(--vscode-button-hoverBackground);
+  --accent: var(--vscode-button-background, #2e7dd7);
+  --accent-fg: var(--vscode-button-foreground, #ffffff);
+  --accent-hover: var(--vscode-button-hoverBackground, #2b70c3);
 
   --row-hover: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.16));
   --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14, 99, 156, 0.35));
-  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--fg));
 
   /* 선택(포커스)된 행 하이라이트 */
   --row-focus: color-mix(in oklab, var(--row-selected) 45%, transparent 55%);
@@ -57,6 +59,9 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
+  /* 포털로 뜨는 다이얼로그도 기본 전경/배경을 안정적으로 상속 */
+  color: var(--fg, #e6e6e6);
+  background: var(--bg, #121212);
 }
 
 /* ── 하이라이트 공통 스타일 & 색상 팔레트 ───────────────────────────── */

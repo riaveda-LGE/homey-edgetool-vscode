@@ -1,23 +1,25 @@
 :root {
-  --bg: var(--vscode-editor-background);
-  --panel: var(--vscode-editorWidget-background);
+  /* VS Code → 앱 공용 토큰 (안전한 기본값 포함) */
+  --bg: var(--vscode-editor-background, #121212);
+  --fg: var(--vscode-editor-foreground, #e6e6e6);
+  --panel: var(--vscode-editorWidget-background, #1b1b1b);
   --console-bg: var(--vscode-terminal-background, var(--vscode-editor-background));
-  --console-fg: var(--vscode-terminal-foreground, var(--vscode-foreground));
+  --console-fg: var(--vscode-terminal-foreground, var(--fg));
   --border: var(--vscode-panel-border, var(--vscode-editorWidget-border, #3c3c3c));
-  --accent: var(--vscode-button-background);
-  --accent-foreground: var(--vscode-button-foreground);
-  --accent-hover: var(--vscode-button-hoverBackground);
-  --focus: var(--vscode-focusBorder);
+  --accent: var(--vscode-button-background, #2e7dd7);
+  --accent-foreground: var(--vscode-button-foreground, #ffffff);
+  --accent-hover: var(--vscode-button-hoverBackground, #2b70c3);
+  --focus: var(--vscode-focusBorder, #2e7dd7);
   --section-bg: var(
     --vscode-sideBarSectionHeader-background,
-    var(--vscode-editorWidget-background)
+    var(--vscode-editorWidget-background, #1b1b1b)
   );
-  --section-title: var(--vscode-foreground);
-  --muted: var(--vscode-descriptionForeground);
-  --link: var(--vscode-textLink-foreground);
+  --section-title: var(--fg);
+  --muted: var(--vscode-descriptionForeground, #9aa0a6);
+  --link: var(--vscode-textLink-foreground, #4ea1ff);
   --row-hover: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.16));
   --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14, 99, 156, 0.35));
-  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+  --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--fg));
 
   /* 내부/외부 스플리터 높이 단일 소스 */
   --splitter-h: 15px;
@@ -28,4 +30,11 @@
   --indent: 18px;
   --chev-w: 14px;
   --branch-x: calc(var(--chev-w) / 2 + 4px);
+}
+
+/* 기본 전경/배경을 문서 루트에 보장 (포털 컴포넌트 포함) */
+html,
+body {
+  color: var(--fg, #e6e6e6);
+  background: var(--bg, #121212);
 }

@@ -145,8 +145,8 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           alignItems: 'center',
         }}
       >
-        {/* 라벨 */}
-        <div style={{ fontSize: 12, opacity: 0.75 }}>{label}</div>
+        {/* 라벨: 항상 밝은 전경색 사용 */}
+        <div style={{ fontSize: 12, color: 'var(--fg, #e6e6e6)' }}>{label}</div>
 
         {/* 입력 */}
         <input
@@ -155,10 +155,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
             width: '100%',
             boxSizing: 'border-box',
             padding: '6px 8px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border, rgba(255,255,255,0.15))',
             borderRadius: 8,
-            background: 'var(--bg)',
-            color: 'var(--fg)',
+            background: 'var(--bg, #121212)',
+            color: 'var(--fg, #e6e6e6)',
             fontSize: 13,
           }}
           placeholder={ph}
@@ -188,7 +188,8 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', minHeight: 28 }}
         >
           {groups.length === 0 ? (
-            <span style={{ fontSize: 12, opacity: 0.5 }}>없음</span>
+            /* "없음"도 밝은 전경색으로 명확히 */
+            <span style={{ fontSize: 12, color: 'var(--fg, #e6e6e6)' }}>없음</span>
           ) : (
             groups.map((g, gi) => (
               <div
@@ -266,10 +267,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
             style={{
               fontSize: 12,
               padding: '4px 8px',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--border, rgba(255,255,255,0.15))',
               borderRadius: 8,
               background: 'transparent',
-              cursor: 'pointer',
+              color: 'var(--fg, #e6e6e6)',
               whiteSpace: 'nowrap',
             }}
           >
@@ -285,10 +286,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           style={{
             fontSize: 12,
             padding: '6px 10px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border, rgba(255,255,255,0.15))',
             borderRadius: 8,
             background: 'transparent',
-            color: 'inherit',
+            color: 'var(--fg, #e6e6e6)',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
           }}
@@ -347,9 +348,9 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           style={{
             width: 640,
             maxWidth: 'min(96vw, 860px)',
-            background: 'var(--panel)',
-            color: 'var(--fg)',
-            border: '1px solid var(--border)',
+            background: 'var(--panel, #1b1b1b)',
+            color: 'var(--fg, #e6e6e6)',
+            border: '1px solid var(--border, rgba(255,255,255,0.15))',
             borderRadius: 16,
             boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
             padding: 16,
@@ -384,10 +385,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
               style={{
                 fontSize: 12,
                 padding: '6px 10px',
-                border: '1px solid var(--border)',
+                border: '1px solid var(--border, rgba(255,255,255,0.15))',
                 borderRadius: 8,
                 background: 'transparent',
-                color: 'inherit',
+                color: 'var(--fg, #e6e6e6)',
                 cursor: 'pointer',
               }}
               onClick={() => {
@@ -406,8 +407,8 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
                   fontSize: 12,
                   padding: '6px 12px',
                   borderRadius: 8,
-                  background: 'var(--accent)',
-                  color: 'var(--accent-fg)',
+                  background: 'var(--accent, #2e7dd7)',
+                  color: 'var(--accent-fg, #ffffff)',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -420,10 +421,10 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
                 style={{
                   fontSize: 12,
                   padding: '6px 12px',
-                  border: '1px solid var(--border)',
+                  border: '1px solid var(--border, rgba(255,255,255,0.15))',
                   borderRadius: 8,
                   background: 'transparent',
-                  color: 'inherit',
+                  color: 'var(--fg, #e6e6e6)',
                   cursor: 'pointer',
                 }}
                 onClick={onCancel}
