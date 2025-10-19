@@ -16,6 +16,7 @@ edgetool.exe
 
 # TEMP files
 *.tmp
+*.tmp.*
 *.txt
 
 # OS generated files
@@ -35,6 +36,8 @@ cts_suite/result/
 # Node modules
 node_modules/
 dist/
+edge-go-go/
 
-# Performance test results
+# test results
 .homey-perf/
+out/

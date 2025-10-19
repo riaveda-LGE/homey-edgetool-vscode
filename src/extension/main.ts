@@ -4,11 +4,11 @@ import * as vscode from 'vscode';
 // 사용자 저장 구성 요소
 import { resolveWorkspaceInfo } from '../core/config/userdata.js';
 import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
+import { globalProfiler } from '../core/logging/perf.js';
 import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
+import { PerfMonitorPanel } from './editors/PerfMonitorPanel.js';
 import { EdgePanelProvider, registerEdgePanelCommands } from './panels/extensionPanel.js';
 import { checkLatestVersion } from './update/updater.js';
-import { PerfMonitorPanel } from './editors/PerfMonitorPanel.js';
-import { globalProfiler } from '../core/logging/perf.js';
 
 export async function activate(context: vscode.ExtensionContext) {
   return globalProfiler.measureFunction('activate', async () => {
@@ -18,7 +18,10 @@ export async function activate(context: vscode.ExtensionContext) {
     const log = getLogger('main');
     log.info('activate() start');
 
-    // --- our-error detector ---
+    // ─────────────────────────────────────────────────────────
+    // [Global Error → UI 로그] Extension Host 전역 에러 스니퍼
+    // 우리 확장 경로에서 기원한 에러만 잡아 UI 로그로 보낸다.
+    // ─────────────────────────────────────────────────────────
     const extRoot = context.extensionUri.fsPath.replace(/\\/g, '/');
     const isFromThisExtension = (err: unknown): boolean => {
       try {
@@ -31,6 +34,16 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     };
 
+    const toPretty = (e: unknown) => {
+      try {
+        if (e instanceof Error) return `${e.name}: ${e.message}\n${e.stack ?? ''}`;
+        if (typeof e === 'string') return e;
+        return JSON.stringify(e);
+      } catch {
+        return String(e);
+      }
+    };
+
     const onUncaught = (e: unknown) => {
       if (!isFromThisExtension(e)) return;
       const g = getLogger('global');
@@ -38,11 +51,12 @@ export async function activate(context: vscode.ExtensionContext) {
       const msg = (e as Error)?.message ?? String(e);
       vscode.window.showErrorMessage(`uncaughtException: ${msg}`);
     };
-    const onUnhandled = (e: unknown) => {
-      if (!isFromThisExtension(e)) return;
+
+    const onUnhandled = (reason: unknown) => {
+      if (!isFromThisExtension(reason)) return;
       const g = getLogger('global');
-      g.error('unhandledRejection', e as any);
-      const msg = (e as any)?.message ?? String(e);
+      g.error('unhandledRejection', reason as any);
+      const msg = toPretty(reason);
       vscode.window.showErrorMessage(`unhandledRejection: ${msg}`);
     };
 
@@ -77,7 +91,7 @@ export async function activate(context: vscode.ExtensionContext) {
       }
 
       // ✅ homey-logging을 외부 커맨드로 노출
-      registerEdgePanelCommands(context, provider, perfMonitor);
+      registerEdgePanelCommands(context, provider);
 
       log.info(
         `registerWebviewViewProvider OK, viewType=${EdgePanelProvider.viewType}, version=${version}`,

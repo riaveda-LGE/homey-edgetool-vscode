@@ -1,5 +1,5 @@
 // src/webviewers/edge-panel/views/Explorer/TreeView.ts
-import type { TreeNode, Kind } from '../../types/model.js';
+import type { Kind,TreeNode } from '../../types/model.js';
 
 export class TreeView {
   private selectedEl: HTMLElement | null = null;

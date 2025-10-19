@@ -1,7 +1,7 @@
 // === src/core/logs/HybridLogBuffer.ts ===
-import type { LogEntry } from '../../extension/messaging/messageTypes.js';
-import { getLogger } from '../logging/extension-logger.js';
+import type { LogEntry } from '@ipc/messages';
 import { REALTIME_BUFFER_MAX } from '../../shared/const.js';
+import { getLogger } from '../logging/extension-logger.js';
 
 export type BufferMetrics = { realtime: number; viewport: number; search: number; spill: number };
 

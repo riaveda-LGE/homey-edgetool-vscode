@@ -1,12 +1,12 @@
 import { createUiLog } from '../../shared/utils.js';
-import { HostBridge } from '../services/HostBridge.js';
 import { ExplorerService } from '../services/ExplorerService.js';
+import { HostBridge } from '../services/HostBridge.js';
 import { PersistService } from '../services/PersistService.js';
-import { createStore } from './store.js';
-import { reducer, createInitialState } from './reducer.js';
+import type { H2W } from '@ipc/messages';
 import type { TreeNode } from '../types/model.js';
-import type { H2W } from '../types/messages.js';
 import { AppView } from '../views/AppView.js';
+import { createInitialState,reducer } from './reducer.js';
+import { createStore } from './store.js';
 
 (function () {
   const vscode = acquireVsCodeApi();

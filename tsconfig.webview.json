@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+
+    "strict": true,
+    "noImplicitAny": false,        // 웹뷰 소스의 암시적 any 경고 완화
+    "skipLibCheck": true,
+    "types": ["react", "react-dom", "vscode"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@ipc/*": ["src/shared/ipc/*"]
+    }
+  },
+  "include": [
+    "src/webviewers/**/*",
+    "src/shared/ipc/**/*.ts",
+    "src/shared/const.ts",
+    "src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    // 웹뷰 빌드 시 host 전용 유틸(내부에서 'vscode' 모듈 의존) 제외
+    "src/shared/utils.ts",
+    // Node 전역(process) 의존 – 웹뷰 타입체크 대상 제외
+    "src/shared/env.ts",
+    "src/shared/featureFlags.ts"
+  ]
+}

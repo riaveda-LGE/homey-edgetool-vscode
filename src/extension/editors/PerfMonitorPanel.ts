@@ -1,9 +1,10 @@
 // === src/extension/editors/PerfMonitorPanel.ts ===
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { globalProfiler, measure } from '../../core/logging/perf.js';
-import type { H2W, W2H } from '../messaging/messageTypes.js';
 import { PERF_UPDATE_INTERVAL_MS } from '../../shared/const.js';
+import type { H2W, W2H } from '@ipc/messages';
 import type { PerfData } from './IPerfMonitorPanelComponents.js';
 import { PerfMonitorCaptureManager } from './PerfMonitorCaptureManager.js';
 import { PerfMonitorExportManager } from './PerfMonitorExportManager.js';

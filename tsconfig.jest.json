@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "verbatimModuleSyntax": false,   // ✅ 테스트 변환 시에만 끔 (CJS/ESM 충돌 방지)
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts", "jest.setup.ts"]
+}

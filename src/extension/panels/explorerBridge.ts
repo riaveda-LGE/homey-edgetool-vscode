@@ -1,8 +1,9 @@
 // === src/extension/panels/explorerBridge.ts ===
 import * as vscode from 'vscode';
+
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { toPosix, relFromBase, parentDir } from '../../shared/utils.js';
+import { parentDir,relFromBase, toPosix } from '../../shared/utils.js';
 
 export type ExplorerBridge = {
   handleMessage(msg: any): Promise<boolean>;
@@ -20,9 +21,53 @@ function shouldHideEntry(name: string, kind: 'file' | 'folder') {
   return HIDE_FILES.has(name);
 }
 
-/** 워처 관리 상태 인터페이스 */
+/** ──────────────────────────────────────────────────────────────────────
+ *  코얼레서(스코프별 디바운스 + in-flight 가드)
+ *  - 동일 스코프(예: '', 'raw', 'raw/merge_log')에 대한 list() 호출을
+ *    150ms 윈도우 안에서 1회로 합치고, 진행 중이면 완료 후 마지막 요청만 1회 더 실행
+ * ────────────────────────────────────────────────────────────────────── */
+class RefreshCoalescer {
+  private readonly log = getLogger('extension:panels:Coalescer');
+  private readonly DEBOUNCE_MS = 150;
+  private timers = new Map<string, NodeJS.Timeout>();
+  private inflight = new Set<string>();
+  private pending = new Set<string>();
+  constructor(private run: (scope: string) => Promise<void>) {}
+  schedule(scope: string) {
+    // 진행 중이면 펜딩만 표시(완료 시 한 번 더)
+    if (this.inflight.has(scope)) {
+      this.pending.add(scope);
+      return;
+    }
+    // 디바운스 재시작
+    if (this.timers.has(scope)) clearTimeout(this.timers.get(scope)!);
+    this.timers.set(
+      scope,
+      setTimeout(async () => {
+        this.timers.delete(scope);
+        await this.execute(scope);
+      }, this.DEBOUNCE_MS),
+    );
+  }
+  private async execute(scope: string) {
+    if (this.inflight.has(scope)) { this.pending.add(scope); return; }
+    this.inflight.add(scope);
+    try { await this.run(scope); }
+    catch (e) { this.log.warn(`list(${scope}) failed: ${e instanceof Error ? e.message : String(e)}`); }
+    finally {
+      this.inflight.delete(scope);
+      if (this.pending.has(scope)) {
+        this.pending.delete(scope);
+        // 완료 직후 짧게 한 번 더(연쇄 이벤트 누락 방지)
+        setTimeout(() => this.execute(scope), 0);
+      }
+    }
+  }
+}
+
+/** 워처 관리 상태 인터페이스(루트 1개만 보유) */
 interface WatcherState {
-  watchers: Map<string, vscode.FileSystemWatcher>;
+  root?: vscode.FileSystemWatcher;
   cleanupTimer?: NodeJS.Timeout;
 }
 
@@ -37,7 +82,7 @@ class WatcherManager {
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
-    this.state = { watchers: new Map() };
+    this.state = {};
   }
 
   setOnFsHandler(handler: (relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') => void) {
@@ -60,42 +105,21 @@ class WatcherManager {
     return vscode.Uri.joinPath(base, ...parts);
   }
 
-  /** 워처 추가 */
-  addWatcher(relPath: string, folderUri: vscode.Uri) {
-    if (this.disposed || this.state.watchers.has(relPath)) {
-      this.log.info('watcher already exists or disposed for folder:', relPath);
-      return;
-    }
-
-    const pattern = new vscode.RelativePattern(folderUri.fsPath, '**/*');
-    const w = vscode.workspace.createFileSystemWatcher(pattern, false, false, false);
-    this.state.watchers.set(relPath, w);
-
-    this.log.info('adding watcher for folder:', relPath, 'at path:', folderUri.fsPath);
-
-    // 이벤트 핸들러 바인딩
+  /** (축소) 루트 워처만 생성: create/delete만 수신, change는 무시 */
+  private addRootWatcher(baseUri: vscode.Uri) {
+    if (this.disposed || this.state.root) return;
+    const pattern = new vscode.RelativePattern(baseUri.fsPath, '**/*');
+    // create, delete만 받는다(변경 이벤트는 무시)
+    const w = vscode.workspace.createFileSystemWatcher(pattern, /*ignoreCreate*/false, /*ignoreChange*/true, /*ignoreDelete*/false);
+    this.state.root = w;
+    this.log.info('[WatcherManager] adding root watcher for workspace');
     if (this.onFsHandler) {
-      const onFs = (uri: vscode.Uri) => this.onFsHandler!(relPath, uri, 'create');
-      const onChange = (uri: vscode.Uri) => this.onFsHandler!(relPath, uri, 'change');
-      const onDelete = (uri: vscode.Uri) => this.onFsHandler!(relPath, uri, 'delete');
-      this.context.subscriptions.push(w.onDidCreate(onFs), w.onDidChange(onChange), w.onDidDelete(onDelete));
+      const onCreate = (uri: vscode.Uri) => this.onFsHandler!('', uri, 'create');
+      const onDelete = (uri: vscode.Uri) => this.onFsHandler!('', uri, 'delete');
+      // change 무시
+      this.context.subscriptions.push(w.onDidCreate(onCreate), w.onDidDelete(onDelete));
     }
-
     this.context.subscriptions.push(w);
-    this.log.info('[WatcherManager] watcher added for folder:', relPath);
-  }
-
-  /** 워처 제거 */
-  removeWatcher(relPath: string) {
-    const w = this.state.watchers.get(relPath);
-    if (w) {
-      this.log.info('[WatcherManager] removing watcher for folder:', relPath);
-      try { w.dispose(); } catch (e) { this.log.error('[WatcherManager] watcher dispose error for', relPath, e); }
-      this.state.watchers.delete(relPath);
-      this.log.info('[WatcherManager] watcher removed for folder:', relPath);
-    } else {
-      this.log.info('[WatcherManager] no watcher found to remove for folder:', relPath);
-    }
   }
 
   /** 워처 초기화 및 재등록 */
@@ -103,32 +127,11 @@ class WatcherManager {
     if (this.disposed || !this.info) return;
     const baseUri = this.info.wsDirUri;
     const baseFsPath = baseUri.fsPath;
-
-    // 기존 워처 해제
-    for (const [path, w] of this.state.watchers) {
-      try { w.dispose(); } catch {}
-    }
-    this.state.watchers.clear();
-
-    // 루트 워처 추가
-    this.log.info('[WatcherManager] adding root watcher for workspace');
-    this.addWatcher('', baseUri);
-
-    // 기존 폴더 스캔
-    try {
-      const entries = await vscode.workspace.fs.readDirectory(baseUri);
-      for (const [name, type] of entries) {
-        if (type === vscode.FileType.Directory && !shouldHideEntry(name, 'folder')) {
-          const folderRel = name;
-          const folderUri = vscode.Uri.joinPath(baseUri, name);
-          this.log.info('[WatcherManager] initializing watcher for existing folder:', folderRel);
-          this.addWatcher(folderRel, folderUri);
-        }
-      }
-    } catch (e) {
-      this.log.error('[WatcherManager] initial folder scan error', e);
-    }
-
+    // 기존 루트 워처 해제
+    try { this.state.root?.dispose(); } catch {}
+    this.state.root = undefined;
+    // 루트 워처만 재등록
+    this.addRootWatcher(baseUri);
     this.log.info('[WatcherManager] watchers initialized for workspace root:', toPosix(baseFsPath));
   }
 
@@ -136,25 +139,7 @@ class WatcherManager {
   async cleanup() {
     if (this.disposed || !this.info) return;
     this.log.info('[WatcherManager] starting periodic watcher cleanup');
-    const beforeCount = this.state.watchers.size;
-
-    const toRemove: string[] = [];
-    for (const [relPath] of this.state.watchers) {
-      if (relPath === '') continue;
-      const uri = this.toChildUri(this.info.wsDirUri, relPath);
-      try {
-        await vscode.workspace.fs.stat(uri);
-      } catch {
-        toRemove.push(relPath);
-      }
-    }
-    for (const relPath of toRemove) {
-      this.removeWatcher(relPath);
-    }
-
-    const afterCount = this.state.watchers.size;
-    this.log.info(`[WatcherManager] cleanup removed ${beforeCount - afterCount} watchers, now ${afterCount}`);
-
+    // 루트만 관리하므로 보정 작업 없음. 워크스페이스 경로 변경만 재보장
     await this.ensureWatchers();
     this.log.info('[WatcherManager] periodic watcher cleanup completed');
   }
@@ -171,15 +156,16 @@ class WatcherManager {
       clearInterval(this.state.cleanupTimer);
       this.state.cleanupTimer = undefined;
     }
-    for (const [path, w] of this.state.watchers) {
-      this.log.info('[WatcherManager] disposing watcher for folder:', path, 'on dispose');
-      try { w.dispose(); } catch (e) { this.log.error('[WatcherManager] watcher dispose error', e); }
+    if (this.state.root) {
+      this.log.info('[WatcherManager] disposing root watcher on dispose');
+      try { this.state.root.dispose(); } catch (e) { this.log.error('[WatcherManager] watcher dispose error', e); }
+      this.state.root = undefined;
     }
-    this.state.watchers.clear();
     this.log.info('[WatcherManager] all watchers disposed');
   }
 
-  get watchers() { return this.state.watchers; }
+  // 하위 호환(더 이상 사용하지 않음)
+  get watchers() { return new Map<string, vscode.FileSystemWatcher>(); }
   get wsDirUri() { return this.info?.wsDirUri; }
 }
 
@@ -188,14 +174,21 @@ class ExplorerUI {
   private log = getLogger('extension:panels:ExplorerUI');
   private post: (msg: any) => void;
   private watcherManager: WatcherManager;
+  private coalescer: RefreshCoalescer;
 
   constructor(post: (msg: any) => void, watcherManager: WatcherManager) {
     this.post = post;
     this.watcherManager = watcherManager;
+    // scope → list() 코얼레싱 실행기
+    this.coalescer = new RefreshCoalescer(async (scope) => {
+      await this.list(scope);
+    });
   }
 
   /** 파일 시스템 이벤트 처리 */
   async handleFsEvent(relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') {
+    // change 이벤트는 루트 워처 단계에서 무시되지만 혹시 모를 케이스 방어
+    if (eventType === 'change') return;
     // 워크스페이스 정보가 없으면 초기화
     if (!this.watcherManager.wsDirUri) {
       await this.watcherManager.ensureInfo();
@@ -207,70 +200,23 @@ class ExplorerUI {
     if (HIDE_DIRS.has(top)) return;
 
     this.log.info('[ExplorerUI] fs event', eventType, 'in folder', relPath, ':', uri.fsPath, 'rel:', rel);
-
-    if (eventType === 'create' || eventType === 'change') {
-      await this.handleCreateOrChange(relPath, uri, rel);
-    } else if (eventType === 'delete') {
-      await this.handleDelete(relPath, uri, rel);
-    }
-
-    this.notifyUIChange(relPath, rel);
+    // create/delete → 해당 디렉터리 스코프만 갱신
+    const scope = parentDir(rel);
+    this.coalescer.schedule(scope);
   }
 
-  private async handleCreateOrChange(relPath: string, uri: vscode.Uri, rel: string) {
-    const baseFsPath = this.watcherManager.wsDirUri!.fsPath;
-
-    // 폴더 생성 감지
-    if (relPath === '' && uri.fsPath.startsWith(this.watcherManager.wsDirUri!.fsPath)) {
-      try {
-        const stat = await vscode.workspace.fs.stat(uri);
-        if (stat.type === vscode.FileType.Directory) {
-          const newRel = relFromBase(baseFsPath, uri);
-          this.log.info('[ExplorerUI] detected folder creation:', newRel, 'adding watcher');
-          this.watcherManager.addWatcher(newRel, uri);
-        }
-      } catch {}
-    }
-
-    // 새 폴더 내 파일 감지
-    if (relPath === '' && rel.includes('/')) {
-      const parentRel = parentDir(rel);
-      if (!this.watcherManager.watchers.has(parentRel)) {
-        const parentUri = this.watcherManager.toChildUri(this.watcherManager.wsDirUri!, parentRel);
-        this.log.info('[ExplorerUI] detected new folder from file:', parentRel, 'adding watcher');
-        this.watcherManager.addWatcher(parentRel, parentUri);
-        this.post({ v: 1, type: 'explorer.fs.changed', payload: { path: '' } });
-      }
-    }
-  }
-
-  private async handleDelete(relPath: string, uri: vscode.Uri, rel: string) {
-    this.watcherManager.removeWatcher(rel);
-
-    try {
-      const stat = await vscode.workspace.fs.stat(uri);
-      if (stat.type === vscode.FileType.Directory) {
-        this.log.info('[ExplorerUI] confirmed folder deletion:', rel);
-      } else {
-        this.log.debug('[ExplorerUI] file deletion detected:', rel);
-      }
-    } catch {}
-  }
-
-  private notifyUIChange(relPath: string, rel: string) {
-    if (relPath !== '') {
-      this.post({ v: 1, type: 'explorer.fs.changed', payload: { path: rel } });
-    } else {
-      const parentDirPath = parentDir(rel);
-      this.post({ v: 1, type: 'explorer.fs.changed', payload: { path: parentDirPath } });
-    }
-  }
+  // (삭제/폴더 추가에 대한 별도 워처 추가/제거 로직은 제거됨: 루트 워처 + list()만으로 반영)
 
   /** 메시지 처리 */
   async handleMessage(msg: any): Promise<boolean> {
     switch (msg.type) {
       case 'explorer.list':
         this.log.info('[ExplorerUI] <- list', msg.payload?.path);
+        await this.list(String(msg.payload?.path || ''));
+        return true;
+      case 'explorer.refresh':
+        // 수동 새로고침: 즉시 해당 스코프 list()
+        this.log.info('[ExplorerUI] <- refresh', msg.payload?.path);
         await this.list(String(msg.payload?.path || ''));
         return true;
       case 'explorer.open':
@@ -301,11 +247,6 @@ class ExplorerUI {
       }
       const wsDirUri = this.watcherManager.wsDirUri!;
       const dirUri = this.watcherManager.toChildUri(wsDirUri, rel);
-
-      if (rel && !this.watcherManager.watchers.has(rel)) {
-        this.log.info('[ExplorerUI] registering watcher for expanded folder:', rel);
-        this.watcherManager.addWatcher(rel, dirUri);
-      }
 
       const entries = await vscode.workspace.fs.readDirectory(dirUri);
       const items = entries
@@ -385,10 +326,6 @@ class ExplorerUI {
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.delete(uri, { recursive, useTrash });
       this.log.info('[ExplorerUI] delete', rel, { recursive, useTrash });
-
-      if (recursive) {
-        this.watcherManager.removeWatcher(rel);
-      }
 
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'delete', path: rel || '' } });
     } catch (e: any) {

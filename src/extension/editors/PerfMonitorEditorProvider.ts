@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+
 import { PERF_DATA_MAX } from '../../shared/const.js';
+import { PerfMonitorCommandHandler } from './PerfMonitorCommandHandler.js';
 import { PerfMonitorDataManager } from './PerfMonitorDataManager.js';
 import { PerfMonitorWebviewManager } from './PerfMonitorWebviewManager.js';
-import { PerfMonitorCommandHandler } from './PerfMonitorCommandHandler.js';
 
 export interface PerfMonitor {
   createPanel(): void;

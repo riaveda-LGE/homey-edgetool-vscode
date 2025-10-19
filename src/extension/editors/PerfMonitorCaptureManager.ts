@@ -1,10 +1,11 @@
 // === src/extension/editors/PerfMonitorCaptureManager.ts ===
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { globalProfiler, PerformanceProfiler } from '../../core/logging/perf.js';
-import type { H2W } from '../messaging/messageTypes.js';
 import { PERF_UPDATE_INTERVAL_MS } from '../../shared/const.js';
-import type { PerfData, IPerfMonitorCaptureManager } from './IPerfMonitorPanelComponents.js';
+import type { H2W } from '@ipc/messages';
+import type { IPerfMonitorCaptureManager,PerfData } from './IPerfMonitorPanelComponents.js';
 
 export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   private _profiler = globalProfiler;
@@ -89,7 +90,7 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   private generateHtmlReport(result: any, isForWebview: boolean = false): string {
     const a = result.analysis || {};
 
-    let html = `
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>

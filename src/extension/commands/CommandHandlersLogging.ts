@@ -1,29 +1,33 @@
 // === src/extension/commands/CommandHandlersLogging.ts ===
-import * as vscode from 'vscode';
-import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-
-const log = getLogger('cmd.logging');
+import type { EdgePanelProvider } from '../panels/extensionPanel.js';
 
 export class CommandHandlersLogging {
   constructor(
     private say: (s: string) => void,
     private appendLog?: (s: string) => void,
+    private provider?: EdgePanelProvider, // 🔁 Provider 주입
   ) {}
 
+  /** 버튼/명령 진입점(공식 경로) */
   @measure()
-  async loggingStart() {
-    this.say('[info] start realtime logging (stub)');
+  async openHomeyLogging() {
+    this.appendLog?.('[debug] logging: command invoked → openHomeyLogging()');
+    if (!this.provider) {
+      this.appendLog?.('[error] logging: provider not ready');
+      return this.say('[error] internal: provider not ready');
+    }
+    try {
+      await this.provider.handleHomeyLoggingCommand();
+      this.appendLog?.('[info] logging: Homey Log Viewer panel opened');
+    } catch (e: any) {
+      const msg = e?.message ?? String(e);
+      this.appendLog?.(`[error] logging: failed to open viewer: ${msg}`);
+      throw e;
+    }
   }
 
-  @measure()
-  async loggingMerge(dir: string) {
-    if (!dir) return this.say('[error] directory path required');
-    this.say(`[info] start file-merge logging for ${dir} (stub)`);
-  }
-
-  @measure()
-  async loggingStop() {
-    this.say('[info] logging stopped (stub)');
-  }
+  // --- 과거 stub은 주석만 남김 ---
+  // loggingStart / loggingMerge / loggingStop 은 사용하지 않습니다.
+  // 실사용 경로는 openHomeyLogging() → Provider → LogViewerPanelManager 입니다.
 }

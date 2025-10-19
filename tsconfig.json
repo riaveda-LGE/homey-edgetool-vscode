@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
@@ -12,9 +12,22 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "verbatimModuleSyntax": true,
-    "sourceMap": true
+    // ⬇️ 공용 IPC 타입 경로 별칭 (SSOT)
+    "baseUrl": ".",
+    "paths": {
+      "@ipc/messages": ["src/shared/ipc/messages.ts"]
+    },
+    "sourceMap": true,
+    "inlineSources": true,
+    "types": ["node", "vscode"]
   },
-  "include": [
-    "src/**/*"
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "src/**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/webviewers/**",   // 웹뷰 TS는 webpack(ts-loader)이 처리
+    "dist/**",
+    "node_modules/**"
   ]
 }

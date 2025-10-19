@@ -42,8 +42,12 @@
   line-height: 1.35;
 }
 
-/* 각 로그 라인 */
+/* 각 로그 라인: 기본은 VS Code 테마 터미널 전경색 */
 .log-line {}
+
+/* 10초 간격 세그먼트별 글자색 (의미 없는 중립색 2가지) */
+.log-line.seg0 { color: #E6E6E6; }  /* 아주 연한 회색 */
+.log-line.seg1 { color: #A8B2D1; }  /* 푸른 기운의 회색(시각적 구분) */
 
 /* ── Explorer ─────────────────────────────────────────────────────────── */
 #explorer {
@@ -59,11 +63,67 @@
 #explorerBar {
   position: sticky; top: 0;
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px; background: var(--panel);
+  padding: 3px 10px; background: var(--panel);
   border-bottom: 1px solid var(--border); z-index: 1;
 }
 #explorerTitle { font-weight: 700; opacity: .9; }
-#explorerPath { color: var(--muted); }
+#explorerActions {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+#explorerRefresh {
+  width: 26px; height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;  /* 아이콘 수직/수평 중앙정렬 */
+  box-sizing: border-box;
+}
+#explorerRefresh::before {
+  /* refresh 아이콘 (폰트 의존 없이 SVG 마스크) */
+  content:"";
+  display:block;
+  width: 18px; height: 18px;  /* 버튼 커진 만큼 아이콘도 확대 */
+  margin: 0;
+  background-color: var(--vscode-foreground);
+  -webkit-mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+   <path d='M17.65 6.35A7.95 7.95 0 0 0 12 4 8 8 0 1 0 20 12h-2a6 6 0 1 1-6-6c1.48 0 2.83.54 3.87 1.43L13 10h7V3l-2.35 3.35z' fill='black'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+   <path d='M17.65 6.35A7.95 7.95 0 0 0 12 4 8 8 0 1 0 20 12h-2a6 6 0 1 1-6-6c1.48 0 2.83.54 3.87 1.43L13 10h7V3l-2.35 3.35z' fill='black'/></svg>") center/contain no-repeat;
+}
+#explorerRefresh:hover { background: rgba(255,255,255,.06); }
+#explorerRefresh:active { transform: translateY(1px); }
+#explorerRefresh:disabled {
+  opacity: .5; cursor: default; background: rgba(255,255,255,.03);
+}
+#explorerBusy {
+  width: 14px; height: 14px; display: inline-block;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: var(--focus);
+  border-radius: 50%;
+  opacity: 0; transform: scale(.9);
+}
+#explorerBusy.spinning {
+  opacity: 1;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#explorerPath {
+  color: var(--muted);
+  flex: 1 1 auto;        /* 타이틀 옆에서 확장 */
+  min-width: 0;          /* ellipsis 동작 보장 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: inline-flex;  /* crumb 정렬 */
+  align-items: center;
+}
 #explorerPath .crumb { color: var(--link); cursor: pointer; }
 #explorerPath .sep { opacity: .6; margin: 0 6px; }
 #explorerTree { padding: 6px 8px 12px 6px; outline: none; font-size: 13px; }

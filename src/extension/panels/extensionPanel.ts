@@ -1,22 +1,20 @@
 // === src/extension/panels/extensionPanel.ts ===
-import * as fs from 'fs';
 import * as vscode from 'vscode';
 
+import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
 import {
   addLogSink,
   getBufferedLogs,
   getLogger,
   removeLogSink,
 } from '../../core/logging/extension-logger.js';
-import { readFileAsText } from '../../shared/utils.js';
-import { PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
-import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
-import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { measure } from '../../core/logging/perf.js';
-import { EdgePanelConnectionManager } from './EdgePanelConnectionManager.js';
-import { EdgePanelLogViewer } from './EdgePanelLogViewer.js';
-import { EdgePanelButtonHandler, type IEdgePanelButtonHandler } from './EdgePanelButtonHandler.js';
-import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
+import { PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
+import { readFileAsText } from '../../shared/utils.js';
+import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
+import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';
+import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
+import { LogViewerPanelManager } from './LogViewerPanelManager.js';
 
 interface EdgePanelState {
   version: string;
@@ -37,10 +35,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   private _perfMonitor?: PerfMonitor;
   private _explorer?: ExplorerBridge;
-  private _buttonHandler?: IEdgePanelButtonHandler;
-  private _logViewer?: EdgePanelLogViewer;
+  private _actionRouter?: IEdgePanelActionRouter;
+  private _logViewer?: LogViewerPanelManager;
 
-  // 메모리 관리: 이벤트 리스너 추적
   private _disposables = new Set<() => void>();
 
   constructor(
@@ -66,11 +63,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._view?.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
   }
 
-  // 메모리 관리 헬퍼
   private _trackDisposable(disposable: () => void) {
     this._disposables.add(disposable);
   }
-
   private _disposeTracked() {
     for (const dispose of this._disposables) {
       try { dispose(); } catch (e) { this.log.warn(`dispose error: ${e}`); }
@@ -85,8 +80,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = {
       enableScripts: true,
-      ...({ retainContextWhenHidden: true } as any),
       localResourceRoots: [uiRoot],
+      // @ts-expect-error retainContextWhenHidden is supported but not typed
+      retainContextWhenHidden: true,
     };
     webviewView.title = `Edge Console - v${this._state.version}`;
 
@@ -108,8 +104,15 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       try { webviewView.webview.postMessage(m); } catch {}
     });
 
-    // 버튼 핸들러
-    this._buttonHandler = new EdgePanelButtonHandler(
+    // 로그 뷰어
+    this._logViewer = new LogViewerPanelManager(
+      this._context,
+      this._extensionUri,
+      (line) => this.appendLog(line)
+    );
+
+    // 버튼 실행 라우터(ActionRouter)
+    this._actionRouter = new EdgePanelActionRouter(
       webviewView,
       this._context,
       this._extensionUri,
@@ -119,18 +122,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         updateUrl: this._state.updateUrl,
         latestSha: this._state.latestSha
       },
+      this,
       this._perfMonitor,
       this._explorer
     );
 
-    // 로그 뷰어
-    this._logViewer = new EdgePanelLogViewer(
-      this._context,
-      this._extensionUri,
-      (line) => this.appendLog(line)
-    );
-
-    // Webview -> Extension
+    // Webview → Extension
     const messageDisposable = webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
         if (this._explorer && (await this._explorer.handleMessage(msg))) return;
@@ -141,7 +138,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         }
 
         if (msg?.type === 'ui.requestButtons' && msg?.v === 1) {
-          this._buttonHandler?.sendButtonSections();
+          this._actionRouter?.sendButtonSections();
           return;
         }
 
@@ -153,22 +150,44 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           (lg[lvl] ?? lg.info).call(lg, text);
           return;
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
-          this._state.logs = getBufferedLogs();
           const panelState = await readEdgePanelState(this._context);
-          webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state: this._state, panelState } });
+          const state = { ...this._state, logs: getBufferedLogs() };
+          webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
           webviewView.webview.postMessage({ v: 1, type: 'setUpdateVisible', payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) } });
-          this._buttonHandler?.sendButtonSections();
+          this._actionRouter?.sendButtonSections();
 
-          // 저장된 상태에서 Explorer가 켜져 있으면 초기화
           if (panelState.showExplorer) {
             await this._explorer?.refreshWorkspaceRoot();
           }
+          return;
         } else if (msg?.type === 'ui.savePanelState' && msg?.v === 1) {
           await writeEdgePanelState(this._context, msg.payload.panelState);
+          return;
         } else if (msg?.command === 'reloadWindow') {
           await vscode.commands.executeCommand('workbench.action.reloadWindow');
+          return;
         } else if (msg?.type === 'button.click' && msg?.v === 1 && typeof msg.payload.id === 'string') {
-          await this._buttonHandler?.dispatchButton(msg.payload.id);
+          await this._actionRouter?.dispatchButton(msg.payload.id);
+          return;
+        }
+
+        // ====== 로그 뷰어 위임 ======
+        if (msg?.type === 'logging.startRealtime' && msg?.v === 1) {
+          await this._logViewer?.startRealtime(msg.payload?.filter);
+          return;
+        }
+        if (msg?.type === 'logging.startFileMerge' && msg?.v === 1) {
+          const dir = String(msg.payload?.dir || '');
+          if (!dir) {
+            vscode.window.showWarningMessage('병합할 로그 디렉터리가 지정되지 않았습니다.');
+            return;
+          }
+          await this._logViewer?.startFileMerge(dir);
+          return;
+        }
+        if (msg?.type === 'logging.stop' && msg?.v === 1) {
+          this._logViewer?.stop();
+          return;
         }
       } catch (e) {
         this.log.error('onDidReceiveMessage error', e as any);
@@ -176,22 +195,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
     this._trackDisposable(() => messageDisposable.dispose());
 
-    // =========================
-    // 안전망: 포커스/가시성 변화 시 선택 해제 신호 보내기
-    // =========================
-
-    // 뷰 가시성 변경
     const visibilityDisposable = webviewView.onDidChangeVisibility(async () => {
       try {
         if (!webviewView.visible) {
           webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
           return;
         }
-        // 다시 보일 때는 버튼/상태 동기화
         const state = { ...this._state, logs: getBufferedLogs() };
         const panelState = await readEdgePanelState(this._context);
         webviewView.webview.postMessage({ v: 1, type: 'initState', payload: { state, panelState } });
-        this._buttonHandler?.sendButtonSections();
+        this._actionRouter?.sendButtonSections();
         if (panelState.showExplorer) {
           await this._explorer?.refreshWorkspaceRoot();
         }
@@ -199,19 +212,16 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
     this._trackDisposable(() => visibilityDisposable.dispose());
 
-    // 활성 에디터가 바뀌면(에디터/커스텀 에디터/Diff 등) → 선택 해제
     const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
       try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
     });
     this._trackDisposable(() => activeEditorDisposable.dispose());
 
-    // 터미널 포커스 변화도 커버
     const activeTerminalDisposable = vscode.window.onDidChangeActiveTerminal(() => {
       try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
     });
     this._trackDisposable(() => activeTerminalDisposable.dispose());
 
-    // 창 포커스(윈도우) 상태 변화
     const winStateDisposable = vscode.window.onDidChangeWindowState((state) => {
       if (!state.focused) {
         try { webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' }); } catch {}
@@ -234,8 +244,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       try { this._explorer?.dispose(); } catch {}
       this._explorer = undefined;
 
-      this._buttonHandler?.dispose();
-      this._buttonHandler = undefined;
+      this._actionRouter?.dispose();
+      this._actionRouter = undefined;
 
       this._logViewer?.dispose();
       this._logViewer = undefined;
@@ -249,59 +259,130 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     await this._logViewer?.handleHomeyLoggingCommand();
   }
 
+  public async startRealtime(filter?: string) {
+    await this._logViewer?.startRealtime(filter);
+  }
+  public async startFileMerge(dir: string) {
+    await this._logViewer?.startFileMerge(dir);
+  }
+  public stopLogging() {
+    this._logViewer?.stop();
+  }
+
+  private _randomNonce(len = (RANDOM_STRING_LENGTH || 32)) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let out = '';
+    for (let i = 0; i < len; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
+    return out;
+  }
+
   /**
-   * index.html 안의 상대 경로(href/src)를 전부 webview.asWebviewUri(...)로 치환
+   * index.html을 읽어:
+   *  - %CSP_SOURCE% → webview.cspSource
+   *  - %NONCE%      → 생성된 nonce
+   *  - src/href의 로컬 상대경로 → webview.asWebviewUri(...)로 재작성
+   *  - 모든 <script> 태그에 nonce 속성 자동 주입(기존에 없을 때만)
    */
-  private async _getHtmlFromFiles(webview: vscode.Webview, mediaRoot: vscode.Uri): Promise<string> {
-    const htmlPath = vscode.Uri.joinPath(mediaRoot, 'index.html');
+  private async _getHtmlFromFiles(webview: vscode.Webview, root: vscode.Uri) {
+    try {
+      const indexHtml = vscode.Uri.joinPath(root, 'index.html');
+      let html = await readFileAsText(indexHtml);
 
-    // 실제 배포 파일 경로
-    const tokensCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'tokens.css'));
-    const baseCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'base.css'));
-    const layoutCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'layout.css'));
-    const componentsCss = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'styles', 'components.css'));
-    const appJs = webview.asWebviewUri(vscode.Uri.joinPath(mediaRoot, 'app.bundle.js'));
+      // 1) CSP 치환
+      const nonce = this._randomNonce();
+      html = html.replace(/%CSP_SOURCE%/g, webview.cspSource);
+      html = html.replace(/%NONCE%/g, nonce);
 
-    const nonce = getNonce();
-    const cspSource = webview.cspSource;
+      // 2) 리소스 경로 재작성(src/href)
+      const ATTR_RE = /(<(script|link|img)\b[^>]*?\s(?:src|href)=)(['"])([^'"]+)\3/gi;
+      html = html.replace(ATTR_RE, (_m, p1: string, _tag: string, q: string, url: string) => {
+        const lower = url.toLowerCase();
+        const isAbs =
+          lower.startsWith('http:') ||
+          lower.startsWith('https:') ||
+          lower.startsWith('data:') ||
+          lower.startsWith('blob:') ||
+          lower.startsWith('vscode-webview:') ||
+          lower.startsWith('vscode-resource:') ||
+          lower.startsWith('chrome:') ||
+          lower.startsWith('about:') ||
+          lower.startsWith('#') ||
+          lower.startsWith('//');
+        if (isAbs) return `${p1}${q}${url}${q}`;
+        const rewritten = webview.asWebviewUri(vscode.Uri.joinPath(root, url)).toString();
+        return `${p1}${q}${rewritten}${q}`;
+      });
 
-    let html = await readFileAsText(htmlPath);
+      // 3) <script> nonce 자동 주입 (이미 nonce가 있으면 유지)
+      html = html.replace(/<script\b(?![^>]*\bnonce=)/gi, `<script nonce="${nonce}"`);
 
-    // CSP/nonce 치환
-    html = html
-      .replace(/%NONCE%/g, nonce)
-      .replace(/%CSP_SOURCE%/g, cspSource);
-
-    // 링크/스크립트 경로 치환
-    html = html
-      .replace(/href=["'](?:styles\/)?tokens\.css["']/g, `href="${String(tokensCss)}"`)
-      .replace(/href=["'](?:styles\/)?base\.css["']/g, `href="${String(baseCss)}"`)
-      .replace(/href=["'](?:styles\/)?layout\.css["']/g, `href="${String(layoutCss)}"`)
-      .replace(/href=["'](?:styles\/)?components\.css["']/g, `href="${String(componentsCss)}"`)
-      .replace(/src=["']app\.bundle\.js["']/g, `src="${String(appJs)}"`);
-
-    return html;
+      return html;
+    } catch (e) {
+      return `<html><body><pre>Edge Panel UI missing</pre></body></html>`;
+    }
   }
 }
 
-export function registerEdgePanelCommands(
-  context: vscode.ExtensionContext,
-  provider: EdgePanelProvider,
-  perfMonitor?: PerfMonitor,
-) {
-  if (perfMonitor) {
-    (provider as any)._perfMonitor = perfMonitor;
-  }
+// ⬇️ 명령 등록 (QuickPick 포함)
+export function registerEdgePanelCommands(context: vscode.ExtensionContext, provider: EdgePanelProvider) {
+  const regs = [
+    // QuickPick으로 모드 선택
+    vscode.commands.registerCommand('homey.logging.openViewer', async () => {
+      const pick = await vscode.window.showQuickPick(
+        [
+          { label: '$(debug-start) 실시간 로그 보기', description: 'ADB / journalctl 스트리밍', id: 'realtime' },
+          { label: '$(folder) 파일 병합 보기', description: '폴더 로그 병합 + 페이징', id: 'filemerge' },
+        ],
+        {
+          title: 'Homey Log Viewer - 모드 선택',
+          placeHolder: '모드를 선택하세요',
+          ignoreFocusOut: true,
+          canPickMany: false,
+        },
+      );
+      if (!pick) return;
 
-  const d = vscode.commands.registerCommand('homeyEdgetool.openHomeyLogging', async () => {
-    await provider.handleHomeyLoggingCommand();
-  });
-  context.subscriptions.push(d);
-}
+      if (pick.id === 'realtime') {
+        const filter = await vscode.window.showInputBox({
+          title: '실시간 로그 필터 (선택)',
+          prompt: '포함될 문자열(공란=전체)',
+          placeHolder: '(예) homey | ERROR',
+          ignoreFocusOut: true,
+        });
+        await provider.startRealtime(filter);
+        return;
+      }
 
-function getNonce() {
-  let text = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < RANDOM_STRING_LENGTH; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
-  return text;
+      const picked = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        title: '병합할 로그 디렉터리를 선택하세요',
+      });
+      if (picked && picked[0]) {
+        await provider.startFileMerge(picked[0].fsPath);
+      }
+    }),
+
+    vscode.commands.registerCommand('homey.logging.startRealtime', (filter?: string) => provider.startRealtime(filter)),
+
+    vscode.commands.registerCommand('homey.logging.startFileMerge', async (dir?: string) => {
+      if (dir && typeof dir === 'string') {
+        await provider.startFileMerge(dir);
+        return;
+      }
+      const picked = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        title: '병합할 로그 디렉터리를 선택하세요',
+      });
+      if (picked && picked[0]) {
+        await provider.startFileMerge(picked[0].fsPath);
+      }
+    }),
+
+    vscode.commands.registerCommand('homey.logging.stop', () => provider.stopLogging()),
+  ];
+  regs.forEach(d => context.subscriptions.push(d));
 }

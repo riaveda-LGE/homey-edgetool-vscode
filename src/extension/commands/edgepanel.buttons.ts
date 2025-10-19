@@ -7,10 +7,9 @@ export type ButtonContext = {
 };
 
 export type ButtonOp =
-  | { kind: 'line'; line: string }              // 콘솔 라인
   | { kind: 'vscode'; command: string; args?: any[] } // VS Code 명령
   | { kind: 'post'; event: string; payload?: any }    // Webview 신호
-  | { kind: 'handler'; name: string };          // 내부 핸들러
+  | { kind: 'handler'; name: string };                // CommandHandlers 진입점
 
 export type ButtonDef = {
   id: string;
@@ -59,10 +58,10 @@ export function getSections(): SectionDef[] {
     // panel 조작
     {
       id: 'panel',
-      title: 'panel 조작',
+      title: '패널 조작',
       items: [
-        { id: 'panel.toggleExplorer', label: '탐색창',   op: { kind: 'post', event: 'ui.toggleExplorer' } },
-        { id: 'panel.toggleLogs',     label: '로그창',   op: { kind: 'post', event: 'ui.toggleLogs' } },
+        { id: 'panel.toggleExplorer', label: '작업패널',   op: { kind: 'post', event: 'ui.toggleExplorer' } },
+        { id: 'panel.toggleLogs',     label: '디버깅패널',   op: { kind: 'post', event: 'ui.toggleLogs' } },
         {
           id: 'panel.updateNow',
           label: 'Update Now',
@@ -70,8 +69,6 @@ export function getSections(): SectionDef[] {
           op: { kind: 'handler', name: 'updateNow' },
           when: (ctx) => !!ctx.updateAvailable && !!ctx.updateUrl,
         },
-        { id: 'panel.reload', label: 'VS Code 재시작', desc: 'VS Code 창 새로고침',
-          op: { kind: 'vscode', command: 'workbench.action.reloadWindow' } },
       ],
     },
 
@@ -80,10 +77,10 @@ export function getSections(): SectionDef[] {
       id: 'homey',
       title: 'homey 조작',
       items: [
-        { id: 'cmd.homeyLogging', label: '로그 보기',   op: { kind: 'line', line: 'homey-logging' } },
-        { id: 'cmd.homeyRestart', label: '재시작',       op: { kind: 'line', line: 'homey-restart' } },
-        { id: 'cmd.homeyMount',   label: '볼륨 마운트',  op: { kind: 'line', line: 'homey-mount' } },
-        { id: 'cmd.homeyUnmount', label: '볼륨 언마운트', op: { kind: 'line', line: 'homey-unmount' } },
+        { id: 'cmd.homeyLogging', label: '로그 보기',     op: { kind: 'handler', name: 'openHomeyLogging' } },
+        { id: 'cmd.homeyRestart', label: '재시작',         op: { kind: 'handler', name: 'homeyRestart' } },
+        { id: 'cmd.homeyMount',   label: '볼륨 마운트',    op: { kind: 'handler', name: 'homeyMount' } },
+        { id: 'cmd.homeyUnmount', label: '볼륨 언마운트',  op: { kind: 'handler', name: 'homeyUnmount' } },
       ],
     },
 
@@ -96,8 +93,8 @@ export function getSections(): SectionDef[] {
           op: { kind: 'handler', name: 'changeWorkspaceQuick' } },
         { id: 'cmd.openWorkspace',   label: '작업폴더 열기', desc: '현재 작업폴더 폴더 열기',
           op: { kind: 'handler', name: 'openWorkspace' } },
-        { id: 'cmd.gitPull',         label: 'git pull', op: { kind: 'line', line: 'git pull' } },
-        { id: 'cmd.gitPush',         label: 'git push', op: { kind: 'line', line: 'git push' } },
+        { id: 'cmd.gitPull',         label: 'git pull', op: { kind: 'handler', name: 'gitPull' } },
+        { id: 'cmd.gitPush',         label: 'git push', op: { kind: 'handler', name: 'gitPush' } },
       ],
     },
 
@@ -108,7 +105,9 @@ export function getSections(): SectionDef[] {
       items: [
         { id: 'cmd.performanceMonitor', label: '성능측정', desc: 'Performance Monitor 토글',
           op: { kind: 'handler', name: 'togglePerformanceMonitoring' } },
-        { id: 'cmd.help', label: '도움말', op: { kind: 'handler', name: 'openHelp' } }
+        { id: 'panel.reload', label: 'VS Code 재시작', desc: 'VS Code 창 새로고침',
+          op: { kind: 'vscode', command: 'workbench.action.reloadWindow' } },
+        { id: 'cmd.help', label: '도움말', op: { kind: 'handler', name: 'openHelp' } },
       ],
     },
   ];

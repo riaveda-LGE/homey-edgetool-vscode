@@ -1,8 +1,8 @@
+import { DEFAULT_TRANSFER_TIMEOUT_MS } from '../../shared/const.js';
+import { ErrorCategory,XError } from '../../shared/errors.js';
 import type { HostConfig } from '../connection/ConnectionManager.js';
 import { runCommandLine } from '../connection/ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { DEFAULT_TRANSFER_TIMEOUT_MS } from '../../shared/const.js';
-import { XError, ErrorCategory } from '../../shared/errors.js';
 import { measureIO } from '../logging/perf.js';
 
 export type TransferOptions = {

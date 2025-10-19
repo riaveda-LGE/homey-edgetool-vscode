@@ -1,4 +1,4 @@
-// === src/shared/utils.ts ===
+// === src/shared/utils.ts (Extension Host 전용) ===
 import * as vscode from 'vscode';
 
 export function safeJson<T>(v: T): string {
@@ -83,3 +83,6 @@ export async function fileExists(uri: vscode.Uri): Promise<boolean> {
 export function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
+
+// ⚠️ 웹뷰 전용 로거는 이 파일에서 제거합니다. (호스트는 getLogger 사용)
+// export function createUiLog(...) { ... }  ← 삭제

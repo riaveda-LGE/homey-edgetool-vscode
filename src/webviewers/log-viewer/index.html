@@ -1,36 +1,22 @@
-<!-- === src/ui/log-viewer/index.html === -->
 <!doctype html>
 <html lang="ko">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none';
-                 style-src 'unsafe-inline' %CSP_SOURCE%;
-                 script-src 'nonce-%NONCE%';"
+      content="default-src 'none'; img-src %CSP_SOURCE% data:;
+               style-src %CSP_SOURCE% 'unsafe-inline';
+               script-src 'nonce-%NONCE%';"
     />
-    <title>Homey Log Viewer</title>
-    <style>
-      body {
-        margin: 0;
-        background: #0b0b0b;
-        color: #eaeaea;
-        font:
-          12px/1.4 ui-monospace,
-          Consolas,
-          monospace;
-      }
-      #log {
-        white-space: pre-wrap;
-        padding: 8px;
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- tokens.css 는 main.tsx 에서 import 되어 app.css 로 합쳐집니다 -->
+    <!-- Tailwind 정적 산출물 (빌드 시 dist/webviewers/log-viewer/app.css 생성) -->
+    <link rel="stylesheet" href="app.css" />
+    <title>Log Viewer</title>
   </head>
-  <body>
-    <div id="log">loading...</div>
-    <script nonce="%NONCE%">
-      const vscode = acquireVsCodeApi();
-    </script>
-    <script nonce="%NONCE%" src="./app.js"></script>
+  <body class="tw-h-screen tw-overflow-hidden">
+    <div id="app" class="tw-h-full tw-bg-[var(--bg)] tw-text-[var(--fg)]"></div>
+    <noscript>JavaScript가 필요합니다.</noscript>
+    <script nonce="%NONCE%" src="app.bundle.js"></script>
   </body>
 </html>

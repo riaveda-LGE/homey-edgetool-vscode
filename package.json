@@ -59,35 +59,103 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format:prettier": "prettier --write \"{src,scripts,media}/**/*.{ts,tsx,js,jsx,css,html,json,md}\"",
     "format": "npm run lint:fix && npm run format:prettier",
-    "perf:merge": "node --expose-gc dist/scripts/perf/run-merge-bench.js",
+    "test": "jest",
+    "test:write-raw": "cross-env HOMEY_WRITE_RAW=1 npm test",
+    "test:watch": "jest --watch",
+    "perf:merge": "node --expose-gc dist/extension/scripts/perf/run-merge-bench.js",
     "webpack": "webpack --mode production",
-    "vscode:prepublish": "npm run webpack && tsc -p .",
-    "build": "npm run webpack && tsc -p .",
+    "vscode:prepublish": "npm run webpack && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/webviewers/edge-panel','dist/webviewers/edge-panel');copy('src/webviewers/log-viewer','dist/webviewers/log-viewer');copy('src/webviewers/perf-monitor','dist/webviewers/perf-monitor');fs.copyFileSync('node_modules/chart.js/dist/chart.umd.js','dist/webviewers/perf-monitor/chart.umd.js');\"",
+    "build": "npm run webpack && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && node -e \"const fs=require('fs'),p=require('path');const copy=(s,d)=>{fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){if(/\\.(html|css)$/.test(f))fs.copyFileSync(p.join(s,f),p.join(d,f));}};copy('src/webviewers/edge-panel','dist/webviewers/edge-panel');copy('src/webviewers/log-viewer','dist/webviewers/log-viewer');copy('src/webviewers/perf-monitor','dist/webviewers/perf-monitor');fs.copyFileSync('node_modules/chart.js/dist/chart.umd.js','dist/webviewers/perf-monitor/chart.umd.js');\"",
     "compile": "npm run build",
     "package": "npm run build && vsce package",
     "deploy": "node scripts/deploy.js",
+    "dev": "node scripts/deploy.js --dev",
+    "dev:write-raw": "cross-env HOMEY_WRITE_RAW=1 npm run dev",
     "now": "node scripts/deploy.js"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.0",
     "@types/node": "^20.11.0",
+    "@types/react": "^18.3.26",
+    "@types/react-dom": "^18.3.7",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.6.2",
+    "autoprefixer": "^10.4.20",
     "chart.js": "^4.4.0",
     "copy-webpack-plugin": "^12.0.2",
+    "cross-env": "^7.0.3",
+    "css-loader": "^7.1.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "jest": "^29.7.0",
+    "mini-css-extract-plugin": "^2.9.4",
+    "postcss": "^8.4.47",
+    "postcss-loader": "^8.2.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
+    "tailwindcss": "^3.4.14",
+    "ts-jest": "^29.1.0",
     "ts-loader": "^9.5.1",
+    "tsc-alias": "^1.8.10",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.46.0",
     "webpack": "^5.102.0",
     "webpack-cli": "^5.1.4"
+  },
+  "jest": {
+    "preset": "ts-jest/presets/default-esm",
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "./jest.setup.ts"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.test.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/**/__tests__/**"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "moduleNameMapper": {
+      "^@ipc/messages$": "<rootDir>/src/shared/ipc/messages.ts",
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "useESM": true,
+          "tsconfig": "<rootDir>/tsconfig.jest.json"
+        }
+      ]
+    },
+    "watchPathIgnorePatterns": [
+      "[/\\\\]src[/\\\\]core[/\\\\]logs[/\\\\]__tests__[/\\\\]out([/\\\\].*)?$"
+    ],
+    "testPathIgnorePatterns": [
+      "[/\\\\]src[/\\\\]core[/\\\\]logs[/\\\\]__tests__[/\\\\]out([/\\\\].*)?$"
+    ]
   },
   "files": [
     "dist/**",
     "media/**",
     "package.json",
     "LICENSE"
-  ]
+  ],
+  "dependencies": {
+    "@headlessui/react": "^2.1.9",
+    "@tanstack/react-virtual": "^3.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.2"
+  }
 }
