@@ -36,7 +36,7 @@ export type SessionCallbacks = {
     merged: number;
   }) => void;
   /** 병합 진행률(증분/상태) 전달 */
-  onProgress?: (p: { inc?: number; total?: number; done?: number; active?: boolean }) => void;
+  onProgress?: (p: { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean }) => void;
   /** 정식 병합(T1) 완료 후 하드리프레시 지시 */
   onRefresh?: (p: { total?: number; version?: number }) => void;
 };
@@ -142,7 +142,7 @@ export class LogSessionManager {
     this.log.info(`T*: estimated total lines=${total ?? 'unknown'}`);
 
     // 진행률: 시작 알림(0/total, active)
-    opts.onProgress?.({ inc: 0, total, active: true });
+    opts.onProgress?.({ inc: 0, total, active: true, reset: true });
 
     // ── T0: Manager 선행 웜업 ───────────────────────────────────────────────
     if (FF.warmupEnabled) {

@@ -43,7 +43,9 @@ type Actions = {
   jumpToRow(rowId: number, idx?: number): void;
   jumpToIdx(idx: number): void;
   resizeColumn(col: 'time' | 'proc' | 'pid' | 'src', dx: number): void;
-  mergeProgress(args: { inc?: number; total?: number; reset?: boolean; active?: boolean }): void;
+  mergeProgress(args: {
+    inc?: number; total?: number; reset?: boolean; active?: boolean; done?: number
+  }): void;
   setFilterField(f: keyof Filter, v: string): void;
   applyFilter(next: Filter): void; // ← 디바운스 후 한 번만 전송
   resetFilters(): void;
@@ -133,14 +135,17 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     set({ colW: next });
   },
 
-  mergeProgress({ inc, total, reset, active }) {
+  mergeProgress({ inc, total, reset, active, done }) {
     const cur = get();
     const t = typeof total === 'number' ? Math.max(0, total) : cur.mergeTotal;
+    // 우선순위: 명시 done → (reset?0:base)+inc
     const base = reset ? 0 : cur.mergeDone;
-    const done = Math.max(0, base + (inc ?? 0));
+    const doneVal = typeof done === 'number'
+      ? Math.max(0, done)
+      : Math.max(0, base + (inc ?? 0));
     let act = active ?? cur.mergeActive;
-    if (t > 0 && done >= t) act = false;
-    set({ mergeTotal: t, mergeDone: done, mergeActive: act });
+    if (t > 0 && doneVal >= t) act = false;
+    set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });
   },
 
   // ── 필터 상태 ─────────────────────────────────────────────────────────

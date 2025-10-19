@@ -152,6 +152,7 @@ export function setupIpc() {
           inc: typeof payload?.inc === 'number' ? payload.inc : undefined,
           total: typeof payload?.total === 'number' ? payload.total : undefined,
           active: typeof payload?.active === 'boolean' ? payload.active : undefined,
+          done: typeof payload?.done === 'number' ? payload.done : undefined,
         });
         return;
       }
