@@ -27,8 +27,13 @@
 }
 #splitter::before {
   content: '';
-  position: absolute; top: 50%; left: 0; right: 0; height: 1px;
-  background: #000; transform: translateY(-50%);
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #000;
+  transform: translateY(-50%);
 }
 
 #content {
@@ -44,9 +49,15 @@
 }
 
 /* 두 패널일 때 행 고정: explorer(1) → splitter(2) → logs(3) */
-.app-root.show-logs.show-explorer #explorer { grid-row: 1; }
-.app-root.show-logs.show-explorer #contentSplitter { grid-row: 2; }
-.app-root.show-logs.show-explorer #logContainer { grid-row: 3; }
+.app-root.show-logs.show-explorer #explorer {
+  grid-row: 1;
+}
+.app-root.show-logs.show-explorer #contentSplitter {
+  grid-row: 2;
+}
+.app-root.show-logs.show-explorer #logContainer {
+  grid-row: 3;
+}
 
 /* 내부 스플리터 */
 .content-splitter {
@@ -59,7 +70,10 @@
 .content-splitter::before {
   content: '';
   position: absolute;
-  top: 50%; left: 0; right: 0; height: 1px;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
   background: #000;
   transform: translateY(-50%);
 }

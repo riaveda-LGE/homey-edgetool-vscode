@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { ErrorCategory,XError } from '../../shared/errors.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 
 const log = getLogger('cmd.workspace');
@@ -51,9 +51,7 @@ export class CommandHandlersWorkspace {
 
       const picked = sel[0].fsPath;
       const baseForConfig =
-        path.basename(picked).toLowerCase() === 'workspace'
-          ? path.dirname(picked)
-          : picked;
+        path.basename(picked).toLowerCase() === 'workspace' ? path.dirname(picked) : picked;
 
       // 병렬 처리로 성능 향상: workspace 변경과 git init 동시에 수행
       const [updated] = await Promise.all([
@@ -113,9 +111,10 @@ export class CommandHandlersWorkspace {
   // 비동기 git init (백그라운드 실행)
   private async ensureGitInitAsync(baseDir: string): Promise<void> {
     try {
-      const wsDir = path.basename(baseDir).toLowerCase() === 'workspace'
-        ? baseDir
-        : path.join(baseDir, 'workspace');
+      const wsDir =
+        path.basename(baseDir).toLowerCase() === 'workspace'
+          ? baseDir
+          : path.join(baseDir, 'workspace');
 
       // 이미 .git 있으면 패스
       await vscode.workspace.fs.stat(vscode.Uri.file(path.join(wsDir, '.git')));
@@ -133,7 +132,8 @@ export class CommandHandlersWorkspace {
 
   @measure()
   async togglePerformanceMonitoring(extensionUri?: vscode.Uri) {
-    if (!this.context || !extensionUri) return this.say('[error] internal: no context or extension uri');
+    if (!this.context || !extensionUri)
+      return this.say('[error] internal: no context or extension uri');
 
     const panel = new PerfMonitorPanel(extensionUri, this.context);
     panel.createPanel();

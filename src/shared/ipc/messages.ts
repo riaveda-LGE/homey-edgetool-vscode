@@ -36,7 +36,7 @@ export type EdgePanelState = {
 
 export type Envelope<TType extends string, TPayload> = {
   v: 1;
-  id?: string;       // 요청-응답 상관관계용(선택)
+  id?: string; // 요청-응답 상관관계용(선택)
   type: TType;
   payload: TPayload;
   abortKey?: string; // 취소 그룹 키(선택)
@@ -47,24 +47,36 @@ type Empty = Record<string, never>;
 // ── 서버측 필터 모델 ────────────────────────────────────────────────────────
 export type LogFilter = {
   pid?: string;
-  src?: string;   // 파일/소스
-  proc?: string;  // 프로세스명
-  msg?: string;   // 메시지
+  src?: string; // 파일/소스
+  proc?: string; // 프로세스명
+  msg?: string; // 메시지
 };
 
 // Host → Webview
 export type H2W =
   | Envelope<'logs.batch', { logs: LogEntry[]; total?: number; seq?: number }>
-  | Envelope<'logs.page.response', { startIdx: number; endIdx: number; logs: LogEntry[]; version?: number }>
+  | Envelope<
+      'logs.page.response',
+      { startIdx: number; endIdx: number; logs: LogEntry[]; version?: number }
+    >
   /** 현재 pagination/데이터 상태 스냅샷(디버깅/부팅용) */
-  | Envelope<'logs.state', { warm: boolean; total?: number; version?: number; manifestDir?: string }>
-  | Envelope<'metrics.update', {
-      buffer: { realtime: number; viewport: number; search: number; spill: number };
-      mem: { rss: number; heapUsed: number };
-    }>
+  | Envelope<
+      'logs.state',
+      { warm: boolean; total?: number; version?: number; manifestDir?: string }
+    >
+  | Envelope<
+      'metrics.update',
+      {
+        buffer: { realtime: number; viewport: number; search: number; spill: number };
+        mem: { rss: number; heapUsed: number };
+      }
+    >
   | Envelope<'connection.status', { state: 'connected' | 'disconnected'; host: string }>
   | Envelope<'update.available', { version: string }>
-  | Envelope<'buttons.set', { sections: { title: string; items: { id: string; label: string; desc?: string }[] }[] }>
+  | Envelope<
+      'buttons.set',
+      { sections: { title: string; items: { id: string; label: string; desc?: string }[] }[] }
+    >
   | Envelope<'ui.toggleMode', { toggle?: boolean; mode?: 'mode-normal' | 'mode-debug' }>
   | Envelope<'error', { code: string; message: string; detail?: any; inReplyTo?: string }>
   | Envelope<'perf.updateData', { data: any[] }>
@@ -72,7 +84,10 @@ export type H2W =
   | Envelope<'perf.captureStopped', { result: any; htmlReport: string; exportHtml: string }>
   | Envelope<'perf.monitoringStarted', Empty>
   | Envelope<'perf.monitoringStopped', Empty>
-  | Envelope<'explorer.list.result', { path: string; items: { name: string; kind: 'file' | 'folder' }[] }>
+  | Envelope<
+      'explorer.list.result',
+      { path: string; items: { name: string; kind: 'file' | 'folder' }[] }
+    >
   | Envelope<'explorer.ok', { op: string; path: string }>
   | Envelope<'explorer.error', { op: string; message: string }>
   | Envelope<'explorer.root.changed', Empty>
@@ -84,7 +99,10 @@ export type H2W =
   | Envelope<'ui.toggleExplorer', Empty>
   | Envelope<'ui.toggleLogs', Empty>
   /** 파일 병합 저장 완료/정보 */
-  | Envelope<'logmerge.saved', { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }>
+  | Envelope<
+      'logmerge.saved',
+      { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }
+    >
   /** 병합 진행률(증분/완료) */
   | Envelope<'merge.progress', { inc?: number; total?: number; done?: number; active?: boolean }>
   /** 사용자 환경설정 전달 */
@@ -92,17 +110,30 @@ export type H2W =
   /** 단순 확인 응답(예: saveUserPrefs ack) */
   | Envelope<'ack', { inReplyTo?: string }>
   /** 정식 병합 완료 후 UI 하드리프레시 트리거(중복/정렬 반영) */
-  | Envelope<'logs.refresh', {
-      reason?: 'full-reindex' | 'manifest-updated' | 'filter-changed' | 'bridge.start' | 'viewer.ready';
-      total?: number; version?: number; warm?: boolean
-    }>
+  | Envelope<
+      'logs.refresh',
+      {
+        reason?:
+          | 'full-reindex'
+          | 'manifest-updated'
+          | 'filter-changed'
+          | 'bridge.start'
+          | 'viewer.ready';
+        total?: number;
+        version?: number;
+        warm?: boolean;
+      }
+    >
   | Envelope<'search.results', { hits: { idx: number; text: string }[]; q: string }>;
 
 // Webview → Host
 export type W2H =
   | Envelope<'viewer.ready', Empty>
   | Envelope<'ui.ready', Empty>
-  | Envelope<'ui.log', { level: 'debug' | 'info' | 'warn' | 'error'; text: string; source?: string }>
+  | Envelope<
+      'ui.log',
+      { level: 'debug' | 'info' | 'warn' | 'error'; text: string; source?: string }
+    >
   /** EdgePanel UI 상태 저장 */
   | Envelope<'ui.savePanelState', { panelState: any }>
   | Envelope<'logging.startRealtime', { filter?: string; files?: string[] }>
@@ -135,5 +166,5 @@ export type W2H =
   | Envelope<'ui.toggleLogs', Empty>
   | Envelope<'ui.requestButtons', Empty>
   | Envelope<'perf.ready', Empty>
-  | Envelope<'logviewer.getUserPrefs', {}>
+  | Envelope<'logviewer.getUserPrefs', Empty>
   | Envelope<'logviewer.saveUserPrefs', { prefs: any }>;

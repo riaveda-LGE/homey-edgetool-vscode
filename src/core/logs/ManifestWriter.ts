@@ -2,14 +2,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { LogChunkMeta,LogManifest } from './ManifestTypes.js';
+import type { LogChunkMeta, LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
 
 export class ManifestWriter {
   private manifest: LogManifest;
   private manifestPath: string;
 
-  constructor(private outDir: string, initial?: Partial<LogManifest>) {
+  constructor(
+    private outDir: string,
+    initial?: Partial<LogManifest>,
+  ) {
     this.manifestPath = path.join(outDir, 'manifest.json');
     this.manifest = {
       version: 1,

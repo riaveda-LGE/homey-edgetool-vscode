@@ -1,4 +1,4 @@
-import { ErrorCategory,XError } from '../../shared/errors.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure, measureIO } from '../logging/perf.js';
 import { adbShell, adbStream } from './adbClient.js';
@@ -65,7 +65,11 @@ export class ConnectionManager implements IConnectionManager {
       });
       return { code };
     } catch (e) {
-      throw new XError(ErrorCategory.Connection, `Command failed: ${e instanceof Error ? e.message : String(e)}`, e);
+      throw new XError(
+        ErrorCategory.Connection,
+        `Command failed: ${e instanceof Error ? e.message : String(e)}`,
+        e,
+      );
     }
   }
 
@@ -95,7 +99,11 @@ export class ConnectionManager implements IConnectionManager {
         onLine,
       );
     } catch (e) {
-      throw new XError(ErrorCategory.Connection, `Stream failed: ${e instanceof Error ? e.message : String(e)}`, e);
+      throw new XError(
+        ErrorCategory.Connection,
+        `Stream failed: ${e instanceof Error ? e.message : String(e)}`,
+        e,
+      );
     }
   }
 

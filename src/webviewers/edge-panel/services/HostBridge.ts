@@ -1,4 +1,4 @@
-import type { H2W,W2H } from '@ipc/messages';
+import type { H2W, W2H } from '@ipc/messages';
 
 export class HostBridge {
   constructor(private vscode: any) {}

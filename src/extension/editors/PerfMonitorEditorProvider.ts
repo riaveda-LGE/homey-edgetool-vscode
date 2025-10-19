@@ -47,9 +47,9 @@ export class PerfMonitorEditorProvider implements PerfMonitor {
 
     return {
       dispose: () => {
-        disposables.forEach(d => d.dispose());
+        disposables.forEach((d) => d.dispose());
         provider.dispose();
-      }
+      },
     };
   }
 
@@ -74,7 +74,7 @@ export class PerfMonitorEditorProvider implements PerfMonitor {
           operation: data.operation,
           duration: data.duration,
           cpuDelta: data.cpuDelta,
-          memDelta: data.memDelta
+          memDelta: data.memDelta,
         };
         const content = Buffer.from(JSON.stringify(logEntry) + '\n');
         const existingContent = await vscode.workspace.fs.readFile(this._perfLogPath);
@@ -118,10 +118,13 @@ export class PerfMonitorEditorProvider implements PerfMonitor {
           startTime: Date.now(),
           vscodeVersion: vscode.version,
           platform: process.platform,
-          arch: process.arch
-        }
+          arch: process.arch,
+        },
       };
-      await vscode.workspace.fs.writeFile(this._perfLogPath, Buffer.from(JSON.stringify(initialData) + '\n'));
+      await vscode.workspace.fs.writeFile(
+        this._perfLogPath,
+        Buffer.from(JSON.stringify(initialData) + '\n'),
+      );
     } catch (error) {
       vscode.window.showErrorMessage('Failed to start performance logging: ' + error);
     }
@@ -133,8 +136,8 @@ export class PerfMonitorEditorProvider implements PerfMonitor {
         const finalData = {
           session: {
             endTime: Date.now(),
-            totalRecords: this._dataManager.getPerfData().length
-          }
+            totalRecords: this._dataManager.getPerfData().length,
+          },
         };
         const content = Buffer.from(JSON.stringify(finalData) + '\n');
         // 기존 파일에 append
@@ -143,7 +146,7 @@ export class PerfMonitorEditorProvider implements PerfMonitor {
         await vscode.workspace.fs.writeFile(this._perfLogPath, newContent);
 
         vscode.window.showInformationMessage(
-          `Performance log saved: ${vscode.workspace.asRelativePath(this._perfLogPath)}`
+          `Performance log saved: ${vscode.workspace.asRelativePath(this._perfLogPath)}`,
         );
       } catch (error) {
         vscode.window.showErrorMessage('Failed to save performance log: ' + error);

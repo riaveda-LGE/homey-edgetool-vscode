@@ -28,7 +28,9 @@ export class PerfMonitorWebviewManager {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor')],
+        localResourceRoots: [
+          vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor'),
+        ],
       },
     );
 
@@ -60,7 +62,11 @@ export class PerfMonitorWebviewManager {
     if (this._webviewPanel && this._dataManager.isPerfMode()) {
       const data = this._dataManager.getPerfData();
       data.forEach((item) => {
-        this._webviewPanel!.webview.postMessage({ v: 1, type: 'perf.updateData', payload: { data: item } });
+        this._webviewPanel!.webview.postMessage({
+          v: 1,
+          type: 'perf.updateData',
+          payload: { data: item },
+        });
       });
     }
   }
@@ -77,7 +83,11 @@ export class PerfMonitorWebviewManager {
     const data = this._dataManager.getPerfData();
     if (data.length > 0) {
       data.forEach((item) => {
-        this._webviewPanel?.webview.postMessage({ v: 1, type: 'perf.updateData', payload: { data: item } });
+        this._webviewPanel?.webview.postMessage({
+          v: 1,
+          type: 'perf.updateData',
+          payload: { data: item },
+        });
       });
     }
   }
@@ -86,11 +96,17 @@ export class PerfMonitorWebviewManager {
     const nonce = getNonce();
     // ✅ 실제 산출물 파일명과 일치
     const jsUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'app.bundle.js')
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'dist',
+        'webviewers',
+        'perf-monitor',
+        'app.bundle.js',
+      ),
     );
     // ✅ 외부 CSS 링크 추가
     const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css')
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css'),
     );
 
     const cspSource = webview.cspSource;

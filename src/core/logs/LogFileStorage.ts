@@ -1,7 +1,7 @@
 // === src/core/logs/LogFileStorage.ts ===
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 
-import type { LogEntry } from '@ipc/messages';
 import { safeParseJson } from '../../shared/utils.js';
 import { globalProfiler, measureIO } from '../logging/perf.js';
 
@@ -36,7 +36,7 @@ export class LogFileStorage implements ILogFileStorage {
   @measureIO('readFile', (instance) => instance.filePath)
   async range(fromTs: number, toTs: number, options?: RangeOptions): Promise<LogEntry[]> {
     const data = await fs.promises.readFile(this.filePath, 'utf8');
-    const lines = data.split('\n').filter(line => line.trim());
+    const lines = data.split('\n').filter((line) => line.trim());
     const entries: LogEntry[] = [];
     const limit = options?.limit ?? Infinity;
     const skipInvalid = options?.skipInvalid ?? true;

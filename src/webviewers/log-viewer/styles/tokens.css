@@ -1,4 +1,4 @@
-:root{
+:root {
   --bg: var(--vscode-editor-background);
   --fg: var(--vscode-foreground);
   --muted: var(--vscode-descriptionForeground);
@@ -11,8 +11,8 @@
   --accent-fg: var(--vscode-button-foreground);
   --accent-hover: var(--vscode-button-hoverBackground);
 
-  --row-hover: var(--vscode-list-hoverBackground, rgba(128,128,128,.16));
-  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14,99,156,.35));
+  --row-hover: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.16));
+  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14, 99, 156, 0.35));
   --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
 
   /* 선택(포커스)된 행 하이라이트 */
@@ -25,15 +25,15 @@
   --col-time-w: 160px;
   --col-proc-w: 160px;
   --col-pid-w: 80px;
-  --col-src-w: 180px;  /* 파일 컬럼 기본 너비 */
-  --col-msg-w: 1fr;    /* 남은 공간 */
+  --col-src-w: 180px; /* 파일 컬럼 기본 너비 */
+  --col-msg-w: 1fr; /* 남은 공간 */
   /* 북마크 전용 고정폭 열(항상 보임) */
   --col-bm-w: 28px;
 
   --bookmark-w: 260px;
 
   --radius: 10px;
-  --shadow-inset: inset 0 0 0 1px rgba(0,0,0,.02);
+  --shadow-inset: inset 0 0 0 1px rgba(0, 0, 0, 0.02);
 
   /* Grid 헤더/리사이저 가시성 향상 */
   --divider: color-mix(in oklab, var(--border) 70%, transparent 30%);
@@ -43,37 +43,67 @@
   --resizer-hover: color-mix(in oklab, var(--border) 30%, var(--fg) 50%);
 
   /* 별 사각형(공통) - 평면 톤 */
-  --bm-bg-base: var(--panel);                                       /* 기본: 패널색(티 안나게) */
-  --bm-bg-hover: color-mix(in oklab, var(--bg) 20%, black 80%);     /* hover: 검정 */
+  --bm-bg-base: var(--panel); /* 기본: 패널색(티 안나게) */
+  --bm-bg-hover: color-mix(in oklab, var(--bg) 20%, black 80%); /* hover: 검정 */
   --bm-star-outline: color-mix(in oklab, var(--fg) 42%, transparent 58%);
   --bm-star-checked-grid: color-mix(in oklab, var(--fg) 72%, transparent 28%);
   --bm-star-white: #ffffff;
 }
 
 /* ── 레이아웃 고정: 바깥 스크롤 금지, 내부(Grid)만 스크롤 ─────────────── */
-html, body, #app { height: 100%; margin: 0; overflow: hidden; }
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
 
 /* ── 하이라이트 공통 스타일 & 색상 팔레트 ───────────────────────────── */
 mark {
-  padding: 0 .15em;
-  border-radius: .2em;
+  padding: 0 0.15em;
+  border-radius: 0.2em;
   color: inherit;
 }
-mark.hl-c1  { background: #ffe066; }
-mark.hl-c2  { background: #ffd43b; }
-mark.hl-c3  { background: #ffa94d; }
-mark.hl-c4  { background: #ff8787; }
-mark.hl-c5  { background: #ff6b6b; }
-mark.hl-c6  { background: #f06595; }
-mark.hl-c7  { background: #b197fc; }
-mark.hl-c8  { background: #74c0fc; }
-mark.hl-c9  { background: #63e6be; }
-mark.hl-c10 { background: #a9e34b; }
-mark.hl-c11 { background: #ffd8a8; }
-mark.hl-c12 { background: #d0bfff; }
+mark.hl-c1 {
+  background: #ffe066;
+}
+mark.hl-c2 {
+  background: #ffd43b;
+}
+mark.hl-c3 {
+  background: #ffa94d;
+}
+mark.hl-c4 {
+  background: #ff8787;
+}
+mark.hl-c5 {
+  background: #ff6b6b;
+}
+mark.hl-c6 {
+  background: #f06595;
+}
+mark.hl-c7 {
+  background: #b197fc;
+}
+mark.hl-c8 {
+  background: #74c0fc;
+}
+mark.hl-c9 {
+  background: #63e6be;
+}
+mark.hl-c10 {
+  background: #a9e34b;
+}
+mark.hl-c11 {
+  background: #ffd8a8;
+}
+mark.hl-c12 {
+  background: #d0bfff;
+}
 
 /* ── 별 사각형 공통 컴포넌트 스타일(평면) ───────────────────────── */
-.lv-bm-btn{
+.lv-bm-btn {
   display: grid;
   place-items: center;
   width: 24px;
@@ -81,26 +111,37 @@ mark.hl-c12 { background: #d0bfff; }
   border-radius: 6px;
   border: 0;
   background: var(--bm-bg-base);
-  transition: transform .06s ease, background-color .12s ease, color .12s ease;
+  transition:
+    transform 0.06s ease,
+    background-color 0.12s ease,
+    color 0.12s ease;
   user-select: none;
   color: var(--bm-star-outline); /* SVG는 currentColor */
 }
-.lv-bm-btn:hover{
+.lv-bm-btn:hover {
   background: var(--bm-bg-hover);
 }
-.lv-bm-btn:active{
-  transform: scale(.96);
+.lv-bm-btn:active {
+  transform: scale(0.96);
 }
-.lv-bm-star{
-  display: block;     /* baseline 영향 제거 */
+.lv-bm-star {
+  display: block; /* baseline 영향 제거 */
   pointer-events: none;
 }
 
 /* ── 변형: 그리드에서의 동작 ────────────────────────────────────── */
-.lv-bm--grid[data-checked="0"]{ color: var(--bm-star-outline); }
-.lv-bm--grid[data-checked="1"]{ color: var(--bm-star-checked-grid); }
+.lv-bm--grid[data-checked='0'] {
+  color: var(--bm-star-outline);
+}
+.lv-bm--grid[data-checked='1'] {
+  color: var(--bm-star-checked-grid);
+}
 /* 눌렀을 때는 하양으로 더 강하게 */
-.lv-bm--grid:active{ color: var(--bm-star-white); }
+.lv-bm--grid:active {
+  color: var(--bm-star-white);
+}
 
 /* ── 변형: 북마크 패널에서의 동작(항상 white 채움 톤) ───────────── */
-.lv-bm--panel{ color: var(--bm-star-white); }
+.lv-bm--panel {
+  color: var(--bm-star-white);
+}

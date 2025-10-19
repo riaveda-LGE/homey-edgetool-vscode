@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { LogRow } from '../types';
-import { vscode } from '../ipc';
+
 import { createUiLog } from '../../../shared/utils';
+import { vscode } from '../ipc';
+import type { LogRow } from '../types';
 
 interface MessageDialogProps {
   isOpen: boolean;
@@ -15,19 +16,23 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
   const ui = useMemo(() => createUiLog(vscode, 'log-viewer.dialog'), []);
   // 열림 직후 잔여 click이 백드롭으로 들어와 닫히는 현상을 방지
   const IGNORE_BACKDROP_MS = 220;
-  const [openedAt, setOpenedAt] = useState(null);
+  const [openedAt, setOpenedAt] = useState<number | null>(null);
   // 훅 순서 고정: 조기 return 금지하고 open 플래그로만 제어
   const open = !!isOpen && !!logRow;
-  const closeBtnRef = useRef(null);
-  const panelRef = useRef(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   // ── 드래그 이동 상태 ─────────────────────────────────────────
   const [pos, setPos] = useState({ x: 0, y: 0 }); // 중앙 기준 translate
   const dragState = useRef({
-    active: false, startX: 0, startY: 0, baseX: 0, baseY: 0
+    active: false,
+    startX: 0,
+    startY: 0,
+    baseX: 0,
+    baseY: 0,
   });
 
   // 열림/대상행 변경 감시
-  useEffect(()=>{
+  useEffect(() => {
     ui.info(`Dialog.state isOpen=${isOpen} rowId=${logRow?.id ?? 'none'} open=${open}`);
     if (open) {
       const now = Date.now();
@@ -50,8 +55,7 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
   const handleCopy = async () => {
     if (!logRow) return;
     const textToCopy =
-      logRow.raw ??
-      `[${logRow.time}] ${logRow.proc}[${logRow.pid}]: ${logRow.msg}`;
+      logRow.raw ?? `[${logRow.time}] ${logRow.proc}[${logRow.pid}]: ${logRow.msg}`;
 
     try {
       ui.info(`Dialog.copy click rowId=${logRow.id} textLen=${textToCopy.length}`);
@@ -97,7 +101,9 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
     if (!open) return;
     const panel = panelRef.current;
     if (!panel) return;
-    const focusable = panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const focusable = panel.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
     const first = focusable[0] as HTMLElement;
     const last = focusable[focusable.length - 1] as HTMLElement;
     const onTab = (ev: KeyboardEvent) => {
@@ -158,8 +164,12 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
         justifyContent: 'center',
         padding: '1rem',
       }}
-      onMouseDown={(e) => { e.stopPropagation(); }} // outside click 무시(닫지 않음)
-      onClick={(e) => { e.stopPropagation(); }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+      }} // outside click 무시(닫지 않음)
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
     >
       <div
         ref={panelRef}
@@ -175,8 +185,12 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
           /* 중앙 기준으로 드래그 이동 (항상 적용) */
           transform: `translate(${pos.x}px, ${pos.y}px)`,
         }}
-        onMouseDown={(e) => { e.stopPropagation(); }}
-        onClick={(e) => { e.stopPropagation(); }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         <div
           style={{
@@ -227,23 +241,28 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
           </div>
         </div>
         <div style={{ maxHeight: '70vh', overflow: 'auto', padding: '1rem' }}>
-          <pre style={{
-            margin: 0,
-            fontSize: 13,
-            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            background: 'var(--bg)',
-            color: 'var(--fg)',
-            padding: '0.75rem',
-            borderRadius: 8,
-            border: '1px solid var(--border)'
-          }}>
-            {logRow ? (logRow.raw ?? `[${logRow.time}] ${logRow.proc}[${logRow.pid}]: ${logRow.msg}`) : '로그 데이터를 불러올 수 없습니다.'}
+          <pre
+            style={{
+              margin: 0,
+              fontSize: 13,
+              fontFamily:
+                'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              background: 'var(--bg)',
+              color: 'var(--fg)',
+              padding: '0.75rem',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+            }}
+          >
+            {logRow
+              ? (logRow.raw ?? `[${logRow.time}] ${logRow.proc}[${logRow.pid}]: ${logRow.msg}`)
+              : '로그 데이터를 불러올 수 없습니다.'}
           </pre>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

@@ -1,5 +1,6 @@
 // === src/core/logs/PaginationService.ts ===
 import type { LogEntry } from '@ipc/messages';
+
 import { getLogger } from '../logging/extension-logger.js';
 import { PagedReader } from './PagedReader.js';
 
@@ -10,8 +11,8 @@ class PaginationService {
   private version = 0; // manifest/리더 재로딩 버전
   // ── Warmup (메모리 기반 페이지) ─────────────────────────────────────────
   private warmActive = false;
-  private warmBuffer: LogEntry[] | null = null;   // 최신순(내림차순) 0..N-1
-  private warmTotal = 0;                          // 가상 total(예: 2000)
+  private warmBuffer: LogEntry[] | null = null; // 최신순(내림차순) 0..N-1
+  private warmTotal = 0; // 가상 total(예: 2000)
   // ── Filter(호스트 적용) ────────────────────────────────────────────────
   private filter: { pid?: string; src?: string; proc?: string; msg?: string } | null = null;
   private filteredTotalCache?: number;
@@ -45,17 +46,29 @@ class PaginationService {
     this.invalidateFilterCache();
   }
 
-  getManifestDir() { return this.manifestDir; }
-  getVersion() { return this.version; }
-  isWarmupActive() { return this.warmActive; }
-  getWarmTotal() { return this.warmTotal || (this.warmBuffer?.length ?? 0); }
+  getManifestDir() {
+    return this.manifestDir;
+  }
+  getVersion() {
+    return this.version;
+  }
+  isWarmupActive() {
+    return this.warmActive;
+  }
+  getWarmTotal() {
+    return this.warmTotal || (this.warmBuffer?.length ?? 0);
+  }
   /** 파일 기반 모드일 때 추론 가능한 총 라인 수(없으면 undefined) */
   getFileTotal(): number | undefined {
     return this.reader?.getTotalLines();
   }
   /** 필터 상태 */
-  isFilterActive() { return !!(this.filter && Object.values(this.filter).some(v => !!(v && String(v).trim()))); }
-  getFilter() { return this.filter; }
+  isFilterActive() {
+    return !!(this.filter && Object.values(this.filter).some((v) => !!(v && String(v).trim())));
+  }
+  getFilter() {
+    return this.filter;
+  }
   setFilter(f: { pid?: string; src?: string; proc?: string; msg?: string } | null) {
     const norm = this.normalizeFilter(f);
     const key = JSON.stringify(norm);
@@ -77,13 +90,16 @@ class PaginationService {
     }
     const key = JSON.stringify(this.filter) + `@v${this.version}`;
     if (this.filteredCacheKey === key && typeof this.filteredTotalCache === 'number') {
-      this.log.debug?.(`pagination: filteredTotal(cache) key=${key} total=${this.filteredTotalCache}`);
+      this.log.debug?.(
+        `pagination: filteredTotal(cache) key=${key} total=${this.filteredTotalCache}`,
+      );
       return this.filteredTotalCache;
     }
     // 1) 워밍업
     if (this.warmActive) {
-      const total = (this.warmBuffer ?? []).filter(e => this.matchesFilter(e)).length;
-      this.filteredCacheKey = key; this.filteredTotalCache = total;
+      const total = (this.warmBuffer ?? []).filter((e) => this.matchesFilter(e)).length;
+      this.filteredCacheKey = key;
+      this.filteredTotalCache = total;
       this.log.info(`pagination: filteredTotal(warm) total=${total}`);
       return total;
     }
@@ -93,10 +109,13 @@ class PaginationService {
     const WINDOW = 5000;
     let cnt = 0;
     for (let from = 0; from < totalLines; from += WINDOW) {
-      const part = await this.reader.readLineRange(from, Math.min(totalLines, from + WINDOW), { skipInvalid: true });
+      const part = await this.reader.readLineRange(from, Math.min(totalLines, from + WINDOW), {
+        skipInvalid: true,
+      });
       for (const e of part) if (this.matchesFilter(e)) cnt++;
     }
-    this.filteredCacheKey = key; this.filteredTotalCache = cnt;
+    this.filteredCacheKey = key;
+    this.filteredTotalCache = cnt;
     this.log.info(`pagination: filteredTotal(file) total=${cnt}, lines=${totalLines}`);
     return cnt;
   }
@@ -116,9 +135,11 @@ class PaginationService {
   seedWarmupBuffer(entries: LogEntry[], virtualTotal: number) {
     this.warmBuffer = entries?.slice?.() ?? [];
     this.warmTotal = Math.max(this.warmBuffer.length, virtualTotal || 0);
-    this.warmActive = (this.warmBuffer.length > 0);
+    this.warmActive = this.warmBuffer.length > 0;
     this.version++;
-    this.log.info(`pagination: warmup seeded entries=${this.warmBuffer.length} virtualTotal=${this.warmTotal}`);
+    this.log.info(
+      `pagination: warmup seeded entries=${this.warmBuffer.length} virtualTotal=${this.warmTotal}`,
+    );
   }
 
   clearWarmup() {
@@ -197,25 +218,27 @@ class PaginationService {
     let virtualCount = 0; // 필터에 매칭된 누적 카운트
 
     for (let from = 0; from < total; from += WINDOW) {
-      const part = await this.reader.readLineRange(from, Math.min(total, from + WINDOW), { skipInvalid: true });
+      const part = await this.reader.readLineRange(from, Math.min(total, from + WINDOW), {
+        skipInvalid: true,
+      });
       for (const e of part) {
         if (!matches(e)) continue;
         virtualCount++;
-        if (virtualCount < startIdx) continue;      // 아직 시작 전
+        if (virtualCount < startIdx) continue; // 아직 시작 전
         out.push(e);
-        if (out.length >= want) return out;         // 충분히 모았으면 종료
+        if (out.length >= want) return out; // 충분히 모았으면 종료
       }
     }
     return out;
   }
 
   private normalizeFilter(f: any) {
-    const s = (v:any)=> String(v ?? '').trim();
+    const s = (v: any) => String(v ?? '').trim();
     const norm = {
-      pid:  s(f?.pid),
-      src:  s(f?.src),
+      pid: s(f?.pid),
+      src: s(f?.src),
       proc: s(f?.proc),
-      msg:  s(f?.msg),
+      msg: s(f?.msg),
     };
     // 전부 빈 문자열이면 null 취급(필터 미적용)
     if (!norm.pid && !norm.src && !norm.proc && !norm.msg) return null;
@@ -232,12 +255,12 @@ class PaginationService {
     if (!s.trim()) return [];
     return s
       .split(',')
-      .map(g => g.trim())
+      .map((g) => g.trim())
       .filter(Boolean)
-      .map(g =>
+      .map((g) =>
         g
           .split(/\s+/g)
-          .map(t => t.trim())
+          .map((t) => t.trim())
           .filter(Boolean),
       );
   }
@@ -246,48 +269,50 @@ class PaginationService {
     const groups = this.parseGroups(q);
     if (groups.length === 0) return true;
     const s = String(haystack || '').toLowerCase();
-    return groups.some(andTokens => andTokens.every(tok => s.includes(tok)));
+    return groups.some((andTokens) => andTokens.every((tok) => s.includes(tok)));
   }
   /** 여러 후보 문자열 대상(src용): 후보 중 하나라도 그룹을 만족하면 true */
   private matchAnyCandidateByGroups(candidates: string[], q?: string): boolean {
     const groups = this.parseGroups(q);
     if (groups.length === 0) return true;
-    const cands = (candidates || []).map(v => String(v || '').toLowerCase()).filter(Boolean);
+    const cands = (candidates || []).map((v) => String(v || '').toLowerCase()).filter(Boolean);
     if (cands.length === 0) return false;
-    return groups.some(andTokens =>
-      cands.some(c => andTokens.every(tok => c.includes(tok))),
-    );
+    return groups.some((andTokens) => cands.some((c) => andTokens.every((tok) => c.includes(tok))));
   }
 
   private matchesFilter(e: LogEntry): boolean {
     if (!this.filter) return true;
     const f = this.filter;
     const parsed = this.parseLine(String(e.text || ''));
-    const msg  = String(parsed.msg  || '');
+    const msg = String(parsed.msg || '');
     const proc = String(parsed.proc || '');
-    const pid  = String(parsed.pid  || '');
+    const pid = String(parsed.pid || '');
     // 파일/경로/소스 중 하나라도 매칭되면 통과
-    const srcCands = [
-      (e as any).file,
-      (e as any).path,
-      e.source,
-    ].map(v => String(v ?? ''));
+    const srcCands = [(e as any).file, (e as any).path, e.source].map((v) => String(v ?? ''));
     const has = (s?: string) => !!(s && String(s).trim());
-    if (has(f.msg)  && !this.matchTextByGroups(msg,  f.msg))  return false;
+    if (has(f.msg) && !this.matchTextByGroups(msg, f.msg)) return false;
     if (has(f.proc) && !this.matchTextByGroups(proc, f.proc)) return false;
-    if (has(f.pid)  && !this.matchTextByGroups(pid,  f.pid))  return false;
-    if (has(f.src)  && !this.matchAnyCandidateByGroups(srcCands, f.src)) return false;
+    if (has(f.pid) && !this.matchTextByGroups(pid, f.pid)) return false;
+    if (has(f.src) && !this.matchAnyCandidateByGroups(srcCands, f.src)) return false;
     return true;
   }
 
   /** UI와 동일한 규칙으로 한 줄을 proc/pid/msg로 파싱 */
-  private parseLine(line: string){
+  private parseLine(line: string) {
     const timeMatch = line.match(/^\[([^\]]+)\]\s+(.*)$/);
     let rest = line;
-    if (timeMatch){ rest = timeMatch[2]; }
+    if (timeMatch) {
+      rest = timeMatch[2];
+    }
     const procMatch = rest.match(/^([^\s:]+)\[(\d+)\]:\s*(.*)$/);
-    let proc='', pid='', msg=rest;
-    if (procMatch){ proc = procMatch[1]; pid = procMatch[2]; msg = procMatch[3] ?? ''; }
+    let proc = '',
+      pid = '',
+      msg = rest;
+    if (procMatch) {
+      proc = procMatch[1];
+      pid = procMatch[2];
+      msg = procMatch[3] ?? '';
+    }
     return { proc, pid, msg };
   }
 
@@ -300,7 +325,9 @@ class PaginationService {
     return { rows, total: total ?? 0 };
   }
   /** 옛 호출자를 위한 호환 래퍼. 현재 필터 해제 */
-  clearFilter() { this.setFilter(null); }
+  clearFilter() {
+    this.setFilter(null);
+  }
 }
 
 export const paginationService = new PaginationService();

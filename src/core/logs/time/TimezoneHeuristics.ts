@@ -11,18 +11,18 @@ import { getLogger } from '../../logging/extension-logger.js';
  * - 글로벌 offset 누적은 하지 않음(국소 보정만).
  */
 export class TimezoneCorrector {
-  private lastCorrected?: number;     // 직전 반환한 보정 ts(단조감소 체크용)
-  private lastRawTs?: number;         // 직전 rawTs
+  private lastCorrected?: number; // 직전 반환한 보정 ts(단조감소 체크용)
+  private lastRawTs?: number; // 직전 rawTs
   private readonly log = getLogger('TimezoneCorrector');
 
   // 점프 의심 상태(최대 1건)
   private suspected:
     | {
-        startIndex: number;               // 점프 구간 시작 인덱스(현재 라인 인덱스 기준)
-        firstJumpRawTs: number;           // 점프가 처음 관측된 rawTs
-        preJumpRawTs: number;             // 점프 직전의 rawTs(기준선)
+        startIndex: number; // 점프 구간 시작 인덱스(현재 라인 인덱스 기준)
+        firstJumpRawTs: number; // 점프가 처음 관측된 rawTs
+        preJumpRawTs: number; // 점프 직전의 rawTs(기준선)
         direction: 'positive' | 'negative';
-        hourDiff: number;                 // 점프 크기(시간)
+        hourDiff: number; // 점프 크기(시간)
       }
     | undefined;
 
@@ -30,8 +30,8 @@ export class TimezoneCorrector {
   private retroSegments: { start: number; end: number; deltaMs: number }[] = [];
 
   // 임계값
-  private readonly MIN_JUMP_HOURS = 3;    // 점프 의심 임계값(현행 3h 유지)
-  private readonly MIN_RETURN_HOURS = 1;  // 복귀 최소 차이(요청하신 1h)
+  private readonly MIN_JUMP_HOURS = 3; // 점프 의심 임계값(현행 3h 유지)
+  private readonly MIN_RETURN_HOURS = 1; // 복귀 최소 차이(요청하신 1h)
 
   constructor(public readonly label: string) {}
 
@@ -48,13 +48,11 @@ export class TimezoneCorrector {
       // ① 점프 꼭짓점에서 최소 1시간 이상 되돌아왔는지
       const movedBackEnough =
         s.direction === 'positive'
-          ? (s.firstJumpRawTs - rawTs) >= this.MIN_RETURN_HOURS * hour
-          : (rawTs - s.firstJumpRawTs) >= this.MIN_RETURN_HOURS * hour;
+          ? s.firstJumpRawTs - rawTs >= this.MIN_RETURN_HOURS * hour
+          : rawTs - s.firstJumpRawTs >= this.MIN_RETURN_HOURS * hour;
       // ② preJump 기준선을 다시 넘었는지
       const crossedBaseline =
-        s.direction === 'positive'
-          ? rawTs <= s.preJumpRawTs
-          : rawTs >= s.preJumpRawTs;
+        s.direction === 'positive' ? rawTs <= s.preJumpRawTs : rawTs >= s.preJumpRawTs;
       const returned = movedBackEnough && crossedBaseline;
 
       if (returned) {
@@ -64,8 +62,7 @@ export class TimezoneCorrector {
         // 이렇게 하면 기준선(preJumpRawTs)과 '완전히 같은 ts'가 되는 것을 방지.
         const CANDIDATES = [1, 9, 10, 12]; // 허용 시간대 후보(시간)
         const nearest = CANDIDATES.reduce(
-          (best, h) =>
-            Math.abs(s.hourDiff - h) < Math.abs(s.hourDiff - best) ? h : best,
+          (best, h) => (Math.abs(s.hourDiff - h) < Math.abs(s.hourDiff - best) ? h : best),
           CANDIDATES[0],
         );
         const sign = s.direction === 'positive' ? -1 : +1;
@@ -154,4 +151,6 @@ export class TimezoneCorrector {
 }
 
 /** (이전 호환) no-op */
-export function identity<T>(v: T): T { return v; }
+export function identity<T>(v: T): T {
+  return v;
+}

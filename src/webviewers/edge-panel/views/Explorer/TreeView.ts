@@ -1,5 +1,5 @@
 // src/webviewers/edge-panel/views/Explorer/TreeView.ts
-import type { Kind,TreeNode } from '../../types/model.js';
+import type { Kind, TreeNode } from '../../types/model.js';
 
 export class TreeView {
   private selectedEl: HTMLElement | null = null;
@@ -85,9 +85,11 @@ export class TreeView {
 
     // Delete / Backspace 로 삭제
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      const selectedEls = Array.from(this.treeEl.querySelectorAll('.tree-node.selected')) as HTMLElement[];
+      const selectedEls = Array.from(
+        this.treeEl.querySelectorAll('.tree-node.selected'),
+      ) as HTMLElement[];
       const selectedNodes = selectedEls
-        .map(el => this.getNodeByPath(el.dataset.path || ''))
+        .map((el) => this.getNodeByPath(el.dataset.path || ''))
         .filter((n): n is TreeNode => !!n);
 
       if (selectedNodes.length > 0) {
@@ -105,10 +107,16 @@ export class TreeView {
     wrap.setAttribute('role', 'treeitem');
     wrap.setAttribute('aria-expanded', node.kind === 'folder' ? String(!!node.expanded) : 'false');
 
-    const line = document.createElement('div'); line.className = 'tn-line';
-    const chev = document.createElement('span'); chev.className = 'tn-chevron'; chev.setAttribute('aria-hidden', 'true');
-    const icon = document.createElement('span'); icon.className = 'tn-icon';
-    const label = document.createElement('span'); label.className = 'tn-label'; label.textContent = node.name;
+    const line = document.createElement('div');
+    line.className = 'tn-line';
+    const chev = document.createElement('span');
+    chev.className = 'tn-chevron';
+    chev.setAttribute('aria-hidden', 'true');
+    const icon = document.createElement('span');
+    icon.className = 'tn-icon';
+    const label = document.createElement('span');
+    label.className = 'tn-label';
+    label.textContent = node.name;
 
     if (node.kind === 'folder') {
       icon.textContent = '📁';
@@ -124,7 +132,9 @@ export class TreeView {
       icon.textContent = '📄';
       chev.classList.add('tn-empty');
     }
-    line.appendChild(chev); line.appendChild(icon); line.appendChild(label);
+    line.appendChild(chev);
+    line.appendChild(icon);
+    line.appendChild(label);
     wrap.appendChild(line);
 
     if (node.kind === 'folder') {
@@ -147,7 +157,10 @@ export class TreeView {
 
   mountNode(parent: HTMLElement, node: TreeNode) {
     let el = node.el;
-    if (!el) { el = this.nodeLabel(node); node.el = el; }
+    if (!el) {
+      el = this.nodeLabel(node);
+      node.el = el;
+    }
     parent.appendChild(el);
   }
 
@@ -156,20 +169,40 @@ export class TreeView {
     return node.el.querySelector('.tn-children') as HTMLElement | null;
   }
 
-  renderChildren(node: TreeNode, items: { name: string; kind: Kind }[], register: (n: TreeNode) => void) {
+  renderChildren(
+    node: TreeNode,
+    items: { name: string; kind: Kind }[],
+    register: (n: TreeNode) => void,
+  ) {
     if (!node.el) this.mountNode(this.treeEl, node);
-    const group = this.ensureChildrenContainer(node); if (!group) return;
+    const group = this.ensureChildrenContainer(node);
+    if (!group) return;
     group.innerHTML = '';
-    const existing = new Map(node.children?.map(c => [c.name, c]) || []);
+    const existing = new Map(node.children?.map((c) => [c.name, c]) || []);
     node.children = [];
 
-    items.sort((a,b)=> a.kind===b.kind ? a.name.localeCompare(b.name, undefined, {numeric:true}) : a.kind==='folder' ? -1 : 1);
+    items.sort((a, b) =>
+      a.kind === b.kind
+        ? a.name.localeCompare(b.name, undefined, { numeric: true })
+        : a.kind === 'folder'
+          ? -1
+          : 1,
+    );
 
     items.forEach((it) => {
       let child = existing.get(it.name);
       if (!child) {
         const path = (node.path ? node.path + '/' : '') + it.name;
-        child = { path, name: it.name, kind: it.kind, parent: node, children: [], expanded: false, loaded: false, selected: false };
+        child = {
+          path,
+          name: it.name,
+          kind: it.kind,
+          parent: node,
+          children: [],
+          expanded: false,
+          loaded: false,
+          selected: false,
+        };
         register(child);
       }
       this.mountNode(group, child);
@@ -182,7 +215,7 @@ export class TreeView {
     });
 
     node.loaded = true;
-    node.expanded = true;            // 목록을 그렸다면 펼쳐진 상태
+    node.expanded = true; // 목록을 그렸다면 펼쳐진 상태
     this.updateExpanded(node);
   }
 

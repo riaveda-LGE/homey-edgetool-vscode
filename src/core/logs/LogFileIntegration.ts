@@ -1,9 +1,9 @@
 // === src/core/logs/LogFileIntegration.ts ===
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import type { FileHandle } from 'fs/promises';
 import * as path from 'path';
 
-import type { LogEntry } from '@ipc/messages';
 import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
@@ -17,7 +17,10 @@ const log = getLogger('LogFileIntegration');
  * ────────────────────────────────────────────────────────────────────────── */
 
 // Manager 선행 웜업 호출을 위해 필요한 필드만 분리
-export type WarmupOptions = Pick<MergeOptions, 'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget'>;
+export type WarmupOptions = Pick<
+  MergeOptions,
+  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget'
+>;
 
 export type MergeOptions = {
   dir: string;
@@ -30,7 +33,7 @@ export type MergeOptions = {
   onWarmupBatch?: (logs: LogEntry[]) => void;
   batchSize?: number;
   mergedDirPath?: string; // 중간 산출물(JSONL) 저장 위치
-  rawDirPath?: string;    // (옵션) 보정 전 RAW 저장 위치
+  rawDirPath?: string; // (옵션) 보정 전 RAW 저장 위치
   /** warmup 선행패스 사용 여부 (기본: false, 상위 FeatureFlags로 채워짐) */
   warmup?: boolean;
   /** warmup 모드일 때 타입별 최대 선행 읽기 라인수 (기본: 500 등) */
@@ -51,7 +54,10 @@ export async function mergeDirectory(opts: MergeOptions) {
     // ─────────────────────────────────────────────────────────────────────────
     // 0) (호환) 워밍업 선행패스
     //    Manager-선행 웜업 경로에서는 mergeDirectory를 warmup:false로 호출하므로 여기 미실행
-    if (opts.warmup && (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')) {
+    if (
+      opts.warmup &&
+      (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')
+    ) {
       try {
         const warmLogs = await warmupTailPrepass({
           dir: opts.dir,
@@ -169,7 +175,9 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
       // 파일 끝에서 suspected가 남아있으면 폐기(복귀 증거 없음)
       tzc.finalizeSuspected();
-      log.debug?.(`T1: timezone correction type=${typeKey} retroSegmentsApplied=${tzRetroSegmentsApplied}`);
+      log.debug?.(
+        `T1: timezone correction type=${typeKey} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
+      );
 
       // ⬇️ JSONL 저장은 "최신→오래된(내림차순)"으로 저장
       logs.sort((a, b) => b.ts - a.ts);
@@ -196,7 +204,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     }
     log.info(`T1: cursors ready types=${cursors.size}`);
 
-        // k-way max-heap: ts 큰 것(최신) 우선
+    // k-way max-heap: ts 큰 것(최신) 우선
     const heap = new MaxHeap<HeapItem>((a, b) => {
       if (a.ts !== b.ts) return a.ts - b.ts;
       if (a.typeKey !== b.typeKey) return a.typeKey < b.typeKey ? -1 : 1;
@@ -459,7 +467,9 @@ class ReverseLineReader {
 
   async close() {
     if (this.fh !== null) {
-      try { await this.fh.close(); } catch {}
+      try {
+        await this.fh.close();
+      } catch {}
       this.fh = null;
     }
   }
@@ -538,7 +548,10 @@ class ForwardLineReader {
   async nextLines(n: number): Promise<string[]> {
     const out: string[] = [];
     while (out.length < n) {
-      if (this.queue.length) { out.push(this.queue.shift()!); continue; }
+      if (this.queue.length) {
+        out.push(this.queue.shift()!);
+        continue;
+      }
       if (this.errored) throw this.errored;
       if (this.ended) break;
       await this.waitForData();
@@ -547,7 +560,9 @@ class ForwardLineReader {
   }
 
   async close() {
-    try { this.rs.close(); } catch {}
+    try {
+      this.rs.close();
+    } catch {}
   }
 }
 
@@ -560,7 +575,10 @@ class MergedCursor {
   private constructor(public typeKey: string) {}
 
   async close() {
-    if (this.reader) { await this.reader.close(); this.reader = null; }
+    if (this.reader) {
+      await this.reader.close();
+      this.reader = null;
+    }
     this.isExhausted = true;
   }
 
@@ -604,15 +622,27 @@ type HeapItem = { ts: number; entry: LogEntry; typeKey: string; seq: number };
 class MaxHeap<T> {
   private arr: T[] = [];
   constructor(private cmp: (a: T, b: T) => number) {}
-  size() { return this.arr.length; }
-  isEmpty() { return this.arr.length === 0; }
-  peek() { return this.arr[0]; }
-  push(v: T) { this.arr.push(v); this.up(this.arr.length - 1); }
+  size() {
+    return this.arr.length;
+  }
+  isEmpty() {
+    return this.arr.length === 0;
+  }
+  peek() {
+    return this.arr[0];
+  }
+  push(v: T) {
+    this.arr.push(v);
+    this.up(this.arr.length - 1);
+  }
   pop(): T | undefined {
     if (this.arr.length === 0) return undefined;
     const top = this.arr[0];
     const last = this.arr.pop()!;
-    if (this.arr.length) { this.arr[0] = last; this.down(0); }
+    if (this.arr.length) {
+      this.arr[0] = last;
+      this.down(0);
+    }
     return top;
   }
   private up(i: number) {
@@ -626,7 +656,9 @@ class MaxHeap<T> {
   private down(i: number) {
     const n = this.arr.length;
     while (true) {
-      let l = i * 2 + 1, r = l + 1, m = i;
+      const l = i * 2 + 1,
+        r = l + 1;
+      let m = i;
       if (l < n && this.cmp(this.arr[l], this.arr[m]) > 0) m = l;
       if (r < n && this.cmp(this.arr[r], this.arr[m]) > 0) m = r;
       if (m === i) break;
@@ -658,9 +690,7 @@ function lineToEntry(filePath: string, line: string): LogEntry {
 // - 타입별 버퍼는 최신→오래된 순으로 수집 후 타임존 보정, 보정 후 최신순(ts desc) 정렬
 // - 최종 k-way 병합으로 정확히 target개만 반환
 // ⬇️ Manager에서 직접 호출할 수 있도록 export + LogEntry[] 반환
-export async function warmupTailPrepass(
-  opts: WarmupOptions
-): Promise<LogEntry[]> {
+export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]> {
   const { dir, signal } = opts;
   const logger = getLogger('LogFileIntegration');
   logger.info(`warmup(T0): start dir=${dir}`);
@@ -690,11 +720,10 @@ export async function warmupTailPrepass(
     alloc.set(k, Math.min(want, perTypeCap));
   }
   logger.info(
-    `warmup(T0): plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`
+    `warmup(T0): plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`,
   );
   logger.debug?.(
-    `warmup(T0): per-type allocation → ` +
-    typeKeys.map(k => `${k}:${alloc.get(k)}`).join(', ')
+    `warmup(T0): per-type allocation → ` + typeKeys.map((k) => `${k}:${alloc.get(k)}`).join(', '),
   );
 
   // 3) 타입별 tail walker 준비
@@ -702,15 +731,21 @@ export async function warmupTailPrepass(
     private idx = 0;
     private rr: ReverseLineReader | null = null;
     private exhausted = false;
-    constructor(private baseDir: string, private files: string[], private typeKey: string) {}
-    get isExhausted() { return this.exhausted; }
+    constructor(
+      private baseDir: string,
+      private files: string[],
+      private typeKey: string,
+    ) {}
+    get isExhausted() {
+      return this.exhausted;
+    }
     private async ensureReader() {
       while (!this.rr && this.idx < this.files.length) {
         const fp = path.join(this.baseDir, this.files[this.idx]);
         try {
           this.rr = await ReverseLineReader.open(fp);
           logger.debug?.(
-            `warmup(T0): [${this.typeKey}] open file=${path.basename(fp)} (idx=${this.idx}/${this.files.length-1})`
+            `warmup(T0): [${this.typeKey}] open file=${path.basename(fp)} (idx=${this.idx}/${this.files.length - 1})`,
           );
         } catch {
           // 파일 오픈 실패 시 다음 파일로
@@ -724,15 +759,20 @@ export async function warmupTailPrepass(
       await this.ensureReader();
       const out: { line: string; file: string }[] = [];
       while (out.length < n && !this.exhausted) {
-        if (!this.rr) { this.exhausted = true; break; }
+        if (!this.rr) {
+          this.exhausted = true;
+          break;
+        }
         const line = await this.rr.nextLine();
         if (line === null) {
           // 현재 파일 끝 → 닫고 다음 파일
-          try { await this.rr.close(); } catch {}
+          try {
+            await this.rr.close();
+          } catch {}
           this.rr = null;
           this.idx++;
           logger.debug?.(
-            `warmup(T0): [${this.typeKey}] file exhausted, move next (idx=${this.idx}/${this.files.length})`
+            `warmup(T0): [${this.typeKey}] file exhausted, move next (idx=${this.idx}/${this.files.length})`,
           );
           await this.ensureReader();
           continue;
@@ -783,7 +823,7 @@ export async function warmupTailPrepass(
     const gotK = await batchRead(k, want);
     total += gotK;
     logger.info(
-      `warmup(T0): primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`
+      `warmup(T0): primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`,
     );
   }
 
@@ -794,17 +834,16 @@ export async function warmupTailPrepass(
     // 현재 각 타입이 cap에 도달했는지 계산
     const room = () =>
       typeKeys
-        .filter(k => !walkers.get(k)!.isExhausted) // ❗ exhausted 제외
-        .map(k => ({
+        .filter((k) => !walkers.get(k)!.isExhausted) // ❗ exhausted 제외
+        .map((k) => ({
           k,
           room: Math.max(
             0,
-            (perTypeCap === Number.POSITIVE_INFINITY
-              ? Number.MAX_SAFE_INTEGER
-              : perTypeCap) - buffers.get(k)!.length
+            (perTypeCap === Number.POSITIVE_INFINITY ? Number.MAX_SAFE_INTEGER : perTypeCap) -
+              buffers.get(k)!.length,
           ),
         }))
-        .filter(x => x.room > 0);
+        .filter((x) => x.room > 0);
     let slots = room();
     // 라운드로빈으로 1~CHUNK씩 분배
     let i = 0;
@@ -813,7 +852,11 @@ export async function warmupTailPrepass(
     while (deficit > 0 && slots.length && !aborted()) {
       const { k, room: r } = slots[i % slots.length];
       const w = walkers.get(k)!;
-      if (w.isExhausted) { i++; slots = room(); continue; }
+      if (w.isExhausted) {
+        i++;
+        slots = room();
+        continue;
+      }
       const take = Math.min(CHUNK, r, deficit);
       if (take > 0) {
         const before = buffers.get(k)!.length;
@@ -822,15 +865,15 @@ export async function warmupTailPrepass(
         deficit -= got;
         total += got;
         logger.debug?.(
-          `warmup(T0): rebalance type=${k} +${got} (buf ${before}->${after}), remain deficit=${deficit}`
+          `warmup(T0): rebalance type=${k} +${got} (buf ${before}->${after}), remain deficit=${deficit}`,
         );
       }
       // 정체(진전 없음) 탐지 → 모두 소진이면 탈출
       if (total === lastProgressTotal) {
-        const anyActive = typeKeys.some(tk => !walkers.get(tk)!.isExhausted);
+        const anyActive = typeKeys.some((tk) => !walkers.get(tk)!.isExhausted);
         if (!anyActive) {
           logger.warn(
-            `warmup(T0): rebalancing stalled — all types exhausted; total=${total}, target=${target}`
+            `warmup(T0): rebalancing stalled — all types exhausted; total=${total}, target=${target}`,
           );
           break;
         }
@@ -840,9 +883,7 @@ export async function warmupTailPrepass(
       i++;
       slots = room();
     }
-    logger.info(
-      `warmup(T0): after rebalance total=${total}, unmet=${Math.max(0, target - total)}`
-    );
+    logger.info(`warmup(T0): after rebalance total=${total}, unmet=${Math.max(0, target - total)}`);
   }
 
   if (total === 0) return [];
@@ -868,7 +909,9 @@ export async function warmupTailPrepass(
       }
     }
     tzc.finalizeSuspected();
-    logger.debug?.(`warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`);
+    logger.debug?.(
+      `warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
+    );
     arr.sort((a, b) => b.ts - a.ts); // 최신순
     // ⬇︎ 파일명은 그대로 유지. 구버전 엔트리엔 file을 보강.
     for (const e of arr) {
@@ -906,12 +949,16 @@ export async function warmupTailPrepass(
   if (out.length < target) {
     logger.info(
       `warmup(T0): dataset smaller than target (out=${out.length} < target=${target}); ` +
-      `will short-circuit T1 if total is known and ≤ out`
+        `will short-circuit T1 if total is known and ≤ out`,
     );
   }
   return out;
-}// 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
-async function tailLines(filePath: string, maxLines: number, chunkSize = 64 * 1024): Promise<string[]> {
+} // 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
+async function tailLines(
+  filePath: string,
+  maxLines: number,
+  chunkSize = 64 * 1024,
+): Promise<string[]> {
   const fh = await fs.promises.open(filePath, 'r');
   try {
     const stat = await fh.stat();

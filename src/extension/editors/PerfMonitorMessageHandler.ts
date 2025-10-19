@@ -1,7 +1,12 @@
 // === src/extension/editors/PerfMonitorMessageHandler.ts ===
-import { getLogger } from '../../core/logging/extension-logger.js';
 import type { W2H } from '@ipc/messages';
-import type { IPerfMonitorCaptureManager, IPerfMonitorExportManager,IPerfMonitorMessageHandler } from './IPerfMonitorPanelComponents.js';
+
+import { getLogger } from '../../core/logging/extension-logger.js';
+import type {
+  IPerfMonitorCaptureManager,
+  IPerfMonitorExportManager,
+  IPerfMonitorMessageHandler,
+} from './IPerfMonitorPanelComponents.js';
 
 export class PerfMonitorMessageHandler implements IPerfMonitorMessageHandler {
   private _captureManager: IPerfMonitorCaptureManager;
@@ -9,7 +14,7 @@ export class PerfMonitorMessageHandler implements IPerfMonitorMessageHandler {
 
   constructor(
     captureManager: IPerfMonitorCaptureManager,
-    exportManager: IPerfMonitorExportManager
+    exportManager: IPerfMonitorExportManager,
   ) {
     this._captureManager = captureManager;
     this._exportManager = exportManager;
@@ -20,7 +25,11 @@ export class PerfMonitorMessageHandler implements IPerfMonitorMessageHandler {
     switch (message.type) {
       case 'ui.log':
         if (message.v === 1 && message.payload) {
-          const lvl = String(message.payload.level ?? 'info') as 'debug' | 'info' | 'warn' | 'error';
+          const lvl = String(message.payload.level ?? 'info') as
+            | 'debug'
+            | 'info'
+            | 'warn'
+            | 'error';
           const text = String(message.payload.text ?? '');
           const src = String(message.payload.source ?? 'ui.perfMonitor');
           const lg = getLogger(src);

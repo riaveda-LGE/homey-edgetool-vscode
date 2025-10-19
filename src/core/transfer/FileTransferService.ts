@@ -1,5 +1,5 @@
 import { DEFAULT_TRANSFER_TIMEOUT_MS } from '../../shared/const.js';
-import { ErrorCategory,XError } from '../../shared/errors.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
 import type { HostConfig } from '../connection/ConnectionManager.js';
 import { runCommandLine } from '../connection/ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
@@ -42,7 +42,11 @@ export class FileTransferService implements IFileTransferService {
       this.log.info(`upload adb: ${localDir} -> device:${this.target.serial ?? ''} ${remoteDir}`);
       await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
     } catch (e) {
-      throw new XError(ErrorCategory.Connection, `Upload failed: ${e instanceof Error ? e.message : String(e)}`, e);
+      throw new XError(
+        ErrorCategory.Connection,
+        `Upload failed: ${e instanceof Error ? e.message : String(e)}`,
+        e,
+      );
     }
   }
 
@@ -69,7 +73,11 @@ export class FileTransferService implements IFileTransferService {
       this.log.info(`download adb: device:${this.target.serial ?? ''} ${remoteDir} -> ${localDir}`);
       await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
     } catch (e) {
-      throw new XError(ErrorCategory.Connection, `Download failed: ${e instanceof Error ? e.message : String(e)}`, e);
+      throw new XError(
+        ErrorCategory.Connection,
+        `Download failed: ${e instanceof Error ? e.message : String(e)}`,
+        e,
+      );
     }
   }
 }

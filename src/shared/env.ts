@@ -7,27 +7,22 @@
 
 declare const __ESD__: boolean | undefined;
 
-export const IS_WEBVIEW =
-  typeof window !== 'undefined' && typeof document !== 'undefined';
+export const IS_WEBVIEW = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 export const IS_EXTENSION_HOST =
-  typeof process !== 'undefined' &&
-  !!(process as any).versions?.node &&
-  !IS_WEBVIEW;
+  typeof process !== 'undefined' && !!(process as any).versions?.node && !IS_WEBVIEW;
 
 // Webpack DefinePlugin에서 온 플래그(웹뷰에서 우선 사용)
-const fromDefine =
-  typeof __ESD__ !== 'undefined' ? Boolean(__ESD__) : undefined;
+const fromDefine = typeof __ESD__ !== 'undefined' ? Boolean(__ESD__) : undefined;
 
 // Node(익스텐션) 측 환경변수
 const fromEnv =
   typeof process !== 'undefined' && (process as any).env
-    ? ((process as any).env.EXT_MODE === 'esd' ||
-       (process as any).env.NODE_ENV === 'development')
+    ? (process as any).env.EXT_MODE === 'esd' || (process as any).env.NODE_ENV === 'development'
     : undefined;
 
 /** 개발(ESD/EDH) 모드인지 여부 */
-export const IS_ESD: boolean = (fromDefine ?? fromEnv) ?? false;
+export const IS_ESD: boolean = fromDefine ?? fromEnv ?? false;
 
 /** 배포(Prod) 모드인지 여부 */
 export const IS_PROD: boolean = !IS_ESD;

@@ -1,8 +1,9 @@
 // === src/extension/messaging/hostWebviewBridge.ts ===
+import type { H2W, LogFilter, W2H } from '@ipc/messages';
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
-import type { H2W, W2H, LogFilter } from '@ipc/messages';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
@@ -36,28 +37,40 @@ export class HostWebviewBridge {
           const total = await paginationService.getFilteredTotal();
           const head = await paginationService.readRangeByIdx(1, 500);
           // ① 바뀐 데이터의 head 500줄을 즉시 푸시
-          this.send({ v:1, type:'logs.batch', payload:{ logs: head, total, seq: ++this.seq } } as any);
+          this.send({
+            v: 1,
+            type: 'logs.batch',
+            payload: { logs: head, total, seq: ++this.seq },
+          } as any);
           // ② 상태(총계/버전)도 함께 브로드캐스트
-          this.send({ v:1, type:'logs.state', payload:{
-            total,
-            version: paginationService.getVersion(),
-            warm: paginationService.isWarmupActive(),
-            manifestDir: paginationService.getManifestDir()
-          }} as any);
+          this.send({
+            v: 1,
+            type: 'logs.state',
+            payload: {
+              total,
+              version: paginationService.getVersion(),
+              warm: paginationService.isWarmupActive(),
+              manifestDir: paginationService.getManifestDir(),
+            },
+          } as any);
           // ③ UI가 이전 요청/버퍼를 정리하고 새 페이지를 확정적으로 요청하도록 트리거
-          this.send({ v:1, type:'logs.refresh', payload:{
-            reason:'filter-changed',
-            total,
-            version: paginationService.getVersion(),
-            warm: paginationService.isWarmupActive()
-          }} as any);
+          this.send({
+            v: 1,
+            type: 'logs.refresh',
+            payload: {
+              reason: 'filter-changed',
+              total,
+              version: paginationService.getVersion(),
+              warm: paginationService.isWarmupActive(),
+            },
+          } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: FILTER_UPDATE_ERROR ${message}`);
           this.send({
             v: 1,
             type: 'error',
-            payload: { code:'FILTER_UPDATE_ERROR', message, detail: err, inReplyTo: msg.id }
+            payload: { code: 'FILTER_UPDATE_ERROR', message, detail: err, inReplyTo: msg.id },
           });
         }
         return;
@@ -69,10 +82,16 @@ export class HostWebviewBridge {
           const { startIdx, endIdx } = msg.payload || {};
           const s = Number(startIdx) || 1;
           const e = Number(endIdx) || s;
-          this.log.debug?.(`bridge: logs.page.request ${s}-${e} filterActive=${paginationService.isFilterActive()}`);
+          this.log.debug?.(
+            `bridge: logs.page.request ${s}-${e} filterActive=${paginationService.isFilterActive()}`,
+          );
           const logs = await paginationService.readRangeByIdx(s, e); // 내부에서 필터 적용 분기
           // 현재 pagination 버전을 함께 내려, 웹뷰가 세션 불일치를 걸러낼 수 있게 한다.
-          this.send({ v: 1, type: 'logs.page.response', payload: { startIdx: s, endIdx: e, logs, version: paginationService.getVersion() } } as any);
+          this.send({
+            v: 1,
+            type: 'logs.page.response',
+            payload: { startIdx: s, endIdx: e, logs, version: paginationService.getVersion() },
+          } as any);
           this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length}`);
         } catch (err: any) {
           const message = err?.message || String(err);
@@ -99,14 +118,40 @@ export class HostWebviewBridge {
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
           const head = await paginationService.readRangeByIdx(1, 500);
-          this.send({ v:1, type:'logs.batch', payload:{ logs: head, total, seq: ++this.seq } } as any);
+          this.send({
+            v: 1,
+            type: 'logs.batch',
+            payload: { logs: head, total, seq: ++this.seq },
+          } as any);
           // 상태도 함께 브로드캐스트
-          this.send({ v:1, type:'logs.state', payload:{ total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive(), manifestDir: paginationService.getManifestDir() } } as any);
-          this.send({ v:1, type:'logs.refresh', payload:{ reason:'filter-changed', total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive() } } as any);
+          this.send({
+            v: 1,
+            type: 'logs.state',
+            payload: {
+              total,
+              version: paginationService.getVersion(),
+              warm: paginationService.isWarmupActive(),
+              manifestDir: paginationService.getManifestDir(),
+            },
+          } as any);
+          this.send({
+            v: 1,
+            type: 'logs.refresh',
+            payload: {
+              reason: 'filter-changed',
+              total,
+              version: paginationService.getVersion(),
+              warm: paginationService.isWarmupActive(),
+            },
+          } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: FILTER_SET_ERROR ${message}`);
-          this.send({ v:1, type:'error', payload:{ code:'FILTER_SET_ERROR', message, detail: err, inReplyTo: msg.id }});
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'FILTER_SET_ERROR', message, detail: err, inReplyTo: msg.id },
+          });
         }
         return;
       }
@@ -119,13 +164,39 @@ export class HostWebviewBridge {
           // 필터 해제 후 상단 500줄 재전송
           const total = await paginationService.getFilteredTotal();
           const head = await paginationService.readRangeByIdx(1, 500);
-          this.send({ v:1, type:'logs.batch', payload:{ logs: head, total, seq: ++this.seq } } as any);
-          this.send({ v:1, type:'logs.state', payload:{ total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive(), manifestDir: paginationService.getManifestDir() } } as any);
-          this.send({ v:1, type:'logs.refresh', payload:{ reason:'filter-changed', total, version: paginationService.getVersion(), warm: paginationService.isWarmupActive() } } as any);
+          this.send({
+            v: 1,
+            type: 'logs.batch',
+            payload: { logs: head, total, seq: ++this.seq },
+          } as any);
+          this.send({
+            v: 1,
+            type: 'logs.state',
+            payload: {
+              total,
+              version: paginationService.getVersion(),
+              warm: paginationService.isWarmupActive(),
+              manifestDir: paginationService.getManifestDir(),
+            },
+          } as any);
+          this.send({
+            v: 1,
+            type: 'logs.refresh',
+            payload: {
+              reason: 'filter-changed',
+              total,
+              version: paginationService.getVersion(),
+              warm: paginationService.isWarmupActive(),
+            },
+          } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: FILTER_CLEAR_ERROR ${message}`);
-          this.send({ v:1, type:'error', payload:{ code:'FILTER_CLEAR_ERROR', message, detail: err, inReplyTo: msg.id }});
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'FILTER_CLEAR_ERROR', message, detail: err, inReplyTo: msg.id },
+          });
         }
         return;
       }
@@ -154,11 +225,15 @@ export class HostWebviewBridge {
             }
           }
           this.log.info(`bridge: search.results hits=${this.searchHits.length}`);
-          this.send({ v:1, type:'search.results', payload:{ hits: this.searchHits, q } } as any);
+          this.send({ v: 1, type: 'search.results', payload: { hits: this.searchHits, q } } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: SEARCH_ERROR ${message}`);
-          this.send({ v:1, type:'error', payload:{ code:'SEARCH_ERROR', message, inReplyTo: msg.id } });
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'SEARCH_ERROR', message, inReplyTo: msg.id },
+          });
         }
         return;
       }
@@ -166,7 +241,7 @@ export class HostWebviewBridge {
       if (msg.type === 'search.clear') {
         this.log.info('bridge: search.clear');
         this.searchHits = [];
-        this.send({ v:1, type:'search.results', payload:{ hits: [], q: '' } } as any);
+        this.send({ v: 1, type: 'search.results', payload: { hits: [], q: '' } } as any);
         return;
       }
 
@@ -259,13 +334,23 @@ export class HostWebviewBridge {
       const manifestDir = paginationService.getManifestDir();
 
       // 상태는 매번 보내도 무방(웹뷰가 최신값으로 덮어씀)
-      this.send({ v: 1, type: 'logs.state', payload: { warm, total, version, manifestDir } } as any);
+      this.send({
+        v: 1,
+        type: 'logs.state',
+        payload: { warm, total, version, manifestDir },
+      } as any);
 
       // 실제 페이징을 시작시키는 refresh는 세션당 1회만 보내면 충분
       if (!this.kickedOnce && (warm || !!manifestDir)) {
-        this.send({ v: 1, type: 'logs.refresh', payload: { reason: origin, total, version, warm } } as any);
+        this.send({
+          v: 1,
+          type: 'logs.refresh',
+          payload: { reason: origin, total, version, warm },
+        } as any);
         this.kickedOnce = true;
-        this.log.info(`bridge: sent initial logs.refresh (origin=${origin}, warm=${warm}, total=${total ?? 'unknown'}, version=${version})`);
+        this.log.info(
+          `bridge: sent initial logs.refresh (origin=${origin}, warm=${warm}, total=${total ?? 'unknown'}, version=${version})`,
+        );
       }
     } catch (e) {
       this.log.warn(`bridge: kickIfReady failed: ${String(e)}`);

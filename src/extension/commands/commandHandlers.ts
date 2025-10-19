@@ -44,12 +44,12 @@ class CommandHandlers {
 
     // 핸들러 초기화
     this.workspaceHandler = new CommandHandlersWorkspace(this.say, this.context);
-    this.updateHandler   = new CommandHandlersUpdate(this.say, this.appendLog, this.extensionUri);
-    this.homeyHandler    = new CommandHandlersHomey(this.say, this.appendLog);
-    this.loggingHandler  = new CommandHandlersLogging(this.say, this.appendLog, this.provider);
-    this.hostHandler     = new CommandHandlersHost(this.say, this.appendLog);
-    this.gitHandler      = new CommandHandlersGit(this.say, this.appendLog);
-    this.connectHandler  = new CommandHandlersConnect(this.say, this.appendLog);
+    this.updateHandler = new CommandHandlersUpdate(this.say, this.appendLog, this.extensionUri);
+    this.homeyHandler = new CommandHandlersHomey(this.say, this.appendLog);
+    this.loggingHandler = new CommandHandlersLogging(this.say, this.appendLog, this.provider);
+    this.hostHandler = new CommandHandlersHost(this.say, this.appendLog);
+    this.gitHandler = new CommandHandlersGit(this.say, this.appendLog);
+    this.connectHandler = new CommandHandlersConnect(this.say, this.appendLog);
   }
 
   async route(raw: string) {

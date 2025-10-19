@@ -1,8 +1,8 @@
 import { LogService } from '../services/LogService.js';
 import type { AppState, PanelStatePersist, SectionDTO, TreeNode } from '../types/model.js';
 import { ExplorerView } from './Explorer/ExplorerView.js';
-import { ensureContentSplitter,ensureExplorerContainer } from './Layout/Panel.js';
-import { bindContentSplitter,bindVerticalSplitter } from './Layout/Splitter.js';
+import { ensureContentSplitter, ensureExplorerContainer } from './Layout/Panel.js';
+import { bindContentSplitter, bindVerticalSplitter } from './Layout/Splitter.js';
 import { LogsView } from './Logs/LogsView.js';
 
 export class AppView {
@@ -18,8 +18,8 @@ export class AppView {
   private contentSplitterBound = false; // 가운데 스플리터 바인딩 여부
 
   // 내부 패널 최소 높이
-  private readonly MIN_TOP = 80;     // Explorer
-  private readonly MIN_BOTTOM = 80;  // Logs
+  private readonly MIN_TOP = 80; // Explorer
+  private readonly MIN_BOTTOM = 80; // Logs
 
   // 선택: 컨트롤 영역 자동 높이 보정용 ResizeObserver 보관
   private _sectionsRO?: ResizeObserver;
@@ -88,17 +88,25 @@ export class AppView {
     const sectionsEl = document.getElementById('sections')!;
     sectionsEl.innerHTML = '';
     sections.forEach((sec) => {
-      const card = document.createElement('div'); card.className = 'section-card';
-      const h = document.createElement('h4'); h.textContent = sec.title; card.appendChild(h);
-      const body = document.createElement('div'); body.className = 'section-body';
+      const card = document.createElement('div');
+      card.className = 'section-card';
+      const h = document.createElement('h4');
+      h.textContent = sec.title;
+      card.appendChild(h);
+      const body = document.createElement('div');
+      body.className = 'section-body';
       sec.items.forEach((it) => {
-        const b = document.createElement('button'); b.className = 'btn'; b.title = it.desc || it.label; b.textContent = it.label;
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.title = it.desc || it.label;
+        b.textContent = it.label;
         if (it.id === 'panel.toggleLogs' && toggles.showLogs) b.classList.add('btn-on');
         if (it.id === 'panel.toggleExplorer' && toggles.showExplorer) b.classList.add('btn-on');
         b.addEventListener('click', () => this.onControlsClick(it.id));
         body.appendChild(b);
       });
-      card.appendChild(body); sectionsEl.appendChild(card);
+      card.appendChild(body);
+      sectionsEl.appendChild(card);
     });
   }
 
@@ -128,7 +136,11 @@ export class AppView {
     }
 
     // 가시성 & 접근성 토글
-    const setVisible = (el: HTMLElement | null, v: boolean, opts?: { focusTarget?: HTMLElement | null }) => {
+    const setVisible = (
+      el: HTMLElement | null,
+      v: boolean,
+      opts?: { focusTarget?: HTMLElement | null },
+    ) => {
       if (!el) return;
       el.style.display = v ? '' : 'none';
       el.setAttribute('aria-hidden', v ? 'false' : 'true');
@@ -143,7 +155,7 @@ export class AppView {
 
     // 내부 스플리터 표시 토글
     if (this.contentSplitter) {
-      this.contentSplitter.style.display = (state.showExplorer && state.showLogs) ? '' : 'none';
+      this.contentSplitter.style.display = state.showExplorer && state.showLogs ? '' : 'none';
     }
 
     // DOM 순서 안전핀
@@ -158,7 +170,12 @@ export class AppView {
     }
 
     // 가운데 스플리터 드래그 바인딩 (한 번만)
-    if ((state.showExplorer && state.showLogs) && this.contentSplitter && !this.contentSplitterBound) {
+    if (
+      state.showExplorer &&
+      state.showLogs &&
+      this.contentSplitter &&
+      !this.contentSplitterBound
+    ) {
       const MIN_TOP = this.MIN_TOP;
       const MIN_BOTTOM = this.MIN_BOTTOM;
 
@@ -218,8 +235,7 @@ export class AppView {
   private reflowAfterCtrlMove(commit: boolean) {
     if (!this.contentSplitter || !this.explorerEl || !this.logsView.element) return;
     const bothVisible =
-      this.root.classList.contains('show-explorer') &&
-      this.root.classList.contains('show-logs');
+      this.root.classList.contains('show-explorer') && this.root.classList.contains('show-logs');
     if (!bothVisible) return;
 
     const contentRect = this.content.getBoundingClientRect();
@@ -233,8 +249,8 @@ export class AppView {
         : (this.logsView.element as HTMLElement).getBoundingClientRect().height;
 
     // 하한/상한(최소 보장 + 상단 최소 확보)
-    const upper = Math.max(0, usable - this.MIN_TOP);              // Logs가 가질 수 있는 최대
-    const lower = Math.max(0, Math.min(this.MIN_BOTTOM, upper));   // 공간이 허용하는 선에서의 최소
+    const upper = Math.max(0, usable - this.MIN_TOP); // Logs가 가질 수 있는 최대
+    const lower = Math.max(0, Math.min(this.MIN_BOTTOM, upper)); // 공간이 허용하는 선에서의 최소
 
     // 가능하면 '유지', 불가 시 범위 내로 클램프
     let bottomPx = Math.max(lower, Math.min(desiredBottom, upper));
@@ -249,8 +265,7 @@ export class AppView {
 
   /** grid-template-rows를 px로 고정 적용(+ 캐시 갱신) */
   private setContentRows(topPx: number, bottomPx: number, commit: boolean) {
-    this.content.style.gridTemplateRows =
-      `${Math.max(0, Math.floor(topPx))}px var(--splitter-h) ${Math.max(0, Math.floor(bottomPx))}px`;
+    this.content.style.gridTemplateRows = `${Math.max(0, Math.floor(topPx))}px var(--splitter-h) ${Math.max(0, Math.floor(bottomPx))}px`;
     // 마지막 bottom px 캐시
     this.lastBottomPx = Math.max(0, Math.floor(bottomPx));
     if (commit) this.savePanelState();
@@ -279,8 +294,12 @@ export class AppView {
     this.explorerView?.renderChildren(node, items);
   }
 
-  logsReset(lines?: string[]) { this.logsView.reset(lines); }
-  logsAppend(line: string) { this.logsView.append(line); }
+  logsReset(lines?: string[]) {
+    this.logsView.reset(lines);
+  }
+  logsAppend(line: string) {
+    this.logsView.append(line);
+  }
 
   savePanelState() {
     const explorerEl = document.getElementById('explorer') as HTMLElement | null;
@@ -300,14 +319,16 @@ export class AppView {
       showExplorer: this.root.classList.contains('show-explorer'),
       showLogs: this.root.classList.contains('show-logs'),
       controlHeight,
-      splitterPosition
+      splitterPosition,
     });
   }
 
   /** 외부(웹뷰 밖 클릭/ESC 등)에서 선택 해제를 요청할 때 DOM만 정리 */
   public clearExplorerSelection() {
-    const selectedEls = Array.from(document.querySelectorAll('#explorer .tree-node.selected')) as HTMLElement[];
-    selectedEls.forEach(el => {
+    const selectedEls = Array.from(
+      document.querySelectorAll('#explorer .tree-node.selected'),
+    ) as HTMLElement[];
+    selectedEls.forEach((el) => {
       el.classList.remove('selected');
       el.removeAttribute('aria-selected');
     });

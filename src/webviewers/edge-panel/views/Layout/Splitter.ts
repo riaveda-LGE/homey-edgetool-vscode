@@ -17,7 +17,9 @@ export function bindVerticalSplitter(
   const onPointerUp = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
-    try { splitter.releasePointerCapture(e.pointerId); } catch {}
+    try {
+      splitter.releasePointerCapture(e.pointerId);
+    } catch {}
     document.body.style.userSelect = '';
     splitter.classList.remove('dragging');
     onChange(0, true);
@@ -28,7 +30,9 @@ export function bindVerticalSplitter(
     lastY = e.clientY;
     document.body.style.userSelect = 'none';
     splitter.classList.add('dragging');
-    try { splitter.setPointerCapture(e.pointerId); } catch {}
+    try {
+      splitter.setPointerCapture(e.pointerId);
+    } catch {}
     e.preventDefault();
   };
 
@@ -87,7 +91,9 @@ export function bindContentSplitter(
   const onPointerUp = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
-    try { splitter.releasePointerCapture(e.pointerId); } catch {}
+    try {
+      splitter.releasePointerCapture(e.pointerId);
+    } catch {}
     document.body.style.userSelect = '';
     splitter.classList.remove('dragging');
 
@@ -121,7 +127,9 @@ export function bindContentSplitter(
     dragging = true;
     document.body.style.userSelect = 'none';
     splitter.classList.add('dragging');
-    try { splitter.setPointerCapture(e.pointerId); } catch {}
+    try {
+      splitter.setPointerCapture(e.pointerId);
+    } catch {}
     e.preventDefault();
   };
 

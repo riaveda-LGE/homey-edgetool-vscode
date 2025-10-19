@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { useLogStore } from './store';
+
 // ⛔️ host utils가 아니라 webview 전용 utils를 사용해야 함
 import { createUiLog } from '../../shared/utils';
+import { useLogStore } from './store';
 
 declare const acquireVsCodeApi: () => {
   postMessage: (m: any) => void;
@@ -17,7 +18,7 @@ const ZLogEntry = z.object({
   id: z.number().optional(),
   idx: z.number().optional(),
   ts: z.number().optional(),
-  level: z.enum(['D','I','W','E']).optional(),
+  level: z.enum(['D', 'I', 'W', 'E']).optional(),
   type: z.string().optional(),
   /** 호스트가 주는 표시용 소스(기존). e.g. 'kernel' */
   source: z.string().optional(),
@@ -46,9 +47,9 @@ function setReadyForFilter() {
 export function setupIpc() {
   ui.info('ipc.setupIpc: start');
   // 1) 사용자 환경설정 요청
-  vscode?.postMessage({ v:1, type:'logviewer.getUserPrefs', payload:{} });
+  vscode?.postMessage({ v: 1, type: 'logviewer.getUserPrefs', payload: {} });
   // 2) 최신 브리지와의 핸드셰이크 (hostWebviewBridge가 viewer.ready를 대기)
-  vscode?.postMessage({ v:1, type:'viewer.ready', payload:{} } as any);
+  vscode?.postMessage({ v: 1, type: 'viewer.ready', payload: {} } as any);
 
   window.addEventListener('message', (ev) => {
     const parsed = Env.safeParse(ev.data);
@@ -71,16 +72,18 @@ export function setupIpc() {
       }
       case 'logviewer.prefs': {
         const p = (payload?.prefs ?? {}) as any;
-        if (typeof p.showTime === 'boolean') useLogStore.getState().toggleColumn('time', !!p.showTime);
-        if (typeof p.showProc === 'boolean') useLogStore.getState().toggleColumn('proc', !!p.showProc);
-        if (typeof p.showPid  === 'boolean') useLogStore.getState().toggleColumn('pid',  !!p.showPid);
-        if (typeof p.showSrc  === 'boolean') useLogStore.getState().toggleColumn('src',  !!p.showSrc);
-        if (typeof p.showMsg  === 'boolean') useLogStore.getState().toggleColumn('msg',  !!p.showMsg);
+        if (typeof p.showTime === 'boolean')
+          useLogStore.getState().toggleColumn('time', !!p.showTime);
+        if (typeof p.showProc === 'boolean')
+          useLogStore.getState().toggleColumn('proc', !!p.showProc);
+        if (typeof p.showPid === 'boolean') useLogStore.getState().toggleColumn('pid', !!p.showPid);
+        if (typeof p.showSrc === 'boolean') useLogStore.getState().toggleColumn('src', !!p.showSrc);
+        if (typeof p.showMsg === 'boolean') useLogStore.getState().toggleColumn('msg', !!p.showMsg);
         // 북마크 패널은 시작 시 기본 닫힘.
         // prefs 가 true 라도, 현재 세션에 실제 북마크가 있을 때만 열도록 제한.
         if (typeof p.bookmarksOpen === 'boolean') {
           const want = !!p.bookmarksOpen;
-          const hasAny = useLogStore.getState().rows.some(r => r.bookmarked);
+          const hasAny = useLogStore.getState().rows.some((r) => r.bookmarked);
           useLogStore.getState().setBookmarksPane(want && hasAny);
         }
         return;
@@ -90,7 +93,7 @@ export function setupIpc() {
         const total = typeof payload?.total === 'number' ? payload.total : undefined;
         if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
         let nextId = useLogStore.getState().nextId;
-        const rows = logs.map(e => {
+        const rows = logs.map((e) => {
           const raw = String(e.text ?? '');
           const p = parseLine(raw);
           const src = pickSrcName(e);
@@ -106,7 +109,9 @@ export function setupIpc() {
         const version = typeof payload?.version === 'number' ? payload.version : undefined;
         const warm = !!payload?.warm;
         CURRENT_SESSION_VERSION = version ?? CURRENT_SESSION_VERSION;
-        ui.info(`logs.refresh: reason=${payload?.reason ?? ''} warm=${warm} total=${total} version=${version ?? 'n/a'}`);
+        ui.info(
+          `logs.refresh: reason=${payload?.reason ?? ''} warm=${warm} total=${total} version=${version ?? 'n/a'}`,
+        );
         useLogStore.getState().setTotalRows(total);
         setReadyForFilter(); // 풀 리인덱스 이후에도 허용
         useLogStore.getState().receiveRows(1, []);
@@ -114,19 +119,25 @@ export function setupIpc() {
         const size = useLogStore.getState().windowSize || 500;
         const endIdx = Math.max(1, Math.min(total || size, size));
         ui.info(`refresh: request first page ${startIdx}-${endIdx} total=${total}`);
-        vscode?.postMessage({ v:1, type:'logs.page.request', payload:{ startIdx, endIdx }});
+        vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
         return;
       }
       case 'logs.page.response': {
         const startIdx = Number(payload?.startIdx) || 1;
         const respVersion = typeof payload?.version === 'number' ? payload.version : undefined;
-        if (typeof respVersion === 'number' && typeof CURRENT_SESSION_VERSION === 'number' && respVersion !== CURRENT_SESSION_VERSION) {
-          ui.warn(`page.response: IGNORE stale version resp=${respVersion} current=${CURRENT_SESSION_VERSION}`);
+        if (
+          typeof respVersion === 'number' &&
+          typeof CURRENT_SESSION_VERSION === 'number' &&
+          respVersion !== CURRENT_SESSION_VERSION
+        ) {
+          ui.warn(
+            `page.response: IGNORE stale version resp=${respVersion} current=${CURRENT_SESSION_VERSION}`,
+          );
           return;
         }
         const items = z.array(ZLogEntry).parse(payload?.logs ?? []);
         let nextId = useLogStore.getState().nextId;
-        const rows = items.map(e => {
+        const rows = items.map((e) => {
           const raw = String(e.text ?? '');
           const p = parseLine(raw);
           const src = pickSrcName(e);
@@ -138,9 +149,9 @@ export function setupIpc() {
       }
       case 'merge.progress': {
         useLogStore.getState().mergeProgress({
-          inc:   typeof payload?.inc   === 'number' ? payload.inc   : undefined,
+          inc: typeof payload?.inc === 'number' ? payload.inc : undefined,
           total: typeof payload?.total === 'number' ? payload.total : undefined,
-          active: typeof payload?.active === 'boolean' ? payload.active : undefined
+          active: typeof payload?.active === 'boolean' ? payload.active : undefined,
         });
         return;
       }
@@ -158,7 +169,10 @@ export function setupIpc() {
         return;
       }
       case 'search.results': {
-        const hits = (payload?.hits ?? []).map((h: any)=>({ idx: Number(h?.idx)||0, text: String(h?.text||'') }));
+        const hits = (payload?.hits ?? []).map((h: any) => ({
+          idx: Number(h?.idx) || 0,
+          text: String(h?.text || ''),
+        }));
         ui.info(`search.results recv hits=${hits.length}`);
         // q 동기화(+ 닫힘 상태 레이스 방지 로직은 store 쪽에 존재)
         const q = typeof payload?.q === 'string' ? String(payload.q) : undefined;
@@ -173,13 +187,23 @@ export function setupIpc() {
   });
 }
 
-function parseLine(line: string){
+function parseLine(line: string) {
   const timeMatch = line.match(/^\[([^\]]+)\]\s+(.*)$/);
-  let time = '', rest = line;
-  if (timeMatch){ time = timeMatch[1]; rest = timeMatch[2]; }
+  let time = '',
+    rest = line;
+  if (timeMatch) {
+    time = timeMatch[1];
+    rest = timeMatch[2];
+  }
   const procMatch = rest.match(/^([^\s:]+)\[(\d+)\]:\s*(.*)$/);
-  let proc='', pid='', msg=rest;
-  if (procMatch){ proc = procMatch[1]; pid = procMatch[2]; msg = procMatch[3] ?? ''; }
+  let proc = '',
+    pid = '',
+    msg = rest;
+  if (procMatch) {
+    proc = procMatch[1];
+    pid = procMatch[2];
+    msg = procMatch[3] ?? '';
+  }
   return { time, proc, pid, msg };
 }
 
@@ -204,7 +228,12 @@ function basename(p: string): string {
 }
 
 // 호스트로 필터 변경을 보냅니다(필요 시 컴포넌트에서 호출).
-export function postFilterUpdate(filter: { pid?: string; src?: string; proc?: string; msg?: string }) {
+export function postFilterUpdate(filter: {
+  pid?: string;
+  src?: string;
+  proc?: string;
+  msg?: string;
+}) {
   const next = normalizeFilter(filter);
   if (!READY_FOR_FILTER) {
     PENDING_FILTER = next;
@@ -214,17 +243,17 @@ export function postFilterUpdate(filter: { pid?: string; src?: string; proc?: st
   flushFilter(next);
 }
 
-function normalizeFilter(f: any){
-  const s = (v:any)=> String(v ?? '').trim();
-  const pid  = s(f?.pid);
-  const src  = s(f?.src);
+function normalizeFilter(f: any) {
+  const s = (v: any) => String(v ?? '').trim();
+  const pid = s(f?.pid);
+  const src = s(f?.src);
   const proc = s(f?.proc);
-  const msg  = s(f?.msg);
+  const msg = s(f?.msg);
   return { pid, src, proc, msg };
 }
 
 function flushFilter(next: { pid: string; src: string; proc: string; msg: string }) {
   const payload = { filter: next };
   ui.info(`filter.update → host ${JSON.stringify(payload.filter)}`);
-  vscode?.postMessage({ v:1, type:'logs.filter.update', payload });
+  vscode?.postMessage({ v: 1, type: 'logs.filter.update', payload });
 }

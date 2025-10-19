@@ -1,20 +1,22 @@
 import { useLogStore } from '../../react/store';
 import { BookmarkSquare } from './BookmarkSquare';
 
-export function Bookmarks(){
-  const rows = useLogStore(s=>s.rows);
-  const selectedId = useLogStore(s=>s.selectedRowId);
-  const list = rows.filter(r=>r.bookmarked);
+export function Bookmarks() {
+  const rows = useLogStore((s) => s.rows);
+  const selectedId = useLogStore((s) => s.selectedRowId);
+  const list = rows.filter((r) => r.bookmarked);
   return (
     <aside className="tw-w-[260px] tw-bg-[var(--panel)] tw-border-l tw-border-[var(--border-strong)] tw-flex tw-flex-col tw-min-h-0">
-      <div className="tw-font-semibold tw-px-3 tw-py-2 tw-border-b tw-border-[var(--border)]">북마크</div>
+      <div className="tw-font-semibold tw-px-3 tw-py-2 tw-border-b tw-border-[var(--border)]">
+        북마크
+      </div>
       <div className="tw-flex-1 tw-min-h-0 tw-overflow-y-auto tw-overflow-x-hidden tw-p-2 tw-space-y-1">
-        {list.map(r=>(
+        {list.map((r) => (
           <div
             key={r.id}
             className={`tw-px-2 tw-py-1 tw-rounded tw-cursor-pointer hover:tw-bg-[var(--row-hover)]
-                       ${selectedId===r.id ? 'tw-bg-[color-mix(in_oklab,var(--row-selected)_22%,transparent_78%)]' : ''}`}
-            onClick={()=>{
+                       ${selectedId === r.id ? 'tw-bg-[color-mix(in_oklab,var(--row-selected)_22%,transparent_78%)]' : ''}`}
+            onClick={() => {
               const st = useLogStore.getState();
               // 버퍼 안에 이미 보이는 경우 즉시 하이라이트
               st.jumpToRow(r.id, r.idx);
@@ -29,7 +31,7 @@ export function Bookmarks(){
               <BookmarkSquare
                 checked
                 title="북마크 해제"
-                onClick={(e)=>{
+                onClick={(e) => {
                   e.stopPropagation();
                   useLogStore.getState().toggleBookmark(r.id);
                 }}

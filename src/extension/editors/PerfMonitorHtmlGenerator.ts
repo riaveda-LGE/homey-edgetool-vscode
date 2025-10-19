@@ -76,22 +76,36 @@ export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
   <h2>Function Calls</h2>
   <table>
     <tr><th>Function</th><th>Calls</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th></tr>
-    ${Object.entries(a.functionSummary || {}).map(([name, stats]: [string, any]) =>
-      `<tr class="${(a.bottlenecks?.slowFunctions || []).includes(name) ? 'bottleneck' : ''}">
+    ${Object.entries(a.functionSummary || {})
+      .map(
+        ([name, stats]: [string, any]) =>
+          `<tr class="${(a.bottlenecks?.slowFunctions || []).includes(name) ? 'bottleneck' : ''}">
         <td>${name}</td><td>${stats?.count || 0}</td><td>${(stats?.avgTime || 0).toFixed(2)}</td><td>${(stats?.maxTime || 0).toFixed(2)}</td><td>${(stats?.totalTime || 0).toFixed(2)}</td>
-      </tr>`).join('')}
+      </tr>`,
+      )
+      .join('')}
   </table>
 
-  ${a.ioAnalysis && a.ioAnalysis.totalOperations > 0 ? `
+  ${
+    a.ioAnalysis && a.ioAnalysis.totalOperations > 0
+      ? `
   <h2>I/O Operations</h2>
   <table>
     <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Errors</th></tr>
-    ${a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0 ?
-      `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>` : ''}
-    ${a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0 ?
-      `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>` : ''}
+    ${
+      a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0
+        ? `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>`
+        : ''
+    }
+    ${
+      a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0
+        ? `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>`
+        : ''
+    }
   </table>
-  ` : ''}
+  `
+      : ''
+  }
 
 </body>
 </html>`;
@@ -99,9 +113,21 @@ export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
   }
 
   getHtmlForWebview(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'app.bundle.js'));
-    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css'));
-    const chartUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'chart.umd.js'));
+    const scriptUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'dist',
+        'webviewers',
+        'perf-monitor',
+        'app.bundle.js',
+      ),
+    );
+    const styleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css'),
+    );
+    const chartUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'chart.umd.js'),
+    );
 
     return `<!DOCTYPE html>
 <html lang="en">

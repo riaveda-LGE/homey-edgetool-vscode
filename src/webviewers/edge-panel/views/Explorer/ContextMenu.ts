@@ -14,7 +14,7 @@ export class ContextMenu {
     private parent: HTMLElement,
     private onOpen: (n: TreeNode) => void,
     private onCreate: (dir: string, file: boolean, name: string) => void,
-    private onDelete: (nodes: TreeNode[]) => void
+    private onDelete: (nodes: TreeNode[]) => void,
   ) {
     this.ensure();
 
@@ -78,7 +78,10 @@ export class ContextMenu {
         if (!btn) return;
         const cmd = (btn.dataset as any).cmd as string;
 
-        if (cmd === 'open' && this.target) { this.onOpen(this.target); this.close(); }
+        if (cmd === 'open' && this.target) {
+          this.onOpen(this.target);
+          this.close();
+        }
         if (cmd === 'new-file') this.showCreateForm(true);
         if (cmd === 'new-folder') this.showCreateForm(false);
 
@@ -89,26 +92,25 @@ export class ContextMenu {
         }
       });
 
-      // ⌨️ 입력창 단축키(Enter=확인, Esc=취소)
-      // 중복 바인딩 방지
-      (this.inputEl as any)._kbdBound || this.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.submitCreate();
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          this.showMenuList();
-        }
-      });
-      (this.inputEl as any)._kbdBound = true;
+      // ⌨️ 입력창 단축키(Enter=확인, Esc=취소) — 중복 바인딩 방지
+      if (!(this.inputEl as any)._kbdBound) {
+        this.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.submitCreate();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.showMenuList();
+          }
+        });
+        (this.inputEl as any)._kbdBound = true;
+      }
     }
   }
 
   private baseDir(): string {
     if (!this.target) return '';
-    return this.target.kind === 'folder'
-      ? this.target.path
-      : (this.target.parent?.path ?? '');
+    return this.target.kind === 'folder' ? this.target.path : (this.target.parent?.path ?? '');
   }
 
   private showMenuList() {

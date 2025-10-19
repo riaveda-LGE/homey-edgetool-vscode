@@ -8,12 +8,15 @@
   --accent-foreground: var(--vscode-button-foreground);
   --accent-hover: var(--vscode-button-hoverBackground);
   --focus: var(--vscode-focusBorder);
-  --section-bg: var(--vscode-sideBarSectionHeader-background, var(--vscode-editorWidget-background));
+  --section-bg: var(
+    --vscode-sideBarSectionHeader-background,
+    var(--vscode-editorWidget-background)
+  );
   --section-title: var(--vscode-foreground);
   --muted: var(--vscode-descriptionForeground);
   --link: var(--vscode-textLink-foreground);
-  --row-hover: var(--vscode-list-hoverBackground, rgba(128,128,128,.16));
-  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14,99,156,.35));
+  --row-hover: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.16));
+  --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14, 99, 156, 0.35));
   --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
 
   /* 내부/외부 스플리터 높이 단일 소스 */

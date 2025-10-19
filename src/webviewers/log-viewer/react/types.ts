@@ -1,8 +1,22 @@
 export type ColumnId = 'time' | 'proc' | 'pid' | 'src' | 'msg';
 export type HighlightColor =
-  | 'c1'|'c2'|'c3'|'c4'|'c5'|'c6'|'c7'|'c8'|'c9'|'c10'|'c11'|'c12';
+  | 'c1'
+  | 'c2'
+  | 'c3'
+  | 'c4'
+  | 'c5'
+  | 'c6'
+  | 'c7'
+  | 'c8'
+  | 'c9'
+  | 'c10'
+  | 'c11'
+  | 'c12';
 
-export interface HighlightRule { text: string; color?: HighlightColor; }
+export interface HighlightRule {
+  text: string;
+  color?: HighlightColor;
+}
 
 export interface LogRow {
   id: number;

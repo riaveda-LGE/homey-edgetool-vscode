@@ -1,4 +1,4 @@
-import type { Kind,TreeNode } from '../../types/model.js';
+import type { Kind, TreeNode } from '../../types/model.js';
 import { ContextMenu } from './ContextMenu.js';
 import { TreeView } from './TreeView.js';
 
@@ -40,12 +40,19 @@ export class ExplorerView {
     this.busyEl = this.container.querySelector('#explorerBusy')!;
     this.treeEl = this.container.querySelector('#explorerTree')!;
     // ✅ TreeView에 onDelete 전달 (Delete 키 처리)
-    this.tree = new TreeView(this.treeEl, this.getNodeByPath, this.onToggle, this.onOpen, this.onSelect, this.onDelete);
+    this.tree = new TreeView(
+      this.treeEl,
+      this.getNodeByPath,
+      this.onToggle,
+      this.onOpen,
+      this.onSelect,
+      this.onDelete,
+    );
     this.ctx = new ContextMenu(
       this.container,
       (n) => this.onOpen(n),
       (_dir, isFile, full) => this.onCreate(full, isFile),
-      (nodes) => this.onDelete(nodes)
+      (nodes) => this.onDelete(nodes),
     );
 
     // 새로고침 버튼: 현재 경로 재요청
@@ -56,19 +63,27 @@ export class ExplorerView {
     });
     // F5 단축키(웹뷰 포커스 시)
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'F5') { e.preventDefault(); this.refreshBtn.click(); }
+      if (e.key === 'F5') {
+        e.preventDefault();
+        this.refreshBtn.click();
+      }
     });
 
     // 우클릭 캡처
-    document.addEventListener('contextmenu', (e) => {
-      const t = e.target as HTMLElement | null;
-      if (!t || !t.closest('#explorer')) return;
-      e.preventDefault(); e.stopPropagation();
-      const li = t.closest('.tree-node') as HTMLElement | null;
-      const node = li ? this.getNodeByPath(li.dataset.path || '') ?? null : null;
-      const me = e as MouseEvent;
-      this.ctx.open(me.clientX, me.clientY, node);
-    }, true);
+    document.addEventListener(
+      'contextmenu',
+      (e) => {
+        const t = e.target as HTMLElement | null;
+        if (!t || !t.closest('#explorer')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const li = t.closest('.tree-node') as HTMLElement | null;
+        const node = li ? (this.getNodeByPath(li.dataset.path || '') ?? null) : null;
+        const me = e as MouseEvent;
+        this.ctx.open(me.clientX, me.clientY, node);
+      },
+      true,
+    );
   }
 
   renderBreadcrumb(path: string, nodesByPath: Map<string, TreeNode>) {
@@ -76,16 +91,21 @@ export class ExplorerView {
     this.pathEl.innerHTML = '';
     const segs = path ? path.split('/').filter(Boolean) : [];
     const rootCrumb = document.createElement('span');
-    rootCrumb.className = 'crumb'; rootCrumb.textContent = 'workspace';
+    rootCrumb.className = 'crumb';
+    rootCrumb.textContent = 'workspace';
     rootCrumb.addEventListener('click', () => this.onList(''));
     this.pathEl.appendChild(rootCrumb);
 
     let acc = '';
     segs.forEach((seg) => {
-      const sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '/';
+      const sep = document.createElement('span');
+      sep.className = 'sep';
+      sep.textContent = '/';
       this.pathEl.appendChild(sep);
-      acc = [acc, seg].filter(Boolean).join('/').replace(/\/+/g,'/');
-      const c = document.createElement('span'); c.className = 'crumb'; c.textContent = seg;
+      acc = [acc, seg].filter(Boolean).join('/').replace(/\/+/g, '/');
+      const c = document.createElement('span');
+      c.className = 'crumb';
+      c.textContent = seg;
       c.addEventListener('click', () => this.onList(acc));
       this.pathEl.appendChild(c);
     });
@@ -97,7 +117,9 @@ export class ExplorerView {
     this.setRefreshing(false);
   }
 
-  updateExpanded(node: TreeNode) { this.tree.updateExpanded(node); }
+  updateExpanded(node: TreeNode) {
+    this.tree.updateExpanded(node);
+  }
 
   /** 상단 바 스피너/비활성 표시 */
   setRefreshing(busy: boolean) {

@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 // scripts/deploy.js (ESM)
 import { execSync, spawn } from 'child_process';
 import fs from 'fs';
@@ -11,8 +13,12 @@ process.chdir(root);
 // ────────────────────────────────────────────────────────────────
 // 공용 유틸
 // ────────────────────────────────────────────────────────────────
-function log(msg) { console.log(msg); }
-function err(msg) { console.error(msg); }
+function log(msg) {
+  console.log(msg);
+}
+function err(msg) {
+  console.error(msg);
+}
 
 function spawnProc(cmd, args = [], opts = {}) {
   // Windows에서 code(.cmd) / npm bin 사용 등 고려 → shell:true가 안전
@@ -26,17 +32,17 @@ function getCodeCmd() {
 function waitForFile(filePath, timeoutMs = 300000, intervalMs = 300) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
-    const timer = setInterval(() => {
+    const timer = globalThis.setInterval(() => {
       try {
         if (fs.existsSync(filePath)) {
-          clearInterval(timer);
+          globalThis.clearInterval(timer);
           resolve(true);
         } else if (Date.now() - start > timeoutMs) {
-          clearInterval(timer);
+          globalThis.clearInterval(timer);
           reject(new Error(`Timeout waiting for ${filePath}`));
         }
       } catch (e) {
-        clearInterval(timer);
+        globalThis.clearInterval(timer);
         reject(e);
       }
     }, intervalMs);
@@ -86,8 +92,16 @@ if (isDev) {
   log('🛠️  Start webpack in watch (development + inline-source-map)...');
   const webpack = spawnProc(
     'cross-env',
-    ['NODE_ENV=development', 'webpack', '--watch', '--mode', 'development', '--devtool', 'inline-source-map'],
-    { env: { ...process.env, NODE_ENV: 'development', EXT_MODE: 'esd' } }
+    [
+      'NODE_ENV=development',
+      'webpack',
+      '--watch',
+      '--mode',
+      'development',
+      '--devtool',
+      'inline-source-map',
+    ],
+    { env: { ...process.env, NODE_ENV: 'development', EXT_MODE: 'esd' } },
   );
 
   // EDH 띄우기 전에 필요한 산출물 3가지 모두 대기
@@ -103,19 +117,22 @@ if (isDev) {
       const codeCmd = getCodeCmd();
 
       // Windows spawn 이슈 방지: 인자 분리 대신 = 형태 사용
-      const args = [
-        `--extensionDevelopmentPath=${root}`,
-        '--inspect-extensions=9229'
-      ];
+      const args = [`--extensionDevelopmentPath=${root}`, '--inspect-extensions=9229'];
       const edh = spawnProc(codeCmd, args, {
         env: { ...process.env, NODE_ENV: 'development', EXT_MODE: 'esd' },
       });
 
       // 종료/정리
       const shutdown = () => {
-        try { tsc.kill(); } catch {}
-        try { webpack.kill(); } catch {}
-        try { edh.kill(); } catch {}
+        try {
+          tsc.kill();
+        } catch {}
+        try {
+          webpack.kill();
+        } catch {}
+        try {
+          edh.kill();
+        } catch {}
       };
       process.on('SIGINT', shutdown);
       process.on('SIGTERM', shutdown);
@@ -125,12 +142,15 @@ if (isDev) {
       err(`❌ Failed to detect first build: ${e.message}`);
       process.exit(1);
     });
-
 } else {
   // ───────────── PROD: vsix 패키징 + 설치 ─────────────
   function isInstalled(extId) {
     try {
-      const list = execSync(`${getCodeCmd()} --list-extensions`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: true });
+      const list = execSync(`${getCodeCmd()} --list-extensions`, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: true,
+      });
       return list.split(/\r?\n/).includes(extId);
     } catch {
       return false;

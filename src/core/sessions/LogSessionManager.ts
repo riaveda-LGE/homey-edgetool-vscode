@@ -1,25 +1,40 @@
 // src/core/sessions/LogSessionManager.ts
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { LogEntry } from '@ipc/messages';
-import { DEFAULT_BATCH_SIZE, MERGED_CHUNK_MAX_LINES, MERGED_DIR_NAME, MERGED_MANIFEST_FILENAME } from '../../shared/const.js';
-import { ErrorCategory,XError } from '../../shared/errors.js';
+import {
+  DEFAULT_BATCH_SIZE,
+  MERGED_CHUNK_MAX_LINES,
+  MERGED_DIR_NAME,
+  MERGED_MANIFEST_FILENAME,
+} from '../../shared/const.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
+import { __setWarmupFlagsForTests, Flags as FF } from '../../shared/featureFlags.js';
 import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { ChunkWriter } from '../logs/ChunkWriter.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
-import { countTotalLinesInDir, mergeDirectory, warmupTailPrepass } from '../logs/LogFileIntegration.js';
+import {
+  countTotalLinesInDir,
+  mergeDirectory,
+  warmupTailPrepass,
+} from '../logs/LogFileIntegration.js';
 import { ManifestWriter } from '../logs/ManifestWriter.js';
 import { paginationService } from '../logs/PaginationService.js';
-import { Flags as FF, __setWarmupFlagsForTests } from '../../shared/featureFlags.js';
 
 export type SessionCallbacks = {
   onBatch: (logs: LogEntry[], total?: number, seq?: number) => void;
   onMetrics?: (m: { buffer: any; mem: { rss: number; heapUsed: number } }) => void;
   /** 병합 결과 저장이 끝났을 때 호출(경로/메타 전달) */
-  onSaved?: (info: { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }) => void;
+  onSaved?: (info: {
+    outDir: string;
+    manifestPath: string;
+    chunkCount: number;
+    total?: number;
+    merged: number;
+  }) => void;
   /** 병합 진행률(증분/상태) 전달 */
   onProgress?: (p: { inc?: number; total?: number; done?: number; active?: boolean }) => void;
   /** 정식 병합(T1) 완료 후 하드리프레시 지시 */
@@ -42,14 +57,19 @@ export class LogSessionManager {
   constructor(private conn?: HostConfig) {}
 
   // 진행률 스로틀 메서드
-  private throttledOnProgress(opts: SessionCallbacks, current: {inc?: number, total?: number, done?: number, active?: boolean}) {
+  private throttledOnProgress(
+    opts: SessionCallbacks,
+    current: { inc?: number; total?: number; done?: number; active?: boolean },
+  ) {
     const now = Date.now();
     const newPercent = current.total ? Math.round(((current.done || 0) / current.total) * 100) : 0;
-    
+
     // 퍼센트 변화 ≥1% 또는 250ms 경과 또는 완료 시에만 업데이트
-    if (Math.abs(newPercent - this.lastProgressPercent) >= this.PROGRESS_PERCENT_THRESHOLD || 
-        now - this.lastProgressUpdate > this.PROGRESS_THROTTLE_MS || 
-        !current.active) {
+    if (
+      Math.abs(newPercent - this.lastProgressPercent) >= this.PROGRESS_PERCENT_THRESHOLD ||
+      now - this.lastProgressUpdate > this.PROGRESS_THROTTLE_MS ||
+      !current.active
+    ) {
       this.lastProgressPercent = newPercent;
       this.lastProgressUpdate = now;
       opts.onProgress?.(current);
@@ -113,7 +133,9 @@ export class LogSessionManager {
   ) {
     this.log.info(`T*: merge session start dir=${opts.dir}`);
     let seq = 0;
-    this.log.info(`T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`);
+    this.log.info(
+      `T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`,
+    );
 
     // 총 라인 수 추정 (실패 시 undefined)
     const total = await this.estimateTotalLinesSafe(opts.dir);
@@ -139,13 +161,17 @@ export class LogSessionManager {
           this.hb.addBatch(warmLogs);
           const first = warmLogs.slice(0, Math.min(500, warmLogs.length));
           if (first.length) {
-            this.log.info(`warmup(T0): deliver first ${first.length}/${warmLogs.length} (virtual total=${warmLogs.length})`);
+            this.log.info(
+              `warmup(T0): deliver first ${first.length}/${warmLogs.length} (virtual total=${warmLogs.length})`,
+            );
             opts.onBatch(first, warmLogs.length, ++seq);
           }
           // Short-circuit: 웜업 수가 총합 이상이면 T1 스킵
           if (typeof total === 'number' && warmLogs.length >= total) {
             opts.onProgress?.({ done: total, total, active: false });
-            this.log.info(`T*: short-circuit after warmup (warm=${warmLogs.length} >= total=${total}) — skip T1`);
+            this.log.info(
+              `T*: short-circuit after warmup (warm=${warmLogs.length} >= total=${total}) — skip T1`,
+            );
             return;
           }
         } else {
@@ -169,15 +195,15 @@ export class LogSessionManager {
     manifest.setTotal(total);
     const chunkWriter = new ChunkWriter(outDir, MERGED_CHUNK_MAX_LINES, manifest.data.chunkCount);
     this.log.debug?.(
-      `T1: manifest loaded chunks=${manifest.data.chunkCount} mergedLines=${manifest.data.mergedLines ?? 0}`
+      `T1: manifest loaded chunks=${manifest.data.chunkCount} mergedLines=${manifest.data.mergedLines ?? 0}`,
     );
 
     // 전역 인덱스 부여(최신=1). 과거에 이어쓸 수 있으므로 기저값은 mergedLines.
-    let nextIdx = (manifest.data.mergedLines ?? 0);
+    let nextIdx = manifest.data.mergedLines ?? 0;
     let mergedSoFar = manifest.data.mergedLines;
-    let sentInitial = false;           // ✅ 최초 500줄만 보낼 가드
+    let sentInitial = false; // ✅ 최초 500줄만 보낼 가드
     const initialBuffer: LogEntry[] = [];
-    let paginationOpened = false;      // ✅ T0 시점에만 1회 open
+    let paginationOpened = false; // ✅ T0 시점에만 1회 open
 
     // (워밍업은 mergeDirectory의 warmup 옵션으로만 처리)
 
@@ -186,10 +212,8 @@ export class LogSessionManager {
     //  - __raw   : (옵션) 보정 전 RAW JSONL
     const jsonlDir = path.join(outDir, '__jsonl');
     // 🔹 FF.writeRaw 가 true일 때만 RAW 스냅샷 경로 활성화
-    const rawDir   = FF.writeRaw ? path.join(outDir, '__raw') : undefined;
-    this.log.debug?.(
-      `T1: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir ?? '(disabled)'}`
-    );
+    const rawDir = FF.writeRaw ? path.join(outDir, '__raw') : undefined;
+    this.log.debug?.(`T1: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir ?? '(disabled)'}`);
 
     await mergeDirectory({
       dir: opts.dir,
@@ -217,7 +241,9 @@ export class LogSessionManager {
           if (initialBuffer.length >= 500) {
             const slice = initialBuffer.slice(0, 500);
             const t = paginationService.isWarmupActive() ? paginationService.getWarmTotal() : total;
-            this.log.info(`T1: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()})`);
+            this.log.info(
+              `T1: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()})`,
+            );
             // 워밍업이 이미 초기 500을 보냈다면 보통 여긴 실행되지 않지만,
             // 안전하게 가드 없이도 동일 total로 동작하도록 유지
             opts.onBatch(slice, t, ++seq);
@@ -277,7 +303,9 @@ export class LogSessionManager {
     } else {
       await paginationService.reload();
     }
-    this.log.info(`T1: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`);
+    this.log.info(
+      `T1: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`,
+    );
     // 파일 기반으로 스위치되면 워밍업 버퍼는 내부적으로 clear됨(reload에서 처리)
     if (!paginationService.isWarmupActive()) {
       this.log.info(`T1: switched to file-backed pagination (warm buffer cleared)`);
@@ -350,7 +378,10 @@ export class LogSessionManager {
       const mf = path.join(baseOutDir, MERGED_MANIFEST_FILENAME);
       try {
         await fs.promises.stat(mf);
-        const ts = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+        const ts = new Date()
+          .toISOString()
+          .replace(/[-:TZ.]/g, '')
+          .slice(0, 14);
         const next = `${baseOutDir}-${ts}`;
         await fs.promises.mkdir(next, { recursive: true });
         return next;
@@ -365,7 +396,7 @@ export class LogSessionManager {
 }
 
 // ⬇️ 테스트에서만 사용: 런타임 모드/리밋 주입 API (제품 코드에서 호출 금지)
-export function __setLogMergeModeForTests(mode: 'warmup'|'kway', limit?: number) {
+export function __setLogMergeModeForTests(mode: 'warmup' | 'kway', limit?: number) {
   const enabled = mode === 'warmup';
   __setWarmupFlagsForTests({ warmupEnabled: enabled, warmupPerTypeLimit: limit });
 }

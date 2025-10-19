@@ -1,7 +1,7 @@
-import { LogSessionManager } from '../../sessions/LogSessionManager.js';
 import { __setWarmupFlagsForTests } from '../../../shared/featureFlags.js';
 import type { LogEntry } from '../../../shared/ipc/messages.js';
-import { setupTempInput, prepareUniqueOutDir, cleanDir } from './helpers/testFs.js';
+import { LogSessionManager } from '../../sessions/LogSessionManager.js';
+import { cleanDir, prepareUniqueOutDir, setupTempInput } from './helpers/testFs.js';
 
 jest.setTimeout(600_000);
 
@@ -11,11 +11,11 @@ beforeEach(() => {
   // 테스트 시작 시 항상 초기화: 입력 로그 생성 (유니크 입력 폴더 사용 → 충돌/락 회피)
   INPUT_DIR = prepareUniqueOutDir('ab-compare');
   return setupTempInput(INPUT_DIR, {
-    'cpcd': 2000,
+    cpcd: 2000,
     'homey-pro': 2000,
-    'kernel': 2000,
-    'matter': 2000,
-    'z3gateway': 2000,
+    kernel: 2000,
+    matter: 2000,
+    z3gateway: 2000,
   });
 });
 
@@ -24,10 +24,16 @@ afterEach(() => {
   cleanDir(INPUT_DIR);
 });
 
-async function runOnce(useWarmup: boolean, limit = 10000): Promise<{ initialMs: number; firstLen: number; total?: number }> {
+async function runOnce(
+  useWarmup: boolean,
+  limit = 10000,
+): Promise<{ initialMs: number; firstLen: number; total?: number }> {
   // 테스트에서 RAW 기록은 항상 OFF (네트워크 드라이브/권한 이슈 회피)
   __setWarmupFlagsForTests({
-    warmupEnabled: useWarmup, warmupPerTypeLimit: limit, warmupTarget: 2000, writeRaw: false
+    warmupEnabled: useWarmup,
+    warmupPerTypeLimit: limit,
+    warmupTarget: 2000,
+    writeRaw: false,
   });
 
   const mgr = new LogSessionManager(undefined);
@@ -44,7 +50,13 @@ async function runOnce(useWarmup: boolean, limit = 10000): Promise<{ initialMs: 
         initialMs = Date.now() - t0;
       }
     },
-    onSaved: (info: { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }) => {
+    onSaved: (info: {
+      outDir: string;
+      manifestPath: string;
+      chunkCount: number;
+      total?: number;
+      merged: number;
+    }) => {
       finalTotal = info.total ?? info.merged;
     },
     onProgress: () => {},
@@ -55,8 +67,8 @@ async function runOnce(useWarmup: boolean, limit = 10000): Promise<{ initialMs: 
 
 describe('Warmup vs Full merge', () => {
   it('초기 배치 시간/크기 비교', async () => {
-    const full = await runOnce(false, 0);      // 워밍업 OFF
-    const warm = await runOnce(true, 500);     // 워밍업 ON (limit=500, target=2000)
+    const full = await runOnce(false, 0); // 워밍업 OFF
+    const warm = await runOnce(true, 500); // 워밍업 ON (limit=500, target=2000)
 
     // ── 사람이 읽기 쉬운 비교 출력 ────────────────────────────────────────────────
     const diffMs = (full.initialMs ?? 0) - (warm.initialMs ?? 0);
@@ -65,11 +77,9 @@ describe('Warmup vs Full merge', () => {
     console.log('\n[WarmupVsFull]');
     console.log(
       `  First batch latency  |  OFF: ${full.initialMs} ms (n=${full.firstLen})  ` +
-      `ON: ${warm.initialMs} ms (n=${warm.firstLen})  Δ: ${diffMs} ms (~${pct}%)`
+        `ON: ${warm.initialMs} ms (n=${warm.firstLen})  Δ: ${diffMs} ms (~${pct}%)`,
     );
-    console.log(
-      `  Final merged totals  |  OFF: ${full.total}  ON: ${warm.total}\n`
-    );
+    console.log(`  Final merged totals  |  OFF: ${full.total}  ON: ${warm.total}\n`);
 
     // 둘 다 500줄을 첫 배치로 제공해야 함
     expect(full.firstLen).toBe(500);

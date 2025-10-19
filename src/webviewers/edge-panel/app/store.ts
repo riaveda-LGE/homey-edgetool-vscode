@@ -12,6 +12,9 @@ export function createStore(initial: AppState, reduce: (s: AppState, a: Action) 
       state = reduce(state, a);
       listeners.forEach((l) => l(state, a));
     },
-    subscribe: (l: Listener) => { listeners.add(l); return () => listeners.delete(l); },
+    subscribe: (l: Listener) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
   };
 }

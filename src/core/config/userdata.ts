@@ -2,7 +2,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { ErrorCategory,XError } from '../../shared/errors.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
 import { readJsonFile } from '../../shared/utils.js';
 
 export type Json = any;

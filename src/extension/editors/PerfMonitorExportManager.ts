@@ -7,7 +7,7 @@ import { globalProfiler } from '../../core/logging/perf.js';
 import type { IPerfMonitorExportManager } from './IPerfMonitorPanelComponents.js';
 
 export class PerfMonitorExportManager implements IPerfMonitorExportManager {
-  private _webviewPerfData: Array<{name: string, duration: number}> = [];
+  private _webviewPerfData: Array<{ name: string; duration: number }> = [];
   private _data: any[] = [];
   private _context: vscode.ExtensionContext;
   private _onFileCreated?: (path: string) => void;
@@ -17,7 +17,7 @@ export class PerfMonitorExportManager implements IPerfMonitorExportManager {
     this._onFileCreated = onFileCreated;
   }
 
-  setWebviewPerfData(data: Array<{name: string, duration: number}>): void {
+  setWebviewPerfData(data: Array<{ name: string; duration: number }>): void {
     this._webviewPerfData = data;
   }
 
@@ -30,7 +30,14 @@ export class PerfMonitorExportManager implements IPerfMonitorExportManager {
     try {
       log.info('Starting exportJson');
       const captureResult = globalProfiler.getLastCaptureResult();
-      const combinedFunctionCalls = [...(captureResult?.functionCalls || []), ...this._webviewPerfData.map((d: any) => ({ name: d.name, start: 0, duration: d.duration }))];
+      const combinedFunctionCalls = [
+        ...(captureResult?.functionCalls || []),
+        ...this._webviewPerfData.map((d: any) => ({
+          name: d.name,
+          start: 0,
+          duration: d.duration,
+        })),
+      ];
       const combinedResult = { ...captureResult, functionCalls: combinedFunctionCalls };
       const json = {
         version: '1.0',
@@ -46,8 +53,12 @@ export class PerfMonitorExportManager implements IPerfMonitorExportManager {
         summary: {
           totalMonitoringSamples: (this._data || []).length,
           captureDuration: combinedResult.duration,
-          avgCpuUser: (this._data || []).reduce((sum: number, d: any) => sum + d.cpu.user, 0) / (this._data || []).length || 0,
-          avgCpuSystem: (this._data || []).reduce((sum: number, d: any) => sum + d.cpu.system, 0) / (this._data || []).length || 0,
+          avgCpuUser:
+            (this._data || []).reduce((sum: number, d: any) => sum + d.cpu.user, 0) /
+              (this._data || []).length || 0,
+          avgCpuSystem:
+            (this._data || []).reduce((sum: number, d: any) => sum + d.cpu.system, 0) /
+              (this._data || []).length || 0,
           maxMemory: Math.max(...(this._data || []).map((d: any) => d.memory.heapUsed)),
           minMemory: Math.min(...(this._data || []).map((d: any) => d.memory.heapUsed)),
         },
@@ -106,7 +117,7 @@ export class PerfMonitorExportManager implements IPerfMonitorExportManager {
       const fileUri = vscode.Uri.joinPath(perfFolderUri, filename);
 
       await vscode.workspace.fs.writeFile(fileUri, Buffer.from(html, 'utf8'));
-      
+
       // 파일 생성 후 콜백 호출 (explorer 갱신용)
       this._onFileCreated?.(fileUri.fsPath);
     } catch (error) {

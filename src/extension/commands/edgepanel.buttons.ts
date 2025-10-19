@@ -8,8 +8,8 @@ export type ButtonContext = {
 
 export type ButtonOp =
   | { kind: 'vscode'; command: string; args?: any[] } // VS Code 명령
-  | { kind: 'post'; event: string; payload?: any }    // Webview 신호
-  | { kind: 'handler'; name: string };                // CommandHandlers 진입점
+  | { kind: 'post'; event: string; payload?: any } // Webview 신호
+  | { kind: 'handler'; name: string }; // CommandHandlers 진입점
 
 export type ButtonDef = {
   id: string;
@@ -60,8 +60,16 @@ export function getSections(): SectionDef[] {
       id: 'panel',
       title: '패널 조작',
       items: [
-        { id: 'panel.toggleExplorer', label: '작업패널',   op: { kind: 'post', event: 'ui.toggleExplorer' } },
-        { id: 'panel.toggleLogs',     label: '디버깅패널',   op: { kind: 'post', event: 'ui.toggleLogs' } },
+        {
+          id: 'panel.toggleExplorer',
+          label: '작업패널',
+          op: { kind: 'post', event: 'ui.toggleExplorer' },
+        },
+        {
+          id: 'panel.toggleLogs',
+          label: '디버깅패널',
+          op: { kind: 'post', event: 'ui.toggleLogs' },
+        },
         {
           id: 'panel.updateNow',
           label: 'Update Now',
@@ -77,10 +85,18 @@ export function getSections(): SectionDef[] {
       id: 'homey',
       title: 'homey 조작',
       items: [
-        { id: 'cmd.homeyLogging', label: '로그 보기',     op: { kind: 'handler', name: 'openHomeyLogging' } },
-        { id: 'cmd.homeyRestart', label: '재시작',         op: { kind: 'handler', name: 'homeyRestart' } },
-        { id: 'cmd.homeyMount',   label: '볼륨 마운트',    op: { kind: 'handler', name: 'homeyMount' } },
-        { id: 'cmd.homeyUnmount', label: '볼륨 언마운트',  op: { kind: 'handler', name: 'homeyUnmount' } },
+        {
+          id: 'cmd.homeyLogging',
+          label: '로그 보기',
+          op: { kind: 'handler', name: 'openHomeyLogging' },
+        },
+        { id: 'cmd.homeyRestart', label: '재시작', op: { kind: 'handler', name: 'homeyRestart' } },
+        { id: 'cmd.homeyMount', label: '볼륨 마운트', op: { kind: 'handler', name: 'homeyMount' } },
+        {
+          id: 'cmd.homeyUnmount',
+          label: '볼륨 언마운트',
+          op: { kind: 'handler', name: 'homeyUnmount' },
+        },
       ],
     },
 
@@ -89,12 +105,20 @@ export function getSections(): SectionDef[] {
       id: 'workspace',
       title: '작업폴더',
       items: [
-        { id: 'cmd.changeWorkspace', label: '작업폴더 변경', desc: '작업폴더 베이스 폴더 변경',
-          op: { kind: 'handler', name: 'changeWorkspaceQuick' } },
-        { id: 'cmd.openWorkspace',   label: '작업폴더 열기', desc: '현재 작업폴더 폴더 열기',
-          op: { kind: 'handler', name: 'openWorkspace' } },
-        { id: 'cmd.gitPull',         label: 'git pull', op: { kind: 'handler', name: 'gitPull' } },
-        { id: 'cmd.gitPush',         label: 'git push', op: { kind: 'handler', name: 'gitPush' } },
+        {
+          id: 'cmd.changeWorkspace',
+          label: '작업폴더 변경',
+          desc: '작업폴더 베이스 폴더 변경',
+          op: { kind: 'handler', name: 'changeWorkspaceQuick' },
+        },
+        {
+          id: 'cmd.openWorkspace',
+          label: '작업폴더 열기',
+          desc: '현재 작업폴더 폴더 열기',
+          op: { kind: 'handler', name: 'openWorkspace' },
+        },
+        { id: 'cmd.gitPull', label: 'git pull', op: { kind: 'handler', name: 'gitPull' } },
+        { id: 'cmd.gitPush', label: 'git push', op: { kind: 'handler', name: 'gitPush' } },
       ],
     },
 
@@ -103,10 +127,18 @@ export function getSections(): SectionDef[] {
       id: 'help',
       title: '기타',
       items: [
-        { id: 'cmd.performanceMonitor', label: '성능측정', desc: 'Performance Monitor 토글',
-          op: { kind: 'handler', name: 'togglePerformanceMonitoring' } },
-        { id: 'panel.reload', label: 'VS Code 재시작', desc: 'VS Code 창 새로고침',
-          op: { kind: 'vscode', command: 'workbench.action.reloadWindow' } },
+        {
+          id: 'cmd.performanceMonitor',
+          label: '성능측정',
+          desc: 'Performance Monitor 토글',
+          op: { kind: 'handler', name: 'togglePerformanceMonitoring' },
+        },
+        {
+          id: 'panel.reload',
+          label: 'VS Code 재시작',
+          desc: 'VS Code 창 새로고침',
+          op: { kind: 'vscode', command: 'workbench.action.reloadWindow' },
+        },
         { id: 'cmd.help', label: '도움말', op: { kind: 'handler', name: 'openHelp' } },
       ],
     },

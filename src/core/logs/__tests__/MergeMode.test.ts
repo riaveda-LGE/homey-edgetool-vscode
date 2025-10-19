@@ -1,7 +1,7 @@
-import { mergeDirectory } from '../LogFileIntegration.js';
-import type { LogEntry } from '../../../shared/ipc/messages.js';
-import { setupTempInput, prepareUniqueOutDir, cleanDir } from './helpers/testFs.js';
 import { __setWarmupFlagsForTests } from '../../../shared/featureFlags.js';
+import type { LogEntry } from '../../../shared/ipc/messages.js';
+import { mergeDirectory } from '../LogFileIntegration.js';
+import { cleanDir, prepareUniqueOutDir, setupTempInput } from './helpers/testFs.js';
 
 jest.setTimeout(120_000);
 
