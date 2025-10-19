@@ -150,7 +150,9 @@ export function setupIpc() {
       case 'search.results': {
         const hits = (payload?.hits ?? []).map((h: any)=>({ idx: Number(h?.idx)||0, text: String(h?.text||'') }));
         ui.info(`search.results recv hits=${hits.length}`);
-        useLogStore.getState().setSearchResults(hits);
+        // q 동기화(+ 닫힘 상태 레이스 방지 로직은 store 쪽에 존재)
+        const q = typeof payload?.q === 'string' ? String(payload.q) : undefined;
+        useLogStore.getState().setSearchResults(hits, { q });
         return;
       }
       case 'error': {

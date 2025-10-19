@@ -24,10 +24,11 @@ type Actions = {
   setHighlights(rules: HighlightRule[]): void;
   setSearch(q: string): void;
   closeSearch(): void;
-  setSearchResults(hits: { idx: number; text: string }[]): void;
+  openSearchPanel(): void;
+  setSearchResults(hits: { idx: number; text: string }[], opts?: { q?: string }): void;
   toggleBookmark(rowId: number): void;
   toggleBookmarksPane(): void;
-  jumpToRow(rowId: number): void;
+  jumpToRow(rowId: number, idx?: number): void;
   jumpToIdx(idx: number): void;
   resizeColumn(col: 'time'|'proc'|'pid'|'src', dx: number): void;
   mergeProgress(args: { inc?: number; total?: number; reset?: boolean; active?: boolean }): void;
@@ -54,12 +55,20 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   },
 
   setSearch(q){
-    // 이제 검색 실행은 Enter→host(search.query)에서 처리
-    if (!q.trim()) return set({ searchQuery:'', searchOpen:false, searchHits:[] });
-    set({ searchQuery:q, searchOpen:true });
+    // 쿼리만 저장. 패널 오픈은 명시적으로 openSearchPanel에서 처리.
+    const t = q.trim();
+    if (!t) return set({ searchQuery:'', searchHits:[], searchOpen:false });
+    set({ searchQuery:t });
   },
   closeSearch(){ set({ searchOpen:false, searchQuery:'', searchHits:[] }); },
-  setSearchResults(hits){ set({ searchOpen:true, searchHits:hits }); },
+  openSearchPanel(){ set({ searchOpen:true }); },
+  setSearchResults(hits, opts){
+    const st = get();
+    // 사용자가 닫은 뒤(쿼리도 비움) 늦게 도착한 결과는 무시하여 재오픈 방지
+    if (!st.searchOpen && !st.searchQuery.trim()) return;
+    const nextQ = (opts?.q ?? st.searchQuery) || '';
+    set({ searchOpen:true, searchHits:hits, searchQuery: nextQ });
+  },
 
   toggleBookmark(rowId){
     const rows = get().rows.map(r=> r.id===rowId ? {...r, bookmarked: !r.bookmarked } : r);
@@ -68,7 +77,15 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   },
 
   toggleBookmarksPane(){ set({ showBookmarks: !get().showBookmarks }); },
-  jumpToRow(rowId){ set({ selectedRowId: rowId }); },
+  jumpToRow(rowId, idx){
+    // 직접 클릭/북마크에서 선택: 바로 선택 상태로 반영
+    set({ selectedRowId: rowId });
+    // idx가 함께 넘어오면 이후 페이지 교체에도 선택 유지가 자연스러움(추가 확장 대비)
+    if (typeof idx === 'number' && idx > 0) {
+      // 점프 요청 없이 선택만 갱신
+      // (필요 시 여기서 pendingJumpIdx를 다룰 수 있으나 현재는 불필요)
+    }
+  },
   jumpToIdx(idx){ set({ pendingJumpIdx: Math.max(1, idx|0) }); },
 
   resizeColumn(col, dx){

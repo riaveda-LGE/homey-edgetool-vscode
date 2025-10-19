@@ -5,15 +5,17 @@ import { Popover, Transition } from '@headlessui/react';
 import { HighlightPopover } from './HighlightPopover';
 import { FilterDialog } from './FilterDialog';
 import { createUiLog } from '../../../shared/utils';
+import { SearchDialog } from './SearchDialog';
 
 export function Toolbar(){
   const show = useLogStore(s=>s.showCols);
   const setCol = useLogStore(s=>s.toggleColumn);
   const setSearch = useLogStore(s=>s.setSearch);
-  const closeSearch = useLogStore(s=>s.closeSearch);
+  const openSearchPanel = useLogStore(s=>s.openSearchPanel);
   const toggleBookmarksPane = useLogStore(s=>s.toggleBookmarksPane);
   const progress = useLogStore(s=>({active:s.mergeActive, done:s.mergeDone, total:s.mergeTotal}));
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchDlgOpen, setSearchDlgOpen] = useState(false);
   const ui = useMemo(()=>createUiLog(vscode,'log-viewer.toolbar'),[]);
 
   const savePref = (k:string, v:boolean) => vscode?.postMessage({ v:1, type:'logviewer.saveUserPrefs', payload:{ prefs: { [k]: v } } });
@@ -61,31 +63,27 @@ export function Toolbar(){
         )}
       </div>
 
-      <input
-        className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-bg-[var(--bg)]"
-        placeholder="검색어"
-        value={useLogStore(s=>s.searchQuery)}
-        onChange={e=>setSearch(e.currentTarget.value)}
-        onKeyDown={e=>{
-          if (e.key === 'Enter') {
-            const q = useLogStore.getState().searchQuery.trim();
-            ui.info(`search.enter q="${q}"`);
-            if (q) vscode?.postMessage({ v:1, type:'search.query', payload:{ q } });
-          } else if (e.key === 'Escape') {
-            ui.info('search.escape → clear');
-            vscode?.postMessage({ v:1, type:'search.clear', payload:{} });
-            closeSearch();
-          }
-        }}
-      />
+      {/* 검색: 인라인 입력 제거 → 버튼 + 팝업 */}
       <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
-        onClick={()=>{
-          ui.info('search.close.click');
-          vscode?.postMessage({ v:1, type:'search.clear', payload:{} });
-          closeSearch();
+        onClick={()=>{ setSearchDlgOpen(true); }}
+      >
+        검색
+      </button>
+      <SearchDialog
+        open={searchDlgOpen}
+        initialQuery={useLogStore(s=>s.searchQuery)}
+        onCancel={()=> setSearchDlgOpen(false)}
+        onSearch={(q)=>{
+          const query = (q ?? '').trim();
+          ui.info(`search.button q="${query}"`);
+          setSearch(query);           // 쿼리만 저장
+          openSearchPanel();          // 패널 오픈을 명시적으로
+          if (query) vscode?.postMessage({ v:1, type:'search.query', payload:{ q: query } });
+          setSearchDlgOpen(false);
         }}
-      >검색 닫기</button>
+      />
+
       <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
         onClick={()=>setFilterOpen(true)}

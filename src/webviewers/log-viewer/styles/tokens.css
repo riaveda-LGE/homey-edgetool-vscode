@@ -15,6 +15,10 @@
   --row-selected: var(--vscode-list-activeSelectionBackground, rgba(14,99,156,.35));
   --row-selected-fg: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
 
+  /* 선택(포커스)된 행 하이라이트 */
+  --row-focus: color-mix(in oklab, var(--row-selected) 45%, transparent 55%);
+  --row-focus-border: color-mix(in oklab, var(--row-selected) 90%, var(--bg) 10%);
+
   --splitter-h: 10px;
   --toolbar-h: 44px;
 

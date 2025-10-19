@@ -113,9 +113,18 @@ export function Grid(){
     ui.info(`Grid.jumpToIdx idx=${idx} → request ${startIdx}-${endIdx}`);
     parentRef.current.scrollTop = Math.max(0, (idx - 1) * m.rowH);
     vscode?.postMessage({ v:1, type:'logs.page.request', payload:{ startIdx, endIdx }});
-    // 점프 1회 소진
-    useLogStore.setState({ pendingJumpIdx: undefined });
   }, [m.pendingJumpIdx, m.windowSize, m.totalRows, m.rowH]);
+
+  // pendingJumpIdx가 뷰포트로 로드되면 해당 행을 선택 상태로 확정
+  useEffect(()=>{
+    const target = m.pendingJumpIdx;
+    if (!target) return;
+    const found = m.rows.find(r => r.idx === target);
+    if (found) {
+      ui.info(`Grid.jump.resolve idx=${target} → rowId=${found.id}`);
+      useLogStore.setState({ selectedRowId: found.id, pendingJumpIdx: undefined });
+    }
+  }, [m.pendingJumpIdx, m.rows]);
 
   return (
     <>
@@ -143,15 +152,21 @@ export function Grid(){
               />
             );
           }
+          const isSelected = m.selectedRowId === r.id;
           return (
             <div
               key={r.id}
-              className={`tw-grid ${r.bookmarked?'tw-bg-[color-mix(in_oklab,var(--row-selected)_20%,transparent_80%)]':''}`}
+              className={[
+                'tw-grid',
+                r.bookmarked ? 'tw-bg-[color-mix(in_oklab,var(--row-selected)_20%,transparent_80%)]' : '',
+                isSelected ? 'tw-bg-[var(--row-focus)] tw-shadow-[inset_0_0_0_1px_var(--row-focus-border)]' : ''
+              ].join(' ')}
               style={{
                 position:'absolute', top: v.start, left:0, right:0, height: v.size,
                 gridTemplateColumns: gridCols, columnGap: anyHidden ? 0 : undefined
               }}
-              onClick={()=>useLogStore.getState().jumpToRow(r.id)}
+              onClick={()=>useLogStore.getState().jumpToRow(r.id, r.idx)}
+              aria-selected={isSelected || undefined}
               /* 행 어디를 더블클릭해도 팝업이 뜨도록 보장 */
               onDoubleClick={(e)=>{
                 // 더블클릭 이벤트 흐름 추적
