@@ -9,6 +9,9 @@ export type LogEntry = {
   level?: 'D' | 'I' | 'W' | 'E';
   type?: 'system' | 'homey' | 'application' | 'other';
   source?: string;
+  /** (선택) 파싱된 필드 – 일부 소스에만 존재 */
+  pid?: string | number;
+  process?: string;
   text: string;
 };
 
@@ -32,10 +35,20 @@ export type Envelope<TType extends string, TPayload> = {
 
 type Empty = Record<string, never>;
 
+// ── 서버측 필터 모델 ────────────────────────────────────────────────────────
+export type LogFilter = {
+  pid?: string;
+  src?: string;   // 파일/소스
+  proc?: string;  // 프로세스명
+  msg?: string;   // 메시지
+};
+
 // Host → Webview
 export type H2W =
   | Envelope<'logs.batch', { logs: LogEntry[]; total?: number; seq?: number }>
-  | Envelope<'logs.page.response', { startIdx: number; endIdx: number; logs: LogEntry[] }>
+  | Envelope<'logs.page.response', { startIdx: number; endIdx: number; logs: LogEntry[]; version?: number }>
+  /** 현재 pagination/데이터 상태 스냅샷(디버깅/부팅용) */
+  | Envelope<'logs.state', { warm: boolean; total?: number; version?: number; manifestDir?: string }>
   | Envelope<'metrics.update', {
       buffer: { realtime: number; viewport: number; search: number; spill: number };
       mem: { rss: number; heapUsed: number };
@@ -71,17 +84,25 @@ export type H2W =
   | Envelope<'ack', { inReplyTo?: string }>
   /** 정식 병합 완료 후 UI 하드리프레시 트리거(중복/정렬 반영) */
   | Envelope<'logs.refresh', {
-      reason?: 'full-reindex' | 'manifest-updated'; total?: number; version?: number
+      reason?: 'full-reindex' | 'manifest-updated' | 'filter-changed' | 'bridge.start' | 'viewer.ready';
+      total?: number; version?: number; warm?: boolean
     }>;
 
 // Webview → Host
 export type W2H =
+  | Envelope<'viewer.ready', Empty>
   | Envelope<'ui.ready', Empty>
   | Envelope<'ui.log', { level: 'debug' | 'info' | 'warn' | 'error'; text: string; source?: string }>
+  /** EdgePanel UI 상태 저장 */
+  | Envelope<'ui.savePanelState', { panelState: any }>
   | Envelope<'logging.startRealtime', { filter?: string; files?: string[] }>
   | Envelope<'logging.startFileMerge', { dir: string; types?: string[]; reverse?: boolean }>
   | Envelope<'logging.stop', Empty>
   | Envelope<'logs.page.request', { startIdx: number; endIdx: number }>
+  /** 서버측 필터 적용/해제 */
+  | Envelope<'logs.filter.set', { filter: LogFilter }>
+  | Envelope<'logs.filter.clear', Empty>
+  | Envelope<'logs.filter.update', { filter: LogFilter }>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
   | Envelope<'homey.command.run', { name: string; args?: string[] }>
   | Envelope<'button.click', { id: string }>

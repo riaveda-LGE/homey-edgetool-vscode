@@ -322,12 +322,6 @@ homey-edgetool/
 │  ├─ development-notes.md                # 개발 노트
 │  ├─ homey_logging_architect.md          # Homey 로깅 아키텍처
 │  └─ log-viewer.md                       # 로그 뷰어 문서
-├─ edge-go-go/                            # Go 기반 Edge 툴 (별도 프로젝트)
-│  ├─ doc/                                # Go 프로젝트 문서
-│  ├─ lib/                                # Go 라이브러리
-│  ├─ main.go                             # Go 메인 파일
-│  ├─ util/                               # Go 유틸리티
-│  └─ TODO.md                             # Go 프로젝트 TODO
 ├─ media/                                 # 아이콘/정적자원
 │  └─ resources/
 │     ├─ edge-icon.svg                    # 확장 아이콘
@@ -472,27 +466,23 @@ homey-edgetool/
 │     │     └─ model.ts                   # State/TreeNode/Section 등 타입
 │     ├─ log-viewer/
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰
-│     │  ├─ app/
-│     │  │  ├─ index.ts                   # 부트스트랩
-│     │  │  ├─ model.ts                   # 모델 정의
-│     │  │  ├─ parse.ts                   # 파싱 로직
-│     │  │  ├─ types.ts                   # 타입 정의
-│     │  │  └─ update.ts                  # 업데이트 로직
-│     │  ├─ styles/
-│     │  │  ├─ base.css                   # 기본 스타일
-│     │  │  ├─ components.css             # 컴포넌트 스타일
-│     │  │  ├─ layout.css                 # 레이아웃 스타일
-│     │  │  └─ tokens.css                 # 테마 토큰
-│     │  └─ views/
-│     │     ├─ AppView.ts                 # 메인 앱 뷰
-│     │     ├─ BookmarksView.ts           # 북마크 뷰
-│     │     ├─ dom.ts                     # DOM 유틸리티
-│     │     ├─ GridHeaderView.ts          # 그리드 헤더 뷰
-│     │     ├─ GridView.ts                # 그리드 뷰
-│     │     ├─ Layout/                    # 레이아웃 컴포넌트
-│     │     ├─ ModalView.ts               # 모달 뷰
-│     │     ├─ SearchView.ts              # 검색 뷰
-│     │     └─ ToolbarView.ts             # 툴바 뷰
+│     │  ├─ react/
+│     │  │  ├─ components/
+│     │  │  │  ├─ App.tsx                 # 메인 앱 컴포넌트
+│     │  │  │  ├─ Bookmarks.tsx           # 북마크 컴포넌트
+│     │  │  │  ├─ FilterBar.tsx           # 필터 바 컴포넌트
+│     │  │  │  ├─ Grid.tsx                # 로그 그리드 컴포넌트
+│     │  │  │  ├─ GridHeader.tsx          # 그리드 헤더 컴포넌트
+│     │  │  │  ├─ HighlightPopover.tsx    # 하이라이트 팝오버
+│     │  │  │  ├─ SearchPanel.tsx         # 검색 패널 컴포넌트
+│     │  │  │  └─ Toolbar.tsx             # 툴바 컴포넌트
+│     │  │  ├─ ipc.ts                     # IPC 통신 유틸리티
+│     │  │  ├─ main.tsx                   # React 앱 진입점
+│     │  │  ├─ store.ts                   # Zustand 상태 관리
+│     │  │  └─ types.ts                   # React 앱 타입 정의
+│     │  └─ styles/
+│     │     ├─ tailwind.css               # Tailwind CSS 스타일
+│     │     └─ tokens.css                 # 테마 토큰 및 하이라이트 스타일
 │     └─ perf-monitor/
 │        ├─ app.js                        # 성능 모니터 앱 (Chart.js 기반)
 │        └─ style.css                     # 스타일시트
@@ -508,6 +498,8 @@ homey-edgetool/
 ├─ tsconfig.webview.json                  # Webview용 TypeScript 설정
 ├─ webpack.config.js                      # Webpack 설정
 ├─ eslint.config.js                       # ESLint 설정
+├─ postcss.config.mjs                     # PostCSS 설정 (Tailwind용)
+├─ tailwind.config.js                     # Tailwind CSS 설정
 ├─ .prettierrc                            # Prettier 설정
 ├─ .prettierignore                        # Prettier 제외 파일
 ├─ .gitattributes                         # Git 속성

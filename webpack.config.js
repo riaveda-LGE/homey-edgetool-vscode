@@ -1,6 +1,7 @@
 // webpack.config.js
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import webpack from 'webpack';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,7 +23,7 @@ export default (_env, argv) => {
 
   entry: {
     'edge-panel/app': path.resolve(__dirname, 'src/webviewers/edge-panel/app/index.ts'),
-    'log-viewer/app': path.resolve(__dirname, 'src/webviewers/log-viewer/app/index.ts'),
+    'log-viewer/app': path.resolve(__dirname, 'src/webviewers/log-viewer/react/main.tsx'),
     'perf-monitor/app': path.resolve(__dirname, 'src/webviewers/perf-monitor/app.js'),
   },
 
@@ -30,13 +31,17 @@ export default (_env, argv) => {
     // 웹뷰 번들은 dist/webviewers 아래로만 출력 (extension 번들과 분리)
     path: path.resolve(__dirname, 'dist/webviewers'),
     filename: '[name].bundle.js',
-    // 이 clean은 output.path(=dist/webviewers)만 청소 → 배포용 dist/extension 산출물엔 영향 없음
+    // CSS는 이번 빌드에서 추출되므로 전체 정리
     clean: true,
   },
 
   resolve: {
-    extensions: ['.ts', '.js'],
-    extensionAlias: { '.js': ['.ts', '.js'] },
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    // .js로 작성된 임포트를 .ts/.tsx로도 해석되게 확장
+    extensionAlias: {
+      '.js':  ['.ts', '.tsx', '.js'],
+      '.jsx': ['.tsx', '.jsx']
+    },
     alias: {
       '@ipc': path.resolve(__dirname, 'src/shared/ipc'),
     },
@@ -45,7 +50,7 @@ export default (_env, argv) => {
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         use: {
           loader: 'ts-loader',
           options: {
@@ -55,6 +60,18 @@ export default (_env, argv) => {
           },
         },
         exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/i,
+        use: [
+          // entry와 동일 경로/이름으로 CSS 추출 (예: log-viewer/app.css)
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: { importLoaders: 1 },
+          },
+          { loader: 'postcss-loader' }, // Tailwind(postcss.config.mjs) 사용
+        ],
       },
     ],
   },
@@ -71,6 +88,9 @@ export default (_env, argv) => {
   cache: isProd ? false : { type: 'filesystem' },
 
   plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].css', // log-viewer/app.css, edge-panel/app.css ...
+    }),
     // 웹뷰/번들에서 모드 분기를 쉽게 하도록 주입
     new webpack.DefinePlugin({
       __ESD__: JSON.stringify(!isProd),
@@ -96,12 +116,6 @@ export default (_env, argv) => {
         {
           from: path.resolve(__dirname, 'src/webviewers/log-viewer/index.html'),
           to: 'log-viewer/index.html',
-          noErrorOnMissing: true,
-        },
-        {
-          context: path.resolve(__dirname, 'src/webviewers/log-viewer'),
-          from: 'styles/*.css',
-          to: 'log-viewer/styles/[name][ext]',
           noErrorOnMissing: true,
         },
 
