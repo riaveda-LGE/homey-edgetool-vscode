@@ -53,6 +53,14 @@ npm test -- --testNamePattern="일반 로그 파일들을 정확히 병합해야
 npm test -- --testNamePattern="타임존 점프가 있는 로그 파일들을 정확히 병합해야 함"
 ```
 
+## 검증
+
+TypeScript 컴파일 검증:
+
+```bash
+npx tsc --noEmit --project tsconfig.webview.json
+```
+
 ## 스크립트
 
 - `npm run clean`: dist 디렉토리 정리
