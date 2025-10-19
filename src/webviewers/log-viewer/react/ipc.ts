@@ -28,9 +28,19 @@ const ZLogEntry = z.object({
   text: z.string(),
 });
 
-// 현재 세션(version) 추적: host가 logs.refresh로 알려주는 버전 값과 맞지 않으면
-// logs.page.response(구버전)를 무시해 UI 일관성을 지킵니다.
+// 현재 세션(version) 추적
 let CURRENT_SESSION_VERSION: number | undefined;
+function updateSessionVersion(next: number | undefined, origin: string) {
+  const prev = CURRENT_SESSION_VERSION;
+  if (typeof next === 'number' && next !== prev) {
+    CURRENT_SESSION_VERSION = next;
+    ui.info(`session.version ← ${next} (prev=${prev ?? 'n/a'}, origin=${origin})`);
+  } else {
+    ui.debug?.(
+      `session.version keep ${prev ?? 'n/a'} (origin=${origin}, next=${next ?? 'n/a'})`,
+    );
+  }
+}
 
 // 필터 전송 gate: warmup/초기 배치 수신 전에는 필터 변경을 보류
 let READY_FOR_FILTER = false;
@@ -62,8 +72,10 @@ export function setupIpc() {
         const total = typeof payload?.total === 'number' ? payload.total : undefined;
         const version = typeof payload?.version === 'number' ? payload.version : undefined;
         const warm = !!payload?.warm;
-        CURRENT_SESSION_VERSION = version ?? CURRENT_SESSION_VERSION;
-        ui.info(`logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`);
+        updateSessionVersion(version, 'logs.state');
+        ui.info(
+          `logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`,
+        );
         // ⚠️ 과거엔 warm 일 때만 ready. 파일 기반( warm=false ) 초기 클릭이 묵살되는 이슈가 있어
         // 호스트가 살아있다는 신호(logs.state)를 받는 즉시 필터 전송을 허용한다.
         setReadyForFilter();
@@ -91,6 +103,8 @@ export function setupIpc() {
       case 'logs.batch': {
         const logs = z.array(ZLogEntry).parse(payload?.logs ?? []);
         const total = typeof payload?.total === 'number' ? payload.total : undefined;
+        const seq = typeof payload?.seq === 'number' ? payload.seq : undefined;
+        const v = typeof payload?.version === 'number' ? payload.version : undefined;
         if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
         let nextId = useLogStore.getState().nextId;
         const rows = logs.map((e) => {
@@ -99,7 +113,11 @@ export function setupIpc() {
           const src = pickSrcName(e);
           return { id: nextId++, idx: e.idx, ...p, src, raw };
         });
-        ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'}`);
+        // 버전 동기화: payload.version 우선, 없으면 구버전 호환 seq를 fallback으로 채택
+        updateSessionVersion(v ?? seq, 'logs.batch');
+        ui.debug?.(
+          `logs.batch: recv=${rows.length} total=${total ?? 'n/a'} seq=${seq ?? 'n/a'} ver=${v ?? 'n/a'} cur=${CURRENT_SESSION_VERSION ?? 'n/a'}`,
+        );
         useLogStore.getState().receiveRows(1, rows);
         setReadyForFilter(); // 최초 배치 수신 시 필터 전송 허용
         return;
@@ -108,7 +126,7 @@ export function setupIpc() {
         const total = Number(payload?.total ?? 0) || 0;
         const version = typeof payload?.version === 'number' ? payload.version : undefined;
         const warm = !!payload?.warm;
-        CURRENT_SESSION_VERSION = version ?? CURRENT_SESSION_VERSION;
+        updateSessionVersion(version, 'logs.refresh');
         ui.info(
           `logs.refresh: reason=${payload?.reason ?? ''} warm=${warm} total=${total} version=${version ?? 'n/a'}`,
         );
@@ -135,6 +153,13 @@ export function setupIpc() {
           );
           return;
         }
+        // 진입 시점에 아직 세션 버전을 모르면(초기 핸드셰이크 경합) 1회 채택
+        if (
+          typeof respVersion === 'number' &&
+          typeof CURRENT_SESSION_VERSION !== 'number'
+        ) {
+          updateSessionVersion(respVersion, 'logs.page.response(adopt-on-first)');
+        }
         const items = z.array(ZLogEntry).parse(payload?.logs ?? []);
         let nextId = useLogStore.getState().nextId;
         const rows = items.map((e) => {
@@ -143,7 +168,9 @@ export function setupIpc() {
           const src = pickSrcName(e);
           return { id: nextId++, idx: e.idx, ...p, src, raw };
         });
-        ui.debug(`page: response ${startIdx}-${payload?.endIdx} count=${rows.length}`);
+        ui.debug(
+          `page: response ${startIdx}-${payload?.endIdx} count=${rows.length} v=${respVersion ?? 'n/a'} cur=${CURRENT_SESSION_VERSION ?? 'n/a'}`,
+        );
         useLogStore.getState().receiveRows(startIdx, rows);
         return;
       }

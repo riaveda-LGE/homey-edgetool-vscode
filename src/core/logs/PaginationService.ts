@@ -9,6 +9,11 @@ class PaginationService {
   private reader?: PagedReader;
   private log = getLogger('PaginationService');
   private version = 0; // manifest/리더 재로딩 버전
+  private bump(reason: string) {
+    const prev = this.version;
+    this.version++;
+    this.log.info(`pagination: version bump ${prev} → ${this.version} (${reason})`);
+  }
   // ── Warmup (메모리 기반 페이지) ─────────────────────────────────────────
   private warmActive = false;
   private warmBuffer: LogEntry[] | null = null; // 최신순(내림차순) 0..N-1
@@ -24,7 +29,7 @@ class PaginationService {
       this.log.info(`pagination: open dir=${dir}`);
       this.reader = await PagedReader.open(dir);
       this.manifestDir = dir;
-      this.version++;
+      this.bump('setManifestDir');
       this.invalidateFilterCache();
     } else {
       this.log.debug?.(`pagination: already set dir=${dir}`);
@@ -40,7 +45,7 @@ class PaginationService {
     }
     this.log.info(`pagination: reload dir=${this.manifestDir}`);
     this.reader = await PagedReader.open(this.manifestDir);
-    this.version++;
+    this.bump('reload');
     // 파일 기반 준비 끝 → 이제 warm 모드 종료
     this.clearWarmup();
     // 데이터셋 버전이 바뀌었으므로 필터 총계 캐시 무효화
@@ -77,7 +82,7 @@ class PaginationService {
     this.filter = norm;
     if (changed) {
       this.invalidateFilterCache();
-      this.version++; // UI가 구버전 응답을 버리도록 bump
+      this.bump('filter.set'); // UI가 구버전 응답을 버리도록 bump
       this.log.info(`pagination: filter set ${key}`);
     } else {
       this.log.debug?.('pagination: filter unchanged');
@@ -137,7 +142,7 @@ class PaginationService {
     this.warmBuffer = entries?.slice?.() ?? [];
     this.warmTotal = Math.max(this.warmBuffer.length, virtualTotal || 0);
     this.warmActive = this.warmBuffer.length > 0;
-    this.version++;
+    this.bump('warm.seed');
     this.log.info(
       `pagination: warmup seeded entries=${this.warmBuffer.length} virtualTotal=${this.warmTotal}`,
     );
@@ -149,7 +154,7 @@ class PaginationService {
     this.warmBuffer = null;
     this.warmTotal = 0;
     this.warmActive = false;
-    this.version++;
+    this.bump('warm.clear');
     this.log.info(`pagination: warmup cleared (released ${n} entries)`);
   }
 

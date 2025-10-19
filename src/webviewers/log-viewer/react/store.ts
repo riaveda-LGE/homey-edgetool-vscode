@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
 import { LOG_OVERSCAN, LOG_ROW_HEIGHT, LOG_WINDOW_SIZE } from '../../../shared/const';
+import { vscode } from './ipc';
+import { createUiLog } from '../../shared/utils';
 import { postFilterUpdate } from './ipc';
 import type { ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
 
@@ -53,8 +55,11 @@ type Actions = {
 
 export const useLogStore = create<Model & Actions>()((set, get) => ({
   ...initial,
+  // 로거: 스토어 변경 시점 추적
+  __ui: createUiLog(vscode, 'log-viewer.store'),
   setTotalRows(total) {
     set({ totalRows: Math.max(0, total | 0) });
+    (get() as any).__ui?.info?.(`store.totalRows ← ${Math.max(0, total | 0)}`);
   },
 
   receiveRows(startIdx, rows) {
@@ -72,6 +77,12 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       windowStart: Math.max(1, startIdx | 0),
       selectedRowId,
     });
+    (get() as any).__ui?.debug?.(
+      `store.receiveRows start=${startIdx} rows=${rows.length} nextId=${maxId} windowStart=${Math.max(
+        1,
+        startIdx | 0,
+      )} sel=${selectedRowId ?? '-'}`,
+    );
   },
 
   toggleColumn(col, on) {
@@ -146,6 +157,9 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     let act = active ?? cur.mergeActive;
     if (t > 0 && doneVal >= t) act = false;
     set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });
+    (get() as any).__ui?.debug?.(
+      `store.mergeProgress inc=${inc ?? '-'} done=${doneVal} total=${t} active=${act}`,
+    );
   },
 
   // ── 필터 상태 ─────────────────────────────────────────────────────────
@@ -156,11 +170,13 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   applyFilter(next) {
     set({ filter: next });
     postFilterUpdate(next); // ← 실제 전송은 여기서만
+    (get() as any).__ui?.info?.(`store.applyFilter ${JSON.stringify(next)}`);
   },
   resetFilters() {
     const empty = { pid: '', src: '', proc: '', msg: '' };
     set({ filter: empty });
     postFilterUpdate(empty); // 초기화는 즉시 반영
+    (get() as any).__ui?.info?.('store.resetFilters');
   },
 }));
 

@@ -122,7 +122,7 @@ export class HostWebviewBridge {
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq },
+            payload: { logs: head, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           // ② 상태(총계/버전)도 함께 브로드캐스트
           this.send({
@@ -169,12 +169,13 @@ export class HostWebviewBridge {
           );
           const logs = await paginationService.readRangeByIdx(s, e); // 내부에서 필터 적용 분기
           // 현재 pagination 버전을 함께 내려, 웹뷰가 세션 불일치를 걸러낼 수 있게 한다.
+          const version = paginationService.getVersion();
           this.send({
             v: 1,
             type: 'logs.page.response',
-            payload: { startIdx: s, endIdx: e, logs, version: paginationService.getVersion() },
+            payload: { startIdx: s, endIdx: e, logs, version },
           } as any);
-          this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length}`);
+          this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length} v=${version}`);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: PAGE_READ_ERROR ${message}`);
@@ -203,7 +204,7 @@ export class HostWebviewBridge {
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq },
+            payload: { logs: head, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           // 상태도 함께 브로드캐스트
           this.send({
@@ -249,7 +250,7 @@ export class HostWebviewBridge {
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq },
+            payload: { logs: head, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           this.send({
             v: 1,
@@ -410,6 +411,9 @@ export class HostWebviewBridge {
       const manifestDir = paginationService.getManifestDir();
 
       // 상태는 매번 보내도 무방(웹뷰가 최신값으로 덮어씀)
+      this.log.info(
+        `bridge: kickIfReady origin=${origin} warm=${warm} total=${total ?? 'unknown'} version=${version} manifest=${manifestDir ?? '-'}`,
+      );
       this.send({
         v: 1,
         type: 'logs.state',

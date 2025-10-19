@@ -54,7 +54,7 @@ export type LogFilter = {
 
 // Host → Webview
 export type H2W =
-  | Envelope<'logs.batch', { logs: LogEntry[]; total?: number; seq?: number }>
+  | Envelope<'logs.batch', { logs: LogEntry[]; total?: number; seq?: number; version?: number }>
   | Envelope<
       'logs.page.response',
       { startIdx: number; endIdx: number; logs: LogEntry[]; version?: number }

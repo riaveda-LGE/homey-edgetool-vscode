@@ -13,6 +13,7 @@ import { getLogger } from '../../core/logging/extension-logger.js';
 import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
 import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
+import { paginationService } from '../../core/logs/PaginationService.js';
 
 export class LogViewerPanelManager {
   private log = getLogger('LogViewerPanelManager');
@@ -186,7 +187,9 @@ export class LogViewerPanelManager {
         this.appendLog?.(
           `[info] merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`,
         );
-        this._send('logs.batch', { logs, total, seq });
+        // 초기 배치에도 현재 pagination 버전을 함께 전달(웹뷰 버전 동기화)
+        const ver = paginationService.getVersion();
+        this._send('logs.batch', { logs, total, seq, version: ver });
         this.initialSent = true;
       },
       onSaved: (info) => {
@@ -270,8 +273,9 @@ export class LogViewerPanelManager {
         const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
         const total = payload?.total;
         const seq = payload?.seq;
+        const ver = payload?.version;
         this.appendLog?.(
-          `[debug] host→ui: ${type} (len=${len}, total=${total ?? ''}, seq=${seq ?? ''})`,
+          `[debug] host→ui: ${type} (len=${len}, total=${total ?? ''}, seq=${seq ?? ''}, v=${ver ?? ''})`,
         );
       } else if (type === 'logs.page.response') {
         const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
