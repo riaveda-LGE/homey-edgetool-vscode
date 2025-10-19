@@ -90,8 +90,18 @@ export function Toolbar(){
       >
         필터링
       </button>
-      <button className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]" onClick={()=>{ toggleBookmarksPane(); vscode?.postMessage({ v:1, type:'logviewer.saveUserPrefs', payload:{ prefs: { bookmarksOpen: !useLogStore.getState().showBookmarks } } }); }}>
-        북마크 보기
+      <button
+        className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
+        onClick={()=>{
+          toggleBookmarksPane();
+          vscode?.postMessage({
+            v:1,
+            type:'logviewer.saveUserPrefs',
+            payload:{ prefs: { bookmarksOpen: !useLogStore.getState().showBookmarks } }
+          });
+        }}
+      >
+        북마크
       </button>
       <FilterDialog open={filterOpen} onClose={()=>setFilterOpen(false)} />
     </>

@@ -8,6 +8,7 @@ export function GridHeader(){
 
   // 그리드와 동일하게: 마지막 보이는 컬럼은 1fr
   const buildGridTemplate = () => {
+    // 본문 컬럼(time~msg)만 계산
     const tracks: string[] = [];
     const vis = { ...show };
     const push = (on: boolean, px: string) => tracks.push(on ? px : '0px');
@@ -22,7 +23,8 @@ export function GridHeader(){
       }
     }
     if (!tracks.some(t => t !== '0px')) tracks[0] = '1fr';
-    return tracks.join(' ');
+    // ⬇️ 항상 보이는 '북마크' 고정폭 열을 맨 앞에 추가
+    return `var(--col-bm-w) ${tracks.join(' ')}`;
   };
   const cols = buildGridTemplate();
 
@@ -40,6 +42,8 @@ export function GridHeader(){
   return (
     <div className="tw-sticky tw-top-0 tw-bg-[var(--panel)] tw-border-b tw-border-[var(--border-strong)] tw-z-[1]"
          style={{ display:'grid', gridTemplateColumns: cols, columnGap: anyHidden ? 0 : undefined }}>
+      {/* 북마크 헤더(비어있는 고정 폭 컬럼, 오른쪽 구분선 유지) */}
+      <div className="tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)]" aria-hidden />
       {col('time','시간', true, (dx)=>resize('time',dx), !show.time, lastVisible==='time')}
       {col('proc','프로세스', true, (dx)=>resize('proc',dx), !show.proc, lastVisible==='proc')}
       {col('pid','PID', true, (dx)=>resize('pid',dx), !show.pid, lastVisible==='pid')}

@@ -40,7 +40,10 @@ export function SearchPanel(){
             <div
               key={`${idx}-${i}`}
               className="tw-px-3 tw-py-2 tw-border-b tw-border-[rgba(255,255,255,.06)] tw-cursor-pointer hover:tw-bg-[var(--row-hover)]"
-              onClick={()=>{ if (idx>0) useLogStore.getState().jumpToIdx(idx); }}
+              onClick={()=>{
+                if (idx>0) useLogStore.getState().jumpToIdx(idx);
+                // 선택 강조는 receiveRows에서 idx 매칭으로 보장됨
+              }}
             >
               <div className="tw-text-sm" dangerouslySetInnerHTML={{ __html: html }} />
             </div>

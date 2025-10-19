@@ -28,6 +28,7 @@ type Actions = {
   setSearchResults(hits: { idx: number; text: string }[], opts?: { q?: string }): void;
   toggleBookmark(rowId: number): void;
   toggleBookmarksPane(): void;
+  setBookmarksPane(open: boolean): void;
   jumpToRow(rowId: number, idx?: number): void;
   jumpToIdx(idx: number): void;
   resizeColumn(col: 'time'|'proc'|'pid'|'src', dx: number): void;
@@ -42,8 +43,20 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   setTotalRows(total){ set({ totalRows: Math.max(0, total|0) }); },
 
   receiveRows(startIdx, rows){
-    const maxId = Math.max(get().nextId, ((rows.at(-1)?.id ?? 0) + 1));
-    set({ rows, nextId: maxId, windowStart: Math.max(1, startIdx|0) });
+    const state = get();
+    const maxId = Math.max(state.nextId, ((rows.at(-1)?.id ?? 0) + 1));
+    // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
+    let selectedRowId = state.selectedRowId;
+    if (state.pendingJumpIdx) {
+      const hit = rows.find(r => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
+      if (hit) selectedRowId = hit.id;
+    }
+    set({
+      rows,
+      nextId: maxId,
+      windowStart: Math.max(1, startIdx|0),
+      selectedRowId,
+    });
   },
 
   toggleColumn(col,on){ set({ showCols: { ...get().showCols, [col]: on } }); },
@@ -71,20 +84,18 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   },
 
   toggleBookmark(rowId){
+    // 북마크 패널 자동 열림 방지: 단순히 행의 상태만 토글
     const rows = get().rows.map(r=> r.id===rowId ? {...r, bookmarked: !r.bookmarked } : r);
-    const any = rows.some(r=>r.bookmarked);
-    set({ rows, showBookmarks: any || get().showBookmarks });
+    set({ rows });
   },
 
   toggleBookmarksPane(){ set({ showBookmarks: !get().showBookmarks }); },
+  setBookmarksPane(open){ set({ showBookmarks: !!open }); },
   jumpToRow(rowId, idx){
-    // 직접 클릭/북마크에서 선택: 바로 선택 상태로 반영
+    // 직접 클릭/북마크/검색결과에서 선택: 즉시 선택 표시
     set({ selectedRowId: rowId });
-    // idx가 함께 넘어오면 이후 페이지 교체에도 선택 유지가 자연스러움(추가 확장 대비)
-    if (typeof idx === 'number' && idx > 0) {
-      // 점프 요청 없이 선택만 갱신
-      // (필요 시 여기서 pendingJumpIdx를 다룰 수 있으나 현재는 불필요)
-    }
+    // 참고: 실제 스크롤 이동은 jumpToIdx가 담당
+    // (여기서는 선택만 처리; idx는 디버깅/확장용으로 보존)
   },
   jumpToIdx(idx){ set({ pendingJumpIdx: Math.max(1, idx|0) }); },
 

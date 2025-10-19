@@ -70,10 +70,12 @@ export function setupIpc() {
         if (typeof p.showPid  === 'boolean') useLogStore.getState().toggleColumn('pid',  !!p.showPid);
         if (typeof p.showSrc  === 'boolean') useLogStore.getState().toggleColumn('src',  !!p.showSrc);
         if (typeof p.showMsg  === 'boolean') useLogStore.getState().toggleColumn('msg',  !!p.showMsg);
+        // 북마크 패널은 시작 시 기본 닫힘.
+        // prefs 가 true 라도, 현재 세션에 실제 북마크가 있을 때만 열도록 제한.
         if (typeof p.bookmarksOpen === 'boolean') {
           const want = !!p.bookmarksOpen;
-          const cur = useLogStore.getState().showBookmarks;
-          if (cur !== want) useLogStore.getState().toggleBookmarksPane();
+          const hasAny = useLogStore.getState().rows.some(r => r.bookmarked);
+          useLogStore.getState().setBookmarksPane(want && hasAny);
         }
         return;
       }

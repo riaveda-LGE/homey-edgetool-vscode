@@ -6,6 +6,7 @@ import { vscode } from '../ipc';
 import { GridHeader } from './GridHeader';
 import { MessageDialog } from './MessageDialog';
 import { createUiLog } from '../../../shared/utils';
+import { BookmarkSquare } from './BookmarkSquare';
 
 export function Grid(){
   const parentRef = useRef(null as HTMLDivElement | null);
@@ -64,6 +65,7 @@ export function Grid(){
 
   // 마지막 보이는 컬럼이 항상 1fr이 되도록 그리드 트랙을 구성
   const buildGridTemplate = () => {
+    // 본문 컬럼(time~msg)만 계산(토글 영향 받음)
     const tracks: string[] = [];
     const order: Array<keyof typeof m.showCols> = ['time','proc','pid','src','msg'];
     for (const id of order) {
@@ -86,7 +88,8 @@ export function Grid(){
     }
     // 모든 컬럼이 숨겨졌을 때 안전장치
     if (!tracks.some(t => t !== '0px')) tracks[0] = '1fr';
-    return tracks.join(' ');
+    // ⬇️ 항상 보이는 '북마크' 고정폭 열을 맨 앞에 추가
+    return `var(--col-bm-w) ${tracks.join(' ')}`;
   };
   const gridCols = buildGridTemplate();
   const anyHidden = !(m.showCols.time && m.showCols.proc && m.showCols.pid && m.showCols.src && m.showCols.msg);
@@ -176,8 +179,22 @@ export function Grid(){
                 openPreview(r);
               }}
             >
+              {/* ── 북마크 전용 열(항상 보임) ───────────────────────────── */}
+              <div
+                className="tw-flex tw-items-center tw-justify-center tw-border-b tw-border-[var(--row-divider)] tw-border-r tw-border-r-[var(--divider)]"
+              >
+                <BookmarkSquare
+                  checked={!!r.bookmarked}
+                  // 그리드 행 높이에 맞춰 버튼 크기 자동 조정(살짝 여유)
+                  size={Math.max(18, Math.min(28, m.rowH - 6))}
+                  title={r.bookmarked ? '북마크 해제' : '북마크'}
+                  onClick={(e)=>{
+                    e.stopPropagation();
+                    useLogStore.getState().toggleBookmark(r.id);
+                  }}
+                />
+              </div>
               <Cell kind="time" hidden={!m.showCols.time} mono={false} last={lastVisibleCol==='time'}>
-                <span className="tw-mr-1 tw-cursor-pointer" onClick={(e)=>{ e.stopPropagation(); useLogStore.getState().toggleBookmark(r.id); }}> {r.bookmarked ? '★' : '☆'} </span>
                 {hi(r.time, m.highlights)}
               </Cell>
               <Cell kind="proc" hidden={!m.showCols.proc} last={lastVisibleCol==='proc'}>{hi(r.proc, m.highlights)}</Cell>
