@@ -7,6 +7,8 @@ export type Action =
   | { type: 'TOGGLE_EXPLORER' }
   | { type: 'SET_SECTIONS' }
   | { type: 'LOG_APPEND'; text: string }
+  | { type: 'LOG_PREPEND'; lines: string[] }
+  | { type: 'LOG_RESET'; lines?: string[] }
   | { type: 'EXPLORER_SET_ROOT' }
   | { type: 'EXPLORER_LIST_RESULT' }
   | { type: 'EXPLORER_SELECT'; node: TreeNode; multi: boolean }

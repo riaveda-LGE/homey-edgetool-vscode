@@ -1,4 +1,5 @@
 import type { AppState, TreeNode } from '../types/model.js';
+import { DEBUG_LOG_MEMORY_MAX } from '../../../shared/const.js';
 import type { Action } from './actions.js';
 
 export function createInitialState(): AppState {
@@ -17,7 +18,11 @@ export function createInitialState(): AppState {
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'INIT': {
-      if (action.logs) state.logs = [...action.logs];
+      if (action.logs) {
+        state.logs = action.logs.length > DEBUG_LOG_MEMORY_MAX
+          ? action.logs.slice(-DEBUG_LOG_MEMORY_MAX)
+          : [...action.logs];
+      }
       if (action.panelState) state.panel = action.panelState;
       return state;
     }
@@ -29,9 +34,24 @@ export function reducer(state: AppState, action: Action): AppState {
       return state;
     case 'SET_SECTIONS':
       return state; // view에서만 사용
-    case 'LOG_APPEND':
+    case 'LOG_APPEND': {
       state.logs.push(action.text);
+      if (state.logs.length > DEBUG_LOG_MEMORY_MAX) {
+        state.logs.splice(0, state.logs.length - DEBUG_LOG_MEMORY_MAX);
+      }
       return state;
+    }
+    case 'LOG_PREPEND': {
+      const next = [...action.lines, ...state.logs];
+      state.logs = next.length > DEBUG_LOG_MEMORY_MAX ? next.slice(-DEBUG_LOG_MEMORY_MAX) : next;
+      return state;
+    }
+    case 'LOG_RESET': {
+      state.logs = action.lines
+        ? action.lines.slice(-DEBUG_LOG_MEMORY_MAX)
+        : [];
+      return state;
+    }
     case 'EXPLORER_SET_ROOT': {
       const root: TreeNode = {
         path: '',

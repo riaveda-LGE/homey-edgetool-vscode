@@ -42,12 +42,18 @@ export class AppView {
     private onCreate: (full: string, isFile: boolean) => void,
     private onDelete: (nodes: TreeNode[]) => void,
     private onSavePanel: (p: PanelStatePersist) => void,
+    /** Debug Log Panel 상단 스크롤/버튼 콜백 */
+    private onLogLoadOlder?: () => void,
+    private onLogClear?: () => void,
+    private onLogCopy?: () => void,
   ) {
     this.splitter = document.getElementById('splitter')!;
     this.content = document.getElementById('content')!;
 
     // 로그 컨테이너/뷰는 항상 생성(컨테이너는 reset/append 시에 DOM에 붙음)
-    this.logsView = new LogsView(new LogService(this.content));
+    this.logsView = new LogsView(
+      new LogService(this.content, this.onLogLoadOlder, this.onLogClear, this.onLogCopy),
+    );
 
     // Explorer·내부 스플리터도 고정 DOM으로 미리 생성
     this.explorerEl = ensureExplorerContainer(this.content);
@@ -299,6 +305,9 @@ export class AppView {
   }
   logsAppend(line: string) {
     this.logsView.append(line);
+  }
+  logsPrepend(lines: string[]) {
+    this.logsView.prepend(lines);
   }
 
   savePanelState() {

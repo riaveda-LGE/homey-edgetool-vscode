@@ -63,6 +63,10 @@ import { createStore } from './store.js';
     (full, isFile) => (isFile ? explorer.createFile(full) : explorer.createFolder(full)),
     (nodes) => nodes.forEach((node) => explorer.delete(node.path, node.kind === 'folder', true)),
     (p) => persist.save(p),
+    // Debug Log Panel 콜백
+    () => host.post({ v: 1, type: 'debuglog.loadOlder', payload: {} }),
+    () => host.post({ v: 1, type: 'debuglog.clear', payload: {} }),
+    () => host.post({ v: 1, type: 'debuglog.copy', payload: {} }),
   );
 
   // =========================
@@ -129,6 +133,24 @@ import { createStore } from './store.js';
       }
       case 'appendLog': {
         appView.logsAppend(msg.payload.text);
+        break;
+      }
+      case 'debuglog.page.response': {
+        const lines: string[] = msg.payload.lines || [];
+        if (lines.length) {
+          // 상태 반영은 최소화(렌더는 DOM 주도)
+          store.dispatch({ type: 'LOG_PREPEND', lines } as any);
+          appView.logsPrepend(lines);
+        }
+        break;
+      }
+      case 'debuglog.cleared': {
+        store.dispatch({ type: 'LOG_RESET', lines: [] } as any);
+        appView.logsReset([]);
+        break;
+      }
+      case 'debuglog.copy.done': {
+        // 웹뷰는 조용히 무시 (호스트가 토스트/알림 처리 가능)
         break;
       }
       case 'buttons.set': {

@@ -1,20 +1,29 @@
 // === src/extension/panels/extensionPanel.ts ===
 import * as vscode from 'vscode';
 
-import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
+import { readEdgePanelState, writeEdgePanelState, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import {
   addLogSink,
-  getBufferedLogs,
   getLogger,
   removeLogSink,
 } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
+import {
+  DEBUG_LOG_DIR,
+  DEBUG_LOG_FILENAME,
+  DEBUG_LOG_MEMORY_MAX,
+  DEBUG_LOG_PAGE_SIZE,
+  DEBUG_LOG_BIGFILE_BYTES,
+  RAW_DIR_NAME,
+  PANEL_VIEW_TYPE,
+  RANDOM_STRING_LENGTH,
+} from '../../shared/const.js';
 import { readFileAsText } from '../../shared/utils.js';
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';
 import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
 import { LogViewerPanelManager } from './LogViewerPanelManager.js';
+import * as fsp from 'fs/promises';
 
 interface EdgePanelState {
   version: string;
@@ -40,6 +49,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   private _disposables = new Set<() => void>();
 
+  // ── Debug Log Panel 스풀 상태 ───────────────────────────────────────
+  private _dbgDir?: vscode.Uri;
+  private _dbgFile?: vscode.Uri;
+  private _dbgTotal = 0;     // 스풀 파일 기준 누적 라인 수
+  private _dbgCursor = 0;    // 웹뷰 세션 기준 '이전 로드' 커서(끝에서 앞으로)
+  private _sinkBound = false;
+
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
@@ -55,7 +71,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       updateUrl: latestInfo?.url,
       latestSha: latestInfo?.sha256,
       lastCheckTime: new Date().toISOString(),
-      logs: getBufferedLogs(),
+      logs: [], // 초기에는 스풀에서 tail 로 채움
     };
   }
 
@@ -99,6 +115,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    // ── Debug Log 스풀 준비 및 초기 로그 로드 ───────────────────────
+    await this._ensureDebugSpool();
+    const initialLines = await this._readTail(DEBUG_LOG_MEMORY_MAX);
+    this._state.logs = initialLines;
+    // 커서는 파일 끝에서 현재 표시 라인수만큼 되돌린 위치
+    this._dbgCursor = Math.max(0, this._dbgTotal - initialLines.length);
+
     // Explorer 브리지
     this._explorer = createExplorerBridge(this._context, (m) => {
       try {
@@ -108,6 +131,22 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
     // 로그 뷰어
     this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri);
+
+    // ── Debug Log sink 등록(한 번만) ─────────────────────────────────
+    if (!this._sinkBound) {
+      const sink = (line: string) => {
+        try {
+          webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
+        } catch {}
+        // 파일 스풀(비동기, 비블로킹)
+        this._appendToSpool(line).catch(() => {});
+        this._dbgTotal += 1;
+      };
+      addLogSink(sink);
+      this._sink = sink;
+      this._sinkBound = true;
+      this._trackDisposable(() => removeLogSink(sink));
+    }
 
     // 버튼 실행 라우터(ActionRouter)
     this._actionRouter = new EdgePanelActionRouter(
@@ -148,7 +187,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           return;
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
           const panelState = await readEdgePanelState(this._context);
-          const state = { ...this._state, logs: getBufferedLogs() };
+          // 메모리 버퍼 대신 스풀에서 읽은 tail(초기 로드) 사용
+          const state = { ...this._state, logs: this._state.logs };
           webviewView.webview.postMessage({
             v: 1,
             type: 'initState',
@@ -198,6 +238,41 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this._logViewer?.stop();
           return;
         }
+
+        // ── Webview 메시지 처리: Debug Log Panel 동작 ────────────────────
+        if (msg?.type === 'debuglog.loadOlder' && msg?.v === 1) {
+          // 커서 이전 구간에서 페이지 단위로 전송
+          const limit: number = Number(msg?.payload?.limit ?? DEBUG_LOG_PAGE_SIZE);
+          const end = this._dbgCursor; // [start, end) 형태로 생각
+          const start = Math.max(0, end - limit);
+          const lines = await this._readRange(start, end);
+          this._dbgCursor = start;
+          webviewView.webview.postMessage({
+            v: 1,
+            type: 'debuglog.page.response',
+            payload: { lines, cursor: this._dbgCursor, total: this._dbgTotal },
+          });
+          return;
+        }
+        if (msg?.type === 'debuglog.clear' && msg?.v === 1) {
+          await this._clearSpool();
+          this._state.logs = [];
+          this._dbgTotal = 0;
+          this._dbgCursor = 0;
+          webviewView.webview.postMessage({ v: 1, type: 'debuglog.cleared', payload: {} });
+          return;
+        }
+        if (msg?.type === 'debuglog.copy' && msg?.v === 1) {
+          const text = await this._readAllText();
+          await vscode.env.clipboard.writeText(text);
+          webviewView.webview.postMessage({
+            v: 1,
+            type: 'debuglog.copy.done',
+            payload: { bytes: Buffer.byteLength(text, 'utf8'), lines: text ? text.split('\n').length : 0 },
+          });
+          vscode.window.showInformationMessage('Debug logs copied to clipboard.');
+          return;
+        }
       } catch (e) {
         this.log.error('onDidReceiveMessage error', e as any);
       }
@@ -210,7 +285,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
           return;
         }
-        const state = { ...this._state, logs: getBufferedLogs() };
+        // 가시성 복귀 시에도 스풀 기반 상태 유지
+        const state = { ...this._state, logs: this._state.logs };
         const panelState = await readEdgePanelState(this._context);
         webviewView.webview.postMessage({
           v: 1,
@@ -247,14 +323,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       }
     });
     this._trackDisposable(() => winStateDisposable.dispose());
-
-    // OutputChannel -> EdgePanel
-    this._sink = (line: string) => {
-      try {
-        webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
-      } catch {}
-    };
-    addLogSink(this._sink);
 
     webviewView.onDidDispose(() => {
       this._disposeTracked();
@@ -298,6 +366,122 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this.log.debug('[debug] EdgePanelProvider stopLogging: start');
     this._logViewer?.stop();
     this.log.debug('[debug] EdgePanelProvider stopLogging: end');
+  }
+
+  // ───────────────────────────────────────────────────────────────────
+  // Debug Log Spool Helpers
+  // ───────────────────────────────────────────────────────────────────
+  private async _ensureDebugSpool() {
+    if (!this._dbgDir) {
+      // 1) 워크스페이스가 있으면: <workspace>/<RAW_DIR_NAME>/<DEBUG_LOG_DIR>
+      // 2) 없으면 폴백: <globalStorageUri>/<DEBUG_LOG_DIR>
+      let dir: vscode.Uri | undefined;
+      try {
+        const info = await resolveWorkspaceInfo(this._context as any);
+        if (info?.wsDirUri) {
+          dir = vscode.Uri.joinPath(info.wsDirUri, RAW_DIR_NAME, DEBUG_LOG_DIR);
+        }
+      } catch {}
+      if (!dir) {
+        dir = vscode.Uri.joinPath(this._context.globalStorageUri, DEBUG_LOG_DIR);
+      }
+      await fsp.mkdir(dir.fsPath, { recursive: true });
+      this._dbgDir = dir;
+      this.log.debug(`[debug] spool dir fixed: ${dir.fsPath}`);
+    }
+    if (!this._dbgFile) {
+      const file = vscode.Uri.joinPath(this._dbgDir, DEBUG_LOG_FILENAME);
+      // 파일 존재 보장
+      try {
+        await fsp.access(file.fsPath);
+      } catch {
+        await fsp.writeFile(file.fsPath, '', 'utf8');
+      }
+      this._dbgFile = file;
+      this.log.debug(`[debug] spool file: ${file.fsPath}`);
+    }
+    // 총 라인수 계산 (성능 보호: 큰 파일이면 전량 읽지 않음)
+    try {
+      const stat = await fsp.stat(this._dbgFile.fsPath);
+      if (stat.size > DEBUG_LOG_BIGFILE_BYTES) {
+        // 큰 파일: 정확 카운트는 생략하고 초기 tail만 사용하도록 둔다.
+        // (_readTail 결과를 초기 상태로 쓰며, _dbgTotal은 우선 tail 길이로 설정)
+        const tail = await this._readTail(DEBUG_LOG_MEMORY_MAX);
+        this._dbgTotal = tail.length;
+        this.log.debug(
+          `[debug] large spool detected (${stat.size}B) → skip full count; init total≈${this._dbgTotal}`
+        );
+        return;
+      }
+    } catch {}
+    try {
+      const txt = await this._readAllText();
+      this._dbgTotal = txt ? txt.split('\n').filter((l) => l.length > 0).length : 0;
+    } catch {
+      this._dbgTotal = 0;
+    }
+  }
+
+  private async _appendToSpool(line: string) {
+    if (!this._dbgFile) await this._ensureDebugSpool();
+    try {
+      await fsp.appendFile(this._dbgFile!.fsPath, line + '\n', 'utf8');
+    } catch (err: any) {
+      if (err?.code === 'ENOENT') {
+        // 경로/파일이 사라졌다면 재보장 후 재시도
+        await this._ensureDebugSpool();
+        await fsp.appendFile(this._dbgFile!.fsPath, line + '\n', 'utf8');
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  private async _readAllText(): Promise<string> {
+    if (!this._dbgFile) await this._ensureDebugSpool();
+    try {
+      const buf = await fsp.readFile(this._dbgFile!.fsPath);
+      return buf.toString('utf8');
+    } catch (err: any) {
+      if (err?.code === 'ENOENT') {
+        // 경로/파일이 누락되었으면 재보장 후 재시도
+        await this._ensureDebugSpool();
+        try {
+          const buf = await fsp.readFile(this._dbgFile!.fsPath);
+          return buf.toString('utf8');
+        } catch {
+          return '';
+        }
+      }
+      throw err;
+    }
+  }
+
+  private async _readTail(n: number): Promise<string[]> {
+    const all = await this._readAllText();
+    if (!all) return [];
+    const lines = all.split('\n').filter((l) => l.length > 0);
+    return lines.slice(-n);
+  }
+
+  private async _readRange(start: number, end: number): Promise<string[]> {
+    const all = await this._readAllText();
+    if (!all) return [];
+    const lines = all.split('\n').filter((l) => l.length > 0);
+    const s = Math.max(0, Math.min(start, lines.length));
+    const e = Math.max(0, Math.min(end, lines.length));
+    if (s >= e) return [];
+    return lines.slice(s, e);
+  }
+
+  private async _clearSpool() {
+    if (!this._dbgFile) await this._ensureDebugSpool();
+    try {
+      await fsp.unlink(this._dbgFile!.fsPath);
+    } catch {}
+    // 디렉터리가 사라졌을 수도 있으니 재보장 후 빈 파일 생성
+    await this._ensureDebugSpool();
+    await fsp.writeFile(this._dbgFile!.fsPath, '', 'utf8');
   }
 
   private _randomNonce(len = RANDOM_STRING_LENGTH || 32) {

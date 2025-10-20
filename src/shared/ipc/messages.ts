@@ -108,6 +108,12 @@ export type H2W =
   | Envelope<'setUpdateVisible', { visible: boolean }>
   | Envelope<'ui.toggleExplorer', Empty>
   | Envelope<'ui.toggleLogs', Empty>
+  /** Debug Log Panel 페이징 응답(오래된 로그 프리펜드) */
+  | Envelope<'debuglog.page.response', { lines: string[]; cursor: number; total: number }>
+  /** Debug Log Panel 전체 삭제 완료 통지 */
+  | Envelope<'debuglog.cleared', Empty>
+  /** Debug Log Panel 전체 복사 완료(선택적 통계) */
+  | Envelope<'debuglog.copy.done', { bytes?: number; lines?: number }>
   /** 파일 병합 저장 완료/정보 */
   | Envelope<
       'logmerge.saved',
@@ -177,4 +183,10 @@ export type W2H =
   | Envelope<'ui.requestButtons', Empty>
   | Envelope<'perf.ready', Empty>
   | Envelope<'logviewer.getUserPrefs', Empty>
-  | Envelope<'logviewer.saveUserPrefs', { prefs: any }>;
+  | Envelope<'logviewer.saveUserPrefs', { prefs: any }>
+  /** Debug Log Panel: 상단 스크롤 시 이전 로그 요청 */
+  | Envelope<'debuglog.loadOlder', { limit?: number }>
+  /** Debug Log Panel: 전체 삭제 */
+  | Envelope<'debuglog.clear', Empty>
+  /** Debug Log Panel: 전체 복사(클립보드) */
+  | Envelope<'debuglog.copy', Empty>;

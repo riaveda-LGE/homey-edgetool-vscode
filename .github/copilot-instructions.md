@@ -318,12 +318,15 @@ homey-edgetool/
 │  ├─ copilot-instructions.md             # Copilot 지침 문서
 │  └─ workflows/                          # GitHub Actions 워크플로우
 ├─ doc/                                   # 프로젝트 문서
-│  ├─ button_command_add_rule.md          # 버튼 명령 추가 규칙
-│  ├─ development-notes.md                # 개발 노트
-│  ├─ homey_logging_architect.md          # Homey 로깅 아키텍처
-│  └─ log-viewer.md                       # 로그 뷰어 문서
+│  ├─ instruction.md                      # 프로젝트 지침
+│  ├─ logging-0-parser.md                 # 로깅 파서 문서
+│  ├─ logging-1-data-preparation.md       # 데이터 준비 문서
+│  ├─ logging-2-data-processing.md        # 데이터 처리 문서
+│  ├─ logging-3-data-transmission.md      # 데이터 전송 문서
+│  └─ logging-4-ui-display.md             # UI 표시 문서
 ├─ media/                                 # 아이콘/정적자원
 │  └─ resources/
+│     ├─ custom_log_parser.template.v1.json # 커스텀 로그 파서 템플릿
 │     ├─ edge-icon.svg                    # 확장 아이콘
 │     └─ help.md                          # 도움말
 ├─ scripts/                               # 빌드/배포 스크립트
@@ -340,6 +343,8 @@ homey-edgetool/
 │  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
 │  │  ├─ main.ts                          # activate/deactivate, 초기 부트스트랩
 │  │  ├─ readme.md                        # 확장 모듈 설명
+│  │  ├─ setup/
+│  │  │  └─ parserConfigSeeder.ts         # 파서 설정 시더
 │  │  ├─ commands/
 │  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅
 │  │  │  ├─ CommandHandlersConnect.ts     # 연결 관련 명령
@@ -347,6 +352,7 @@ homey-edgetool/
 │  │  │  ├─ CommandHandlersHomey.ts       # Homey 관련 명령
 │  │  │  ├─ CommandHandlersHost.ts        # 호스트 관련 명령
 │  │  │  ├─ CommandHandlersLogging.ts     # 로깅 관련 명령
+│  │  │  ├─ CommandHandlersParser.ts      # 파서 관련 명령
 │  │  │  ├─ CommandHandlersUpdate.ts      # 업데이트 관련 명령
 │  │  │  ├─ CommandHandlersWorkspace.ts   # 워크스페이스 관련 명령
 │  │  │  ├─ edgepanel.buttons.ts           # 버튼 정의 SSOT
@@ -492,6 +498,7 @@ homey-edgetool/
 │     └─ shared/
 │        └─ utils.ts                      # 공용 유틸리티
 │
+├─ diff.txt                              # diff 파일
 ├─ jest.setup.ts                          # Jest 설정
 ├─ package-lock.json                      # 패키지 잠금 파일
 ├─ package.json                           # 프로젝트 설정

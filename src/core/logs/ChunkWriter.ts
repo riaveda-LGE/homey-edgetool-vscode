@@ -23,14 +23,11 @@ export class ChunkWriter {
     private chunkMaxLines: number,
     startIndex = 0, // part-XXXX 시작 인덱스(0-based)
   ) {
-    log.debug('[debug] ChunkWriter constructor: start');
     this.currentIndex = startIndex;
-    log.debug('[debug] ChunkWriter constructor: end');
   }
 
   /** 들어온 엔트리들을 청크 경계에 맞춰 파일로 기록하고, 생성/완성된 part 목록을 반환 */
   async appendBatch(entries: LogEntry[]): Promise<ChunkWriteResult[]> {
-    log.debug('[debug] ChunkWriter appendBatch: start');
     const results: ChunkWriteResult[] = [];
     for (const e of entries) {
       this.currentBuffer.push(e);
@@ -40,21 +37,17 @@ export class ChunkWriter {
         results.push(r);
       }
     }
-    log.debug('[debug] ChunkWriter appendBatch: end');
     return results;
   }
 
   /** 강제 플러시(미완 청크까지 파일로 떨어뜨림) */
   async flushRemainder(): Promise<ChunkWriteResult | undefined> {
-    log.debug('[debug] ChunkWriter flushRemainder: start');
     if (!this.currentBuffer.length) return;
     const result = await this.flushChunk();
-    log.debug('[debug] ChunkWriter flushRemainder: end');
     return result;
   }
 
   private async flushChunk(): Promise<ChunkWriteResult> {
-    log.debug('[debug] ChunkWriter flushChunk: start');
     const partName = `part-${String(this.currentIndex + 1).padStart(6, '0')}.ndjson`;
     const filePath = path.join(this.outDir, partName);
 
@@ -66,8 +59,6 @@ export class ChunkWriter {
     this.currentBuffer = [];
     this.writtenThisChunk = 0;
     this.currentIndex += 1;
-
-    log.debug('[debug] ChunkWriter flushChunk: end');
     return { file: partName, lines };
   }
 }

@@ -20,6 +20,18 @@ export const LOG_IGNORE_KEYWORDS = [
   'typescript-language-features',
 ] as const;
 
+// ── Debug Log Panel ────────────────────────────────────────────────
+/** 디버그 로그 패널 메모리 보유 최대 라인 수 */
+export const DEBUG_LOG_MEMORY_MAX = 200;
+/** 디버그 로그 스크롤 로드 페이지 사이즈 */
+export const DEBUG_LOG_PAGE_SIZE = 200;
+/** 디버그 로그 스풀 디렉터리명 (workspace/raw 하위; 워크스페이스 없으면 globalStorageUri 하위) */
+export const DEBUG_LOG_DIR = 'debug_log';
+/** 디버그 로그 스풀 파일명 */
+export const DEBUG_LOG_FILENAME = 'edge-debug.log';
+/** 초기에 전량 라인수 계산을 생략할 파일 크기(바이트) — 성능 보호용 */
+export const DEBUG_LOG_BIGFILE_BYTES = 5 * 1024 * 1024; // 5MB
+
 // Updater / GitHub
 export const GH_OWNER = 'riaveda-LGE' as const;
 export const GH_REPO = 'homey-edgetool-vscode' as const;
