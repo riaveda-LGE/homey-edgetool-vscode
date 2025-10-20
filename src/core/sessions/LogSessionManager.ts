@@ -22,6 +22,7 @@ import {
   countTotalLinesInDir,
   mergeDirectory,
   warmupTailPrepass,
+  compileWhitelistPathRegexes,
 } from '../logs/LogFileIntegration.js';
 import { ManifestWriter } from '../logs/ManifestWriter.js';
 import { paginationService } from '../logs/PaginationService.js';
@@ -62,7 +63,7 @@ export class LogSessionManager {
   // 진행률 스로틀 메서드
   private throttledOnProgress(
     opts: SessionCallbacks,
-    current: { inc?: number; total?: number; done?: number; active?: boolean },
+    current: { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean },
   ) {
     const now = Date.now();
     const newPercent = current.total ? Math.round(((current.done || 0) / current.total) * 100) : 0;
@@ -242,7 +243,7 @@ export class LogSessionManager {
    */
   @measure()
   async startFileMergeSession(
-    opts: { dir: string; signal?: AbortSignal; indexOutDir?: string } & SessionCallbacks,
+    opts: { dir: string; signal?: AbortSignal; indexOutDir?: string; whitelistGlobs?: string[] } & SessionCallbacks,
   ) {
     this.log.info(`[debug] LogSessionManager.startFileMergeSession: start dir=${opts.dir}`);
     let seq = 0;
@@ -250,8 +251,8 @@ export class LogSessionManager {
       `T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`,
     );
 
-    // 총 라인 수 추정 (실패 시 undefined)
-    const total = await this.estimateTotalLinesSafe(opts.dir);
+    // 총 라인 수 추정 (화이트리스트 반영; 실패 시 undefined)
+    const total = await this.estimateTotalLinesSafe(opts.dir, opts.whitelistGlobs);
     this.log.info(`T*: estimated total lines=${total ?? 'unknown'}`);
 
     // 진행률: 시작 알림(0/total, active)
@@ -265,6 +266,7 @@ export class LogSessionManager {
           signal: opts.signal,
           warmupPerTypeLimit: FF.warmupPerTypeLimit,
           warmupTarget: FF.warmupTarget,
+          whitelistGlobs: opts.whitelistGlobs,
         });
         if (warmLogs.length) {
           // 메모리/웹뷰 준비
@@ -339,6 +341,7 @@ export class LogSessionManager {
       rawDirPath: FF.writeRaw ? rawDir : undefined,
       // Manager가 T0 웜업을 수행했으므로 여기서는 비활성화
       warmup: false,
+      whitelistGlobs: opts.whitelistGlobs,
       onBatch: async (logs: LogEntry[]) => {
         // 1) 메모리 버퍼 업데이트
         this.hb.addBatch(logs);
@@ -405,12 +408,16 @@ export class LogSessionManager {
       // (최종 done/total 신호로 바를 고정)
     }
 
-    // ✅ T1: 최종 완료 시점에 최신 manifest로 리더 리로드
-    if (!paginationOpened) {
-      // (예외: 앞에서 열지 못한 경우 보정)
-      await paginationService.setManifestDir(outDir);
-    } else {
-      await paginationService.reload();
+    // ✅ T1: 최종 완료 시점에 최신 manifest로 리더 리로드 (빈 입력 케이스 대비 가드)
+    try {
+      if (!paginationOpened) {
+        // (예외: 앞에서 열지 못한 경우 보정)
+        await paginationService.setManifestDir(outDir);
+      } else {
+        await paginationService.reload();
+      }
+    } catch (e) {
+      this.log.warn(`T1: pagination finalize failed (possibly empty dataset): ${String(e)}`);
     }
     this.log.info(
       `T1: pagination ready dir=${outDir} total=${manifest.data.totalLines ?? 'unknown'} merged=${manifest.data.mergedLines}`,
@@ -476,9 +483,12 @@ export class LogSessionManager {
   // -------------------- helpers --------------------
 
   /** 총 라인 수 추정 (에러 시 undefined) */
-  private async estimateTotalLinesSafe(dir: string): Promise<number | undefined> {
+  private async estimateTotalLinesSafe(
+    dir: string,
+    whitelistGlobs?: string[],
+  ): Promise<number | undefined> {
     try {
-      return await this.estimateTotalLines(dir);
+      return await this.estimateTotalLines(dir, whitelistGlobs);
     } catch (e) {
       this.log.warn(`estimateTotalLines failed: ${String(e)}`);
       return undefined;
@@ -486,8 +496,13 @@ export class LogSessionManager {
   }
 
   /** 실제 병합과 동일한 규칙(EOF 개행 없음 보정 포함)으로 총 라인수를 계산 */
-  private async estimateTotalLines(dir: string): Promise<number> {
-    const { total } = await countTotalLinesInDir(dir);
+  private async estimateTotalLines(
+    dir: string,
+    whitelistGlobs?: string[],
+  ): Promise<number> {
+    const allow =
+      whitelistGlobs?.length ? compileWhitelistPathRegexes(whitelistGlobs) : undefined;
+    const { total } = await countTotalLinesInDir(dir, allow);
     return total;
   }
 

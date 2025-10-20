@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { readJsonFile } from '../../shared/utils.js';
+import type { ParserConfig } from './schema.js';
+import { PARSER_CONFIG_REL } from '../../shared/const.js';
 
 export type Json = any;
 
@@ -287,4 +289,36 @@ export async function writeLogViewerPrefs(
   const config = await readAppConfig(ctx);
   config.logViewer = { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}), ...(patch ?? {}) };
   await writeAppConfig(ctx, config);
+}
+
+/* -------------------- Parser Config Helpers -------------------- */
+
+/** 워크스페이스 .config/custom_log_parser.json 읽기 (없으면 undefined) */
+export async function readParserConfigJson(
+  ctx: vscode.ExtensionContext,
+): Promise<ParserConfig | undefined> {
+  try {
+    const info = await resolveWorkspaceInfo(ctx);
+    const cfgUri = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_CONFIG_REL.split('/'));
+    const buf = await vscode.workspace.fs.readFile(cfgUri);
+    const txt = new TextDecoder('utf-8').decode(buf);
+    const json = JSON.parse(txt);
+    if (json && Array.isArray(json.parser)) return json as ParserConfig;
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** parser[].files 전부 모아 고유화한 화이트리스트(globs) 반환 */
+export async function readParserWhitelistGlobs(
+  ctx: vscode.ExtensionContext,
+): Promise<string[]> {
+  const cfg = await readParserConfigJson(ctx);
+  if (!cfg?.parser?.length) return [];
+  const set = new Set<string>();
+  for (const rule of cfg.parser) {
+    for (const g of rule.files ?? []) if (typeof g === 'string' && g.trim()) set.add(g.trim());
+  }
+  return [...set];
 }

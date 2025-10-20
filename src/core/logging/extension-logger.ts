@@ -35,11 +35,20 @@ class ExtensionLoggerCore {
     error: typeof console.error;
   };
 
+  private webviewReady = false;
+
   setLevel(level: LogLevel) {
     this.level = level;
   }
   getLevel() {
     return this.level;
+  }
+
+  setWebviewReady(ready: boolean) {
+    this.webviewReady = ready;
+  }
+  getWebviewReady() {
+    return this.webviewReady;
   }
 
   addSink(sink: Sink) {
@@ -144,6 +153,11 @@ class ExtensionLoggerCore {
 
     const line = `[${ts}] [${shortLevel}] [${scope}] ${body}`;
 
+    // edge-panel 준비 전: 즉시 console.log로 출력
+    if (!this.webviewReady) {
+      this.origConsole?.log(line);
+    }
+
     // 1) VSCode Output Channel
     this.channel.appendLine(line);
 
@@ -189,6 +203,12 @@ export function setLogLevel(level: LogLevel) {
 }
 export function getLogLevel() {
   return core.getLevel();
+}
+export function setWebviewReady(ready: boolean) {
+  core.setWebviewReady(ready);
+}
+export function getWebviewReady() {
+  return core.getWebviewReady();
 }
 export function getLogger(scope: string) {
   return core.getLogger(scope);

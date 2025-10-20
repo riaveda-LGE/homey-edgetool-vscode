@@ -315,208 +315,210 @@ export async function doWork() {
 ```
 homey-edgetool/
 ├─ .github/                               # GitHub 관련 설정 및 문서
-│  ├─ copilot-instructions.md             # Copilot 지침 문서
-│  └─ workflows/                          # GitHub Actions 워크플로우
+│  ├─ copilot-instructions.md             # Copilot 지침 및 프로젝트 구조 문서
+│  └─ workflows/                          # GitHub Actions 워크플로우 (현재 비어있음)
 ├─ doc/                                   # 프로젝트 문서
-│  ├─ instruction.md                      # 프로젝트 지침
-│  ├─ logging-0-parser.md                 # 로깅 파서 문서
-│  ├─ logging-1-data-preparation.md       # 데이터 준비 문서
-│  ├─ logging-2-data-processing.md        # 데이터 처리 문서
-│  ├─ logging-3-data-transmission.md      # 데이터 전송 문서
-│  └─ logging-4-ui-display.md             # UI 표시 문서
-├─ media/                                 # 아이콘/정적자원
+│  ├─ instruction.md                      # 프로젝트 지침 및 사용법
+│  ├─ logging-0-parser.md                 # 로그 파서 설계 및 구현 문서
+│  ├─ logging-1-data-preparation.md       # 데이터 준비 단계 문서
+│  ├─ logging-2-data-processing.md        # 데이터 처리 로직 문서
+│  ├─ logging-3-data-transmission.md      # 데이터 전송 최적화 문서
+│  └─ logging-4-ui-display.md             # UI 표시 및 렌더링 문서
+├─ media/                                 # 아이콘 및 정적 자원
 │  └─ resources/
-│     ├─ custom_log_parser.template.v1.json # 커스텀 로그 파서 템플릿
-│     ├─ edge-icon.svg                    # 확장 아이콘
-│     └─ help.md                          # 도움말
-├─ scripts/                               # 빌드/배포 스크립트
-│  ├─ clean-reinstall.ps1                 # 클린 재설치 스크립트
-│  ├─ deploy.js                           # 배포 스크립트
-│  ├─ get_source/                         # 소스 가져오기
+│     ├─ custom_log_parser.template.v1.json # 커스텀 로그 파서 템플릿 JSON
+│     ├─ edge-icon.svg                    # 확장 아이콘 SVG 파일
+│     └─ help.md                          # 도움말 문서
+├─ scripts/                               # 빌드/배포 및 유틸리티 스크립트
+│  ├─ clean-reinstall.ps1                 # 클린 재설치 PowerShell 스크립트
+│  ├─ deploy.js                           # 배포 JavaScript 스크립트
+│  ├─ get_source/                         # 소스 가져오기 관련 스크립트
 │  │  ├─ export_source_list.ps1           # 소스 목록 내보내기 스크립트
-│  │  ├─ get_source.ps1                   # 소스 가져오기 스크립트
-│  │  ├─ source_list.txt                  # 소스 목록
+│  │  ├─ get_source.ps1                   # 소스 가져오기 메인 스크립트
+│  │  ├─ source_list.txt                  # 소스 목록 텍스트 파일
 │  │  └─ source.tmp                       # 임시 소스 파일
 │  └─ perf/
-│     └─ run-merge-bench.ts               # 병합 벤치마크
+│     └─ run-merge-bench.ts               # 로그 병합 벤치마크 실행 스크립트
 ├─ src/
-│  ├─ extension/                          # VS Code 진입점과 확장 전용 코드
-│  │  ├─ main.ts                          # activate/deactivate, 초기 부트스트랩
-│  │  ├─ readme.md                        # 확장 모듈 설명
+│  ├─ extension/                          # VS Code 확장 진입점 및 확장 전용 코드
+│  │  ├─ main.ts                          # VS Code 확장 활성화/비활성화 및 초기 부트스트랩 로직 구현
+│  │  ├─ readme.md                        # 확장 모듈 설명 및 구조 문서
 │  │  ├─ setup/
-│  │  │  └─ parserConfigSeeder.ts         # 파서 설정 시더
+│  │  │  └─ parserConfigSeeder.ts         # 파서 설정 초기화 및 시딩 로직
 │  │  ├─ commands/
-│  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅
-│  │  │  ├─ CommandHandlersConnect.ts     # 연결 관련 명령
-│  │  │  ├─ CommandHandlersGit.ts         # Git 관련 명령
-│  │  │  ├─ CommandHandlersHomey.ts       # Homey 관련 명령
-│  │  │  ├─ CommandHandlersHost.ts        # 호스트 관련 명령
-│  │  │  ├─ CommandHandlersLogging.ts     # 로깅 관련 명령
-│  │  │  ├─ CommandHandlersParser.ts      # 파서 관련 명령
-│  │  │  ├─ CommandHandlersUpdate.ts      # 업데이트 관련 명령
-│  │  │  ├─ CommandHandlersWorkspace.ts   # 워크스페이스 관련 명령
-│  │  │  ├─ edgepanel.buttons.ts           # 버튼 정의 SSOT
-│  │  │  └─ ICommandHandlers.ts           # 명령 핸들러 인터페이스
+│  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅 및 버튼 이벤트 처리
+│  │  │  ├─ CommandHandlersConnect.ts     # 연결 관련 명령 핸들러 (호스트 연결/해제)
+│  │  │  ├─ CommandHandlersGit.ts         # Git 관련 명령 핸들러 (pull/push 등)
+│  │  │  ├─ CommandHandlersHomey.ts       # Homey 디바이스 제어 명령 핸들러
+│  │  │  ├─ CommandHandlersHost.ts        # 호스트 작업 명령 핸들러 (셸 실행 등)
+│  │  │  ├─ CommandHandlersLogging.ts     # 로깅 관련 명령 핸들러
+│  │  │  ├─ CommandHandlersParser.ts      # 로그 파서 관련 명령 핸들러
+│  │  │  ├─ CommandHandlersUpdate.ts      # 업데이트 관련 명령 핸들러
+│  │  │  ├─ CommandHandlersWorkspace.ts   # 워크스페이스 관련 명령 핸들러
+│  │  │  ├─ edgepanel.buttons.ts           # Edge Panel 버튼 정의 및 메타데이터 SSOT
+│  │  │  └─ ICommandHandlers.ts           # 명령 핸들러 인터페이스 정의
 │  │  ├─ editors/
-│  │  │  ├─ PerfMonitorEditorProvider.ts  # 성능 모니터 에디터 제공자
-│  │  │  ├─ PerfMonitorPanel.ts           # 성능 모니터 패널
-│  │  │  ├─ PerfMonitorCaptureManager.ts  # 성능 데이터 캡처 관리
+│  │  │  ├─ PerfMonitorEditorProvider.ts  # 성능 모니터 에디터 제공자 구현
+│  │  │  ├─ PerfMonitorPanel.ts           # 성능 모니터 패널 컴포넌트
+│  │  │  ├─ PerfMonitorCaptureManager.ts  # 성능 데이터 캡처 관리 로직
 │  │  │  ├─ PerfMonitorCommandHandler.ts  # 성능 모니터 명령 핸들러
-│  │  │  ├─ PerfMonitorDataManager.ts     # 성능 데이터 관리
-│  │  │  ├─ PerfMonitorExportManager.ts   # 성능 데이터 내보내기
-│  │  │  ├─ PerfMonitorHtmlGenerator.ts   # HTML 생성
-│  │  │  ├─ PerfMonitorMessageHandler.ts  # 메시지 핸들링
-│  │  │  ├─ PerfMonitorWebviewManager.ts  # 웹뷰 관리
+│  │  │  ├─ PerfMonitorDataManager.ts     # 성능 데이터 관리 및 처리
+│  │  │  ├─ PerfMonitorExportManager.ts   # 성능 데이터 내보내기 관리
+│  │  │  ├─ PerfMonitorHtmlGenerator.ts   # 성능 모니터 HTML 생성 로직
+│  │  │  ├─ PerfMonitorMessageHandler.ts  # 성능 모니터 메시지 핸들링
+│  │  │  ├─ PerfMonitorWebviewManager.ts  # 성능 모니터 웹뷰 관리
 │  │  │  ├─ IPerfMonitorComponents.ts     # 성능 모니터 컴포넌트 인터페이스
-│  │  │  └─ IPerfMonitorPanelComponents.ts # 패널 컴포넌트 인터페이스
+│  │  │  └─ IPerfMonitorPanelComponents.ts # 성능 모니터 패널 컴포넌트 인터페이스
 │  │  ├─ messaging/
-│  │  │  ├─ hostWebviewBridge.ts          # Webview ↔ Extension 메시지 브리지
-│  │  │  ├─ messageTypes.ts               # 공용 메시지 타입
-│  │  │  └─ bridge.ts                     # 메시징 브리지
+│  │  │  ├─ hostWebviewBridge.ts          # 호스트 ↔ 웹뷰 메시지 브리지 구현
+│  │  │  ├─ messageTypes.ts               # 공용 메시지 타입 정의
+│  │  │  └─ bridge.ts                     # 메시징 브리지 유틸리티
 │  │  ├─ panels/
-│  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자
-│  │  │  ├─ EdgePanelActionRouter.ts      # 버튼→액션 라우터 역할
-│  │  │  ├─ LogConnectionPicker.ts        # 로그 연결 전용 QuickPick
-│  │  │  ├─ LogViewerPanelManager.ts      # 독립 Log Viewer 패널 컨트롤러
-│  │  │  └─ explorerBridge.ts             # 파일 탐색기 브리지
+│  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자 및 Webview 관리
+│  │  │  ├─ EdgePanelActionRouter.ts      # 버튼 이벤트 → 액션 라우팅 로직
+│  │  │  ├─ LogConnectionPicker.ts        # 로그 연결 선택 QuickPick 구현
+│  │  │  ├─ LogViewerPanelManager.ts      # 독립 로그 뷰어 패널 컨트롤러
+│  │  │  └─ explorerBridge.ts             # 파일 탐색기 브리지 구현
 │  │  └─ update/
-│  │     └─ updater.ts                    # 업데이트 관리
+│  │     └─ updater.ts                    # 확장 업데이트 관리 로직
 │  │
-│  ├─ core/                               # 핵심 비즈니스 로직(런타임 독립)
-│  │  ├─ readme.md                        # 코어 모듈 설명
+│  ├─ core/                               # 핵심 비즈니스 로직 (런타임 독립)
+│  │  ├─ readme.md                        # 코어 모듈 설명 문서
 │  │  ├─ config/
-│  │  │  ├─ schema.ts                     # 사용자 설정 스키마
-│  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리
+│  │  │  ├─ schema.ts                     # 사용자 설정 스키마 정의
+│  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리 구현
 │  │  ├─ connection/
-│  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 관리
-│  │  │  ├─ ExecRunner.ts                 # 프로세스 실행 표준화
-│  │  │  ├─ sshClient.ts                  # SSH 클라이언트
-│  │  │  ├─ adbClient.ts                  # ADB 클라이언트
-│  │  │  └─ HomeyController.ts            # Homey 디바이스 제어
+│  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 상태 관리
+│  │  │  ├─ ExecRunner.ts                 # 프로세스 실행 표준화 유틸리티
+│  │  │  ├─ sshClient.ts                  # SSH 클라이언트 구현
+│  │  │  ├─ adbClient.ts                  # ADB 클라이언트 구현
+│  │  │  └─ HomeyController.ts            # Homey 디바이스 제어 로직
 │  │  ├─ logging/
-│  │  │  ├─ extension-logger.ts           # OutputChannel + 로깅 싱크
+│  │  │  ├─ extension-logger.ts           # OutputChannel 기반 로깅 싱크 구현
 │  │  │  └─ perf.ts                       # 성능 계측 데코레이터
 │  │  ├─ logs/
-│  │  │  ├─ ChunkWriter.ts                # 청크 쓰기 유틸리티
-│  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼
-│  │  │  ├─ IndexedLogStore.ts            # 인덱스된 로그 저장소
-│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합
-│  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기
-│  │  │  ├─ LogSearch.ts                  # 로그 검색
-│  │  │  ├─ ManifestTypes.ts              # 매니페스트 타입
-│  │  │  ├─ ManifestWriter.ts             # 매니페스트 쓰기
-│  │  │  ├─ PagedReader.ts                # 페이지드 리더
-│  │  │  ├─ PaginationService.ts          # 페이지네이션 서비스
+│  │  │  ├─ ChunkWriter.ts                # 로그 청크 쓰기 유틸리티
+│  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼 관리 (4-버퍼 시스템)
+│  │  │  ├─ IndexedLogStore.ts            # 인덱스 기반 로그 저장소
+│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합 및 병합 컨트롤러
+│  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기 구현
+│  │  │  ├─ LogSearch.ts                  # 로그 검색 기능 구현
+│  │  │  ├─ ManifestTypes.ts              # 로그 매니페스트 타입 정의
+│  │  │  ├─ ManifestWriter.ts             # 로그 매니페스트 쓰기 로직
+│  │  │  ├─ PagedReader.ts                # 페이지드 로그 리더 구현
+│  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스
+│  │  │  ├─ ParserEngine.ts               # 로그 파싱 엔진 구현
 │  │  │  ├─ time/                         # 시간 관련 유틸리티
-│  │  │  │  ├─ TimeParser.ts              # 시간 파서
-│  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱
-│  │  │  └─ __tests__/                    # 테스트 파일들
-│  │  │     ├─ helpers/                   # 테스트 헬퍼
+│  │  │  │  ├─ TimeParser.ts              # 로그 시간 파서
+│  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱 로직
+│  │  │  └─ __tests__/                    # 로그 모듈 테스트 파일들
+│  │  │     ├─ helpers/                   # 테스트 헬퍼 유틸리티
 │  │  │     ├─ LogFileIntegration.test.ts # 로그 파일 통합 테스트
 │  │  │     ├─ MergeMode.test.ts          # 병합 모드 테스트
-│  │  │     ├─ out/                       # 테스트 출력
-│  │  │     ├─ test_log/                  # 테스트 로그
-│  │  │     └─ WarmupVsFull.test.ts       # 워밍업 vs 전체 테스트
+│  │  │     ├─ out/                       # 테스트 출력 디렉토리
+│  │  │     ├─ test_log/                  # 테스트용 로그 파일들
+│  │  │     └─ WarmupVsFull.test.ts       # 워밍업 vs 전체 모드 테스트
 │  │  ├─ sessions/
-│  │  │  └─ LogSessionManager.ts          # 로그 세션 관리
+│  │  │  └─ LogSessionManager.ts          # 로그 세션 관리 구현
 │  │  └─ transfer/
-│  │     └─ FileTransferService.ts        # 파일 전송 서비스
+│  │     └─ FileTransferService.ts        # 파일 전송 서비스 (tar/base64 over SSH)
 │  │
-│  ├─ shared/                             # 공용 유틸/타입
-│  │  ├─ const.ts                         # 상수 정의
-│  │  ├─ env.ts                           # 환경 변수 관리
-│  │  ├─ errors.ts                        # 에러 처리
-│  │  ├─ featureFlags.ts                  # 기능 플래그
-│  │  ├─ ipc/                             # IPC 메시지
-│  │  │  └─ messages.ts                   # IPC 메시지 정의
+│  ├─ shared/                             # 공용 유틸리티 및 타입
+│  │  ├─ const.ts                         # 상수 정의 모음
+│  │  ├─ env.ts                           # 환경 변수 관리 유틸리티
+│  │  ├─ errors.ts                        # 에러 처리 및 정의
+│  │  ├─ featureFlags.ts                  # 기능 플래그 관리
+│  │  ├─ ipc/                             # IPC 메시지 관련
+│  │  │  └─ messages.ts                   # IPC 메시지 정의 및 타입
 │  │  ├─ types.ts                         # 공용 타입 정의
-│  │  ├─ ui-input.ts                      # UI 입력 유틸리티
-│  │  └─ utils.ts                         # 공용 유틸리티
+│  │  ├─ ui-input.ts                      # UI 입력 유틸리티 (입력창/선택창 표준화)
+│  │  └─ utils.ts                         # 공용 유틸리티 함수들
 │  │
-│  ├─ types/                              # 타입 정의
-│  │  ├─ style.d.ts                       # 스타일 타입 정의
-│  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입
+│  ├─ types/                              # 타입 정의 파일들
+│  │  ├─ style.d.ts                       # 스타일 관련 타입 정의
+│  │  └─ vscode-webview.d.ts              # VS Code 웹뷰 타입 정의
 │  │
 │  └─ webviewers/                         # Webview 리소스 (ES 모듈 기반)
-│     ├─ readme.md                        # Webviewers 모듈 설명
+│     ├─ readme.md                        # Webviewers 모듈 설명 문서
 │     ├─ edge-panel/
-│     │  ├─ index.html                    # Edge Panel 웹뷰
+│     │  ├─ index.html                    # Edge Panel 웹뷰 HTML 엔트리
 │     │  ├─ app/
-│     │  │  ├─ index.ts                   # 부트스트랩, Store 생성/구독, 첫 렌더
-│     │  │  ├─ store.ts                   # createStore, subscribe, dispatch
-│     │  │  ├─ reducer.ts                 # 순수 업데이트: Action × State -> State
-│     │  │  ├─ actions.ts                 # 액션 타입/크리에이터 정의
-│     │  │  └─ effects.ts                 # 부수효과: VS Code postMessage, 타이머 등
+│     │  │  ├─ index.ts                   # Edge Panel 부트스트랩 및 스토어 초기화
+│     │  │  ├─ store.ts                   # Zustand 기반 상태 관리 스토어
+│     │  │  ├─ reducer.ts                 # 상태 업데이트 순수 함수 (MVU 패턴)
+│     │  │  ├─ actions.ts                 # 액션 타입 및 크리에이터 정의
+│     │  │  └─ effects.ts                 # 부수효과 처리 (postMessage, 타이머 등)
 │     │  ├─ views/
-│     │  │  ├─ AppView.ts                 # 루트, Grid 5행 구성/토글
-│     │  │  ├─ ControlsView.ts            # 섹션 카드/버튼
+│     │  │  ├─ AppView.ts                 # 루트 앱 뷰 및 그리드 레이아웃 관리
+│     │  │  ├─ ControlsView.ts            # 컨트롤 섹션 뷰 및 버튼 렌더링
 │     │  │  ├─ Layout/
-│     │  │  │  ├─ Panel.ts                # 공통 패널 컨테이너 + 타이틀바
+│     │  │  │  ├─ Panel.ts                # 공통 패널 컨테이너 및 타이틀바 컴포넌트
 │     │  │  │  └─ Splitter.ts             # 상단/중단 스플리터 컴포넌트
 │     │  │  ├─ Explorer/
-│     │  │  │  ├─ ExplorerView.ts         # 탐색기 패널 전체
-│     │  │  │  ├─ TreeView.ts             # 트리 렌더/키보드 내비/가상화
-│     │  │  │  └─ ContextMenu.ts          # 우클릭 메뉴 + 인라인 폼/확인
-│     │  │  └─ Logs/LogsView.ts           # 로그 패널, 줄 누적, 가상 스크롤
+│     │  │  │  ├─ ExplorerView.ts         # 파일 탐색기 패널 전체 뷰
+│     │  │  │  ├─ TreeView.ts             # 트리 렌더링, 키보드 내비게이션, 가상화
+│     │  │  │  └─ ContextMenu.ts          # 우클릭 메뉴 및 인라인 폼/확인 컴포넌트
+│     │  │  └─ Logs/LogsView.ts           # 로그 패널 뷰, 줄 누적 및 가상 스크롤
 │     │  ├─ services/
-│     │  │  ├─ HostBridge.ts              # postMessage/이벤트 → Action 변환
-│     │  │  ├─ ExplorerService.ts         # list/open/create/delete 래핑
-│     │  │  ├─ LogService.ts              # append/reset 래핑
-│     │  │  └─ PersistService.ts          # panelState 저장/복원
+│     │  │  ├─ HostBridge.ts              # postMessage 이벤트 → 액션 변환 브리지
+│     │  │  ├─ ExplorerService.ts         # 파일 탐색기 API 래핑 서비스
+│     │  │  ├─ LogService.ts              # 로그 추가/리셋 래핑 서비스
+│     │  │  └─ PersistService.ts          # 패널 상태 저장/복원 서비스
 │     │  ├─ styles/
-│     │  │  ├─ tokens.css                 # VS Code 테마 토큰→로컬 변수 매핑
-│     │  │  ├─ base.css                   # 리셋·타이포·색상 토큰
-│     │  │  ├─ layout.css                 # #root Grid, 패널 배치
-│     │  │  └─ components.css             # Panel/Titlebar/Tree/ContextMenu 등
+│     │  │  ├─ tokens.css                 # VS Code 테마 토큰 → 로컬 변수 매핑
+│     │  │  ├─ base.css                   # 리셋, 타이포그래피, 색상 토큰
+│     │  │  ├─ layout.css                 # #root 그리드 및 패널 배치 스타일
+│     │  │  └─ components.css             # Panel/Titlebar/Tree/ContextMenu 컴포넌트 스타일
 │     │  └─ types/
-│     │     └─ model.ts                   # State/TreeNode/Section 등 타입
+│     │     └─ model.ts                   # Edge Panel 상태/트리노드/섹션 타입 정의
 │     ├─ log-viewer/
-│     │  ├─ index.html                    # 로그 뷰어 웹뷰
+│     │  ├─ index.html                    # 로그 뷰어 웹뷰 HTML 엔트리
 │     │  ├─ react/
 │     │  │  ├─ components/
-│     │  │  │  ├─ App.tsx                 # 메인 앱 컴포넌트
-│     │  │  │  ├─ Bookmarks.tsx           # 북마크 컴포넌트
-│     │  │  │  ├─ BookmarkSquare.tsx      # 북마크 사각형 컴포넌트
-│     │  │  │  ├─ FilterBar.tsx           # 필터 바 컴포넌트
+│     │  │  │  ├─ App.tsx                 # 메인 React 앱 컴포넌트
+│     │  │  │  ├─ Bookmarks.tsx           # 북마크 관리 컴포넌트
+│     │  │  │  ├─ BookmarkSquare.tsx      # 북마크 사각형 표시 컴포넌트
+│     │  │  │  ├─ FilterDialog.tsx        # 필터 설정 다이얼로그
 │     │  │  │  ├─ Grid.tsx                # 로그 그리드 컴포넌트
 │     │  │  │  ├─ GridHeader.tsx          # 그리드 헤더 컴포넌트
-│     │  │  │  ├─ HighlightPopover.tsx    # 하이라이트 팝오버
+│     │  │  │  ├─ HighlightPopover.tsx    # 하이라이트 팝오버 컴포넌트
+│     │  │  │  ├─ MessageDialog.tsx       # 메시지 다이얼로그 컴포넌트
+│     │  │  │  ├─ SearchDialog.tsx        # 검색 설정 다이얼로그
 │     │  │  │  ├─ SearchPanel.tsx         # 검색 패널 컴포넌트
 │     │  │  │  └─ Toolbar.tsx             # 툴바 컴포넌트
-│     │  │  ├─ ipc.ts                     # IPC 통신 유틸리티
-│     │  │  ├─ main.tsx                   # React 앱 진입점
-│     │  │  ├─ store.ts                   # Zustand 상태 관리
+│     │  │  ├─ ipc.ts                     # React 앱 IPC 통신 유틸리티
+│     │  │  ├─ main.tsx                   # React 앱 진입점 및 렌더링
+│     │  │  ├─ store.ts                   # Zustand 기반 상태 관리
 │     │  │  └─ types.ts                   # React 앱 타입 정의
 │     │  └─ styles/
-│     │     ├─ tailwind.css               # Tailwind CSS 스타일
-│     │     ├─ theme.css                  # 공통 UI 컴포넌트 테마
+│     │     ├─ tailwind.css               # Tailwind CSS 스타일시트
 │     │     └─ tokens.css                 # 테마 토큰 및 하이라이트 스타일
 │     └─ perf-monitor/
 │        ├─ app.js                        # 성능 모니터 앱 (Chart.js 기반)
-│        └─ style.css                     # 스타일시트
+│        └─ style.css                     # 성능 모니터 스타일시트
 │
 │     └─ shared/
-│        └─ utils.ts                      # 공용 유틸리티
+│        └─ utils.ts                      # Webview 공용 유틸리티 함수들
 │
-├─ diff.txt                              # diff 파일
-├─ jest.setup.ts                          # Jest 설정
+├─ diff.txt                              # 변경사항 비교 파일
+├─ jest.setup.ts                          # Jest 테스트 설정
 ├─ package-lock.json                      # 패키지 잠금 파일
-├─ package.json                           # 프로젝트 설정
+├─ package.json                           # 프로젝트 설정 및 의존성
 ├─ tsconfig.jest.json                     # Jest용 TypeScript 설정
 ├─ tsconfig.json                          # TypeScript 설정
-├─ tsconfig.webview.json                  # Webview용 TypeScript 설정
-├─ webpack.config.js                      # Webpack 설정
+├- tsconfig.webview.json                  # Webview용 TypeScript 설정
+├─ webpack.config.js                      # Webpack 빌드 설정
 ├─ eslint.config.js                       # ESLint 설정
 ├─ postcss.config.mjs                     # PostCSS 설정 (Tailwind용)
 ├─ tailwind.config.js                     # Tailwind CSS 설정
 ├─ .prettierrc                            # Prettier 설정
 ├─ .prettierignore                        # Prettier 제외 파일
-├─ .gitattributes                         # Git 속성
+├─ .gitattributes                         # Git 속성 설정
 ├─ .gitignore                             # Git 제외 파일
-├─ LICENSE                                # 라이선스
-├─ homey-edgetool-0.0.2.vsix              # 빌드된 VSIX 파일
+├─ LICENSE                                # 라이선스 파일
+├─ homey-edgetool-0.0.2.vsix              # 빌드된 VSIX 확장 파일
 ├─ dist/                                  # 컴파일 출력 디렉토리
-└─ node_modules/                          # 의존성 모듈
+└─ node_modules/                          # 의존성 모듈 디렉토리
 ```
 
 # 🧭 VS Code Extension 입력 처리 가이드

@@ -1,6 +1,5 @@
 // src/extension/panels/LogViewerPanelManager.ts
 // === src/extension/panels/LogViewerPanelManager.ts ===
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -14,6 +13,8 @@ import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
 import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
 import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
+import { readParserWhitelistGlobs } from '../../core/config/userdata.js';
+import { ensureWorkspaceInitialized } from '../../core/workspace/init.js';
 
 export class LogViewerPanelManager {
   private log = getLogger('LogViewerPanelManager');
@@ -57,18 +58,7 @@ export class LogViewerPanelManager {
     this.log.debug(`[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`);
     this.log.debug(`[debug] viewer: handleHomeyLoggingCommand (panelExists=${already})`);
 
-    // ✅ 버튼 누른 순간 raw 초기화 시도
-    const wsRoot = await this._resolveWorkspaceRoot();
-    if (wsRoot) {
-      try {
-        await this._cleanupRaw(wsRoot);
-        this.log.info(`viewer: raw folder cleaned (${path.join(wsRoot, RAW_DIR_NAME)})`);
-      } catch (e: any) {
-        this.log.error(`viewer: raw cleanup failed ${String(e?.message ?? e)}`);
-      }
-    } else {
-      this.log.warn('viewer: no workspace root; skip raw cleanup');
-    }
+    // (중요) 뷰어 오픈 시 raw 삭제 금지 — 초기화는 워크스페이스 설정/보장 단계에서만 수행
 
     if (!this.panel) {
       this.panel = vscode.window.createWebviewPanel(
@@ -157,13 +147,16 @@ export class LogViewerPanelManager {
     this.initialSent = false;
     this.log.info(`merge: start (dir=${dir})`);
 
+    // 워크스페이스 준비(초기 1회 초기화 포함) 보장
+    await ensureWorkspaceInitialized(this.context);
+
     // 🔒 샘플링 상태 리셋 (권장)
     this.progAcc = 0;
     this.progDoneAcc = 0;
     this.progTotal = undefined;
     this.progLastLogMs = 0;
 
-    // ✅ 병합 결과 저장 위치를 workspace/raw/merge_log 로 고정
+    // ✅ 병합 결과 저장 위치를 workspace/raw/merge_log 로 고정 (준비 완료 기준)
     const wsRoot = await this._resolveWorkspaceRoot();
     const indexOutDir = wsRoot ? path.join(wsRoot, RAW_DIR_NAME, MERGED_DIR_NAME) : undefined;
     if (!wsRoot) {
@@ -173,9 +166,23 @@ export class LogViewerPanelManager {
     this.session?.dispose();
     this.session = new LogSessionManager(undefined);
 
+    // ⬇️ 파서 설정(.config/custom_log_parser.json)에서 files 화이트리스트 추출
+    let whitelistGlobs: string[] | undefined;
+    try {
+      whitelistGlobs = await readParserWhitelistGlobs(this.context);
+      if (whitelistGlobs?.length) {
+        this.log.info(`merge: applying whitelist globs (${whitelistGlobs.length})`);
+      } else {
+        this.log.info(`merge: no whitelist globs found; will fallback to default (*.log*/.txt)`);
+      }
+    } catch (e: any) {
+      this.log.warn(`merge: failed to read parser whitelist globs (${e?.message ?? e})`);
+    }
+
     await this.session.startFileMergeSession({
       dir,
       indexOutDir,
+      whitelistGlobs,
       onBatch: (logs, total, seq) => {
         if (this.initialSent) return;
         this.log.info(
@@ -331,14 +338,6 @@ export class LogViewerPanelManager {
     }
 
     return undefined;
-  }
-
-  private async _cleanupRaw(wsRoot: string) {
-    const rawDir = path.join(wsRoot, RAW_DIR_NAME);
-    try {
-      await fs.promises.rm(rawDir, { recursive: true, force: true });
-    } catch {}
-    await fs.promises.mkdir(rawDir, { recursive: true });
   }
 
   // ─────────────────────────────────────────────────────────

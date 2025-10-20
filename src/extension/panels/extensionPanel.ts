@@ -2,10 +2,12 @@
 import * as vscode from 'vscode';
 
 import { readEdgePanelState, writeEdgePanelState, resolveWorkspaceInfo } from '../../core/config/userdata.js';
+import { isWorkspaceInitialized } from '../../core/workspace/init.js';
 import {
   addLogSink,
   getLogger,
   removeLogSink,
+  setWebviewReady,
 } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 import {
@@ -186,6 +188,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           (lg[lvl] ?? lg.info).call(lg, text);
           return;
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
+          setWebviewReady(true);
           const panelState = await readEdgePanelState(this._context);
           // 메모리 버퍼 대신 스풀에서 읽은 tail(초기 로드) 사용
           const state = { ...this._state, logs: this._state.logs };
@@ -325,6 +328,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._trackDisposable(() => winStateDisposable.dispose());
 
     webviewView.onDidDispose(() => {
+      setWebviewReady(false);
       this._disposeTracked();
 
       if (this._sink) removeLogSink(this._sink);
@@ -373,16 +377,19 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   // ───────────────────────────────────────────────────────────────────
   private async _ensureDebugSpool() {
     if (!this._dbgDir) {
-      // 1) 워크스페이스가 있으면: <workspace>/<RAW_DIR_NAME>/<DEBUG_LOG_DIR>
-      // 2) 없으면 폴백: <globalStorageUri>/<DEBUG_LOG_DIR>
-      let dir: vscode.Uri | undefined;
+      // 준비 완료 여부에 따라 대상 위치 결정
+      // 1) 준비됨: <workspace>/raw/debug_log
+      // 2) 미준비/오류: <globalStorageUri>/debug_log
+      let dir: vscode.Uri;
       try {
-        const info = await resolveWorkspaceInfo(this._context as any);
-        if (info?.wsDirUri) {
+        const ready = await isWorkspaceInitialized(this._context);
+        if (ready) {
+          const info = await resolveWorkspaceInfo(this._context as any);
           dir = vscode.Uri.joinPath(info.wsDirUri, RAW_DIR_NAME, DEBUG_LOG_DIR);
+        } else {
+          dir = vscode.Uri.joinPath(this._context.globalStorageUri, DEBUG_LOG_DIR);
         }
-      } catch {}
-      if (!dir) {
+      } catch {
         dir = vscode.Uri.joinPath(this._context.globalStorageUri, DEBUG_LOG_DIR);
       }
       await fsp.mkdir(dir.fsPath, { recursive: true });

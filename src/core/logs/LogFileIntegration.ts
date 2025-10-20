@@ -16,10 +16,10 @@ const log = getLogger('LogFileIntegration');
  * 공개 API
  * ────────────────────────────────────────────────────────────────────────── */
 
-// Manager 선행 웜업 호출을 위해 필요한 필드만 분리
+// Manager 선행 웜업 호출을 위해 필요한 필드만 분리(+ whitelist 지원)
 export type WarmupOptions = Pick<
   MergeOptions,
-  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget'
+  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget' | 'whitelistGlobs'
 >;
 
 export type MergeOptions = {
@@ -40,6 +40,8 @@ export type MergeOptions = {
   warmupPerTypeLimit?: number;
   /** warmup 모드일 때 최초 즉시 방출 목표치 (기본: 500) */
   warmupTarget?: number;
+  /** 커스텀 파서 설정에서 온 files 화이트리스트(glob). 지정되면 여기에 매칭되는 파일만 수집 */
+  whitelistGlobs?: string[];
 };
 
 /**
@@ -50,6 +52,10 @@ export type MergeOptions = {
 export async function mergeDirectory(opts: MergeOptions) {
   try {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
+    // 화이트리스트(glob) → "상대경로" 매칭용 정규식 셋으로 변환
+    const allowPathRegexes = opts.whitelistGlobs?.length
+      ? compileWhitelistPathRegexes(opts.whitelistGlobs)
+      : undefined;
 
     // ─────────────────────────────────────────────────────────────────────────
     // 0) (호환) 워밍업 선행패스
@@ -78,8 +84,8 @@ export async function mergeDirectory(opts: MergeOptions) {
     }
 
     // ── 2) 기존 k-way/표준 패스 그대로 ───────────────────────────────────
-    // 입력 로그(.log/.log.N/.txt) 수집
-    const files = await listInputLogFiles(opts.dir);
+    // 입력 로그(.log/.log.N/.txt) 수집 (재귀)
+    const files = await listInputLogFiles(opts.dir, allowPathRegexes);
     log.info(
       `T1: mergeDirectory start dir=${opts.dir} files=${files.length} reverse=${!!opts.reverse} batchSize=${batchSize}`,
     );
@@ -140,7 +146,8 @@ export async function mergeDirectory(opts: MergeOptions) {
         const rr = await ReverseLineReader.open(fullPath);
         let line: string | null;
         while ((line = await rr.nextLine()) !== null) {
-          const entry = lineToEntry(fileName, line);
+          // fullPath를 넘겨 path/file 일관성 유지
+          const entry = lineToEntry(fullPath, line);
           logs.push(entry); // 전체 logs가 최신→오래된 순
         }
         await rr.close();
@@ -263,20 +270,20 @@ export async function mergeDirectory(opts: MergeOptions) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 입력 로그 파일(.log/.log.N/.txt) 유틸
+ * 입력 로그 파일(.log/.log.N/.txt) 유틸 — 재귀 검색 + 경로 글롭 매칭
  * ────────────────────────────────────────────────────────────────────────── */
 
-export async function listInputLogFiles(dir: string): Promise<string[]> {
+export async function listInputLogFiles(
+  dir: string,
+  allowPathRegexes?: RegExp[],
+): Promise<string[]> {
   try {
-    const names = await fs.promises.readdir(dir);
-    const results: string[] = [];
-    for (const name of names) {
-      const full = path.join(dir, name);
-      if (!(await isRegularFile(full))) continue;
-      if (!/\.log(\.\d+)?$/i.test(name) && !/\.txt$/i.test(name)) continue;
-      results.push(name);
+    const out: string[] = [];
+    await walk(dir, '', out, allowPathRegexes);
+    if (allowPathRegexes?.length && out.length === 0) {
+      log.warn('listInputLogFiles: whitelist present but no files matched');
     }
-    return results;
+    return out;
   } catch (e) {
     throw new XError(
       ErrorCategory.Path,
@@ -286,11 +293,50 @@ export async function listInputLogFiles(dir: string): Promise<string[]> {
   }
 }
 
+/** 재귀 디렉터리 워커: 상대경로 기준으로 필터링 */
+async function walk(
+  root: string,
+  rel: string,
+  out: string[],
+  allowPathRegexes?: RegExp[],
+) {
+  const base = rel ? path.join(root, rel) : root;
+  let names: string[];
+  try {
+    names = await fs.promises.readdir(base);
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    const relPath = rel ? path.join(rel, name) : name;
+    const full = path.join(root, relPath);
+    let st;
+    try {
+      st = await fs.promises.lstat(full);
+    } catch {
+      continue;
+    }
+    if (st.isDirectory()) {
+      await walk(root, relPath, out, allowPathRegexes);
+      continue;
+    }
+    if (!st.isFile()) continue;
+    // 기본 허용: *.log / *.log.N / *.txt
+    const bn = path.basename(relPath);
+    const isLogLike = /\.log(\.\d+)?$/i.test(bn) || /\.txt$/i.test(bn);
+    if (!allowPathRegexes?.length && !isLogLike) continue;
+    // 화이트리스트가 있으면 "상대경로"로 매칭
+    if (allowPathRegexes?.length && !pathMatchesWhitelist(relPath, allowPathRegexes)) continue;
+    out.push(relPath);
+  }
+}
+
 /** 병합 전 총 라인수 계산 (참고용) — 최신 파일부터 세되 결과는 단순 합 */
 export async function countTotalLinesInDir(
   dir: string,
+  allowPathRegexes?: RegExp[],
 ): Promise<{ total: number; files: { name: string; lines: number }[] }> {
-  const files = await listInputLogFiles(dir);
+  const files = await listInputLogFiles(dir, allowPathRegexes);
   const ordered = files.sort(compareLogOrderDesc); // 최신부터
   const details: { name: string; lines: number }[] = [];
   let total = 0;
@@ -310,7 +356,7 @@ export async function countTotalLinesInDir(
 
 function compareLogOrderDesc(a: string, b: string) {
   // homey-pro.log > .log.1 > .log.2 … (숫자 작을수록 최신)
-  return numberSuffix(a) - numberSuffix(b);
+  return numberSuffix(path.basename(a)) - numberSuffix(path.basename(b));
 }
 function compareLogOrderAsc(a: string, b: string) {
   return -compareLogOrderDesc(a, b);
@@ -352,7 +398,8 @@ async function countLinesInFile(filePath: string): Promise<number> {
 
 /** 타입키 추출: 'homey-pro.log.1' -> 'homey-pro' / 'clip.log' -> 'clip' */
 function typeKeyOf(name: string): string {
-  const m = name.match(/^(.*)\.log(?:\.\d+)?$/i);
+  const bn = path.basename(name);
+  const m = bn.match(/^(.*)\.log(?:\.\d+)?$/i);
   return m ? m[1] : name;
 }
 
@@ -366,6 +413,60 @@ function groupByType(files: string[]): Map<string, string[]> {
     else mp.set(k, [f]);
   }
   return mp;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * 화이트리스트(globs) → "상대경로" 매칭 정규식
+ *   - 지원: **, *, ?  (경로 기준)
+ *   - 예: "**\/homey-pro.log*", "**\/*.log*", "**\/bt\/*\/clip.log*"
+ * ────────────────────────────────────────────────────────────────────────── */
+export function compileWhitelistPathRegexes(globs: string[]): RegExp[] {
+  const out: RegExp[] = [];
+  for (const g of globs ?? []) {
+    const rx = globToRegExp(g);
+    if (rx) out.push(rx);
+  }
+  return out;
+}
+
+export function pathMatchesWhitelist(relPath: string, allow: RegExp[]): boolean {
+  const norm = relPath.replace(/\\/g, '/'); // Windows 대비
+  for (const rx of allow) if (rx.test(norm)) return true;
+  return false;
+}
+
+function globToRegExp(glob: string): RegExp | null {
+  if (!glob || typeof glob !== 'string') return null;
+  // 경로 구분자를 '/'로 정규화
+  const g = glob.replace(/\\/g, '/');
+  // 글롭 토큰을 먼저 해석하고, 그 외 문자는 이스케이프한다.
+  //  - **  : 경로 구분자 포함 임의 길이 => .*
+  //  - *   : 경로 구분자 제외 임의 길이 => [^/]*
+  //  - ?   : 경로 구분자 제외 1글자    => [^/]
+  //  - 나머지 메타문자는 이스케이프
+  let rx = '^';
+  for (let i = 0; i < g.length; ) {
+    const c = g[i];
+    if (c === '*') {
+      if (g[i + 1] === '*') {
+        rx += '.*';
+        i += 2;
+      } else {
+        rx += '[^/]*';
+        i += 1;
+      }
+    } else if (c === '?') {
+      rx += '[^/]';
+      i += 1;
+    } else {
+      // 정규식 메타문자 이스케이프
+      if ('.+^$()[]{}|\\'.includes(c)) rx += '\\' + c;
+      else rx += c;
+      i += 1;
+    }
+  }
+  rx += '$';
+  return new RegExp(rx, 'i');
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -701,8 +802,10 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   const aborted = () => !!signal?.aborted;
   if (aborted()) return [];
 
-  // 1) 입력 로그 파일 수집 → 타입별 그룹화(회전 파일 포함)
-  const names = await listInputLogFiles(dir);
+  // 1) 입력 로그 파일 수집(화이트리스트 반영) → 타입별 그룹화(회전 파일 포함)
+  const allowPathRegexes =
+    opts.whitelistGlobs?.length ? compileWhitelistPathRegexes(opts.whitelistGlobs) : undefined;
+  const names = await listInputLogFiles(dir, allowPathRegexes);
   if (!names.length) return [];
   const grouped = groupByType(names); // key: type, val: ['x.log', 'x.log.1', ...]
   const typeKeys = [...grouped.keys()];
