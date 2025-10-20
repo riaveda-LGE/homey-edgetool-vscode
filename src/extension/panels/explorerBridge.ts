@@ -248,33 +248,31 @@ class ExplorerUI {
 
   /** 메시지 처리 */
   async handleMessage(msg: any): Promise<boolean> {
-    log.debug('[debug] ExplorerUI handleMessage: start');
     switch (msg.type) {
       case 'explorer.list':
         this.log.info('[ExplorerUI] <- list', msg.payload?.path);
         await this.list(String(msg.payload?.path || ''));
-        log.debug('[debug] ExplorerUI handleMessage: end');
         return true;
       case 'explorer.refresh':
         // 수동 새로고침: 즉시 해당 스코프 list()
         this.log.info('[ExplorerUI] <- refresh', msg.payload?.path);
         await this.list(String(msg.payload?.path || ''));
-        log.debug('[debug] ExplorerUI handleMessage: end');
+        return true;
         return true;
       case 'explorer.open':
         this.log.info('[ExplorerUI] <- open', msg.payload?.path);
         await this.open(String(msg.payload?.path || ''));
-        log.debug('[debug] ExplorerUI handleMessage: end');
+        return true;
         return true;
       case 'explorer.createFile':
         this.log.info('[ExplorerUI] <- createFile', msg.payload?.path);
         await this.createFile(String(msg.payload?.path || ''));
-        log.debug('[debug] ExplorerUI handleMessage: end');
+        return true;
         return true;
       case 'explorer.createFolder':
         this.log.info('[ExplorerUI] <- createFolder', msg.payload?.path);
         await this.createFolder(String(msg.payload?.path || ''));
-        log.debug('[debug] ExplorerUI handleMessage: end');
+        return true;
         return true;
       case 'explorer.delete':
         this.log.info('[ExplorerUI] <- delete', msg.payload?.path, {
@@ -286,10 +284,8 @@ class ExplorerUI {
           !!msg.payload?.recursive,
           !!msg.payload?.useTrash,
         );
-        log.debug('[debug] ExplorerUI handleMessage: end');
         return true;
     }
-    log.debug('[debug] ExplorerUI handleMessage: end');
     return false;
   }
 

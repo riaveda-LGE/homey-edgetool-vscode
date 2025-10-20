@@ -1,5 +1,6 @@
 // === src/core/logs/time/TimezoneHeuristics.ts ===
 import { getLogger } from '../../logging/extension-logger.js';
+// 로그 스팸 완화: per-line 출력 최소화, 집계로 대체
 
 /**
  * 파일 타입별(Time series 단위) 타임존 점프 보정기.
@@ -14,6 +15,16 @@ export class TimezoneCorrector {
   private lastCorrected?: number; // 직전 반환한 보정 ts(단조감소 체크용)
   private lastRawTs?: number; // 직전 rawTs
   private readonly log = getLogger('TimezoneCorrector');
+
+  // 집계 카운터(스팸 억제용)
+  private clampCount = 0;        // per-line 클램프 누적
+  private suspectedCount = 0;    // 의심 구간 발생 수
+  private fixedCount = 0;        // retro 세그먼트 확정 수
+  private worstJumpHours = 0;    // 가장 큰 점프(시간)
+  private worstJumpAt?: number;  // 가장 큰 점프 최초 관측 시각
+
+  // (선택) per-line 샘플 로그를 원하면 >0으로 조정
+  private readonly LOG_SAMPLE_N = 0;
 
   // 점프 의심 상태(최대 1건)
   private suspected:
@@ -75,6 +86,7 @@ export class TimezoneCorrector {
           this.log.info(
             `타임존 점프 판명 [${this.label}]: retro(${s.startIndex}..${end}) Δ=${deltaMs / 3600000}h (nearest)`,
           );
+          this.fixedCount++;
         }
 
         // suspected 해제 (글로벌 offset 누적은 하지 않음)
@@ -108,9 +120,18 @@ export class TimezoneCorrector {
             direction,
             hourDiff,
           };
-          this.log.info(
-            `타임존 점프 의심 [${this.label}]: ${direction} ${hourDiff.toFixed(1)}h @idx=${index} (pre=${new Date(this.lastRawTs).toISOString()} jump=${new Date(rawTs).toISOString()})`,
-          );
+          // per-line 로그 대신 집계만 수행 (최대 점프 갱신)
+          this.suspectedCount++;
+          if (hourDiff > this.worstJumpHours) {
+            this.worstJumpHours = hourDiff;
+            this.worstJumpAt = rawTs;
+          }
+          // 필요 시 샘플링 디버그 (기본 비활성)
+          if (this.LOG_SAMPLE_N > 0 && this.suspectedCount % this.LOG_SAMPLE_N === 1) {
+            this.log.debug(
+              `타임존 점프 의심(sample) [${this.label}]: ${direction} ${hourDiff.toFixed(1)}h @idx=${index}`,
+            );
+          }
         }
         this.lastCorrected = corrected;
         this.lastRawTs = rawTs;
@@ -122,7 +143,11 @@ export class TimezoneCorrector {
     const clamped = (this.lastCorrected ?? corrected) - 1;
     this.lastCorrected = clamped;
     this.lastRawTs = rawTs;
-    this.log.info(`타임존 클램프 [${this.label}]: 1ms, ts=${new Date(clamped).toISOString()}`);
+    // per-line 클램프 로그 제거 → 집계만
+    this.clampCount++;
+    if (this.LOG_SAMPLE_N > 0 && this.clampCount % this.LOG_SAMPLE_N === 0) {
+      this.log.debug(`타임존 클램프(sample) [${this.label}]: +${this.LOG_SAMPLE_N} lines`);
+    }
     return clamped;
   }
 
@@ -133,10 +158,31 @@ export class TimezoneCorrector {
   finalizeSuspected(): boolean {
     const had = !!this.suspected;
     if (had) {
-      this.log.info(`타임존 suspected 폐기 [${this.label}]: 복귀 증거 없음`);
+      // 폐기 알림은 디버그로 강등 (최대 1회/타입)
+      this.log.debug(`타임존 suspected 폐기 [${this.label}]: 복귀 증거 없음`);
     }
     this.suspected = undefined;
+    // 처리 요약(1줄) 출력
+    this.flushSummary();
     return had;
+  }
+
+  // 집계 요약을 출력하고 카운터 초기화
+  private flushSummary() {
+    if (this.suspectedCount || this.fixedCount || this.clampCount) {
+      const worst =
+        this.worstJumpAt != null
+          ? `${this.worstJumpHours.toFixed(1)}h @ ${new Date(this.worstJumpAt).toISOString()}`
+          : 'n/a';
+      this.log.info(
+        `TZ summary [${this.label}] suspected=${this.suspectedCount}, fixed=${this.fixedCount}, clamped=${this.clampCount}, worst_jump=${worst}`,
+      );
+    }
+    this.clampCount = 0;
+    this.suspectedCount = 0;
+    this.fixedCount = 0;
+    this.worstJumpHours = 0;
+    this.worstJumpAt = undefined;
   }
 
   /**

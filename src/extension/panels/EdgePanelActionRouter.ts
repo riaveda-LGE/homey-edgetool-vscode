@@ -44,29 +44,24 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
   }
 
   sendButtonSections() {
-    log.debug('[debug] EdgePanelActionRouter sendButtonSections: start');
     const ctx = buildButtonContext({
       updateAvailable: this._updateState.updateAvailable,
       updateUrl: this._updateState.updateUrl,
     });
     const dto = toSectionDTO(this._buttonSections, ctx);
     this._view.webview.postMessage({ v: 1, type: 'buttons.set', payload: { sections: dto } });
-    log.debug('[debug] EdgePanelActionRouter sendButtonSections: end');
   }
 
   async dispatchButton(id: string) {
-    log.debug('[debug] EdgePanelActionRouter dispatchButton: start');
     const def = findButtonById(this._buttonSections, id);
     if (!def) {
       log.warn(`[warn] unknown button id: ${id}`);
       return;
     }
     await this._runOp(def);
-    log.debug('[debug] EdgePanelActionRouter dispatchButton: end');
   }
 
   private async _runOp(def: ButtonDef) {
-    log.debug('[debug] EdgePanelActionRouter _runOp: start');
     const op = def.op;
     try {
       switch (op.kind) {
@@ -85,7 +80,6 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
           }
           break;
       }
-      log.debug('[debug] EdgePanelActionRouter _runOp: end');
     } catch (e: unknown) {
       log.error(
         `[error] button "${def.label}" failed: ${e instanceof Error ? e.message : String(e)}`,
