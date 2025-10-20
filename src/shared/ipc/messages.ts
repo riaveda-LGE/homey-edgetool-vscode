@@ -3,7 +3,11 @@
 
 export type LogEntry = {
   id: number;
-  /** 전역 인덱스(최신=1). 파일 병합 세션에서만 부여됨 */
+  /**
+   * 전역 인덱스(오름차순, 과거=1, 최신=total).
+   * - 파일 병합/페이지 서비스 단계에서 부여됨
+   * - UI/브리지는 항상 이 오름차순 좌표계를 사용
+   */
   idx?: number;
   ts: number; // epoch ms
   level?: 'D' | 'I' | 'W' | 'E';
@@ -57,7 +61,13 @@ export type H2W =
   | Envelope<'logs.batch', { logs: LogEntry[]; total?: number; seq?: number; version?: number }>
   | Envelope<
       'logs.page.response',
-      { startIdx: number; endIdx: number; logs: LogEntry[]; version?: number }
+      {
+        /** 요청/응답 모두 오름차순 인덱스(과거=1, 최신=total) 기준 */
+        startIdx: number;
+        endIdx: number;
+        logs: LogEntry[];
+        version?: number;
+      }
     >
   /** 현재 pagination/데이터 상태 스냅샷(디버깅/부팅용) */
   | Envelope<

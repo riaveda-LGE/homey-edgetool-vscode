@@ -20,7 +20,7 @@ export interface HighlightRule {
 
 export interface LogRow {
   id: number;
-  /** 전역 인덱스(최신=1). 페이징 점프에 사용 */
+  /** 전역 인덱스(오름차순: 과거=1, 최신=total). 페이징/점프에 사용 */
   idx?: number;
   time: string;
   proc: string;

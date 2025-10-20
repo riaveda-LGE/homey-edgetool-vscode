@@ -17,7 +17,7 @@ class PaginationService {
   }
   // ── Warmup (메모리 기반 페이지) ─────────────────────────────────────────
   private warmActive = false;
-  private warmBuffer: LogEntry[] | null = null; // 최신순(내림차순) 0..N-1
+  private warmBuffer: LogEntry[] | null = null; // 최신→오래된(내림차순) 0..N-1 (물리)
   private warmTotal = 0; // 가상 total(예: 2000)
   // ── Filter(호스트 적용) ────────────────────────────────────────────────
   private filter: { pid?: string; src?: string; proc?: string; msg?: string } | null = null;
@@ -162,7 +162,7 @@ class PaginationService {
 
   /** 1-based inclusive 인덱스 범위를 읽어온다. */
   async readRangeByIdx(startIdx: number, endIdx: number): Promise<LogEntry[]> {
-    // 필터가 활성화된 경우에는 필터링 인덱스 공간 기준으로 읽음
+    // 필터가 활성화된 경우에는 필터링 인덱스(오름차순) 공간 기준으로 읽음
     if (this.isFilterActive()) {
       return await this.readRangeFiltered(startIdx, endIdx);
     }
@@ -173,17 +173,22 @@ class PaginationService {
         this.log.warn(`pagination(warm): invalid range ${startIdx}-${endIdx}`);
         return [];
       }
-      // 최신=1 기준. 내부 배열은 최신이 index 0
-      const start0 = Math.max(0, startIdx - 1);
-      const endExcl = Math.min(buf.length, Math.max(start0, endIdx));
-      const slice = buf.slice(start0, endExcl);
-      // idx 보정(없으면 채워줌)
-      for (let i = 0; i < slice.length; i++) {
-        const e = slice[i] as any;
-        if (typeof e.idx !== 'number') e.idx = start0 + 1 + i;
+      // 논리(오름차순) idx → 물리(warm: 최신→오래된) 슬라이스로 변환
+      const N = buf.length;
+      if (N === 0) return [];
+      const s = Math.max(1, Math.min(N, startIdx));
+      const e = Math.max(1, Math.min(N, endIdx));
+      const physStart = Math.max(0, N - e);
+      const physEndExcl = Math.min(N, N - s + 1);
+      const picked = buf.slice(physStart, physEndExcl).slice().reverse(); // 오름차순으로 반환
+      for (let i = 0; i < picked.length; i++) {
+        const e = picked[i] as any;
+        e.idx = s + i; // 논리 오름차순 인덱스 보장
       }
-      this.log.debug?.(`pagination(warm): read ${startIdx}-${endIdx} -> ${slice.length}`);
-      return slice as LogEntry[];
+      this.log.debug?.(
+        `pagination(warm): read ${startIdx}-${endIdx} -> ${picked.length} (phys ${physStart}-${physEndExcl})`,
+      );
+      return picked as LogEntry[];
     }
 
     // ── 파일 기반 모드 ───────────────────────────────────────────────────
@@ -197,20 +202,27 @@ class PaginationService {
       return [];
     }
     const total = this.reader.getTotalLines() ?? 0;
-    const start0 = Math.max(0, Math.min(total, startIdx - 1));
-    const endExcl = Math.min(total, Math.max(start0, endIdx)); // [S-1, E) (E inclusive → exclusive)
-    if (endExcl <= start0) return [];
-    const rows = await this.reader.readLineRange(start0, endExcl, { skipInvalid: true });
-    // idx 보정(파일 메타가 없다면 1-based로 보장)
-    for (let i = 0; i < rows.length; i++) {
-      const e = rows[i] as any;
-      if (typeof e.idx !== 'number') e.idx = start0 + 1 + i;
+    if (total <= 0) return [];
+    const s = Math.max(1, Math.min(total, startIdx));
+    const e = Math.max(1, Math.min(total, endIdx));
+    if (e < s) return [];
+    // 논리(오름차순) → 물리(내림차순 저장) 매핑
+    const physStart = Math.max(0, total - e);
+    const physEndExcl = Math.min(total, total - s + 1);
+    if (physEndExcl <= physStart) return [];
+    const rowsDesc = await this.reader.readLineRange(physStart, physEndExcl, { skipInvalid: true });
+    const rowsAsc = rowsDesc.slice().reverse();
+    for (let i = 0; i < rowsAsc.length; i++) {
+      const eRow = rowsAsc[i] as any;
+      eRow.idx = s + i; // 논리 오름차순 인덱스
     }
-    this.log.debug?.(`pagination: read ${startIdx}-${endIdx} -> ${rows.length}`);
-    return rows;
+    this.log.debug?.(
+      `pagination: read ${startIdx}-${endIdx} -> ${rowsAsc.length} (phys ${physStart}-${physEndExcl})`,
+    );
+    return rowsAsc;
   }
 
-  /** 필터 활성 시, "필터 결과 인덱스" 기준으로 [startIdx,endIdx] 구간을 반환 */
+  /** 필터 활성 시, "필터 결과 인덱스(오름차순)" 기준으로 [startIdx,endIdx] 구간을 반환 */
   async readRangeFiltered(startIdx: number, endIdx: number): Promise<LogEntry[]> {
     if (startIdx > endIdx) return [];
     const want = Math.max(0, endIdx - startIdx + 1);
@@ -219,15 +231,14 @@ class PaginationService {
 
     // 1) 워밍업 버퍼
     if (this.warmActive) {
-      const buf = (this.warmBuffer ?? []).filter(matches);
+      // 물리는 최신→오래된이므로, 필터 후 뒤집어 오름차순으로 본다
+      const asc = (this.warmBuffer ?? []).filter(matches).slice().reverse();
       const s0 = Math.max(0, startIdx - 1);
-      const slice = buf.slice(s0, s0 + want);
-      // 필터 가상 인덱스를 보장
+      const slice = asc.slice(s0, s0 + want);
       for (let i = 0; i < slice.length; i++) {
         const e = slice[i] as any;
-        // 원본 파일 인덱스가 있으면 보존
         if (typeof e._fileIdx !== 'number' && typeof e.idx === 'number') e._fileIdx = e.idx;
-        e.idx = startIdx + i;
+        e.idx = startIdx + i; // 오름차순 필터 공간
       }
       return slice;
     }
@@ -237,19 +248,20 @@ class PaginationService {
     const total = this.reader.getTotalLines() ?? 0;
     if (total <= 0) return [];
 
-    const WINDOW = 2000; // 한 번에 읽을 라인 수(튜닝 가능)
-    let virtualCount = 0; // 필터에 매칭된 누적 카운트
-
-    for (let from = 0; from < total; from += WINDOW) {
-      const part = await this.reader.readLineRange(from, Math.min(total, from + WINDOW), {
-        skipInvalid: true,
-      });
-      for (const e of part) {
+    // ⬇️ 논리 오름차순을 보장하기 위해 "물리 끝→앞"으로 창을 옮겨 읽고, 각 창을 reverse
+    const WINDOW = 2000;
+    let v = 0; // 필터 공간(오름차순)에서의 누적 카운트
+    for (let tail = total; tail > 0 && out.length < want; tail -= WINDOW) {
+      const from = Math.max(0, tail - WINDOW);
+      const toEx = tail;
+      const partDesc = await this.reader.readLineRange(from, toEx, { skipInvalid: true });
+      const partAsc = partDesc.slice().reverse();
+      for (const e of partAsc) {
         if (!matches(e)) continue;
-        virtualCount++;
-        if (virtualCount < startIdx) continue; // 아직 시작 전
+        v++;
+        if (v < startIdx) continue;
         out.push(e);
-        if (out.length >= want) return this.reindexFiltered(out, startIdx);
+        if (out.length >= want) break;
       }
     }
     return this.reindexFiltered(out, startIdx);
@@ -356,7 +368,7 @@ class PaginationService {
   // ────────────────────────────────────────────────────────────────────
   // 전체 검색(필터 적용 공간 기준) — 단일 패스로 선형 스캔 (warm/file 공용)
   // - 기존 HostWebviewBridge.search.query의 O(N^2) 접근을 대체
-  // - 반환 idx는 "필터 결과 인덱스(1-based)" 공간 기준
+  // - 반환 idx는 "필터 결과 인덱스(오름차순, 1-based)" 공간 기준
   // - 옵션: regex / range / top (필요 시 확장)
   // ────────────────────────────────────────────────────────────────────
   async searchAll(
@@ -377,10 +389,14 @@ class PaginationService {
 
     // 1) 워밍업 메모리 버퍼
     if (this.warmActive) {
-      const buf = (this.warmBuffer ?? []).filter((e) => this.matchesFilter(e));
-      for (let i = 0; i < buf.length; i++) {
-        const e = buf[i];
-        const idx = i + 1; // 필터 결과 공간 기준
+      // 오름차순 스캔을 위해 뒤집어서 탐색
+      const asc = (this.warmBuffer ?? [])
+        .filter((e) => this.matchesFilter(e))
+        .slice()
+        .reverse();
+      for (let i = 0; i < asc.length; i++) {
+        const e = asc[i];
+        const idx = i + 1;
         if (!inRange(idx)) continue;
         if (test(String(e.text || ''))) {
           hits.push({ idx, text: String(e.text || '') });
@@ -395,19 +411,19 @@ class PaginationService {
     const total = this.reader.getTotalLines() ?? 0;
     if (total <= 0) return hits;
     const WINDOW = 4000;
-    let virtualCount = 0;
-
-    for (let from = 0; from < total && wantMore(); from += WINDOW) {
-      const part = await this.reader.readLineRange(from, Math.min(total, from + WINDOW), {
-        skipInvalid: true,
-      });
-      for (const e of part) {
+    let v = 0;
+    for (let tail = total; tail > 0 && wantMore(); tail -= WINDOW) {
+      const from = Math.max(0, tail - WINDOW);
+      const toEx = tail;
+      const partDesc = await this.reader.readLineRange(from, toEx, { skipInvalid: true });
+      const partAsc = partDesc.slice().reverse();
+      for (const e of partAsc) {
         if (!this.matchesFilter(e)) continue;
-        virtualCount++;
-        if (!inRange(virtualCount)) continue;
+        v++;
+        if (!inRange(v)) continue;
         const txt = String(e.text || '');
         if (test(txt)) {
-          hits.push({ idx: virtualCount, text: txt });
+          hits.push({ idx: v, text: txt });
           if (!wantMore()) break;
         }
       }

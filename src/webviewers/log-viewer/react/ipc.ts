@@ -122,7 +122,12 @@ export function setupIpc() {
         // 버전 동기화: payload.version 우선, 없으면 구버전 호환 seq를 fallback으로 채택
         updateSessionVersion(v ?? seq, 'logs.batch');
         ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'} ver=${v ?? 'n/a'}`);
-        useLogStore.getState().receiveRows(1, rows);
+        // 🚩 rows 는 오름차순 idx 를 포함하므로, 실제 시작 인덱스로 수신
+        const startIdx =
+          rows.length && typeof rows[0].idx === 'number'
+            ? Math.min(...rows.map((r) => r.idx ?? Number.POSITIVE_INFINITY))
+            : 1;
+        useLogStore.getState().receiveRows(startIdx, rows);
         setReadyForFilter(); // 최초 배치 수신 시 필터 전송 허용
         return;
       }
@@ -137,10 +142,11 @@ export function setupIpc() {
         useLogStore.getState().setTotalRows(total);
         setReadyForFilter(); // 풀 리인덱스 이후에도 허용
         useLogStore.getState().receiveRows(1, []);
-        const startIdx = 1;
+        // ✅ 표시 순서는 오름차순, 초기 관심은 최신 → "마지막 페이지"를 요청
         const size = useLogStore.getState().windowSize || 500;
-        const endIdx = Math.max(1, Math.min(total || size, size));
-        ui.info(`refresh: request first page ${startIdx}-${endIdx} total=${total}`);
+        const endIdx = Math.max(1, total);
+        const startIdx = Math.max(1, endIdx - size + 1);
+        ui.info(`refresh: request last page ${startIdx}-${endIdx} total=${total}`);
         vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
         return;
       }

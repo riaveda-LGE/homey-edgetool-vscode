@@ -59,6 +59,9 @@ export function Grid() {
   // scroll 이벤트 중복 방지 플래그
   const ignoreScrollRef = useRef(false);
   const lastWindowStartChangeTimeRef = useRef(0);
+  // 최초/리프레시 이후 단 한 번만 아래로 앵커링
+  const initialAnchoredRef = useRef(false);
+  const wasEmptyRef = useRef(true);
 
   // mount/unmount 로그 + 기본 측정값
   useEffect(() => {
@@ -233,6 +236,42 @@ export function Grid() {
       lastCoverageRef.current = cov;
     }
   }, [m.windowStart, visibleRows.length, m.windowSize, m.totalRows]);
+
+  // 🚩 최초(또는 refresh/필터 후) 데이터가 들어오면
+  //    "전달된 마지막 줄(=최신)"을 화면 맨 아래에 오도록 스크롤을 한 번만 맞춘다.
+  useEffect(() => {
+    const el = parentRef.current;
+    const list = listRef.current;
+    if (!el || !list) return;
+    const nowEmpty = m.rows.length === 0;
+    if (nowEmpty) {
+      // 다음 비어있던→채워짐 전환에서 다시 1회 앵커링 허용
+      wasEmptyRef.current = true;
+      initialAnchoredRef.current = false;
+      return;
+    }
+    if (wasEmptyRef.current && m.rows.length > 0 && !initialAnchoredRef.current) {
+      const headerOffset = list.offsetTop || 0; // 헤더 높이 보정
+      // endIdx: rows의 idx 최대값(없으면 windowStart+rows-1)
+      const endIdxFromRows = m.rows.reduce(
+        (acc, r) => (typeof r.idx === 'number' ? Math.max(acc, r.idx) : acc),
+        0,
+      );
+      const endIdx = endIdxFromRows || (m.windowStart + m.rows.length - 1);
+      // 아래 앵커: scrollTop + clientHeight = headerOffset + endIdx * rowH
+      const target =
+        headerOffset + endIdx * Math.max(1, m.rowH) - el.clientHeight;
+      ignoreScrollRef.current = true;
+      lastWindowStartChangeTimeRef.current = Date.now();
+      el.scrollTop = Math.max(0, Math.min(target, el.scrollHeight - el.clientHeight));
+      requestAnimationFrame(() => {
+        ignoreScrollRef.current = false;
+      });
+      ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`);
+      initialAnchoredRef.current = true;
+      wasEmptyRef.current = false;
+    }
+  }, [m.rows.length, m.windowStart, m.rowH, m.totalRows]);
 
   // ── 보여지는 로그 범위 로그(스로틀 + 경계 구간만) ────────────────────
   const lastVisRef = useRef<{ s: number; e: number } | null>(null);

@@ -130,12 +130,15 @@ export class HostWebviewBridge {
           this.log.info(`bridge: logs.filter.update ${JSON.stringify(filter)}`);
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
-          // ① 바뀐 데이터의 head 500줄을 즉시 푸시
+          // 표시 순서는 오름차순이지만, 사용자는 "최신"을 원한다 → 마지막 페이지로 보냄
+          const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
+          const endIdx = Math.max(1, total ?? 0);
+          const page = await paginationService.readRangeByIdx(startIdx, endIdx);
+          // ① 바뀐 데이터의 "마지막 페이지(최신 영역)" 즉시 푸시
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq, version: paginationService.getVersion() },
+            payload: { logs: page, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           // ② 상태(총계/버전)도 함께 브로드캐스트
           this.send({
@@ -217,7 +220,9 @@ export class HostWebviewBridge {
           this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
+          const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
+          const endIdx = Math.max(1, total ?? 0);
+          const head = await paginationService.readRangeByIdx(startIdx, endIdx);
           this.send({
             v: 1,
             type: 'logs.batch',
@@ -263,7 +268,9 @@ export class HostWebviewBridge {
           paginationService.setFilter(null);
           // 필터 해제 후 상단 500줄 재전송
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
+          const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
+          const endIdx = Math.max(1, total ?? 0);
+          const head = await paginationService.readRangeByIdx(startIdx, endIdx);
           this.send({
             v: 1,
             type: 'logs.batch',

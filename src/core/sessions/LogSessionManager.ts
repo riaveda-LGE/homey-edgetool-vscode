@@ -155,17 +155,19 @@ export class LogSessionManager {
           warmupTarget: FF.warmupTarget,
         });
         if (warmLogs.length) {
-          // idx(최신=1) 임시 부여 — 웜업 구간은 파일 쓰기 전이므로 로컬 인덱스 사용
-          for (let i = 0; i < warmLogs.length; i++) (warmLogs[i] as any).idx = i + 1;
           // 메모리/웹뷰 준비
           paginationService.seedWarmupBuffer(warmLogs, warmLogs.length);
           this.hb.addBatch(warmLogs);
-          const first = warmLogs.slice(0, Math.min(LOG_WINDOW_SIZE, warmLogs.length));
-          if (first.length) {
+          // ✅ 초기 전달: "마지막 페이지(최신 영역)"을 오름차순으로 보냄
+          const totalWarm = warmLogs.length;
+          const endIdx = totalWarm;
+          const startIdx = Math.max(1, endIdx - LOG_WINDOW_SIZE + 1);
+          const lastPage = await paginationService.readRangeByIdx(startIdx, endIdx);
+          if (lastPage.length) {
             this.log.info(
-              `warmup(T0): deliver first ${first.length}/${warmLogs.length} (virtual total=${warmLogs.length}, window=${LOG_WINDOW_SIZE})`,
+              `warmup(T0): deliver last-page ${startIdx}-${endIdx} (${lastPage.length}/${totalWarm})`,
             );
-            opts.onBatch(first, warmLogs.length, ++seq);
+            opts.onBatch(lastPage, totalWarm, ++seq);
           }
           // Short-circuit: 웜업 수가 총합 이상이면 T1 스킵
           if (typeof total === 'number' && warmLogs.length >= total) {
@@ -199,8 +201,7 @@ export class LogSessionManager {
       `T1: manifest loaded chunks=${manifest.data.chunkCount} mergedLines=${manifest.data.mergedLines ?? 0}`,
     );
 
-    // 전역 인덱스 부여(최신=1). 과거에 이어쓸 수 있으므로 기저값은 mergedLines.
-    let nextIdx = manifest.data.mergedLines ?? 0;
+    // (주의) 전역 인덱스는 페이지 서비스에서 오름차순으로 부여한다.
     let mergedSoFar = manifest.data.mergedLines;
     let sentInitial = false; // ✅ 최초 LOG_WINDOW_SIZE만 보낼 가드
     const initialBuffer: LogEntry[] = [];
@@ -227,20 +228,15 @@ export class LogSessionManager {
       // Manager가 T0 웜업을 수행했으므로 여기서는 비활성화
       warmup: false,
       onBatch: async (logs: LogEntry[]) => {
-        // 0) 전역 인덱스 부여
-        for (const e of logs) {
-          nextIdx += 1;
-          (e as any).idx = nextIdx;
-        }
-
         // 1) 메모리 버퍼 업데이트
         this.hb.addBatch(logs);
 
-        // 2) 최초 500줄만 UI에 전달 (그 이후는 전달 금지)
+        // 2) 최초 LOG_WINDOW_SIZE줄만 UI에 전달 (그 이후는 전달 금지)
         if (!sentInitial && !paginationService.isWarmupActive()) {
           initialBuffer.push(...logs);
           if (initialBuffer.length >= LOG_WINDOW_SIZE) {
-            const slice = initialBuffer.slice(0, LOG_WINDOW_SIZE);
+            // 최신부터 쌓인 버퍼이므로, 오름차순 표시를 위해 뒤집어서 보냄
+            const slice = initialBuffer.slice(0, LOG_WINDOW_SIZE).slice().reverse();
             const t = paginationService.isWarmupActive() ? paginationService.getWarmTotal() : total;
             this.log.info(
               `T1: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()}, window=${LOG_WINDOW_SIZE})`,
@@ -313,10 +309,15 @@ export class LogSessionManager {
     }
     // 파일 기반 최신 head 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
     try {
-      const freshHead = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
-      if (freshHead.length) {
-        this.log.info(`T1: deliver refreshed head=${freshHead.length} (file-backed, window=${LOG_WINDOW_SIZE})`);
-        opts.onBatch(freshHead, manifest.data.totalLines ?? total, ++seq);
+      const totalLines = manifest.data.totalLines ?? total ?? 0;
+      const endIdx = Math.max(1, totalLines);
+      const startIdx = Math.max(1, endIdx - LOG_WINDOW_SIZE + 1);
+      const freshTail = await paginationService.readRangeByIdx(startIdx, endIdx);
+      if (freshTail.length) {
+        this.log.info(
+          `T1: deliver refreshed last-page ${startIdx}-${endIdx} (${freshTail.length}) (file-backed, window=${LOG_WINDOW_SIZE})`,
+        );
+        opts.onBatch(freshTail, manifest.data.totalLines ?? total, ++seq);
       }
     } catch (e) {
       this.log.warn(`T1: failed to deliver refreshed head: ${String(e)}`);
