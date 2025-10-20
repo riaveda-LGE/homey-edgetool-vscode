@@ -13,6 +13,7 @@ import { CommandHandlersGit } from './CommandHandlersGit.js';
 import { CommandHandlersHomey } from './CommandHandlersHomey.js';
 import { CommandHandlersHost } from './CommandHandlersHost.js';
 import { CommandHandlersLogging } from './CommandHandlersLogging.js';
+import { CommandHandlersParser } from './CommandHandlersParser.js';
 import { CommandHandlersUpdate } from './CommandHandlersUpdate.js';
 import { CommandHandlersWorkspace } from './CommandHandlersWorkspace.js';
 
@@ -28,6 +29,7 @@ class CommandHandlers {
   private hostHandler: CommandHandlersHost;
   private gitHandler: CommandHandlersGit;
   private connectHandler: CommandHandlersConnect;
+  private parserHandler: CommandHandlersParser;
 
   constructor(
     private context?: vscode.ExtensionContext,
@@ -42,6 +44,7 @@ class CommandHandlers {
     this.hostHandler = new CommandHandlersHost();
     this.gitHandler = new CommandHandlersGit();
     this.connectHandler = new CommandHandlersConnect();
+    this.parserHandler = new CommandHandlersParser(this.context);
   }
 
   async route(raw: string) {
@@ -80,6 +83,9 @@ class CommandHandlers {
         return this.updateHandler.updateNow();
       case 'openHelp':
         return this.updateHandler.openHelp();
+
+      case 'initParser':
+        return this.parserHandler.initParser();
 
       // === 과거 라인 기반 명령들(가능한 쓰지 않음) ===
       case 'connect_info':

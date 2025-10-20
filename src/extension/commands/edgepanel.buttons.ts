@@ -119,6 +119,12 @@ export function getSections(): SectionDef[] {
         },
         { id: 'cmd.gitPull', label: 'git pull', op: { kind: 'handler', name: 'gitPull' } },
         { id: 'cmd.gitPush', label: 'git push', op: { kind: 'handler', name: 'gitPush' } },
+        {
+          id: 'cmd.initParser',
+          label: 'Parser 초기화',
+          desc: '.config/custom_log_parser.json + README 재생성',
+          op: { kind: 'handler', name: 'initParser' },
+        },
       ],
     },
 

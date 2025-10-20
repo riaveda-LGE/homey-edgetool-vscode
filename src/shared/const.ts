@@ -67,3 +67,11 @@ export const LOG_OVERSCAN = 40;
 // UI & Misc
 export const PERF_UPDATE_INTERVAL_MS = 1000;
 export const RANDOM_STRING_LENGTH = 32;
+
+// Parser config/template
+// 워크스페이스 내 배치 파일명
+export const PARSER_CONFIG_REL = '.config/custom_log_parser.json';
+export const PARSER_README_REL = '.config/custom_log_parser_readme.md';
+// 확장 내 내장 템플릿/문서 경로
+export const PARSER_TEMPLATE_REL = 'media/resources/custom_log_parser.template.v1.json';
+export const PARSER_README_TEMPLATE_REL = 'doc/logging-0-parser.md';

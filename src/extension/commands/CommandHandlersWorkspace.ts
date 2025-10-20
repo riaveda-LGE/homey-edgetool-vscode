@@ -1,5 +1,5 @@
 // === src/extension/commands/CommandHandlersWorkspace.ts ===
-import { exec as execCb } from 'child_process';
+import { execFile as execFileCb } from 'child_process';
 import * as path from 'path';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
@@ -9,9 +9,10 @@ import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
+import { migrateParserConfigIfNeeded } from '../setup/parserConfigSeeder.js';
 
 const log = getLogger('cmd.workspace');
-const exec = promisify(execCb);
+const execFile = promisify(execFileCb);
 
 export class CommandHandlersWorkspace {
   private workspaceInfoCache?: Awaited<ReturnType<typeof resolveWorkspaceInfo>>;
@@ -31,6 +32,8 @@ export class CommandHandlersWorkspace {
     const startTime = Date.now();
 
     try {
+      const prevInfo = await this.getCachedWorkspaceInfo(); // 변경 전
+      log.debug(`[debug] changeWorkspaceQuick: prev ws=${prevInfo.wsDirUri.fsPath}`);
       // 캐시된 workspace 정보 사용 (불필요한 resolveWorkspaceInfo 호출 방지)
       const info = await this.getCachedWorkspaceInfo();
 
@@ -60,6 +63,16 @@ export class CommandHandlersWorkspace {
         this.ensureGitInitAsync(baseForConfig),
       ]);
 
+      // 변경 후 워크스페이스 정보 갱신
+      this.workspaceInfoCache = undefined; // 강제 무효화
+      const nextInfo = await this.getCachedWorkspaceInfo();
+      log.debug(`[debug] changeWorkspaceQuick: next ws=${nextInfo.wsDirUri.fsPath}`);
+
+      // .config 마이그레이션(새 ws에 없으면 이전 ws의 .config 복사, 둘 다 없으면 템플릿 시드)
+      try {
+        await migrateParserConfigIfNeeded(prevInfo.wsDirUri, nextInfo.wsDirUri, this.context!.extensionUri);
+        log.debug('[debug] changeWorkspaceQuick: migration + old .config cleanup completed');
+      } catch (e: any) { log.warn(`parser config migrate skipped: ${e?.message ?? e}`); }
       const duration = Date.now() - startTime;
       log.debug(`changeWorkspaceQuick completed in ${duration}ms`);
     } catch (e: any) {
@@ -121,11 +134,24 @@ export class CommandHandlersWorkspace {
     } catch {}
 
     try {
-      log.debug(`git init in: ${baseDir}/workspace`);
-      await exec('git init', { cwd: path.join(baseDir, 'workspace') });
+      const wsDir =
+        path.basename(baseDir).toLowerCase() === 'workspace'
+          ? baseDir
+          : path.join(baseDir, 'workspace');
+
+      // 작업 디렉터리 보장(없어도 생성)
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(wsDir));
+
+      log.debug(`git init in: ${wsDir}`);
+      // shell을 통하지 않고 직접 git 실행 → Windows에서 cmd.exe ENOENT 회피
+      await execFile('git', ['init'], { cwd: wsDir });
       log.debug('git init done');
     } catch (e: any) {
-      log.error(`git init failed: ${e?.message || String(e)}`);
+      if (e?.code === 'ENOENT') {
+        log.error('git init failed: git executable not found on PATH (ENOENT)');
+      } else {
+        log.error(`git init failed: ${e?.message || String(e)}`);
+      }
     }
   }
 
