@@ -62,6 +62,7 @@ export function Grid() {
   // 최초/리프레시 이후 단 한 번만 아래로 앵커링
   const initialAnchoredRef = useRef(false);
   const wasEmptyRef = useRef(true);
+  const AUTO_PAUSE_TOLERANCE_ROWS = 2; // 바닥에서 이만큼 벗어나면 PAUSE
 
   // mount/unmount 로그 + 기본 측정값
   useEffect(() => {
@@ -130,11 +131,19 @@ export function Grid() {
         ui.debug?.(`Grid.scroll → page.request ${payload}`);
       }
       vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
+
+      // ✅ FOLLOW 자동 해제: 사용자가 바닥 근처를 벗어나면 PAUSE로 전환
+      const nearBottom =
+        cur.scrollTop + cur.clientHeight >= cur.scrollHeight - m.rowH * (AUTO_PAUSE_TOLERANCE_ROWS + 0.5);
+      if (m.follow && !nearBottom) {
+        useLogStore.getState().setFollow(false);
+        ui.info('Grid.scroll: auto-pause follow (scrolled away from bottom)');
+      }
     };
 
     el.addEventListener('scroll', onScroll, { passive: true } as AddEventListenerOptions);
     return () => el.removeEventListener('scroll', onScroll as unknown as EventListener);
-  }, [m.rowH, m.windowStart, m.totalRows, m.overscan, m.windowSize]);
+  }, [m.rowH, m.windowStart, m.totalRows, m.overscan, m.windowSize, m.follow]);
 
   // 프리뷰 상태 변경 로그
   useEffect(() => {
@@ -237,41 +246,50 @@ export function Grid() {
     }
   }, [m.windowStart, visibleRows.length, m.windowSize, m.totalRows]);
 
-  // 🚩 최초(또는 refresh/필터 후) 데이터가 들어오면
-  //    "전달된 마지막 줄(=최신)"을 화면 맨 아래에 오도록 스크롤을 한 번만 맞춘다.
-  useEffect(() => {
+  // ── 공통: 맨 아래로 앵커링 함수 ──────────────────────────────────────
+  const scrollToBottom = () => {
     const el = parentRef.current;
     const list = listRef.current;
     if (!el || !list) return;
-    const nowEmpty = m.rows.length === 0;
-    if (nowEmpty) {
-      // 다음 비어있던→채워짐 전환에서 다시 1회 앵커링 허용
-      wasEmptyRef.current = true;
-      initialAnchoredRef.current = false;
-      return;
-    }
-    if (wasEmptyRef.current && m.rows.length > 0 && !initialAnchoredRef.current) {
-      const headerOffset = list.offsetTop || 0; // 헤더 높이 보정
-      // endIdx: rows의 idx 최대값(없으면 windowStart+rows-1)
-      const endIdxFromRows = m.rows.reduce(
-        (acc, r) => (typeof r.idx === 'number' ? Math.max(acc, r.idx) : acc),
-        0,
-      );
-      const endIdx = endIdxFromRows || (m.windowStart + m.rows.length - 1);
-      // 아래 앵커: scrollTop + clientHeight = headerOffset + endIdx * rowH
-      const target =
-        headerOffset + endIdx * Math.max(1, m.rowH) - el.clientHeight;
+    const headerOffset = list.offsetTop || 0;
+    const endIdx = m.windowStart + m.rows.length - 1;
+    const target = headerOffset + endIdx * Math.max(1, m.rowH) - el.clientHeight;
+    ignoreScrollRef.current = true;
+    lastWindowStartChangeTimeRef.current = Date.now();
+    el.scrollTop = Math.max(0, Math.min(target, el.scrollHeight - el.clientHeight));
+    requestAnimationFrame(() => {
+      ignoreScrollRef.current = false;
+    });
+    ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`);
+  };
+
+  // (1) FOLLOW=true로 전환될 때:
+  //  - 현재 커버리지의 바닥이 전체 tail이 아니면 마지막 페이지를 요청
+  //  - 이후 바닥으로 앵커링
+  useEffect(() => {
+    if (!m.follow) return;
+    const endIdx = m.windowStart + Math.max(0, m.rows.length) - 1;
+    const atTail = m.totalRows > 0 && endIdx >= m.totalRows - 1; // 1줄 관용 오차
+    if (!atTail && m.totalRows > 0) {
+      const size = m.windowSize || 500;
+      const tailEnd = Math.max(1, m.totalRows);
+      const tailStart = Math.max(1, tailEnd - size + 1);
+      ui.info(`Grid.follow: jump-to-tail request ${tailStart}-${tailEnd} (endIdx=${endIdx}, total=${m.totalRows})`);
+      // 프로그램적 이동 동안 스크롤 핸들러 무시(자동 PAUSE 방지)
       ignoreScrollRef.current = true;
       lastWindowStartChangeTimeRef.current = Date.now();
-      el.scrollTop = Math.max(0, Math.min(target, el.scrollHeight - el.clientHeight));
-      requestAnimationFrame(() => {
-        ignoreScrollRef.current = false;
-      });
-      ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`);
-      initialAnchoredRef.current = true;
-      wasEmptyRef.current = false;
+      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: tailStart, endIdx: tailEnd } });
+      requestAnimationFrame(() => { ignoreScrollRef.current = false; });
     }
-  }, [m.rows.length, m.windowStart, m.rowH, m.totalRows]);
+    scrollToBottom();
+  }, [m.follow, m.totalRows, m.windowSize, m.windowStart, m.rows.length]);
+
+  // (2) FOLLOW=true 상태에서 새 데이터가 들어오면 → 계속 바닥으로 고정
+  useEffect(() => {
+    if (m.follow && m.rows.length > 0) {
+      scrollToBottom();
+    }
+  }, [m.rows.length, m.windowStart, m.rowH, m.follow]);
 
   // ── 보여지는 로그 범위 로그(스로틀 + 경계 구간만) ────────────────────
   const lastVisRef = useRef<{ s: number; e: number } | null>(null);

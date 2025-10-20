@@ -61,4 +61,6 @@ export interface Model {
 
   filter: Filter;
   pendingJumpIdx?: number;
+  follow: boolean;
+  newSincePause: number;
 }

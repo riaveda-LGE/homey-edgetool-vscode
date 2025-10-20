@@ -109,7 +109,6 @@ export function setupIpc() {
       case 'logs.batch': {
         const logs = z.array(ZLogEntry).parse(payload?.logs ?? []);
         const total = typeof payload?.total === 'number' ? payload.total : undefined;
-        const seq = typeof payload?.seq === 'number' ? payload.seq : undefined;
         const v = typeof payload?.version === 'number' ? payload.version : undefined;
         if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
         let nextId = useLogStore.getState().nextId;
@@ -119,8 +118,11 @@ export function setupIpc() {
           const src = pickSrcName(e);
           return { id: nextId++, idx: e.idx, ...p, src, raw };
         });
-        // 버전 동기화: payload.version 우선, 없으면 구버전 호환 seq를 fallback으로 채택
-        updateSessionVersion(v ?? seq, 'logs.batch');
+        // ✅ 파일기반 버전만 채택(구버전 seq fallback은 page.response와 충돌 가능)
+        if (typeof v === 'number') {
+          updateSessionVersion(v, 'logs.batch');
+        }
+
         ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'} ver=${v ?? 'n/a'}`);
         // 🚩 rows 는 오름차순 idx 를 포함하므로, 실제 시작 인덱스로 수신
         const startIdx =
@@ -128,6 +130,10 @@ export function setupIpc() {
             ? Math.min(...rows.map((r) => r.idx ?? Number.POSITIVE_INFINITY))
             : 1;
         useLogStore.getState().receiveRows(startIdx, rows);
+        // FOLLOW 모드가 아닐 때는 새 로그 도착을 알림
+        if (!useLogStore.getState().follow && rows.length > 0) {
+          useLogStore.getState().incNewSincePause();
+        }
         setReadyForFilter(); // 최초 배치 수신 시 필터 전송 허용
         return;
       }

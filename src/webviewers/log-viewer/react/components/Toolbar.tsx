@@ -20,6 +20,10 @@ export function Toolbar() {
     total: s.mergeTotal,
   }));
   const filter = useLogStore((s) => s.filter);
+  const follow = useLogStore((s) => s.follow);
+  const newSincePause = useLogStore((s) => s.newSincePause);
+  const setFollow = useLogStore((s) => s.setFollow);
+  const clearNewSincePause = useLogStore((s) => s.clearNewSincePause);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchDlgOpen, setSearchDlgOpen] = useState(false);
   const ui = useMemo(() => createUiLog(vscode, 'log-viewer.toolbar'), []);
@@ -152,6 +156,28 @@ export function Toolbar() {
         data-testid="btn-filter"
       >
         {`필터${activeCount > 0 ? `(${activeCount})` : ''}`}
+      </button>
+      <button
+        className={[
+          'tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-relative',
+          follow
+            ? 'tw-bg-[var(--accent)] tw-text-[var(--accent-fg)] hover:tw-bg-[var(--accent-hover)]'
+            : '',
+        ].join(' ')}
+        onClick={() => {
+          const next = !follow;
+          setFollow(next);
+          if (next) clearNewSincePause(); // FOLLOW 모드로 돌아올 때 배지 클리어
+          ui.info(`toolbar.follow.click follow=${next}`);
+        }}
+        title={follow ? '실시간 로그 따라가기 중지' : '실시간 로그 따라가기 재개'}
+      >
+        {follow ? '팔로우 중' : '맨 아래로'}
+        {newSincePause > 0 && !follow && (
+          <span className="tw-absolute -tw-top-1 -tw-right-1 tw-bg-red-500 tw-text-white tw-text-xs tw-rounded-full tw-px-1 tw-min-w-[18px] tw-h-4 tw-flex tw-items-center tw-justify-center">
+            {newSincePause > 99 ? '99+' : newSincePause}
+          </span>
+        )}
       </button>
       <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"

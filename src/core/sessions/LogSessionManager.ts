@@ -1,6 +1,7 @@
 // src/core/sessions/LogSessionManager.ts
 import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 import {
@@ -47,6 +48,7 @@ export class LogSessionManager {
   private hb = new HybridLogBuffer();
   private seq = 0;
   private rtAbort?: AbortController;
+  private rtFlushTimer?: NodeJS.Timeout;
   private cm?: ConnectionManager;
 
   // 진행률 스로틀 관련
@@ -78,8 +80,10 @@ export class LogSessionManager {
   }
 
   @measure()
-  async startRealtimeSession(opts: { signal?: AbortSignal; filter?: string } & SessionCallbacks) {
-    this.log.info('realtime: start');
+  async startRealtimeSession(
+    opts: { signal?: AbortSignal; filter?: string; indexOutDir?: string } & SessionCallbacks,
+  ) {
+    this.log.info('realtime: start (file-backed + pagination)');
     if (!this.conn) throw new XError(ErrorCategory.Connection, 'No connection configured');
 
     this.cm = new ConnectionManager(this.conn);
@@ -88,9 +92,94 @@ export class LogSessionManager {
     this.rtAbort = new AbortController();
     if (opts.signal) opts.signal.addEventListener('abort', () => this.rtAbort?.abort());
 
-    const filter = (s: string) => {
-      const f = opts.filter?.trim();
-      return !f || s.toLowerCase().includes(f.toLowerCase());
+    // ── 출력 디렉터리(실시간) 준비 ────────────────────────────────────────
+    // - caller가 indexOutDir을 준 경우 우선
+    // - 그 외에는 OS temp 하위에 <MERGED_DIR_NAME>-rt-<pid> 고정 사용
+    const baseOut =
+      opts.indexOutDir ||
+      path.join(os.tmpdir(), `${MERGED_DIR_NAME}-rt-${process.pid}`);
+    const outDir = await this.prepareCleanOutputDir(baseOut);
+    this.log.info(`realtime: outDir=${outDir}`);
+
+    // manifest / chunk writer
+    const manifest = await ManifestWriter.loadOrCreate(outDir);
+    const chunkWriter = new ChunkWriter(outDir, MERGED_CHUNK_MAX_LINES, manifest.data.chunkCount);
+    let mergedSoFar = manifest.data.mergedLines ?? 0;
+    let paginationOpened = false;
+
+    // flush 코얼레서
+    const PULSE_MS = 250;
+    let pending: LogEntry[] = [];
+    const doFlush = async (reason: string) => {
+      if (!pending.length) return;
+      const batch = pending;
+      pending = [];
+
+      // 1) 메모리 메트릭
+      this.hb.addBatch(batch);
+
+      // 2) 디스크 청크 append + manifest 스냅샷
+      const parts = await chunkWriter.appendBatch(batch);
+      for (const p of parts) {
+        manifest.addChunk(p.file, p.lines, mergedSoFar);
+        mergedSoFar += p.lines;
+      }
+      manifest.setTotal(mergedSoFar);
+      await manifest.save();
+
+      // 3) 페이지네이션 오픈/리로드
+      try {
+        if (!paginationOpened) {
+          await paginationService.setManifestDir(outDir);
+          paginationOpened = true;
+          this.log.info(`realtime: pagination opened dir=${outDir}`);
+          // ✅ 파일기반 세션 버전을 웹뷰에 전달(웹뷰가 페이지 요청을 바로 시작하도록)
+          try {
+            opts.onRefresh?.({
+              total: mergedSoFar,
+              version: paginationService.getVersion(),
+            });
+          } catch {}
+        } else if (parts.length) {
+          // 새 청크가 만들어진 경우에만 리로드(비용 절감)
+          await paginationService.reload();
+        }
+      } catch (e) {
+        this.log.warn(`realtime: pagination prepare failed: ${String(e)}`);
+      }
+
+      // 4) 최신 윈도우 구간을 읽어 교체 푸시
+      try {
+        const total = mergedSoFar;
+        const endIdx = Math.max(1, total);
+        const startIdx = Math.max(1, endIdx - LOG_WINDOW_SIZE + 1);
+        const page = await paginationService.readRangeByIdx(startIdx, endIdx);
+        if (page.length) {
+          opts.onBatch(page, total, ++this.seq);
+        }
+      } catch (e) {
+        this.log.warn(`realtime: failed to deliver last page: ${String(e)}`);
+      }
+
+      // 5) 메트릭
+      opts.onMetrics?.({
+        buffer: this.hb.getMetrics(),
+        mem: { rss: process.memoryUsage().rss, heapUsed: process.memoryUsage().heapUsed },
+      });
+      this.log.debug?.(`realtime.flush[${reason}] batch=${batch.length} total=${mergedSoFar}`);
+    };
+
+    const schedulePulse = () => {
+      if (this.rtFlushTimer) return;
+      this.rtFlushTimer = setTimeout(async () => {
+        this.rtFlushTimer = undefined;
+        try {
+          await doFlush('pulse');
+        } finally {
+          // 지속적으로 입력이 올 수 있으므로 다음 펄스는 필요 시 다시 예약
+          if (pending.length) schedulePulse();
+        }
+      }, PULSE_MS);
     };
 
     const cmd =
@@ -101,8 +190,8 @@ export class LogSessionManager {
     this.log.debug?.(`realtime: streaming cmd="${cmd}"`);
     await this.cm.stream(
       cmd,
-      (line) => {
-        if (!filter(line)) return;
+      (line: string) => {
+        // 실시간은 "전체 라인"을 파일에 보존(필터는 PaginationService 경로에서 처리)
         const e: LogEntry = {
           id: Date.now(),
           ts: Date.now(),
@@ -111,15 +200,38 @@ export class LogSessionManager {
           source: this.conn!.type,
           text: line,
         };
-        this.hb.add(e);
-        opts.onBatch([e], undefined, ++this.seq);
-        opts.onMetrics?.({
-          buffer: this.hb.getMetrics(),
-          mem: { rss: process.memoryUsage().rss, heapUsed: process.memoryUsage().heapUsed },
-        });
+        pending.push(e);
+        // 첫 라인이 들어오면 즉시 펄스 예약(뭉텅이로 처리)
+        schedulePulse();
       },
       this.rtAbort.signal,
     );
+
+    // 스트림 종료 시 잔여 플러시
+    try {
+      await doFlush('final');
+      const rem = await chunkWriter.flushRemainder();
+      if (rem) {
+        manifest.addChunk(rem.file, rem.lines, mergedSoFar);
+        mergedSoFar += rem.lines;
+        manifest.setTotal(mergedSoFar);
+        await manifest.save();
+        await paginationService.reload();
+      }
+      // 마지막 페이지 재전송(세션 종료 전 정합)
+      const total = mergedSoFar;
+      const endIdx = Math.max(1, total);
+      const startIdx = Math.max(1, endIdx - LOG_WINDOW_SIZE + 1);
+      const tail = await paginationService.readRangeByIdx(startIdx, endIdx);
+      if (tail.length) opts.onBatch(tail, total, ++this.seq);
+    } catch (e) {
+      this.log.warn(`realtime: final flush failed: ${String(e)}`);
+    } finally { // stream 종료 처리 이후에
+      if (this.rtFlushTimer) {
+        clearTimeout(this.rtFlushTimer);
+        this.rtFlushTimer = undefined;
+      }
+    }
   }
 
   /**
@@ -346,6 +458,11 @@ export class LogSessionManager {
   @measure()
   stopAll() {
     this.log.info('session: stopAll');
+    // ✅ 실시간 플러시 타이머 정리(종료 후 지연 flush 방지)
+    if (this.rtFlushTimer) {
+      clearTimeout(this.rtFlushTimer);
+      this.rtFlushTimer = undefined;
+    }
     this.rtAbort?.abort();
     this.cm?.dispose();
   }

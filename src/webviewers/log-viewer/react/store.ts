@@ -30,6 +30,8 @@ const initial: Model = {
   mergeDone: 0,
   mergeTotal: 0,
   filter: { pid: '', src: '', proc: '', msg: '' },
+  follow: true,
+  newSincePause: 0,
 };
 
 type Actions = {
@@ -53,6 +55,9 @@ type Actions = {
   setFilterField(f: keyof Filter, v: string): void;
   applyFilter(next: Filter): void; // ← 디바운스 후 한 번만 전송
   resetFilters(): void;
+  setFollow(follow: boolean): void;
+  incNewSincePause(): void;
+  clearNewSincePause(): void;
 };
 
 export const useLogStore = create<Model & Actions>()((set, get) => ({
@@ -201,6 +206,18 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     postFilterUpdate(empty); // 초기화는 즉시 반영
     (get() as any).__ui?.info?.('store.resetFilters');
     (get() as any).__ui?.debug?.('[debug] resetFilters: end');
+  },
+  setFollow(follow) {
+    set({ follow });
+    (get() as any).__ui?.debug?.(`store.setFollow ${follow}`);
+  },
+  incNewSincePause() {
+    set({ newSincePause: get().newSincePause + 1 });
+    (get() as any).__ui?.debug?.('store.incNewSincePause');
+  },
+  clearNewSincePause() {
+    set({ newSincePause: 0 });
+    (get() as any).__ui?.debug?.('store.clearNewSincePause');
   },
 }));
 
