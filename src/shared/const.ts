@@ -58,7 +58,7 @@ export const PAGED_READER_DEFAULT_PAGE_SIZE = 500;
  * Log Viewer 공통 상수(Host/Webview 공용) — 가상 스크롤 윈도우
  * ────────────────────────────────────────────────────────────── */
 /** 웹뷰 한 번에 유지할 최대 행 수 (윈도우 크기) */
-export const LOG_WINDOW_SIZE = 500;
+export const LOG_WINDOW_SIZE = 200;
 /** 1행의 기준 높이(px) — 가상 스크롤 계산에 사용 */
 export const LOG_ROW_HEIGHT = 22;
 /** 오버스캔(위/아래 미리 로드) 행 수 */

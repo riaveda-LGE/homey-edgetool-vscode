@@ -149,7 +149,7 @@ export class LogViewerPanelManager {
     this.log.debug('[debug] LogViewerPanelManager startRealtime: end');
   }
 
-  /** 파일 병합 세션 시작: 최초 최신 500줄만 보내고, 이후는 스크롤 요청에 따른 페이지 읽기 */
+  /** 파일 병합 세션 시작: 최초 최신 LOG_WINDOW_SIZE만 보내고, 이후는 스크롤 요청에 따른 페이지 읽기 */
   async startFileMerge(dir: string) {
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: start');
     if (!this.panel) await this.handleHomeyLoggingCommand();

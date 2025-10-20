@@ -8,6 +8,7 @@ import {
   MERGED_CHUNK_MAX_LINES,
   MERGED_DIR_NAME,
   MERGED_MANIFEST_FILENAME,
+  LOG_WINDOW_SIZE,
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { __setWarmupFlagsForTests, Flags as FF } from '../../shared/featureFlags.js';
@@ -125,7 +126,7 @@ export class LogSessionManager {
    * 파일 병합 세션
    * - 병합 전 총 라인수를 추정해 onBatch(..., total)로 전달
    * - 결과를 outDir/<part-*.ndjson> + manifest.json 으로 저장
-   * - 실시간 뷰로는 "최초 최신 500줄"만 전송하고, 이후는 스크롤 요청에만 응답
+   * - 실시간 뷰로는 "최초 최신 LOG_WINDOW_SIZE만큼" 전송하고, 이후는 스크롤 요청에만 응답
    */
   @measure()
   async startFileMergeSession(
@@ -159,10 +160,10 @@ export class LogSessionManager {
           // 메모리/웹뷰 준비
           paginationService.seedWarmupBuffer(warmLogs, warmLogs.length);
           this.hb.addBatch(warmLogs);
-          const first = warmLogs.slice(0, Math.min(500, warmLogs.length));
+          const first = warmLogs.slice(0, Math.min(LOG_WINDOW_SIZE, warmLogs.length));
           if (first.length) {
             this.log.info(
-              `warmup(T0): deliver first ${first.length}/${warmLogs.length} (virtual total=${warmLogs.length})`,
+              `warmup(T0): deliver first ${first.length}/${warmLogs.length} (virtual total=${warmLogs.length}, window=${LOG_WINDOW_SIZE})`,
             );
             opts.onBatch(first, warmLogs.length, ++seq);
           }
@@ -201,7 +202,7 @@ export class LogSessionManager {
     // 전역 인덱스 부여(최신=1). 과거에 이어쓸 수 있으므로 기저값은 mergedLines.
     let nextIdx = manifest.data.mergedLines ?? 0;
     let mergedSoFar = manifest.data.mergedLines;
-    let sentInitial = false; // ✅ 최초 500줄만 보낼 가드
+    let sentInitial = false; // ✅ 최초 LOG_WINDOW_SIZE만 보낼 가드
     const initialBuffer: LogEntry[] = [];
     let paginationOpened = false; // ✅ T0 시점에만 1회 open
 
@@ -238,11 +239,11 @@ export class LogSessionManager {
         // 2) 최초 500줄만 UI에 전달 (그 이후는 전달 금지)
         if (!sentInitial && !paginationService.isWarmupActive()) {
           initialBuffer.push(...logs);
-          if (initialBuffer.length >= 500) {
-            const slice = initialBuffer.slice(0, 500);
+          if (initialBuffer.length >= LOG_WINDOW_SIZE) {
+            const slice = initialBuffer.slice(0, LOG_WINDOW_SIZE);
             const t = paginationService.isWarmupActive() ? paginationService.getWarmTotal() : total;
             this.log.info(
-              `T1: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()})`,
+              `T1: initial deliver(len=${slice.length}) total=${t ?? 'unknown'} (warm=${paginationService.isWarmupActive()}, window=${LOG_WINDOW_SIZE})`,
             );
             // 워밍업이 이미 초기 500을 보냈다면 보통 여긴 실행되지 않지만,
             // 안전하게 가드 없이도 동일 total로 동작하도록 유지
@@ -310,11 +311,11 @@ export class LogSessionManager {
     if (!paginationService.isWarmupActive()) {
       this.log.info(`T1: switched to file-backed pagination (warm buffer cleared)`);
     }
-    // 파일 기반 최신 500 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
+    // 파일 기반 최신 head 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
     try {
-      const freshHead = await paginationService.readRangeByIdx(1, 500);
+      const freshHead = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
       if (freshHead.length) {
-        this.log.info(`T1: deliver refreshed head=${freshHead.length} (file-backed)`);
+        this.log.info(`T1: deliver refreshed head=${freshHead.length} (file-backed, window=${LOG_WINDOW_SIZE})`);
         opts.onBatch(freshHead, manifest.data.totalLines ?? total, ++seq);
       }
     } catch (e) {

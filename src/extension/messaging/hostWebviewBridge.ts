@@ -3,6 +3,7 @@ import type { H2W, LogFilter, W2H } from '@ipc/messages';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { LOG_WINDOW_SIZE } from '../../shared/const.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
@@ -122,14 +123,14 @@ export class HostWebviewBridge {
         }
         return;
       }
-      // ── 필터 업데이트: "호스트가 head 500줄을 즉시 푸시" ──
+      // ── 필터 업데이트: "호스트가 head(LOG_WINDOW_SIZE) 즉시 푸시" ──
       if (msg.type === 'logs.filter.update') {
         try {
           const filter = (msg.payload?.filter ?? {}) as LogFilter;
           this.log.info(`bridge: logs.filter.update ${JSON.stringify(filter)}`);
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, 500);
+          const head = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
           // ① 바뀐 데이터의 head 500줄을 즉시 푸시
           this.send({
             v: 1,
@@ -216,7 +217,7 @@ export class HostWebviewBridge {
           this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, 500);
+          const head = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
           this.send({
             v: 1,
             type: 'logs.batch',
@@ -262,7 +263,7 @@ export class HostWebviewBridge {
           paginationService.setFilter(null);
           // 필터 해제 후 상단 500줄 재전송
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, 500);
+          const head = await paginationService.readRangeByIdx(1, LOG_WINDOW_SIZE);
           this.send({
             v: 1,
             type: 'logs.batch',
