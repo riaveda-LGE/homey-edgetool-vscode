@@ -25,15 +25,18 @@ export class IndexedLogStore {
 
   /** merged_list 폴더를 제거해 초기화 */
   async reset() {
+    this.log.debug('[debug] IndexedLogStore reset: start');
     try {
       await fs.promises.rm(this.outDir, { recursive: true, force: true });
     } catch (e) {
       this.log.warn(`reset failed: ${String(e)}`);
     }
+    this.log.debug('[debug] IndexedLogStore reset: end');
   }
 
   /** 세션 시작. (선행 라인 플랜이 있다면 from/lines를 미리 채워 저장) */
   async begin(plan?: { name: string; lines: number }[]) {
+    this.log.debug('[debug] IndexedLogStore begin: start');
     await fs.promises.mkdir(this.outDir, { recursive: true });
     this.segments = [];
     this.total = 0;
@@ -48,10 +51,12 @@ export class IndexedLogStore {
       }
       await this.writeIndex(); // 초기 플랜을 먼저 기록
     }
+    this.log.debug('[debug] IndexedLogStore begin: end');
   }
 
   /** 병합 스트림에서 받은 배치를 반영 */
   onBatch(logs: LogEntry[]) {
+    this.log.debug('[debug] IndexedLogStore onBatch: start');
     for (const e of logs) {
       const name = e.source || 'unknown';
       this.total++;
@@ -67,21 +72,29 @@ export class IndexedLogStore {
       }
       this.cur.lines++;
     }
+    this.log.debug('[debug] IndexedLogStore onBatch: end');
   }
 
   /** 세션 종료 시 index.json 저장(총 라인수 포함) */
   async finalize() {
+    this.log.debug('[debug] IndexedLogStore finalize: start');
     await this.writeIndex();
+    this.log.debug('[debug] IndexedLogStore finalize: end');
   }
 
   getTotal() {
-    return this.total;
+    this.log.debug('[debug] IndexedLogStore getTotal: start');
+    const result = this.total;
+    this.log.debug('[debug] IndexedLogStore getTotal: end');
+    return result;
   }
 
   private async writeIndex() {
+    this.log.debug('[debug] IndexedLogStore writeIndex: start');
     const sum = this.total || this.segments.reduce((a, b) => a + b.lines, 0);
     const payload = { totalLines: sum, files: this.segments };
     const p = path.join(this.outDir, 'index.json');
     await fs.promises.writeFile(p, JSON.stringify(payload, null, 2), 'utf8');
+    this.log.debug('[debug] IndexedLogStore writeIndex: end');
   }
 }

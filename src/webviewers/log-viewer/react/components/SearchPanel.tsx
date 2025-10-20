@@ -1,10 +1,14 @@
 import { useLogStore } from '../../react/store';
 import { vscode } from '../ipc';
+import { createUiLog } from '../../../shared/utils';
 
 export function SearchPanel() {
   const open = useLogStore((s) => s.searchOpen);
   const q = useLogStore((s) => s.searchQuery);
   const hits = useLogStore((s) => s.searchHits);
+  // search panel 전용 ui logger
+  const ui = createUiLog(vscode, 'log-viewer.search-panel');
+  ui.debug?.('[debug] SearchPanel: render');
   if (!open) return <div className="tw-hidden" />;
 
   return (

@@ -131,7 +131,7 @@ export class LogSessionManager {
   async startFileMergeSession(
     opts: { dir: string; signal?: AbortSignal; indexOutDir?: string } & SessionCallbacks,
   ) {
-    this.log.info(`T*: merge session start dir=${opts.dir}`);
+    this.log.info(`[debug] LogSessionManager.startFileMergeSession: start dir=${opts.dir}`);
     let seq = 0;
     this.log.info(
       `T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`,
@@ -175,7 +175,7 @@ export class LogSessionManager {
             return;
           }
         } else {
-          this.log.debug?.('warmup(T0): no lines collected — continue to T1');
+          this.log.debug?.('warmup(T0): skipped or not enough lines');
         }
       } catch (e: any) {
         this.log.warn(`warmup(T0): failed (${e?.message ?? e}) — continue to T1`);
@@ -338,6 +338,7 @@ export class LogSessionManager {
 
     // ✅ 웹뷰에 하드리프레시 지시(중복 제거/정렬 갱신 반영용)
     opts.onRefresh?.({ total: manifest.data.totalLines, version: paginationService.getVersion() });
+    this.log.info(`[debug] LogSessionManager.startFileMergeSession: end`);
   }
 
   @measure()

@@ -25,6 +25,7 @@ export class FileTransferService implements IFileTransferService {
     remoteDir: string,
     opts?: { timeoutMs?: number; signal?: AbortSignal },
   ) {
+    this.log.debug('[debug] FileTransferService uploadViaTarBase64: start');
     try {
       const timeoutMs = opts?.timeoutMs ?? DEFAULT_TRANSFER_TIMEOUT_MS;
       if (this.target.type === 'ssh') {
@@ -34,6 +35,7 @@ export class FileTransferService implements IFileTransferService {
           `upload ssh: ${localDir} -> ${this.target.user}@${this.target.host}:${remoteDir}`,
         );
         await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
+        this.log.debug('[debug] FileTransferService uploadViaTarBase64: end');
         return;
       }
       // adb
@@ -41,6 +43,7 @@ export class FileTransferService implements IFileTransferService {
       const cmd = `tar -C "${localDir}" -cf - . | base64 | adb ${serial} shell "mkdir -p '${escapeQ(remoteDir)}' && base64 -d | tar -C '${escapeQ(remoteDir)}' -xpf -"`;
       this.log.info(`upload adb: ${localDir} -> device:${this.target.serial ?? ''} ${remoteDir}`);
       await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
+      this.log.debug('[debug] FileTransferService uploadViaTarBase64: end');
     } catch (e) {
       throw new XError(
         ErrorCategory.Connection,
@@ -56,6 +59,7 @@ export class FileTransferService implements IFileTransferService {
     localDir: string,
     opts?: { timeoutMs?: number; signal?: AbortSignal },
   ) {
+    this.log.debug('[debug] FileTransferService downloadViaTarBase64: start');
     try {
       const timeoutMs = opts?.timeoutMs ?? DEFAULT_TRANSFER_TIMEOUT_MS;
       if (this.target.type === 'ssh') {
@@ -65,6 +69,7 @@ export class FileTransferService implements IFileTransferService {
           `download ssh: ${this.target.user}@${this.target.host}:${remoteDir} -> ${localDir}`,
         );
         await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
+        this.log.debug('[debug] FileTransferService downloadViaTarBase64: end');
         return;
       }
       // adb
@@ -72,6 +77,7 @@ export class FileTransferService implements IFileTransferService {
       const cmd = `adb ${serial} shell "tar -C '${escapeQ(remoteDir)}' -cf - . | base64" | base64 -d | tar -C "${localDir}" -xpf -`;
       this.log.info(`download adb: device:${this.target.serial ?? ''} ${remoteDir} -> ${localDir}`);
       await runCommandLine(cmd, { timeoutMs, signal: opts?.signal });
+      this.log.debug('[debug] FileTransferService downloadViaTarBase64: end');
     } catch (e) {
       throw new XError(
         ErrorCategory.Connection,

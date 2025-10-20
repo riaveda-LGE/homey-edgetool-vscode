@@ -51,6 +51,7 @@ export function runCommandLine(
   cmd: string,
   opts: ExecOptions = {},
 ): Promise<{ code: number | null }> {
+  log.debug('[debug] runCommandLine: start');
   const isWin = process.platform === 'win32';
   const shell = opts.shell ?? (isWin ? 'powershell' : 'sh');
   const sh = isWin ? 'powershell.exe' : '/bin/sh';
@@ -66,6 +67,7 @@ export function runCommandLine(
     let termGraceTimer: NodeJS.Timeout | undefined;
 
     const cleanup = () => {
+      log.debug('[debug] runCommandLine cleanup: start');
       if (timeoutTimer) {
         clearTimeout(timeoutTimer);
         timeoutTimer = undefined;
@@ -75,13 +77,16 @@ export function runCommandLine(
         termGraceTimer = undefined;
       }
       opts.signal?.removeEventListener('abort', onAbort);
+      log.debug('[debug] runCommandLine cleanup: end');
     };
 
     const settle = (code: number | null) => {
+      log.debug('[debug] runCommandLine settle: start');
       if (finished) return;
       finished = true;
       cleanup();
       resolve({ code });
+      log.debug('[debug] runCommandLine settle: end');
     };
 
     // --- stdout/stderr 파이프
@@ -89,25 +94,30 @@ export function runCommandLine(
     child.stderr?.on('data', (b) => opts.onStderr?.(b));
 
     child.on('error', (e) => {
+      log.debug('[debug] runCommandLine on error');
       if (finished) return;
       cleanup();
       reject(e);
     });
 
     child.on('close', (code) => {
+      log.debug('[debug] runCommandLine on close');
       settle(code);
     });
 
     // === 종료 로직 ===
 
     const killProcessTreeWindows = (pid: number) => {
+      log.debug('[debug] killProcessTreeWindows: start');
       // /T: 트리 전체, /F: 강제
       execFile('taskkill', ['/PID', String(pid), '/T', '/F'], (err) => {
         if (err) log.warn(`taskkill failed pid=${pid}: ${String(err)}`);
       });
+      log.debug('[debug] killProcessTreeWindows: end');
     };
 
     const sendSigterm = () => {
+      log.debug('[debug] sendSigterm: start');
       try {
         // 일부 플랫폼에서 SIGTERM 미지원 시 기본 신호로 대체될 수 있음
         const ok = child.kill('SIGTERM');
@@ -115,9 +125,11 @@ export function runCommandLine(
       } catch (e) {
         log.warn('SIGTERM dispatch error:', e);
       }
+      log.debug('[debug] sendSigterm: end');
     };
 
     const sendSigkillOrTaskkill = () => {
+      log.debug('[debug] sendSigkillOrTaskkill: start');
       try {
         if (isWin) {
           if (child.pid) killProcessTreeWindows(child.pid);
@@ -129,9 +141,11 @@ export function runCommandLine(
       } catch (e) {
         log.warn('Force kill error:', e);
       }
+      log.debug('[debug] sendSigkillOrTaskkill: end');
     };
 
     const terminateWithFallback = (reason: 'timeout' | 'aborted') => {
+      log.debug('[debug] terminateWithFallback: start');
       if (finished) return;
       log.warn(`killing sub process: ${reason}`);
       // 1) 정상 종료 시도
@@ -141,6 +155,7 @@ export function runCommandLine(
         if (finished) return;
         sendSigkillOrTaskkill();
       }, grace);
+      log.debug('[debug] terminateWithFallback: end');
     };
 
     // timeout 타이머

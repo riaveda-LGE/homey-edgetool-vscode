@@ -693,7 +693,7 @@ function lineToEntry(filePath: string, line: string): LogEntry {
 export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]> {
   const { dir, signal } = opts;
   const logger = getLogger('LogFileIntegration');
-  logger.info(`warmup(T0): start dir=${dir}`);
+  logger.debug?.(`warmupTailPrepass: start dir=${dir}`);
   const target = Math.max(1, Number(opts.warmupTarget ?? 500));
   const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
     ? Math.max(1, Number(opts.warmupPerTypeLimit))
@@ -719,8 +719,8 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     if (rem > 0) rem--;
     alloc.set(k, Math.min(want, perTypeCap));
   }
-  logger.info(
-    `warmup(T0): plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`,
+  logger.debug?.(
+    `warmupTailPrepass: plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`,
   );
   logger.debug?.(
     `warmup(T0): per-type allocation → ` + typeKeys.map((k) => `${k}:${alloc.get(k)}`).join(', '),
@@ -791,7 +791,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     walkers.set(k, new TypeTailWalker(dir, files, k));
     buffers.set(k, []);
   }
-  logger.info(`warmup(T0): walkers ready for ${typeKeys.length} types`);
+  logger.debug?.(`warmupTailPrepass: walkers ready for ${typeKeys.length} types`);
 
   // 헬퍼: 라인 -> LogEntry (파일명을 source로)
   const toEntry = (fileName: string, line: string): LogEntry => {
@@ -822,8 +822,8 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     const want = alloc.get(k)!;
     const gotK = await batchRead(k, want);
     total += gotK;
-    logger.info(
-      `warmup(T0): primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`,
+    logger.debug?.(
+      `[debug] warmupTailPrepass: primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`,
     );
   }
 
@@ -883,12 +883,12 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       i++;
       slots = room();
     }
-    logger.info(`warmup(T0): after rebalance total=${total}, unmet=${Math.max(0, target - total)}`);
+    logger.debug?.(`warmupTailPrepass: after rebalance total=${total}, unmet=${Math.max(0, target - total)}`);
   }
 
   if (total === 0) return [];
 
-  logger.info(`warmup(T0): collected total=${total} (before TZ correction)`);
+  logger.debug?.(`warmupTailPrepass: collected total=${total} (before TZ correction)`);
   // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
   for (const k of typeKeys) {
     const arr = buffers.get(k)!;
@@ -924,7 +924,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   }
 
   // 7) k-way 병합으로 정확히 target개만 추출
-  logger.info(`warmup(T0): k-way merge to emit=${target}`);
+  logger.debug?.(`warmupTailPrepass: k-way merge to emit=${target}`);
   type WarmItem = { ts: number; entry: LogEntry; typeKey: string; idx: number };
   const heap = new MaxHeap<WarmItem>((a, b) => {
     if (a.ts !== b.ts) return a.ts - b.ts; // 큰 ts 우선
@@ -945,47 +945,12 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
     }
   }
-  logger.info(`warmup(T0): prepared lines=${out.length}`);
+  logger.debug?.(`warmupTailPrepass: prepared lines=${out.length}`);
   if (out.length < target) {
-    logger.info(
-      `warmup(T0): dataset smaller than target (out=${out.length} < target=${target}); ` +
+    logger.debug?.(
+      `[debug] warmupTailPrepass: dataset smaller than target (out=${out.length} < target=${target}); ` +
         `will short-circuit T1 if total is known and ≤ out`,
     );
   }
   return out;
-} // 파일 꼬리에서 최대 N줄을 빠르게 읽음 (대용량 안전)
-async function tailLines(
-  filePath: string,
-  maxLines: number,
-  chunkSize = 64 * 1024,
-): Promise<string[]> {
-  const fh = await fs.promises.open(filePath, 'r');
-  try {
-    const stat = await fh.stat();
-    let pos = Math.max(0, stat.size);
-    let buf = '';
-    const lines: string[] = [];
-    while (pos > 0 && lines.length <= maxLines) {
-      const readSize = Math.min(chunkSize, pos);
-      pos -= readSize;
-      const b = Buffer.allocUnsafe(readSize);
-      await fh.read(b, 0, readSize, pos);
-      buf = b.toString('utf8') + buf;
-      // 줄 단위로 분해(너무 많이 쌓이지 않게 중간중간 잘라내기)
-      const parts = buf.split(/\r?\n/);
-      // 마지막 조각은 다음 루프에서 이어붙일 수 있도록 유지
-      buf = parts.shift() || '';
-      // 맨 뒤쪽(파일 끝쪽)부터 수집 → 결과는 "최신이 앞" 순서가 됨
-      for (let i = parts.length - 1; i >= 0; i--) {
-        if (parts[i].length === 0) continue;
-        lines.push(parts[i]);
-        if (lines.length >= maxLines) break;
-      }
-    }
-    // 남은 buf가 의미 있는 한 줄이면 추가
-    if (buf && lines.length < maxLines) lines.push(buf);
-    return lines.slice(0, maxLines);
-  } finally {
-    await fh.close();
-  }
 }

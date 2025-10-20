@@ -11,18 +11,40 @@ import { MessageDialog } from './MessageDialog';
 
 export function Grid() {
   const parentRef = useRef(null as HTMLDivElement | null);
+  // 헤더가 같은 스크롤 컨테이너 안에 있으므로 실제 리스트 시작점 보정용
+  const listRef = useRef(null as HTMLDivElement | null);
   const m = useLogStore();
   const [preview, setPreview] = useState({ open: false, logRow: null as LogRow | null });
   // grid 전용 ui logger
   const ui = useMemo(() => createUiLog(vscode, 'log-viewer.grid'), []);
+
+  // 동일 요청 범위 중복 송신 방지 (훅은 반드시 최상위에서 선언)
+  const lastReqRef = useRef<{ s: number; e: number } | null>(null);
+
+  // ── 로그 스로틀/디듀프 유틸 ─────────────────────────────
+  // (과도한 로그로 성능/가독성 저하 방지)
+  const lastLogTsRef = useRef(new Map<string, number>());
+  const lastPayloadRef = useRef(new Map<string, string>());
+  const shouldLog = (key: string, ms = 400, payloadStr?: string) => {
+    const now = performance.now();
+    const last = lastLogTsRef.current.get(key) ?? -Infinity;
+    if (payloadStr && lastPayloadRef.current.get(key) === payloadStr) return false; // 동일 payload 반복 제거
+    if (now - last < ms) return false; // 스로틀
+    lastLogTsRef.current.set(key, now);
+    if (payloadStr) lastPayloadRef.current.set(key, payloadStr);
+    return true;
+  };
+
   // 더블클릭 → Dialog 오픈 시 잔여 click 이벤트가 먼저 발생하지 않도록 약간 지연
   const DIALOG_OPEN_DELAY_MS = 40;
   const openPreview = (row: LogRow) => {
+    ui.debug?.('[debug] Grid: openPreview start');
     ui.info(`Grid.openPreview.schedule id=${row.id} delay=${DIALOG_OPEN_DELAY_MS}ms`);
     setTimeout(() => {
       ui.info(`Grid.openPreview.commit id=${row.id}`);
       setPreview({ open: true, logRow: row });
     }, DIALOG_OPEN_DELAY_MS);
+    ui.debug?.('[debug] Grid: openPreview end');
   };
 
   const visibleRows = m.rows;
@@ -34,37 +56,82 @@ export function Grid() {
     overscan: Math.max(10, Math.floor(m.overscan / 2)),
   });
 
-  // mount/unmount 로그
+  // scroll 이벤트 중복 방지 플래그
+  const ignoreScrollRef = useRef(false);
+  const lastWindowStartChangeTimeRef = useRef(0);
+
+  // mount/unmount 로그 + 기본 측정값
   useEffect(() => {
     ui.info(`Grid.mount totalRows=${m.totalRows} windowStart=${m.windowStart}`);
-    return () => ui.info('Grid.unmount');
+    // 컨테이너 측정(높이, DPR) — 스로틀
+    const logMeasure = () => {
+      const h = parentRef.current?.clientHeight ?? 0;
+      const p = window.devicePixelRatio ?? 1;
+      const cap = m.rowH > 0 ? Math.floor(h / Math.round(m.rowH)) : 0;
+      const payload = `h=${h} rowH=${m.rowH} dpr=${p} capacity=${cap}`;
+      if (shouldLog('measure', 800, payload)) ui.info(`Grid.measure ${payload}`);
+    };
+    logMeasure();
+    // Webview/old env 가드
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => logMeasure());
+      if (parentRef.current) {
+        ro.observe(parentRef.current);
+      }
+    }
+    return () => {
+      ui.info('Grid.unmount');
+      ro?.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Host 페이지 요청 (가상 스크롤 이동시)
   useEffect(() => {
     const el = parentRef.current;
     if (!el) return;
+
     const onScroll = () => {
+      // 프로그램적 스크롤 보정 중에는 요청 차단
+      if (ignoreScrollRef.current || Date.now() - lastWindowStartChangeTimeRef.current < 100) return;
+
       const cur = parentRef.current;
       if (!cur) return;
-      const estStart = Math.floor(cur.scrollTop / m.rowH) + m.windowStart;
-      const desiredStart = clamp(
-        estStart - Math.floor(m.overscan / 2),
-        1,
-        Math.max(1, m.totalRows - m.windowSize + 1),
-      );
+
+      const headerOffset = listRef.current?.offsetTop ?? 0;
+      const estStart = Math.floor(Math.max(0, cur.scrollTop - headerOffset) / Math.max(1, m.rowH)) + 1;
+
+      const capacity = Math.max(1, Math.floor((cur.clientHeight || 0) / Math.max(1, Math.round(m.rowH))));
+      // 요청 폭을 뷰포트 용량 + overscan 으로 확장하되, windowSize 를 넘지 않도록 제한
+      const requestSize = Math.max(capacity, Math.min(m.windowSize, capacity + m.overscan));
+      // 스크롤 시작점의 상한선은 "요청 폭" 기준으로 계산해야 하단에서 빈칸이 줄어듦
+      const maxStart = Math.max(1, m.totalRows - requestSize + 1);
+
+      const halfOver = Math.floor(m.overscan / 2);
+      const desiredStartRaw = estStart - halfOver;
+      const desiredStart = Math.min(Math.max(1, desiredStartRaw), maxStart);
+
       const delta = Math.abs(desiredStart - m.windowStart);
-      if (delta < Math.max(10, Math.floor(m.overscan / 2))) return;
+      if (delta < Math.max(10, halfOver)) return; // 자잘한 스크롤 억제
+
       const startIdx = desiredStart;
-      const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
-      ui.debug?.(
-        `Grid.scroll → page.request start=${startIdx} end=${endIdx} estStart=${estStart} windowStart=${m.windowStart}`,
-      );
+      const endIdx = Math.min(m.totalRows, startIdx + requestSize - 1);
+
+      // 동일 범위 중복 요청 방지
+      if (lastReqRef.current && lastReqRef.current.s === startIdx && lastReqRef.current.e === endIdx) return;
+      lastReqRef.current = { s: startIdx, e: endIdx };
+
+      const payload = `start=${startIdx} end=${endIdx} estStart=${estStart} cap=${capacity} req=${requestSize} maxStart=${maxStart} windowStart=${m.windowStart}`;
+      if (shouldLog('page.request', 200, payload)) {
+        ui.debug?.(`Grid.scroll → page.request ${payload}`);
+      }
       vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
     };
+
     el.addEventListener('scroll', onScroll, { passive: true } as AddEventListenerOptions);
     return () => el.removeEventListener('scroll', onScroll as unknown as EventListener);
-  }, [m.rowH, m.windowStart, m.totalRows, m.windowSize, m.overscan]);
+  }, [m.rowH, m.windowStart, m.totalRows, m.overscan, m.windowSize]);
 
   // 프리뷰 상태 변경 로그
   useEffect(() => {
@@ -72,13 +139,13 @@ export function Grid() {
   }, [preview.open, preview.logRow?.id]);
 
   // 마지막 보이는 컬럼이 항상 1fr이 되도록 그리드 트랙을 구성
-  const buildGridTemplate = () => {
+  const gridCols = useMemo(() => {
+    ui.debug?.('[debug] Grid: buildGridTemplate start');
     // 본문 컬럼(time~msg)만 계산(토글 영향 받음)
     const tracks: string[] = [];
     const order: Array<keyof typeof m.showCols> = ['time', 'proc', 'pid', 'src', 'msg'];
     for (const id of order) {
       if (!m.showCols[id]) {
-        // 숨김이면 0px 트랙(실질적으로 사라짐)
         tracks.push('0px');
       } else {
         if (id === 'time') tracks.push(`${m.colW.time}px`);
@@ -88,7 +155,6 @@ export function Grid() {
         else if (id === 'msg') tracks.push('1fr');
       }
     }
-    // msg가 꺼져 있으면 오른쪽에서부터 마지막 보이는 고정폭을 1fr로 승격
     if (!m.showCols.msg) {
       for (let i = tracks.length - 1; i >= 0; i--) {
         if (tracks[i] !== '0px') {
@@ -97,12 +163,10 @@ export function Grid() {
         }
       }
     }
-    // 모든 컬럼이 숨겨졌을 때 안전장치
     if (!tracks.some((t) => t !== '0px')) tracks[0] = '1fr';
-    // ⬇️ 항상 보이는 '북마크' 고정폭 열을 맨 앞에 추가
+    ui.debug?.('[debug] Grid: buildGridTemplate end');
     return `var(--col-bm-w) ${tracks.join(' ')}`;
-  };
-  const gridCols = buildGridTemplate();
+  }, [m.showCols.time, m.showCols.proc, m.showCols.pid, m.showCols.src, m.showCols.msg, m.colW.time, m.colW.proc, m.colW.pid, m.colW.src]);
   const anyHidden = !(
     m.showCols.time &&
     m.showCols.proc &&
@@ -135,7 +199,14 @@ export function Grid() {
     const startIdx = Math.max(1, Math.min(Math.max(1, m.totalRows - m.windowSize + 1), idx - half));
     const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
     ui.info(`Grid.jumpToIdx idx=${idx} → request ${startIdx}-${endIdx}`);
+    // 점프 시에만 프로그램적 스크롤 적용(+ onScroll 무시)
+    ignoreScrollRef.current = true;
+    lastWindowStartChangeTimeRef.current = Date.now();
     parentRef.current.scrollTop = Math.max(0, (idx - 1) * m.rowH);
+    // 다음 프레임에서 해제
+    requestAnimationFrame(() => {
+      ignoreScrollRef.current = false;
+    });
     vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
   }, [m.pendingJumpIdx, m.windowSize, m.totalRows, m.rowH]);
 
@@ -150,6 +221,97 @@ export function Grid() {
     }
   }, [m.pendingJumpIdx, m.rows]);
 
+  // ── 수신 커버리지 요약(중복/과다 로그 억제) ─────────────────────────
+  const lastCoverageRef = useRef<string>('');
+  useEffect(() => {
+    if (!m.totalRows) return;
+    const start = m.windowStart;
+    const end = m.windowStart + Math.max(0, visibleRows.length) - 1;
+    const cov = start <= end ? `${start}-${end}` : 'empty';
+    if (cov !== lastCoverageRef.current && shouldLog('coverage', 400, cov)) {
+      ui.info(`Grid.coverage loaded=${cov} len=${visibleRows.length}/${m.windowSize}`);
+      lastCoverageRef.current = cov;
+    }
+  }, [m.windowStart, visibleRows.length, m.windowSize, m.totalRows]);
+
+  // ── 보여지는 로그 범위 로그(스로틀 + 경계 구간만) ────────────────────
+  const lastVisRef = useRef<{ s: number; e: number } | null>(null);
+  const emittedThresholdRef = useRef<{ p80?: boolean; p90?: boolean; end?: boolean }>({});
+  useEffect(() => {
+    if (virtualItems.length === 0 || !m.totalRows) return;
+    const s = Math.min(...virtualItems.map(v => v.index)) + 1; // 1-based
+    const e = Math.max(...virtualItems.map(v => v.index)) + 1;
+    const prev = lastVisRef.current;
+    const movedALot = !prev || Math.abs(s - prev.s) >= Math.max(20, Math.floor(m.windowSize / 3)) || Math.abs(e - prev.e) >= Math.max(20, Math.floor(m.windowSize / 3));
+
+    const ratio = e / m.totalRows;
+    const flags = emittedThresholdRef.current;
+    const hit80 = ratio >= 0.8 && !flags.p80;
+    const hit90 = ratio >= 0.9 && !flags.p90;
+    const hitEnd = e >= m.totalRows && !flags.end;
+
+    const payload = `visible=${s}-${e} items=${virtualItems.length}`;
+    if ((movedALot && shouldLog('visible.range', 400)) || hit80 || hit90 || hitEnd) {
+      ui.info(`Grid.visible range: ${s}-${e} (total virtualItems=${virtualItems.length})`);
+      lastVisRef.current = { s, e };
+      if (hit80) flags.p80 = true;
+      if (hit90) flags.p90 = true;
+      if (hitEnd) flags.end = true;
+    }
+  }, [virtualItems, m.windowSize, m.totalRows]);
+
+  // ── 커밋 상태(렌더 완료 후 DOM/플레이스홀더 비율/needRange 추정) ─────
+  useEffect(() => {
+    if (!m.totalRows) return;
+    // 가시구간
+    const visStart = virtualItems.length ? Math.min(...virtualItems.map(v => v.index)) + 1 : 0;
+    const visEnd = virtualItems.length ? Math.max(...virtualItems.map(v => v.index)) + 1 : 0;
+    // 커버리지
+    const bufStart = m.windowStart;
+    const bufEnd = m.windowStart + Math.max(0, visibleRows.length) - 1;
+    const needRange = !(visStart >= bufStart && visEnd <= bufEnd);
+
+    // DOM 내 실제 렌더된 행 수(플레이스홀더 제외)
+    let rendered = 0;
+    let placeholders = 0;
+    for (const v of virtualItems) {
+      const offset = v.index - Math.max(0, bufStart - 1);
+      const inBuf = offset >= 0 && offset < visibleRows.length;
+      if (inBuf) rendered++;
+      else placeholders++;
+    }
+    const phRatio = virtualItems.length ? Math.round((placeholders / virtualItems.length) * 100) : 0;
+
+    const payload = `visible=${visStart}-${visEnd} coverage=${bufStart <= bufEnd ? `${bufStart}-${bufEnd}` : 'empty'} rendered=${rendered}/${virtualItems.length} placeholders=${phRatio}% needRange=${needRange}`;
+    if (shouldLog('commit', 400, payload)) {
+      ui.info(`Grid.commit ${payload}`);
+    }
+  }, [virtualItems, m.windowStart, visibleRows.length, m.totalRows]);
+
+  // clamp: 빈번 호출이므로 로그 금지(상위 onScroll에서 결과만 출력)
+  const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n));
+
+  const hi = (text: string, rules: HighlightRule[]) => {
+    // 원본문자 HTML 이스케이프 후 하이라이트 적용 → XSS/깨짐 방지
+    if (!rules.length) return text;
+    let html = escapeHtml(text);
+    for (const r of rules) {
+      if (!r.text?.trim()) continue;
+      const re = new RegExp(escapeRegExp(r.text.trim()), 'ig');
+      const cls = r.color ? `hl-${r.color}` : '';
+      html = html.replace(re, (m) => `<mark class="${cls}">${m}</mark>`);
+    }
+    return <span dangerouslySetInnerHTML={{ __html: html }} />;
+  };
+
+  const escapeHtml = (s: string) => {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  };
+
+  const escapeRegExp = (s: string) => {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  };
+
   return (
     <>
       <div
@@ -158,11 +320,9 @@ export function Grid() {
       >
         {/* 헤더를 스크롤 컨테이너 내부로 이동 → 툴바는 고정, 헤더는 sticky */}
         <GridHeader />
-        <div style={{ height: totalSize, position: 'relative' }}>
+        <div ref={listRef} style={{ height: totalSize, position: 'relative' }}>
           {virtualItems.map((v) => {
-            // v.index는 "전체 가상 인덱스(1-based → 0-based)".
-            // 현재 버퍼(windowStart..windowStart+rows.length-1) 안에 있으면 매핑,
-            // 아니면 placeholder(빈 셀)로 높이만 유지.
+            // ── 가상 스크롤 인덱스 매핑 로직 ────────────────────────────────
             const bufferStart0 = Math.max(0, m.windowStart - 1);
             const offset = v.index - bufferStart0;
             const r = offset >= 0 && offset < visibleRows.length ? visibleRows[offset] : undefined;
@@ -202,7 +362,6 @@ export function Grid() {
                 aria-selected={isSelected || undefined}
                 /* 행 어디를 더블클릭해도 팝업이 뜨도록 보장 */
                 onDoubleClick={(e) => {
-                  // 더블클릭 이벤트 흐름 추적
                   e.preventDefault();
                   e.stopPropagation();
                   ui.info(
@@ -296,28 +455,4 @@ function Cell({
       {children}
     </div>
   );
-}
-
-function hi(text: string, rules: HighlightRule[]) {
-  // 원본문자 HTML 이스케이프 후 하이라이트 적용 → XSS/깨짐 방지
-  if (!rules.length) return text;
-  let html = escapeHtml(text);
-  for (const r of rules) {
-    if (!r.text?.trim()) continue;
-    const re = new RegExp(escapeRegExp(r.text.trim()), 'ig');
-    const cls = r.color ? `hl-${r.color}` : '';
-    html = html.replace(re, (m) => `<mark class="${cls}">${m}</mark>`);
-  }
-  return <span dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
-function clamp(n: number, a: number, b: number) {
-  return Math.min(b, Math.max(a, n));
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-function escapeRegExp(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

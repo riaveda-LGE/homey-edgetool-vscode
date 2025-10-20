@@ -74,6 +74,7 @@ class ExtensionLoggerCore {
       error: console.error,
     };
     const c = this.getLogger('console');
+    this.channel.appendLine('[debug] extension-logger: patchConsole start');
 
     const shouldIgnore = (args: any[]) => {
       const joined = args.map(String).join(' ');
@@ -96,6 +97,7 @@ class ExtensionLoggerCore {
       this.origConsole!.error(...a);
       if (!shouldIgnore(a)) c.error(...a);
     };
+    this.channel.appendLine('[debug] extension-logger: patchConsole end');
   }
 
   unpatchConsole() {

@@ -1,11 +1,15 @@
 import { useRef } from 'react';
 
+import { createUiLog } from '../../../shared/utils';
 import { useLogStore } from '../../react/store';
+import { vscode } from '../ipc';
 
 export function GridHeader() {
   const show = useLogStore((s) => s.showCols);
   const colW = useLogStore((s) => s.colW);
   const resize = useLogStore((s) => s.resizeColumn);
+  // grid header 전용 ui logger
+  const ui = createUiLog(vscode, 'log-viewer.grid-header');
 
   // 그리드와 동일하게: 마지막 보이는 컬럼은 1fr
   const buildGridTemplate = () => {
@@ -47,6 +51,59 @@ export function GridHeader() {
             ? 'time'
             : undefined;
 
+  const col = (
+    id: string,
+    label: string,
+    resizable: boolean,
+    onDrag: (dx: number) => void,
+    hidden: boolean,
+    isLast: boolean,
+  ) => {
+    const ref = useRef(null as HTMLDivElement | null);
+    const onPointerDown = (e: React.PointerEvent) => {
+      if (!resizable) return;
+      let last = e.clientX;
+      const up = () => {
+        window.removeEventListener('pointermove', move, true);
+        window.removeEventListener('pointerup', up, true);
+        document.body.style.userSelect = '';
+      };
+      const move = (ev: PointerEvent) => {
+        const dx = ev.clientX - last;
+        last = ev.clientX;
+        onDrag(dx);
+        ev.preventDefault();
+      };
+      document.body.style.userSelect = 'none';
+      window.addEventListener('pointermove', move, true);
+      window.addEventListener('pointerup', up, true);
+    };
+    return (
+      <div
+        ref={ref}
+        className={`tw-relative tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)]
+          ${hidden ? 'tw-p-0 tw-border-0 tw-invisible tw-pointer-events-none' : ''}`}
+        style={{ borderRight: isLast ? '0' : undefined }}
+        aria-hidden={hidden || undefined}
+      >
+        <span className="tw-text-sm tw-truncate">{label}</span>
+        {/* 시각적인 구분선(항상 보임, 1px) */}
+        {resizable && !isLast && !hidden && (
+          <div className="tw-absolute tw-right-[4px] tw-top-1 tw-bottom-1 tw-w-px tw-bg-[var(--divider)] tw-pointer-events-none" />
+        )}
+        {/* 리사이저 핸들(기존 8px → 4px, 반투명) */}
+        {resizable && !isLast && !hidden && (
+          <div
+            className="tw-absolute tw-right-0 tw-top-0 tw-bottom-0 tw-w-[4px] tw-rounded tw-cursor-col-resize
+                       tw-bg-[var(--resizer)] hover:tw-bg-[var(--resizer-hover)] tw-opacity-40 hover:tw-opacity-80"
+            onPointerDown={onPointerDown}
+            title="드래그하여 폭 조절"
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       className="tw-sticky tw-top-0 tw-bg-[var(--panel)] tw-border-b tw-border-[var(--border-strong)] tw-z-[1]"
@@ -66,60 +123,6 @@ export function GridHeader() {
       {col('pid', 'PID', true, (dx) => resize('pid', dx), !show.pid, lastVisible === 'pid')}
       {col('src', '파일', true, (dx) => resize('src', dx), !show.src, lastVisible === 'src')}
       {col('msg', '메시지', false, () => {}, !show.msg, lastVisible === 'msg')}
-    </div>
-  );
-}
-
-function col(
-  id: string,
-  label: string,
-  resizable: boolean,
-  onDrag: (dx: number) => void,
-  hidden: boolean,
-  isLast: boolean,
-) {
-  const ref = useRef(null as HTMLDivElement | null);
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (!resizable) return;
-    let last = e.clientX;
-    const up = () => {
-      window.removeEventListener('pointermove', move, true);
-      window.removeEventListener('pointerup', up, true);
-      document.body.style.userSelect = '';
-    };
-    const move = (ev: PointerEvent) => {
-      const dx = ev.clientX - last;
-      last = ev.clientX;
-      onDrag(dx);
-      ev.preventDefault();
-    };
-    document.body.style.userSelect = 'none';
-    window.addEventListener('pointermove', move, true);
-    window.addEventListener('pointerup', up, true);
-  };
-
-  return (
-    <div
-      ref={ref}
-      className={`tw-relative tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)]
-        ${hidden ? 'tw-p-0 tw-border-0 tw-invisible tw-pointer-events-none' : ''}`}
-      style={{ borderRight: isLast ? '0' : undefined }}
-      aria-hidden={hidden || undefined}
-    >
-      <span className="tw-text-sm tw-truncate">{label}</span>
-      {/* 시각적인 구분선(항상 보임, 1px) */}
-      {resizable && !isLast && !hidden && (
-        <div className="tw-absolute tw-right-[4px] tw-top-1 tw-bottom-1 tw-w-px tw-bg-[var(--divider)] tw-pointer-events-none" />
-      )}
-      {/* 리사이저 핸들(기존 8px → 4px, 반투명) */}
-      {resizable && !isLast && !hidden && (
-        <div
-          className="tw-absolute tw-right-0 tw-top-0 tw-bottom-0 tw-w-[4px] tw-rounded tw-cursor-col-resize
-                     tw-bg-[var(--resizer)] hover:tw-bg-[var(--resizer-hover)] tw-opacity-40 hover:tw-opacity-80"
-          onPointerDown={onPointerDown}
-          title="드래그하여 폭 조절"
-        />
-      )}
     </div>
   );
 }

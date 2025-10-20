@@ -26,6 +26,7 @@ export class LogFileStorage implements ILogFileStorage {
   @measureIO('writeFile', (instance) => instance.filePath)
   async append(e: LogEntry, options?: AppendOptions) {
     const data = JSON.stringify(e) + '\n';
+    console.log('Appending data:', data); // 디버깅 로그 추가
     if (options?.flush) {
       // Node의 appendFile에는 flush 옵션이 없음 → 파일핸들 열고 sync로 보장
       const fh = await fs.promises.open(this.filePath, 'a');

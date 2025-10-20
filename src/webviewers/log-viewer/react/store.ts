@@ -11,7 +11,9 @@ const initial: Model = {
   nextId: 1,
   bufferSize: 2000,
   totalRows: 0,
-  windowSize: LOG_WINDOW_SIZE,
+  // overscan 확장 요청에도 충분히 커버되도록 최소 버퍼 보장
+  // (LOG_WINDOW_SIZE 가 작게 설정된 환경 대비)
+  windowSize: Math.max(LOG_WINDOW_SIZE, LOG_OVERSCAN * 2 + 128),
   windowStart: 1,
   rowH: LOG_ROW_HEIGHT,
   overscan: LOG_OVERSCAN,
@@ -58,8 +60,11 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   // 로거: 스토어 변경 시점 추적
   __ui: createUiLog(vscode, 'log-viewer.store'),
   setTotalRows(total) {
-    set({ totalRows: Math.max(0, total | 0) });
-    (get() as any).__ui?.info?.(`store.totalRows ← ${Math.max(0, total | 0)}`);
+    const prev = get().totalRows;
+    const next = Math.max(0, total | 0);
+    set({ totalRows: next });
+    // 총행수 변화가 실제로 있을 때만 1회 기록
+    if (prev !== next) (get() as any).__ui?.info?.(`store.totalRows ${prev}→${next}`);
   },
 
   receiveRows(startIdx, rows) {
@@ -77,16 +82,14 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       windowStart: Math.max(1, startIdx | 0),
       selectedRowId,
     });
-    (get() as any).__ui?.debug?.(
-      `store.receiveRows start=${startIdx} rows=${rows.length} nextId=${maxId} windowStart=${Math.max(
-        1,
-        startIdx | 0,
-      )} sel=${selectedRowId ?? '-'}`,
-    );
+    // 과도한 로그 방지: 범위 바뀔 때만 간단 요약
+    const end = startIdx + rows.length - 1;
+    (get() as any).__ui?.debug?.(`store.receiveRows ${startIdx}-${end} (${rows.length})`);
   },
 
   toggleColumn(col, on) {
     set({ showCols: { ...get().showCols, [col]: on } });
+    (get() as any).__ui?.debug?.(`store.toggleColumn ${col}=${on}`);
   },
 
   setHighlights(rules) {
@@ -95,6 +98,7 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       .slice(0, 5)
       .map((r) => ({ text: r.text.trim(), color: r.color ?? ('c1' as const) }));
     set({ highlights: norm });
+    (get() as any).__ui?.debug?.(`store.setHighlights n=${norm.length}`);
   },
 
   setSearch(q) {
@@ -102,12 +106,15 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     const t = q.trim();
     if (!t) return set({ searchQuery: '', searchHits: [], searchOpen: false });
     set({ searchQuery: t });
+    (get() as any).__ui?.debug?.('store.setSearch');
   },
   closeSearch() {
     set({ searchOpen: false, searchQuery: '', searchHits: [] });
+    (get() as any).__ui?.debug?.('store.closeSearch');
   },
   openSearchPanel() {
     set({ searchOpen: true });
+    (get() as any).__ui?.debug?.('store.openSearchPanel');
   },
   setSearchResults(hits, opts) {
     const st = get();
@@ -115,28 +122,34 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     if (!st.searchOpen && !st.searchQuery.trim()) return;
     const nextQ = (opts?.q ?? st.searchQuery) || '';
     set({ searchOpen: true, searchHits: hits, searchQuery: nextQ });
+    (get() as any).__ui?.info?.(`search.results hits=${hits.length}`);
   },
 
   toggleBookmark(rowId) {
     // 북마크 패널 자동 열림 방지: 단순히 행의 상태만 토글
     const rows = get().rows.map((r) => (r.id === rowId ? { ...r, bookmarked: !r.bookmarked } : r));
     set({ rows });
+    (get() as any).__ui?.debug?.('store.toggleBookmark');
   },
 
   toggleBookmarksPane() {
     set({ showBookmarks: !get().showBookmarks });
+    (get() as any).__ui?.debug?.('store.toggleBookmarksPane');
   },
   setBookmarksPane(open) {
     set({ showBookmarks: !!open });
+    (get() as any).__ui?.debug?.(`store.setBookmarksPane ${!!open}`);
   },
   jumpToRow(rowId, idx) {
     // 직접 클릭/북마크/검색결과에서 선택: 즉시 선택 표시
     set({ selectedRowId: rowId });
     // 참고: 실제 스크롤 이동은 jumpToIdx가 담당
     // (여기서는 선택만 처리; idx는 디버깅/확장용으로 보존)
+    (get() as any).__ui?.debug?.(`store.jumpToRow id=${rowId} idx=${idx ?? '-'}`);
   },
   jumpToIdx(idx) {
     set({ pendingJumpIdx: Math.max(1, idx | 0) });
+    (get() as any).__ui?.debug?.(`store.jumpToIdx idx=${idx}`);
   },
 
   resizeColumn(col, dx) {
@@ -144,6 +157,7 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     const base = Math.max(60, ((next as any)[col] || 120) + dx);
     (next as any)[col] = base;
     set({ colW: next });
+    (get() as any).__ui?.debug?.(`store.resizeColumn ${col} += ${dx}`);
   },
 
   mergeProgress({ inc, total, reset, active, done }) {
@@ -157,26 +171,36 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
     let act = active ?? cur.mergeActive;
     if (t > 0 && doneVal >= t) act = false;
     set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });
-    (get() as any).__ui?.debug?.(
-      `store.mergeProgress inc=${inc ?? '-'} done=${doneVal} total=${t} active=${act}`,
-    );
+    // 10% 단위 또는 완료 시에만 기록
+    const pct = t > 0 ? Math.floor((doneVal / t) * 100) : 0;
+    const key = '__lastMergePct';
+    const last = (get() as any)[key] ?? -1;
+    if (!act || pct >= 100 || pct >= last + 10) {
+      (get() as any).__ui?.info?.(`merge.progress ${pct}% (${doneVal}/${t}) active=${act}`);
+      (get() as any)[key] = pct;
+    }
   },
 
   // ── 필터 상태 ─────────────────────────────────────────────────────────
   setFilterField(f, v) {
     const next = { ...get().filter, [f]: v };
     set({ filter: next }); // ← 여기서는 전송하지 않음
+    (get() as any).__ui?.debug?.(`store.setFilterField ${f}="${v}"`);
   },
   applyFilter(next) {
+    (get() as any).__ui?.debug?.('[debug] applyFilter: start');
     set({ filter: next });
     postFilterUpdate(next); // ← 실제 전송은 여기서만
     (get() as any).__ui?.info?.(`store.applyFilter ${JSON.stringify(next)}`);
+    (get() as any).__ui?.debug?.('[debug] applyFilter: end');
   },
   resetFilters() {
+    (get() as any).__ui?.debug?.('[debug] resetFilters: start');
     const empty = { pid: '', src: '', proc: '', msg: '' };
     set({ filter: empty });
     postFilterUpdate(empty); // 초기화는 즉시 반영
     (get() as any).__ui?.info?.('store.resetFilters');
+    (get() as any).__ui?.debug?.('[debug] resetFilters: end');
   },
 }));
 

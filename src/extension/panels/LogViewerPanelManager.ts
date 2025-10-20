@@ -32,36 +32,42 @@ export class LogViewerPanelManager {
   private readonly PROG_LINES_THRESHOLD = 1000; // 누적 라인 임계치
   private readonly PROG_LOG_INTERVAL_MS = 800; // 최소 간격(ms)
   // ──────────────────────────────────────────────────────────────────────
+  // 전송 로그 샘플링
+  private lastBatchLogMs = 0;
+  private lastPageLogMs = 0;
+  private readonly SEND_LOG_INTERVAL_MS = 800;
 
   constructor(
     private context: vscode.ExtensionContext,
     private extensionUri: vscode.Uri,
-    private appendLog?: (s: string) => void,
   ) {}
 
   dispose() {
+    this.log.debug('[debug] LogViewerPanelManager dispose: start');
     try {
       this.session?.dispose();
     } catch {}
     this.session = undefined;
     if (this.panel) this.panel.dispose();
+    this.log.debug('[debug] LogViewerPanelManager dispose: end');
   }
 
   async handleHomeyLoggingCommand() {
     const already = !!this.panel;
-    this.appendLog?.(`[debug] viewer: handleHomeyLoggingCommand (panelExists=${already})`);
+    this.log.debug(`[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`);
+    this.log.debug(`[debug] viewer: handleHomeyLoggingCommand (panelExists=${already})`);
 
     // ✅ 버튼 누른 순간 raw 초기화 시도
     const wsRoot = await this._resolveWorkspaceRoot();
     if (wsRoot) {
       try {
         await this._cleanupRaw(wsRoot);
-        this.appendLog?.(`[info] viewer: raw folder cleaned (${path.join(wsRoot, RAW_DIR_NAME)})`);
+        this.log.info(`viewer: raw folder cleaned (${path.join(wsRoot, RAW_DIR_NAME)})`);
       } catch (e: any) {
-        this.appendLog?.(`[error] viewer: raw cleanup failed ${String(e?.message ?? e)}`);
+        this.log.error(`viewer: raw cleanup failed ${String(e?.message ?? e)}`);
       }
     } else {
-      this.appendLog?.('[warn] viewer: no workspace root; skip raw cleanup');
+      this.log.warn('viewer: no workspace root; skip raw cleanup');
     }
 
     if (!this.panel) {
@@ -79,7 +85,7 @@ export class LogViewerPanelManager {
         },
       );
       this.panel.onDidDispose(() => {
-        this.appendLog?.('[info] viewer: panel disposed');
+        this.log.info('viewer: panel disposed');
         try {
           this.bridge?.dispose?.();
         } catch {}
@@ -89,55 +95,41 @@ export class LogViewerPanelManager {
 
       // 정식 Log Viewer UI 로드
       const uiRoot = vscode.Uri.joinPath(this.extensionUri, 'dist', 'webviewers', 'log-viewer');
-      this.appendLog?.('[debug] viewer: loading UI html…');
+      this.log.debug('viewer: loading UI html…');
       this.panel.webview.html = await this._getHtmlFromFiles(this.panel.webview, uiRoot);
-      this.appendLog?.('[info] viewer: UI html loaded');
+      this.log.info('viewer: UI html loaded');
 
       // 메시지 라우팅을 bridge로 일원화
       this.bridge = new HostWebviewBridge(this.panel, {
-        onUiLog: ({ level, text, source, line }) => {
-          // Host 로그 + Output 채널 동시 연결
-          switch (level) {
-            case 'debug':
-              this.log.debug?.(line);
-              break;
-            case 'warn':
-              this.log.warn(line);
-              break;
-            case 'error':
-              this.log.error(line);
-              break;
-            default:
-              this.log.info(line);
-          }
-          this.appendLog?.(line);
-        },
+        onUiLog: ({ level, text, source, line }) => {},
         readUserPrefs: async () => {
-          this.appendLog?.('[debug] viewer: getUserPrefs requested');
+          this.log.debug('viewer: getUserPrefs requested');
           const prefs = await readLogViewerPrefs(this.context);
-          this.appendLog?.('[debug] viewer: getUserPrefs responded');
+          this.log.debug('viewer: getUserPrefs responded');
           return prefs;
         },
         writeUserPrefs: async (patch: any) => {
           await writeLogViewerPrefs(this.context, patch ?? {});
-          this.appendLog?.('[debug] viewer: prefs saved');
+          this.log.debug('viewer: prefs saved');
         },
       });
       this.bridge.start();
-      this.appendLog?.('[debug] viewer: host-webview bridge started');
+      this.log.debug('viewer: host-webview bridge started');
 
-      this.appendLog?.('[info] Homey Log Viewer opened');
+      this.log.info('Homey Log Viewer opened');
       await vscode.commands.executeCommand('homey.logging.openViewer');
     }
     this.panel.reveal(undefined, true);
+    this.log.debug(`LogViewerPanelManager.handleHomeyLoggingCommand: end`);
   }
 
   /** 실시간 세션 시작: 라인 들어오는 대로 즉시 UI 전송 */
   async startRealtime(filter?: string) {
+    this.log.debug('[debug] LogViewerPanelManager startRealtime: start');
     if (!this.panel) await this.handleHomeyLoggingCommand();
     this.mode = 'realtime';
     this.initialSent = true; // 실시간은 제한 없음
-    this.appendLog?.(`[info] realtime: start (filter=${filter ?? ''})`);
+    this.log.info(`realtime: start (filter=${filter ?? ''})`);
 
     this.session?.dispose();
     this.session = new LogSessionManager({ id: 'default', type: 'adb', timeoutMs: 15000 });
@@ -146,7 +138,7 @@ export class LogViewerPanelManager {
       filter,
       onBatch: (logs) => {
         if ((logs?.length ?? 0) > 0) {
-          this.appendLog?.(`[debug] realtime: batch ${logs.length} lines`);
+          this.log.debug(`realtime: batch ${logs.length} lines`);
         }
         this._send('logs.batch', { logs });
       },
@@ -154,14 +146,16 @@ export class LogViewerPanelManager {
         this._send('metrics.update', m);
       },
     });
+    this.log.debug('[debug] LogViewerPanelManager startRealtime: end');
   }
 
   /** 파일 병합 세션 시작: 최초 최신 500줄만 보내고, 이후는 스크롤 요청에 따른 페이지 읽기 */
   async startFileMerge(dir: string) {
+    this.log.debug('[debug] LogViewerPanelManager startFileMerge: start');
     if (!this.panel) await this.handleHomeyLoggingCommand();
     this.mode = 'filemerge';
     this.initialSent = false;
-    this.appendLog?.(`[info] merge: start (dir=${dir})`);
+    this.log.info(`merge: start (dir=${dir})`);
 
     // 🔒 샘플링 상태 리셋 (권장)
     this.progAcc = 0;
@@ -173,7 +167,7 @@ export class LogViewerPanelManager {
     const wsRoot = await this._resolveWorkspaceRoot();
     const indexOutDir = wsRoot ? path.join(wsRoot, RAW_DIR_NAME, MERGED_DIR_NAME) : undefined;
     if (!wsRoot) {
-      this.appendLog?.('[warn] merge: no workspace folder, fallback to default outDir');
+      this.log.warn('merge: no workspace folder, fallback to default outDir');
     }
 
     this.session?.dispose();
@@ -184,8 +178,8 @@ export class LogViewerPanelManager {
       indexOutDir,
       onBatch: (logs, total, seq) => {
         if (this.initialSent) return;
-        this.appendLog?.(
-          `[info] merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`,
+        this.log.info(
+          `merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`,
         );
         // 초기 배치에도 현재 pagination 버전을 함께 전달(웹뷰 버전 동기화)
         const ver = paginationService.getVersion();
@@ -193,8 +187,8 @@ export class LogViewerPanelManager {
         this.initialSent = true;
       },
       onSaved: (info) => {
-        this.appendLog?.(
-          `[info] merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`,
+        this.log.info(
+          `merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`,
         );
         this._send('logmerge.saved', info);
       },
@@ -202,8 +196,8 @@ export class LogViewerPanelManager {
 
       // 정식 병합(T1) 완료 → UI 하드리프레시
       onRefresh: ({ total, version }) => {
-        this.appendLog?.(
-          `[info] merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`,
+        this.log.info(
+          `merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`,
         );
         this._send('logs.refresh', {
           reason: 'full-reindex',
@@ -235,7 +229,7 @@ export class LogViewerPanelManager {
               this.progTotal && this.progTotal > 0
                 ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
                 : undefined;
-            this.appendLog?.(
+            this.log.debug(
               `[debug] host→ui: merge.progress ~${pct ?? '?'}% (≈${this.progDoneAcc}/${this.progTotal ?? '?'})`,
             );
             this.progAcc = 0;
@@ -249,7 +243,7 @@ export class LogViewerPanelManager {
             this.progTotal && this.progTotal > 0
               ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
               : 100;
-          this.appendLog?.(
+          this.log.debug(
             `[debug] host→ui: merge.progress done=${this.progDoneAcc}/${this.progTotal ?? '?'} (${pct}%)`,
           );
           // 상태 초기화
@@ -260,32 +254,41 @@ export class LogViewerPanelManager {
         }
       },
     });
+    this.log.debug('[debug] LogViewerPanelManager startFileMerge: end');
   }
 
   stop() {
+    this.log.debug('[debug] LogViewerPanelManager stop: start');
     this.session?.stopAll();
-    this.appendLog?.('[info] Logging stopped');
+    this.log.info('Logging stopped');
+    this.log.debug('[debug] LogViewerPanelManager stop: end');
   }
 
   private _send<T extends string>(type: T, payload: any) {
     try {
       if (type === 'logs.batch') {
-        const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
-        const total = payload?.total;
-        const seq = payload?.seq;
-        const ver = payload?.version;
-        this.appendLog?.(
-          `[debug] host→ui: ${type} (len=${len}, total=${total ?? ''}, seq=${seq ?? ''}, v=${ver ?? ''})`,
-        );
+        const now = Date.now();
+        if (now - this.lastBatchLogMs >= this.SEND_LOG_INTERVAL_MS) {
+          const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
+          const total = payload?.total;
+          const seq = payload?.seq;
+          const ver = payload?.version;
+          this.log.debug(
+            `[debug] host→ui: ${type} (len=${len}, total=${total ?? ''}, seq=${seq ?? ''}, v=${ver ?? ''})`,
+          );
+          this.lastBatchLogMs = now;
+        }
       } else if (type === 'logs.page.response') {
-        const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
-        this.appendLog?.(
-          `[debug] host→ui: ${type} (${payload?.startIdx}-${payload?.endIdx}, len=${len})`,
-        );
+        const now = Date.now();
+        if (now - this.lastPageLogMs >= this.SEND_LOG_INTERVAL_MS) {
+          const len = Array.isArray(payload?.logs) ? payload.logs.length : 0;
+          this.log.debug(
+            `[debug] host→ui: ${type} (${payload?.startIdx}-${payload?.endIdx}, len=${len})`,
+          );
+          this.lastPageLogMs = now;
+        }
       } else if (type === 'logs.refresh') {
-        this.appendLog?.(
-          `[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`,
-        );
+        this.log.debug(`[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`);
       }
       this.bridge?.send({ v: 1, type, payload } as any);
     } catch {}
@@ -299,7 +302,7 @@ export class LogViewerPanelManager {
     try {
       const p = await getCurrentWorkspacePathFs(this.context);
       if (p && p.trim()) {
-        this.appendLog?.(`[info] viewer: workspace root from userdata=${p}`);
+        this.log.info(`viewer: workspace root from userdata=${p}`);
         return p.trim();
       }
     } catch {}
@@ -308,7 +311,7 @@ export class LogViewerPanelManager {
     const ws = vscode.workspace.workspaceFolders;
     if (ws && ws.length > 0) {
       const p = ws[0].uri.fsPath;
-      this.appendLog?.(`[info] viewer: workspace root from workspaceFolders=${p}`);
+      this.log.info(`viewer: workspace root from workspaceFolders=${p}`);
       return p;
     }
 
@@ -316,14 +319,14 @@ export class LogViewerPanelManager {
     const cfg = vscode.workspace.getConfiguration('homeyEdgeTool');
     const cfgRoot = cfg.get<string>('workspaceRoot');
     if (cfgRoot && cfgRoot.trim()) {
-      this.appendLog?.(`[info] viewer: workspace root from config=${cfgRoot}`);
+      this.log.info(`viewer: workspace root from config=${cfgRoot}`);
       return cfgRoot.trim();
     }
 
     // 4) 과거 세션 잔존 값
     const last = this.context.workspaceState.get<string>('lastWorkspaceRoot');
     if (last && last.trim()) {
-      this.appendLog?.(`[info] viewer: workspace root from workspaceState=${last}`);
+      this.log.info(`viewer: workspace root from workspaceState=${last}`);
       return last.trim();
     }
 
@@ -394,7 +397,7 @@ export class LogViewerPanelManager {
       return html;
     } catch (e) {
       this.log.error('[LogViewerPanelManager] UI load failed:', e);
-      this.appendLog?.('[error] viewer: UI load failed');
+      this.log.error('viewer: UI load failed');
       return `<html><body>Log Viewer UI missing.</body></html>`;
     }
   }

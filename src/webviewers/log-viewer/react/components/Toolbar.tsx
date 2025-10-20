@@ -24,14 +24,40 @@ export function Toolbar() {
   const [searchDlgOpen, setSearchDlgOpen] = useState(false);
   const ui = useMemo(() => createUiLog(vscode, 'log-viewer.toolbar'), []);
 
-  const savePref = (k: string, v: boolean) =>
+  const savePref = (k: string, v: boolean) => {
+    ui.debug?.('[debug] Toolbar: savePref');
     vscode?.postMessage({ v: 1, type: 'logviewer.saveUserPrefs', payload: { prefs: { [k]: v } } });
+  };
 
   // ── 활성 필드 개수 표시(버튼의 필터(x) 용) ───────────────────────────
   const activeCount = (() => {
+    ui.debug?.('[debug] Toolbar: activeCount');
     const t = (v?: string) => String(v ?? '').trim();
     return ['pid', 'src', 'proc', 'msg'].reduce((n, k) => n + (t((filter as any)[k]) ? 1 : 0), 0);
   })();
+
+  const labelOf = (id: 'time' | 'proc' | 'pid' | 'src' | 'msg') => {
+    return id === 'time'
+      ? '시간'
+      : id === 'proc'
+        ? '프로세스'
+        : id === 'pid'
+          ? 'PID'
+          : id === 'src'
+            ? '파일'
+            : '메시지';
+  };
+  const prefKey = (id: 'time' | 'proc' | 'pid' | 'src' | 'msg') => {
+    return id === 'time'
+      ? 'showTime'
+      : id === 'proc'
+        ? 'showProc'
+        : id === 'pid'
+          ? 'showPid'
+          : id === 'src'
+            ? 'showSrc'
+            : 'showMsg';
+  };
 
   return (
     <>
@@ -149,27 +175,4 @@ export function Toolbar() {
       />
     </>
   );
-}
-
-function labelOf(id: 'time' | 'proc' | 'pid' | 'src' | 'msg') {
-  return id === 'time'
-    ? '시간'
-    : id === 'proc'
-      ? '프로세스'
-      : id === 'pid'
-        ? 'PID'
-        : id === 'src'
-          ? '파일'
-          : '메시지';
-}
-function prefKey(id: 'time' | 'proc' | 'pid' | 'src' | 'msg') {
-  return id === 'time'
-    ? 'showTime'
-    : id === 'proc'
-      ? 'showProc'
-      : id === 'pid'
-        ? 'showPid'
-        : id === 'src'
-          ? 'showSrc'
-          : 'showMsg';
 }

@@ -8,16 +8,19 @@ export type UiLogger = {
 
 // 안전 문자열화
 function toStr(t: unknown): string {
+  console.debug?.('[debug] toStr: start');
   if (typeof t === 'string') return t;
   try {
     return JSON.stringify(t);
   } catch {
     return String(t);
   }
+  console.debug?.('[debug] toStr: end');
 }
 
 // lightweight UI logger: webview → extension host 로 전달
 export function createUiLog(vscodeApi: any, source: string): UiLogger {
+  console.debug?.(`[debug] createUiLog: start for ${source}`);
   const post = (level: 'debug' | 'info' | 'warn' | 'error', t: unknown) => {
     const text = toStr(t);
     try {
@@ -31,6 +34,7 @@ export function createUiLog(vscodeApi: any, source: string): UiLogger {
       else console.debug?.(tag, text);
     }
   };
+  console.debug?.(`[debug] createUiLog: end for ${source}`);
   return {
     debug: (t) => post('debug', t),
     info: (t) => post('info', t),

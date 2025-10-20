@@ -12,6 +12,9 @@ import {
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import type { ExplorerBridge } from './explorerBridge.js';
 import type { EdgePanelProvider } from './extensionPanel.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
+
+const log = getLogger('EdgePanelActionRouter');
 
 export interface IEdgePanelActionRouter {
   sendButtonSections(): void;
@@ -27,7 +30,6 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     private _view: vscode.WebviewView,
     private _context: vscode.ExtensionContext,
     private _extensionUri: vscode.Uri,
-    private _appendLog: (line: string) => void,
     private _updateState: { updateAvailable: boolean; updateUrl?: string; latestSha?: string },
     private _provider: EdgePanelProvider,
     private _perfMonitor?: PerfMonitor,
@@ -35,7 +37,6 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
   ) {
     // 🔁 provider 주입된 commandHandlers
     this._handlers = createCommandHandlers(
-      (s) => this._appendLog(s),
       this._context,
       this._extensionUri,
       this._provider,
@@ -43,24 +44,29 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
   }
 
   sendButtonSections() {
+    log.debug('[debug] EdgePanelActionRouter sendButtonSections: start');
     const ctx = buildButtonContext({
       updateAvailable: this._updateState.updateAvailable,
       updateUrl: this._updateState.updateUrl,
     });
     const dto = toSectionDTO(this._buttonSections, ctx);
     this._view.webview.postMessage({ v: 1, type: 'buttons.set', payload: { sections: dto } });
+    log.debug('[debug] EdgePanelActionRouter sendButtonSections: end');
   }
 
   async dispatchButton(id: string) {
+    log.debug('[debug] EdgePanelActionRouter dispatchButton: start');
     const def = findButtonById(this._buttonSections, id);
     if (!def) {
-      this._appendLog(`[warn] unknown button id: ${id}`);
+      log.warn(`[warn] unknown button id: ${id}`);
       return;
     }
     await this._runOp(def);
+    log.debug('[debug] EdgePanelActionRouter dispatchButton: end');
   }
 
   private async _runOp(def: ButtonDef) {
+    log.debug('[debug] EdgePanelActionRouter _runOp: start');
     const op = def.op;
     try {
       switch (op.kind) {
@@ -79,14 +85,17 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
           }
           break;
       }
+      log.debug('[debug] EdgePanelActionRouter _runOp: end');
     } catch (e: unknown) {
-      this._appendLog(
+      log.error(
         `[error] button "${def.label}" failed: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }
 
   dispose() {
+    log.debug('[debug] EdgePanelActionRouter dispose: start');
     this._handlers = undefined;
+    log.debug('[debug] EdgePanelActionRouter dispose: end');
   }
 }

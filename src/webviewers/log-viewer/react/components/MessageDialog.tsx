@@ -53,6 +53,7 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
   // (승격 버전) 오프스크린 측정/뷰포트 추적, fallbackMode는 더 이상 사용하지 않습니다.
 
   const handleCopy = async () => {
+    ui.debug?.('[debug] MessageDialog: handleCopy start');
     if (!logRow) return;
     const textToCopy =
       logRow.raw ?? `[${logRow.time}] ${logRow.proc}[${logRow.pid}]: ${logRow.msg}`;
@@ -66,9 +67,11 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
     } catch (err) {
       ui.error(`Dialog.copy fail: ${String(err)}`);
     }
+    ui.debug?.('[debug] MessageDialog: handleCopy end');
   };
 
   const handleClose = () => {
+    ui.debug?.('[debug] MessageDialog: handleClose');
     ui.info('Dialog.onClose');
     onClose();
   };
@@ -126,6 +129,7 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
 
   // ── 드래그 구현: 타이틀바에서 포인터 트래킹 ────────────────
   const onDragStart = (e: React.PointerEvent) => {
+    ui.debug?.('[debug] MessageDialog: onDragStart');
     dragState.current = {
       active: true,
       startX: e.clientX,
@@ -137,12 +141,14 @@ export function MessageDialog({ isOpen, onClose, logRow }: MessageDialogProps) {
     ui.debug?.(`Dialog.drag.start x=${e.clientX} y=${e.clientY} base=(${pos.x},${pos.y})`);
   };
   const onDragMove = (e: React.PointerEvent) => {
+    ui.debug?.('[debug] MessageDialog: onDragMove');
     if (!dragState.current.active) return;
     const dx = e.clientX - dragState.current.startX;
     const dy = e.clientY - dragState.current.startY;
     setPos({ x: dragState.current.baseX + dx, y: dragState.current.baseY + dy });
   };
   const onDragEnd = (e: React.PointerEvent) => {
+    ui.debug?.('[debug] MessageDialog: onDragEnd');
     if (!dragState.current.active) return;
     dragState.current.active = false;
     ui.debug?.(`Dialog.drag.end at=(${pos.x},${pos.y})`);

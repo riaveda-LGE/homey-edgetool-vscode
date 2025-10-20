@@ -1,4 +1,7 @@
 // === src/core/logs/time/TimeParser.ts ===
+import { getLogger } from '../../logging/extension-logger.js';
+
+const log = getLogger('TimeParser');
 
 /** 라인에서 타임스탬프(epoch ms)를 추출; 실패 시 undefined */
 export function parseTs(line: string): number | undefined {
@@ -6,7 +9,9 @@ export function parseTs(line: string): number | undefined {
   const iso = line.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?/);
   if (iso) {
     const t = Date.parse(iso[0]);
-    if (!Number.isNaN(t)) return t;
+    if (!Number.isNaN(t)) {
+      return t;
+    }
   }
 
   // "[Mon DD HH:MM:SS.mmmm]" 포맷 (테스트 데이터용)
@@ -61,8 +66,14 @@ export function parseTs(line: string): number | undefined {
 }
 
 export function guessLevel(line: string): 'D' | 'I' | 'W' | 'E' {
-  if (/\b(error|err|fail|fatal)\b/i.test(line)) return 'E';
-  if (/\bwarn(ing)?\b/i.test(line)) return 'W';
-  if (/\bdebug|trace\b/i.test(line)) return 'D';
+  if (/\b(error|err|fail|fatal)\b/i.test(line)) {
+    return 'E';
+  }
+  if (/\bwarn(ing)?\b/i.test(line)) {
+    return 'W';
+  }
+  if (/\bdebug|trace\b/i.test(line)) {
+    return 'D';
+  }
   return 'I';
 }

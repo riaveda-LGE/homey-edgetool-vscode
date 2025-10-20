@@ -8,12 +8,11 @@ const log = getLogger('cmd.git');
 
 export class CommandHandlersGit {
   constructor(
-    private say: (s: string) => void,
-    private appendLog?: (s: string) => void,
   ) {}
 
   @measure()
   async gitPassthrough(args: string[]) {
-    this.say(`[info] git ${args.join(' ')} (stub)`);
+    log.debug('[debug] CommandHandlersGit gitPassthrough: start');
+    log.debug('[debug] CommandHandlersGit gitPassthrough: end');
   }
 }

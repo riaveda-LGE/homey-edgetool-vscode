@@ -3,9 +3,12 @@ import { Bookmarks } from './Bookmarks';
 import { Grid } from './Grid';
 import { SearchPanel } from './SearchPanel';
 import { Toolbar } from './Toolbar';
+import { createUiLog } from '../../../shared/utils';
+import { vscode } from '../ipc';
 
 export function App() {
   const showBookmarks = useLogStore((s) => s.showBookmarks);
+  const ui = createUiLog(vscode, 'log-viewer.app');
   return (
     <div
       className="tw-h-full tw-grid tw-min-h-0"

@@ -31,6 +31,7 @@ const ZLogEntry = z.object({
 // 현재 세션(version) 추적
 let CURRENT_SESSION_VERSION: number | undefined;
 function updateSessionVersion(next: number | undefined, origin: string) {
+  ui.debug?.('[debug] updateSessionVersion: start');
   const prev = CURRENT_SESSION_VERSION;
   if (typeof next === 'number' && next !== prev) {
     CURRENT_SESSION_VERSION = next;
@@ -40,22 +41,25 @@ function updateSessionVersion(next: number | undefined, origin: string) {
       `session.version keep ${prev ?? 'n/a'} (origin=${origin}, next=${next ?? 'n/a'})`,
     );
   }
+  ui.debug?.('[debug] updateSessionVersion: end');
 }
 
 // 필터 전송 gate: warmup/초기 배치 수신 전에는 필터 변경을 보류
 let READY_FOR_FILTER = false;
 let PENDING_FILTER: { pid: string; src: string; proc: string; msg: string } | null = null;
 function setReadyForFilter() {
+  ui.debug?.('[debug] setReadyForFilter: start');
   if (!READY_FOR_FILTER) {
     READY_FOR_FILTER = true;
     ui.info('filter: ready — flushing any pending filter');
     if (PENDING_FILTER) flushFilter(PENDING_FILTER);
     PENDING_FILTER = null;
   }
+  ui.debug?.('[debug] setReadyForFilter: end');
 }
 
 export function setupIpc() {
-  ui.info('ipc.setupIpc: start');
+  ui.debug?.('ipc.setupIpc: start');
   // 1) 사용자 환경설정 요청
   vscode?.postMessage({ v: 1, type: 'logviewer.getUserPrefs', payload: {} });
   // 2) 최신 브리지와의 핸드셰이크 (hostWebviewBridge가 viewer.ready를 대기)
@@ -73,9 +77,11 @@ export function setupIpc() {
         const version = typeof payload?.version === 'number' ? payload.version : undefined;
         const warm = !!payload?.warm;
         updateSessionVersion(version, 'logs.state');
-        ui.info(
-          `logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`,
-        );
+        // 최초 1회만 info, 이후는 debug로 하향
+        (setupIpc as any).__stateOnceLogged
+          ? ui.debug?.(`logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`)
+          : ui.info(`logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`);
+        (setupIpc as any).__stateOnceLogged = true;
         // ⚠️ 과거엔 warm 일 때만 ready. 파일 기반( warm=false ) 초기 클릭이 묵살되는 이슈가 있어
         // 호스트가 살아있다는 신호(logs.state)를 받는 즉시 필터 전송을 허용한다.
         setReadyForFilter();
@@ -115,9 +121,7 @@ export function setupIpc() {
         });
         // 버전 동기화: payload.version 우선, 없으면 구버전 호환 seq를 fallback으로 채택
         updateSessionVersion(v ?? seq, 'logs.batch');
-        ui.debug?.(
-          `logs.batch: recv=${rows.length} total=${total ?? 'n/a'} seq=${seq ?? 'n/a'} ver=${v ?? 'n/a'} cur=${CURRENT_SESSION_VERSION ?? 'n/a'}`,
-        );
+        ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'} ver=${v ?? 'n/a'}`);
         useLogStore.getState().receiveRows(1, rows);
         setReadyForFilter(); // 최초 배치 수신 시 필터 전송 허용
         return;
@@ -168,9 +172,7 @@ export function setupIpc() {
           const src = pickSrcName(e);
           return { id: nextId++, idx: e.idx, ...p, src, raw };
         });
-        ui.debug(
-          `page: response ${startIdx}-${payload?.endIdx} count=${rows.length} v=${respVersion ?? 'n/a'} cur=${CURRENT_SESSION_VERSION ?? 'n/a'}`,
-        );
+        ui.debug?.(`page: response ${startIdx}-${payload?.endIdx} count=${rows.length} v=${respVersion ?? 'n/a'}`);
         useLogStore.getState().receiveRows(startIdx, rows);
         return;
       }
@@ -262,26 +264,33 @@ export function postFilterUpdate(filter: {
   proc?: string;
   msg?: string;
 }) {
+  ui.debug?.('[debug] postFilterUpdate: start');
   const next = normalizeFilter(filter);
   if (!READY_FOR_FILTER) {
     PENDING_FILTER = next;
     ui.info(`filter.update deferred (viewer not ready): ${JSON.stringify(next)}`);
+    ui.debug?.('[debug] postFilterUpdate: end');
     return;
   }
   flushFilter(next);
+  ui.debug?.('[debug] postFilterUpdate: end');
 }
 
 function normalizeFilter(f: any) {
+  ui.debug?.('[debug] normalizeFilter: start');
   const s = (v: any) => String(v ?? '').trim();
   const pid = s(f?.pid);
   const src = s(f?.src);
   const proc = s(f?.proc);
   const msg = s(f?.msg);
+  ui.debug?.('[debug] normalizeFilter: end');
   return { pid, src, proc, msg };
 }
 
 function flushFilter(next: { pid: string; src: string; proc: string; msg: string }) {
+  ui.debug?.('[debug] flushFilter: start');
   const payload = { filter: next };
   ui.info(`filter.update → host ${JSON.stringify(payload.filter)}`);
   vscode?.postMessage({ v: 1, type: 'logs.filter.update', payload });
+  ui.debug?.('[debug] flushFilter: end');
 }

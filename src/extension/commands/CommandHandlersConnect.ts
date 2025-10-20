@@ -8,17 +8,16 @@ const log = getLogger('cmd.connect');
 
 export class CommandHandlersConnect {
   constructor(
-    private say: (s: string) => void,
-    private appendLog?: (s: string) => void,
   ) {}
 
   @measure()
   async connectInfo() {
-    this.say('[info] connect_info (stub)');
+    log.debug('[info] connect_info (stub)');
   }
 
   @measure()
   async connectChange() {
-    this.say('[info] connect_change (stub)');
+    log.debug('[debug] CommandHandlersConnect connectChange: start');
+    log.debug('[debug] CommandHandlersConnect connectChange: end');
   }
 }

@@ -8,13 +8,12 @@ const log = getLogger('cmd.host');
 
 export class CommandHandlersHost {
   constructor(
-    private say: (s: string) => void,
-    private appendLog?: (s: string) => void,
   ) {}
 
   @measure()
   async hostCommand(cmd: string) {
-    if (!cmd) return this.say('[error] host <command>');
-    this.say(`[info] host passthrough: ${cmd} (stub)`);
+    log.debug('[debug] CommandHandlersHost hostCommand: start');
+    if (!cmd) return log.error('[error] host <command>');
+    log.info(`[info] host passthrough: ${cmd} (stub)`);
   }
 }

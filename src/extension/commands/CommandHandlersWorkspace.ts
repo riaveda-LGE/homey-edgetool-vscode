@@ -19,14 +19,14 @@ export class CommandHandlersWorkspace {
   private readonly CACHE_DURATION = 30000; // 30초 캐시
 
   constructor(
-    private say: (s: string) => void,
     private context?: vscode.ExtensionContext,
   ) {}
 
   // === 안내 팝업 없이 바로 폴더 선택(패널 버튼 전용)
   @measure()
   async changeWorkspaceQuick() {
-    if (!this.context) return this.say('[error] internal: no extension context');
+    log.debug('[debug] CommandHandlersWorkspace changeWorkspaceQuick: start');
+    if (!this.context) return log.error('[error] internal: no extension context');
 
     const startTime = Date.now();
 
@@ -45,7 +45,7 @@ export class CommandHandlersWorkspace {
       });
 
       if (!sel || !sel[0]) {
-        this.say('[info] change_workspace cancelled');
+        log.debug('[debug] CommandHandlersWorkspace changeWorkspaceQuick: end');
         return;
       }
 
@@ -60,41 +60,40 @@ export class CommandHandlersWorkspace {
         this.ensureGitInitAsync(baseForConfig),
       ]);
 
-      this.say(`[info] workspace (사용자 지정) base=${updated.baseDirFsPath}`);
-      this.say(`[info] -> 실제 사용 경로: ${updated.wsDirFsPath}`);
-
       const duration = Date.now() - startTime;
       log.debug(`changeWorkspaceQuick completed in ${duration}ms`);
     } catch (e: any) {
       const duration = Date.now() - startTime;
       log.error(`changeWorkspaceQuick failed after ${duration}ms`, e);
-      this.say(`[error] change_workspace 실패: ${e?.message || String(e)}`);
     }
   }
 
   // === Workspace 열기: 항상 폴더 내부를 연다
   @measure()
   async openWorkspace() {
-    if (!this.context) return this.say('[error] internal: no extension context');
+    log.debug('[debug] CommandHandlersWorkspace openWorkspace: start');
+    if (!this.context) return log.error('[error] internal: no extension context');
     try {
       const info = await resolveWorkspaceInfo(this.context);
       await vscode.env.openExternal(info.wsDirUri);
+      log.debug('[debug] CommandHandlersWorkspace openWorkspace: end');
     } catch (e: any) {
-      this.say(`[warn] workspace open failed: ${e?.message || String(e)}`);
+      log.error(`workspace open failed: ${e?.message || String(e)}`);
       vscode.window.showWarningMessage('Workspace가 아직 설정되지 않았습니다.');
     }
   }
 
   // (옵션) 현재 상태 확인용
   async showWorkspace() {
-    if (!this.context) return this.say('[error] internal: no extension context');
+    log.debug('[debug] CommandHandlersWorkspace showWorkspace: start');
+    if (!this.context) return log.error('[error] internal: no extension context');
     const info = await resolveWorkspaceInfo(this.context);
     if (info.source === 'user') {
-      this.say(`[info] workspace (사용자 지정) base=${info.baseDirFsPath}`);
+      log.debug(`workspace (사용자 지정) base=${info.baseDirFsPath}`);
     } else {
-      this.say(`[info] workspace (기본) base=${info.baseDirFsPath} (확장전용폴더)`);
+      log.debug(`workspace (기본) base=${info.baseDirFsPath} (확장전용폴더)`);
     }
-    this.say(`[info] -> 실제 사용 경로: ${info.wsDirFsPath}`);
+    log.debug(`-> 실제 사용 경로: ${info.wsDirFsPath}`);
   }
 
   // 캐시된 workspace 정보 조회
@@ -122,21 +121,22 @@ export class CommandHandlersWorkspace {
     } catch {}
 
     try {
-      this.say?.(`[info] git init in: ${baseDir}/workspace`);
+      log.debug(`git init in: ${baseDir}/workspace`);
       await exec('git init', { cwd: path.join(baseDir, 'workspace') });
-      this.say?.('[info] git init done');
+      log.debug('git init done');
     } catch (e: any) {
-      this.say?.(`[warn] git init failed: ${e?.message || String(e)}`);
+      log.error(`git init failed: ${e?.message || String(e)}`);
     }
   }
 
   @measure()
   async togglePerformanceMonitoring(extensionUri?: vscode.Uri) {
+    log.debug('[debug] CommandHandlersWorkspace togglePerformanceMonitoring: start');
     if (!this.context || !extensionUri)
-      return this.say('[error] internal: no context or extension uri');
+      return log.error('[error] internal: no context or extension uri');
 
     const panel = new PerfMonitorPanel(extensionUri, this.context);
     panel.createPanel();
-    this.say('[info] Performance Monitor opened');
+    log.debug('[debug] CommandHandlersWorkspace togglePerformanceMonitoring: end');
   }
 }

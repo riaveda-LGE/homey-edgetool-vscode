@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 
+import { createUiLog } from '../../../shared/utils';
 import { useLogStore } from '../../react/store';
+import { vscode } from '../ipc';
 import type { HighlightColor, HighlightRule } from '../types';
 
 const COLORS: { id: HighlightColor; hex: string }[] = [
@@ -21,6 +23,8 @@ const COLORS: { id: HighlightColor; hex: string }[] = [
 export function HighlightPopover() {
   const current = useLogStore((s) => s.highlights);
   const setHighlights = useLogStore((s) => s.setHighlights);
+  // highlight popover 전용 ui logger
+  const ui = useMemo(() => createUiLog(vscode, 'log-viewer.highlight-popover'), []);
   const [rules, setRules] = useState<HighlightRule[]>(() => {
     const base = Array.from({ length: 5 }, (_, i) => ({ text: '', color: 'c1' as HighlightColor }));
     current.forEach((r, i) => {
@@ -29,11 +33,18 @@ export function HighlightPopover() {
     return base;
   });
 
-  const apply = () => setHighlights(rules);
-  const setText = (i: number, v: string) =>
+  const apply = () => {
+    ui.debug?.('[debug] HighlightPopover: apply');
+    setHighlights(rules);
+  };
+  const setText = (i: number, v: string) => {
+    ui.debug?.('[debug] HighlightPopover: setText');
     setRules((r) => r.map((x, idx) => (idx === i ? { ...x, text: v } : x)));
-  const pick = (i: number, c: HighlightColor) =>
+  };
+  const pick = (i: number, c: HighlightColor) => {
+    ui.debug?.('[debug] HighlightPopover: pick');
     setRules((r) => r.map((x, idx) => (idx === i ? { ...x, color: c } : x)));
+  };
 
   return (
     <div className="tw-space-y-2" style={{ color: 'var(--fg, #e6e6e6)' }}>

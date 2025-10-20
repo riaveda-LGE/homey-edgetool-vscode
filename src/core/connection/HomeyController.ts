@@ -8,29 +8,36 @@ const log = getLogger('HomeyController');
 export class HomeyController {
   private cm: ConnectionManager;
   constructor(private cfg: HostConfig) {
+    log.debug('[debug] HomeyController constructor: start');
     this.cm = new ConnectionManager(cfg);
+    log.debug('[debug] HomeyController constructor: end');
   }
 
   @measure()
   async restart() {
+    log.debug('[debug] HomeyController restart: start');
     await this.cm.connect();
     // 유닛명은 환경마다 다를 수 있어, homey-pro@ 로 시작하는 유닛을 찾아 재시작
     const cmd = `sh -lc 'unit=$(systemctl list-units --type=service --all | awk "/homey-pro@/{print \\$1; exit}"); if [ -n "$unit" ]; then sudo systemctl restart "$unit"; else echo "no homey-pro@ unit"; fi'`;
     const { code } = await this.cm.run(cmd);
     log.info(`restart code=${code}`);
+    log.debug('[debug] HomeyController restart: end');
   }
 
   @measure()
   async mount() {
+    log.debug('[debug] HomeyController mount: start');
     await this.cm.connect();
     // 여기서는 최소: 도커 상태 출력으로 대체 (후속 단계에서 서비스 파일 수정 로직 추가)
     const cmd = `sh -lc 'docker ps --format "{{.Names}} {{.Status}}"'`;
     await this.cm.run(cmd);
     log.info('mount: (stubbed) — later: edit ExecStart with volumes and daemon-reload');
+    log.debug('[debug] HomeyController mount: end');
   }
 
   @measure()
   async unmount() {
+    log.debug('[debug] HomeyController unmount: start');
     await this.cm.connect();
     // 안전한 stop/rm + daemon-reload 시퀀스(있는 경우만)
     const script = `
@@ -43,21 +50,26 @@ docker ps -a --format '{{.Names}}' | awk '/homey/ {print}' | xargs -r -n1 sh -c 
 `;
     await this.cm.run(`sh -lc '${script.replace(/\n/g, ' ')}'`);
     log.info('unmount done');
+    log.debug('[debug] HomeyController unmount: end');
   }
 
   @measure()
   async gitPull(path?: string) {
+    log.debug('[debug] HomeyController gitPull: start');
     await this.cm.connect();
     const p = path || '/etc/homey';
     await this.cm.run(`sh -lc 'cd "${p}" && git pull --ff-only || true'`);
+    log.debug('[debug] HomeyController gitPull: end');
   }
 
   @measure()
   async gitPush(path?: string) {
+    log.debug('[debug] HomeyController gitPush: start');
     await this.cm.connect();
     const p = path || '/etc/homey';
     await this.cm.run(
       `sh -lc 'cd "${p}" && git add -A && git commit -m "edge push" || true && git push || true'`,
     );
+    log.debug('[debug] HomeyController gitPush: end');
   }
 }

@@ -29,6 +29,18 @@ export class HostWebviewBridge {
   private kickedOnce = false; // 초기 리프레시 신호를 중복 발사하지 않도록 가드
   // ── Search buffer (host-held) ────────────────────────────────────────
   private searchHits: { idx: number; text: string }[] = [];
+  // ── 로그 스로틀(반복 노이즈 억제) ─────────────────────────────────────
+  private lastLogTs = new Map<string, number>();
+  private lastPayload = new Map<string, string>();
+  private shouldLog(key: string, ms = 400, payload?: string) {
+    const now = Date.now();
+    const last = this.lastLogTs.get(key) ?? -Infinity;
+    if (payload && this.lastPayload.get(key) === payload) return false;
+    if (now - last < ms) return false;
+    this.lastLogTs.set(key, now);
+    if (payload) this.lastPayload.set(key, payload);
+    return true;
+  }
 
   constructor(
     private readonly host: vscode.WebviewView | vscode.WebviewPanel,
@@ -164,9 +176,11 @@ export class HostWebviewBridge {
           const { startIdx, endIdx } = msg.payload || {};
           const s = Number(startIdx) || 1;
           const e = Number(endIdx) || s;
-          this.log.debug?.(
-            `bridge: logs.page.request ${s}-${e} filterActive=${paginationService.isFilterActive()}`,
-          );
+          if (this.shouldLog('page.req', 300, `${s}-${e}`)) {
+            this.log.debug?.(
+              `bridge: logs.page.request ${s}-${e} filterActive=${paginationService.isFilterActive()}`,
+            );
+          }
           const logs = await paginationService.readRangeByIdx(s, e); // 내부에서 필터 적용 분기
           // 현재 pagination 버전을 함께 내려, 웹뷰가 세션 불일치를 걸러낼 수 있게 한다.
           const version = paginationService.getVersion();
@@ -175,7 +189,9 @@ export class HostWebviewBridge {
             type: 'logs.page.response',
             payload: { startIdx: s, endIdx: e, logs, version },
           } as any);
-          this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length} v=${version}`);
+          if (this.shouldLog('page.resp', 300, `${s}-${e}:${logs.length}`)) {
+            this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length} v=${version}`);
+          }
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: PAGE_READ_ERROR ${message}`);
@@ -342,6 +358,7 @@ export class HostWebviewBridge {
   }
 
   send<T extends H2W>(msg: T) {
+    // 내부 전송 시작/끝 로그는 노이즈가 많아 제거
     this.host.webview.postMessage(msg);
   }
 
@@ -359,16 +376,20 @@ export class HostWebviewBridge {
   }
 
   registerAbort(abortKey: string, controller: AbortController) {
+    this.log.debug('[debug] HostWebviewBridge registerAbort: start');
     this.abort(abortKey); // 기존 있으면 정리
     this.pendings.set(abortKey, controller);
+    this.log.debug('[debug] HostWebviewBridge registerAbort: end');
   }
 
   abort(abortKey: string) {
+    this.log.debug('[debug] HostWebviewBridge abort: start');
     const c = this.pendings.get(abortKey);
     if (c) {
       c.abort();
       this.pendings.delete(abortKey);
     }
+    this.log.debug('[debug] HostWebviewBridge abort: end');
   }
 
   private api(): BridgeAPI {
@@ -388,7 +409,8 @@ export class HostWebviewBridge {
   }
 
   private warnUnknown(type: string) {
-    this.log.warn(`unknown webview message: ${type}`);
+    // 알 수 없는 메시지는 초당 1회 수준으로만 경고
+    if (this.shouldLog('unknown', 1000, type)) this.log.warn(`unknown webview message: ${type}`);
   }
 
   private sendError(e: unknown, inReplyTo?: string) {

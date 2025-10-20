@@ -13,6 +13,7 @@ let exportHtml = '';
 
 // Apply VS Code theme variables
 function applyTheme() {
+  uiLog.debug('[debug] applyTheme: start');
   const bodyStyle = globalThis.getComputedStyle(globalThis.document.body);
   const bg = bodyStyle.getPropertyValue('--vscode-editor-background') || '#1e1e1e';
   const fg = bodyStyle.getPropertyValue('--vscode-editor-foreground') || '#cccccc';
@@ -40,9 +41,11 @@ function applyTheme() {
       uiLog.error(`Error updating chart theme: ${e}`);
     }
   }
+  uiLog.debug('[debug] applyTheme: end');
 }
 
 function initChart() {
+  uiLog.debug('[debug] initChart: start');
   // Wait for Chart.js to be loaded
   let retryCount = 0;
   const maxRetries = 50; // 5 seconds max
@@ -138,9 +141,11 @@ function initChart() {
   };
 
   checkChart();
+  uiLog.debug('[debug] initChart: end');
 }
 
 function updateChart(data) {
+  uiLog.debug('[debug] updateChart: start');
   if (!chart) return;
   const labels = data.map((d) => new Date(d.timestamp).toLocaleTimeString());
   const cpuUser = data.map((d) => d.cpu.user / 1000); // ms
@@ -152,9 +157,11 @@ function updateChart(data) {
   chart.data.datasets[1].data = cpuSystem;
   chart.data.datasets[2].data = memory;
   chart.update();
+  uiLog.debug('[debug] updateChart: end');
 }
 
 function displayHtmlReport(html) {
+  uiLog.debug('[debug] displayHtmlReport: start');
   const reportDiv = globalThis.document.getElementById('htmlReport');
   reportDiv.innerHTML = html;
 
@@ -173,13 +180,16 @@ function displayHtmlReport(html) {
       }
     }
   });
+  uiLog.debug('[debug] displayHtmlReport: end');
 }
 
 function measureFunction(name, fn) {
+  uiLog.debug('[debug] measureFunction: start');
   const start = globalThis.performance.now();
   const result = fn();
   const duration = globalThis.performance.now() - start;
   vscode.postMessage({ v: 1, type: 'perfMeasure', payload: { name, duration } });
+  uiLog.debug('[debug] measureFunction: end');
   return result;
 }
 

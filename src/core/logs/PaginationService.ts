@@ -12,7 +12,8 @@ class PaginationService {
   private bump(reason: string) {
     const prev = this.version;
     this.version++;
-    this.log.info(`pagination: version bump ${prev} → ${this.version} (${reason})`);
+    // 버전 증분은 잦으므로 debug로만 기록
+    this.log.debug?.(`pagination: version bump ${prev} → ${this.version} (${reason})`);
   }
   // ── Warmup (메모리 기반 페이지) ─────────────────────────────────────────
   private warmActive = false;
@@ -26,11 +27,12 @@ class PaginationService {
 
   async setManifestDir(dir: string) {
     if (this.manifestDir !== dir) {
-      this.log.info(`pagination: open dir=${dir}`);
+      this.log.debug?.(`PaginationService.setManifestDir: start dir=${dir}`);
       this.reader = await PagedReader.open(dir);
       this.manifestDir = dir;
       this.bump('setManifestDir');
       this.invalidateFilterCache();
+      this.log.debug?.(`PaginationService.setManifestDir: end`);
     } else {
       this.log.debug?.(`pagination: already set dir=${dir}`);
     }
@@ -106,7 +108,7 @@ class PaginationService {
       const total = (this.warmBuffer ?? []).filter((e) => this.matchesFilter(e)).length;
       this.filteredCacheKey = key;
       this.filteredTotalCache = total;
-      this.log.info(`pagination: filteredTotal(warm) total=${total}`);
+      this.log.debug?.(`pagination: filteredTotal(warm) total=${total}`);
       return total;
     }
     // 2) 파일 기반 — 창 단위로 전체 순회
@@ -122,7 +124,7 @@ class PaginationService {
     }
     this.filteredCacheKey = key;
     this.filteredTotalCache = cnt;
-    this.log.info(`pagination: filteredTotal(file) total=${cnt}, lines=${totalLines}`);
+    this.log.debug?.(`pagination: filteredTotal(file) total=${cnt}, lines=${totalLines}`);
     return cnt;
   }
   /** 브리지/패널에서 디버깅용으로 한 번에 읽어갈 수 있는 스냅샷 */
@@ -155,7 +157,7 @@ class PaginationService {
     this.warmTotal = 0;
     this.warmActive = false;
     this.bump('warm.clear');
-    this.log.info(`pagination: warmup cleared (released ${n} entries)`);
+    this.log.debug?.(`pagination: warmup cleared (released ${n} entries)`);
   }
 
   /** 1-based inclusive 인덱스 범위를 읽어온다. */

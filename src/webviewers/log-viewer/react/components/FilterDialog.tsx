@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-
 import { createUiLog } from '../../../shared/utils';
 import { vscode } from '../ipc';
 import { useLogStore } from '../store';
@@ -14,6 +13,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   const [local, setLocal] = useState(storeFilter);
   useEffect(() => {
+    console.debug?.('[debug] FilterDialog: useEffect open/filter change');
     if (open) {
       ui.info('filterDialog.open');
       setLocal(storeFilter);
@@ -64,20 +64,23 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
   }, [open, onClose]);
 
   const onApply = () => {
+    ui.debug?.('[debug] FilterDialog: onApply');
     // 전체 필드를 정규화(빈 칩/중복 제거)한 뒤 적용
     const cleaned = normalizeAll(local);
     ui.info(`filterDialog.apply ${JSON.stringify(cleaned)}`);
     setLocal(cleaned);
-    applyFilter(normalize(cleaned));
+    applyFilter(normalizeAll(cleaned));
     onClose();
   };
   const onCancel = () => {
+    ui.debug?.('[debug] FilterDialog: onCancel');
     ui.info('filterDialog.cancel');
     onClose();
   };
 
   // ── OR 그룹 UI: "wlan host, deauth" → [["wlan","host"],["deauth"]] ─────────────
   const parseGroups = (s?: string): string[][] => {
+    ui.debug?.('[debug] FilterDialog: parseGroups');
     const src = String(s ?? '');
     if (!src.trim()) return [];
     return src
@@ -91,8 +94,9 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
           .filter(Boolean),
       );
   };
-  const serializeGroups = (groups: string[][]) =>
-    groups
+  const serializeGroups = (groups: string[][]) => {
+    ui.debug?.('[debug] FilterDialog: serializeGroups');
+    return groups
       .map((g) => {
         const uniq: string[] = [];
         for (const t of g) if (t && !uniq.includes(t)) uniq.push(t);
@@ -100,6 +104,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
       })
       .filter(Boolean)
       .join(', ');
+  };
 
   // 모든 필드 정규화(빈 그룹/빈 칩/중복 제거)
   const normalizeAll = (f: Filter): Filter => ({
@@ -177,7 +182,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
               const cleaned = normalizeAll(cur);
               ui.info(`filterDialog.apply.enter ${JSON.stringify(cleaned)}`);
               setLocal(cleaned);
-              applyFilter(normalize(cleaned));
+              applyFilter(normalizeAll(cleaned));
               onClose();
             }
           }}
@@ -438,9 +443,4 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
     </>,
     document.body,
   );
-}
-
-function normalize(f: Filter): Filter {
-  const t = (s?: string) => (s ?? '').trim();
-  return { pid: t(f.pid), src: t(f.src), proc: t(f.proc), msg: t(f.msg) };
 }

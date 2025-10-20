@@ -59,10 +59,6 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     };
   }
 
-  public appendLog(line: string) {
-    this._view?.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
-  }
-
   private _trackDisposable(disposable: () => void) {
     this._disposables.add(disposable);
   }
@@ -111,16 +107,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
 
     // 로그 뷰어
-    this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri, (line) =>
-      this.appendLog(line),
-    );
+    this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri);
 
     // 버튼 실행 라우터(ActionRouter)
     this._actionRouter = new EdgePanelActionRouter(
       webviewView,
       this._context,
       this._extensionUri,
-      (line) => this.appendLog(line),
       {
         updateAvailable: this._state.updateAvailable,
         updateUrl: this._state.updateUrl,
@@ -286,17 +279,25 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   @measure()
   public async handleHomeyLoggingCommand() {
+    this.log.debug('[debug] EdgePanelProvider handleHomeyLoggingCommand: start');
     await this._logViewer?.handleHomeyLoggingCommand();
+    this.log.debug('[debug] EdgePanelProvider handleHomeyLoggingCommand: end');
   }
 
   public async startRealtime(filter?: string) {
+    this.log.debug('[debug] EdgePanelProvider startRealtime: start');
     await this._logViewer?.startRealtime(filter);
+    this.log.debug('[debug] EdgePanelProvider startRealtime: end');
   }
   public async startFileMerge(dir: string) {
+    this.log.debug('[debug] EdgePanelProvider startFileMerge: start');
     await this._logViewer?.startFileMerge(dir);
+    this.log.debug('[debug] EdgePanelProvider startFileMerge: end');
   }
   public stopLogging() {
+    this.log.debug('[debug] EdgePanelProvider stopLogging: start');
     this._logViewer?.stop();
+    this.log.debug('[debug] EdgePanelProvider stopLogging: end');
   }
 
   private _randomNonce(len = RANDOM_STRING_LENGTH || 32) {

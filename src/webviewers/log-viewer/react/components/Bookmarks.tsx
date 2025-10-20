@@ -1,10 +1,14 @@
 import { useLogStore } from '../../react/store';
 import { BookmarkSquare } from './BookmarkSquare';
+import { createUiLog } from '../../../shared/utils';
+import { vscode } from '../ipc';
 
 export function Bookmarks() {
   const rows = useLogStore((s) => s.rows);
   const selectedId = useLogStore((s) => s.selectedRowId);
   const list = rows.filter((r) => r.bookmarked);
+  const ui = createUiLog(vscode, 'log-viewer.bookmarks');
+  ui.debug?.('[debug] Bookmarks: render');
   return (
     <aside className="tw-w-[260px] tw-bg-[var(--panel)] tw-border-l tw-border-[var(--border-strong)] tw-flex tw-flex-col tw-min-h-0">
       <div className="tw-font-semibold tw-px-3 tw-py-2 tw-border-b tw-border-[var(--border)]">
@@ -17,6 +21,7 @@ export function Bookmarks() {
             className={`tw-px-2 tw-py-1 tw-rounded tw-cursor-pointer hover:tw-bg-[var(--row-hover)]
                        ${selectedId === r.id ? 'tw-bg-[color-mix(in_oklab,var(--row-selected)_22%,transparent_78%)]' : ''}`}
             onClick={() => {
+              ui.debug?.('[debug] Bookmarks: onClick jumpToRow');
               const st = useLogStore.getState();
               // 버퍼 안에 이미 보이는 경우 즉시 하이라이트
               st.jumpToRow(r.id, r.idx);
@@ -32,6 +37,7 @@ export function Bookmarks() {
                 checked
                 title="북마크 해제"
                 onClick={(e) => {
+                  ui.debug?.('[debug] BookmarkSquare: onClick toggleBookmark');
                   e.stopPropagation();
                   useLogStore.getState().toggleBookmark(r.id);
                 }}

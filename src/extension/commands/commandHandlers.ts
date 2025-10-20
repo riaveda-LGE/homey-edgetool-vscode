@@ -20,8 +20,6 @@ const log = getLogger('cmd');
 const exec = promisify(execCb);
 
 class CommandHandlers {
-  private say: (s: string) => void;
-
   // 분리된 핸들러들
   private workspaceHandler: CommandHandlersWorkspace;
   private updateHandler: CommandHandlersUpdate;
@@ -32,24 +30,18 @@ class CommandHandlers {
   private connectHandler: CommandHandlersConnect;
 
   constructor(
-    private appendLog?: (s: string) => void,
     private context?: vscode.ExtensionContext,
     private extensionUri?: vscode.Uri,
     private provider?: EdgePanelProvider, // 🔁 provider 주입 (Logging에서 사용)
   ) {
-    this.say = (s: string) => {
-      log.info(s);
-      this.appendLog?.(s);
-    };
-
     // 핸들러 초기화
-    this.workspaceHandler = new CommandHandlersWorkspace(this.say, this.context);
-    this.updateHandler = new CommandHandlersUpdate(this.say, this.appendLog, this.extensionUri);
-    this.homeyHandler = new CommandHandlersHomey(this.say, this.appendLog);
-    this.loggingHandler = new CommandHandlersLogging(this.say, this.appendLog, this.provider);
-    this.hostHandler = new CommandHandlersHost(this.say, this.appendLog);
-    this.gitHandler = new CommandHandlersGit(this.say, this.appendLog);
-    this.connectHandler = new CommandHandlersConnect(this.say, this.appendLog);
+    this.workspaceHandler = new CommandHandlersWorkspace(this.context);
+    this.updateHandler = new CommandHandlersUpdate(this.extensionUri);
+    this.homeyHandler = new CommandHandlersHomey();
+    this.loggingHandler = new CommandHandlersLogging(this.provider);
+    this.hostHandler = new CommandHandlersHost();
+    this.gitHandler = new CommandHandlersGit();
+    this.connectHandler = new CommandHandlersConnect();
   }
 
   async route(raw: string) {
@@ -96,12 +88,12 @@ class CommandHandlers {
         return this.connectHandler.connectChange();
 
       default:
-        this.say(`[info] unknown command: ${raw}`);
+        log.info(`[info] unknown command: ${raw}`);
     }
   }
 
   async help() {
-    this.say(`Commands:
+    log.info(`Commands:
   openHomeyLogging
   homeyRestart | homeyMount | homeyUnmount
   changeWorkspaceQuick | openWorkspace
@@ -111,10 +103,9 @@ class CommandHandlers {
 }
 
 export function createCommandHandlers(
-  appendLog?: (s: string) => void,
   context?: vscode.ExtensionContext,
   extensionUri?: vscode.Uri,
   provider?: EdgePanelProvider,
 ) {
-  return new CommandHandlers(appendLog, context, extensionUri, provider);
+  return new CommandHandlers(context, extensionUri, provider);
 }

@@ -1,28 +1,29 @@
 // === src/extension/commands/CommandHandlersLogging.ts ===
 import { measure } from '../../core/logging/perf.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
 import type { EdgePanelProvider } from '../panels/extensionPanel.js';
+
+const log = getLogger('cmd.logging');
 
 export class CommandHandlersLogging {
   constructor(
-    private say: (s: string) => void,
-    private appendLog?: (s: string) => void,
     private provider?: EdgePanelProvider, // 🔁 Provider 주입
   ) {}
 
   /** 버튼/명령 진입점(공식 경로) */
   @measure()
   async openHomeyLogging() {
-    this.appendLog?.('[debug] logging: command invoked → openHomeyLogging()');
+    log.debug('CommandHandlersLogging.openHomeyLogging: start');
     if (!this.provider) {
-      this.appendLog?.('[error] logging: provider not ready');
-      return this.say('[error] internal: provider not ready');
+      log.error('logging: provider not ready');
+      return;
     }
     try {
       await this.provider.handleHomeyLoggingCommand();
-      this.appendLog?.('[info] logging: Homey Log Viewer panel opened');
+      log.info('logging: Homey Log Viewer panel opened');
     } catch (e: any) {
       const msg = e?.message ?? String(e);
-      this.appendLog?.(`[error] logging: failed to open viewer: ${msg}`);
+      log.error('logging: failed to open viewer', { error: msg });
       throw e;
     }
   }
