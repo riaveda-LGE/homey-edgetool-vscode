@@ -21,8 +21,8 @@ export const LOG_IGNORE_KEYWORDS = [
 ] as const;
 
 // ── Debug Log Panel ────────────────────────────────────────────────
-/** 디버그 로그 패널 메모리 보유 최대 라인 수 */
-export const DEBUG_LOG_MEMORY_MAX = 200;
+/** 디버그 로그 패널 메모리 보유 최대 라인 수(링버퍼 한도) */
+export const DEBUG_LOG_MEMORY_MAX = 2_000;
 /** 디버그 로그 스크롤 로드 페이지 사이즈 */
 export const DEBUG_LOG_PAGE_SIZE = 200;
 /** 디버그 로그 스풀 디렉터리명 (workspace/raw 하위; 워크스페이스 없으면 globalStorageUri 하위) */
