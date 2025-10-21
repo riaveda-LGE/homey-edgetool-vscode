@@ -74,8 +74,28 @@ function globToRegExp(glob: string): RegExp | null {
   return new RegExp(rx, 'i');
 }
 
+/** 템플릿 files 토큰을 "파일명(basename) 전용" 정규식으로 컴파일
+ *  - 정규식 형태(^...$)면 그대로 i 플래그로 컴파일
+ *  - 아니면 글롭으로 간주하여 정규식으로 변환(역시 i 플래그)
+ *  - 매칭은 항상 basename 에만 수행됨
+ */
+function fileTokenToRegex(token: string): RegExp | null {
+  if (!token || typeof token !== 'string') return null;
+  const t = token.trim();
+  // 정규식 고정식(시작 앵커 포함)을 우선 인식
+  if (t.startsWith('^')) {
+    try {
+      return new RegExp(t, 'i');
+    } catch {
+      return null;
+    }
+  }
+  // 그 외는 글롭으로 처리 (예: "kernel.log*", "bt_player.log*")
+  return globToRegExp(t);
+}
+
 export type CompiledRule = {
-  fileRegexes: RegExp[]; // 파일 경로 매칭
+  fileRegexes: RegExp[]; // 파일 "이름(basename)" 매칭
   regex: {
     time?: RegExp;
     process?: RegExp;
@@ -115,7 +135,7 @@ export function compileParserConfig(cfg?: ParserConfig): CompiledParser | undefi
   };
   const hardSkip = (preflight.hard_skip_if_any_line_matches ?? []).map((p) => {
     try {
-      return new RegExp(p);
+      return new RegExp(p, 'i'); // Windows/대소문자 무시
     } catch {
       return new RegExp('a^'); // never
     }
@@ -125,7 +145,7 @@ export function compileParserConfig(cfg?: ParserConfig): CompiledParser | undefi
   for (const r of cfg.parser) {
     if (!Array.isArray(r.files) || !r.files.length) continue;
     const fileRegexes = r.files
-      .map((g) => globToRegExp(String(g).trim()))
+      .map((g) => fileTokenToRegex(String(g).trim()))
       .filter(Boolean) as RegExp[];
     if (!fileRegexes.length) continue;
     const cr: CompiledRule = {
@@ -149,9 +169,11 @@ export function compileParserConfig(cfg?: ParserConfig): CompiledParser | undefi
 }
 
 export function matchRuleForPath(relOrAbsPath: string, cp: CompiledParser): CompiledRule | undefined {
+  // 경로 → POSIX 슬래시 → basename만 추출하여 파일명만으로 매칭
   const norm = relOrAbsPath.replace(/\\/g, '/');
+  const base = norm.includes('/') ? norm.slice(norm.lastIndexOf('/') + 1) : norm;
   for (const r of cp.rules) {
-    if (r.fileRegexes.some((rx) => rx.test(norm))) return r;
+    if (r.fileRegexes.some((rx) => rx.test(base))) return r;
   }
   return undefined;
 }
@@ -239,7 +261,8 @@ export function lineToEntryWithParser(
   let text = line;
 
   if (cp) {
-    const rule = matchRuleForPath(filePath, cp);
+    // ⚠️ 항상 파일명 기준으로 룰 매칭
+    const rule = matchRuleForPath(bn, cp);
     if (rule) {
       const fields = extractByCompiledRule(line, rule);
       // time

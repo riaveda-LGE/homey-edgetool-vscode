@@ -7,7 +7,6 @@ param(
   [Parameter(Mandatory = $false, Position = 0)]
   [string]$FunctionName,
 
-  [string]$WorkspaceRoot = "d:\djwork\homey-edgetool-vscode",
   [string]$InstructionsRel = ".github\copilot-instructions.md",
   [string]$OutputRel = "scripts\get_source\source_list.txt"
 )
@@ -15,6 +14,7 @@ param(
 Set-StrictMode -Version Latest
 
 # ─ Paths ─
+$WorkspaceRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $instructionsPath = Join-Path $WorkspaceRoot $InstructionsRel
 $outputPath       = Join-Path $WorkspaceRoot $OutputRel
 
@@ -63,7 +63,6 @@ if (-not $FunctionName -or [string]::IsNullOrWhiteSpace($FunctionName)) {
     $i = $j - 1
   }
 
-  try { Clear-Host } catch {}
   if ($items.Count -eq 0) {
     Write-Host "No function entries found in $instructionsPath"
   } else {

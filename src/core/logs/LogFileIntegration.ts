@@ -152,7 +152,7 @@ export async function mergeDirectory(opts: MergeOptions) {
         let useParserForThisFile = false;
         if (compiledParser) {
           try {
-            const rel = fileName.replace(/\\/g, '/'); // opts.dir 기준 상대경로
+            const rel = fileName.replace(/\\/g, '/'); // opts.dir 기준 상대경로(파일명 포함)
             useParserForThisFile = await shouldUseParserForFile(fullPath, rel, compiledParser);
           } catch {}
         }
@@ -497,7 +497,9 @@ async function streamFileForward(
   let useParserForThisFile = false;
   if (compiledParser) {
     try {
-      useParserForThisFile = await shouldUseParserForFile(filePath, filePath.replace(/\\/g,'/'), compiledParser);
+      const bn = path.basename(filePath).replace(/\\/g, '/');
+      // shouldUseParserForFile는 rel(파일명) 우선 — 절대경로를 넘기지 않음
+      useParserForThisFile = await shouldUseParserForFile(filePath, bn, compiledParser);
     } catch {}
   }
   let residual = '';
@@ -518,14 +520,22 @@ async function streamFileForward(
       residual = parts.pop() ?? '';
       for (const line of parts) {
         if (!line) continue;
-        const e = lineToEntryWithParser(filePath, line, useParserForThisFile ? compiledParser : undefined);
+        const e = lineToEntryWithParser(
+          filePath,
+          line,
+          useParserForThisFile ? compiledParser : undefined,
+        );
         batch.push(e);
         if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
       }
     });
     rs.on('end', () => {
       if (residual) {
-        const e = lineToEntryWithParser(filePath, residual, useParserForThisFile ? compiledParser : undefined);
+        const e = lineToEntryWithParser(
+          filePath,
+          residual,
+          useParserForThisFile ? compiledParser : undefined,
+        );
         batch.push(e);
       }
       // Abort 되었다면 끝부분 잔여 배치도 내보내지 않음

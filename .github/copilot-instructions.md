@@ -10,17 +10,7 @@
 
 - **작업 기본 방침**: 새로운 파일 작성, 기존 코드 수정, 이슈 수정 등 모든 사항에 대해 기본방침은 언제나 분석이다. 난 수정보다 분석을 더 중요하게 여겨.
 
-## Homey EdgeTool — VS C│  ├─ shared/                             # 공용 유틸/타입
-│  │  ├─ const.ts  │  │  ├─ time/                         # 시간 관련 유틸리티
-│  │  │  ├─ TimeParser.ts              # 로그 시간 파서 # 로그파싱
-│  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱 로직 # 로그파싱           # 상수 정의
-│  │  ├─ types.ts                         # 공용 타입 정의
-│  │  ├─ errors.ts                        # 에러 처리
-│  │  ├─ utils.ts                         # 공용 유틸리티
-│  │  └─ ui-input.ts                      # UI 입력 유틸리티om Editor 아키텍처 & 구현 가이드
-
-*(Node.js/TypeScript 기반)*
-
+## Homey EdgeTool
 > **목표:** VS Code 내부에서 Homey 장치와 SSH/ADB로 연결하여
 > 로그를 실시간/파일 병합 형태로 표시하고, 동시에 Homey 기기 제어(Git 동기화, 마운트, 셸 명령 등)를 수행하는 통합 툴 구현.
 
@@ -30,78 +20,7 @@
 
 ### 1. 기능 요구사항
 
-- **homey-logging 기능 (VS Code Custom Editor + Webview)**
-  - VS Code 안에서 동작해야 함.
-  - 2가지 모드:
-    - **실시간 로그 모드**: adb/ssh host 접근 → 실시간 텍스트 전달 및 표시.
-    - **파일 병합 모드**: 여러 로그 파일을 시간 순서로 병합 → 단일 뷰 제공.
-
-- **Update 기능 + Extension Panel UX**
-  - 최신 버전 확인, 다운로드, 설치, Reload 지원.
-  - Extension Panel에서 업데이트/재로드 버튼 제공.
-  - 로그와 업데이트 상태를 통합 UX로 표시.
-
-- **사용자 UX (명령 기반 기능)**
-  - 연결/세션 관리: `connect_info`, `connect_change`
-  - Host 작업: `host <command>`, `shell`
-  - Homey 관리: `homey-restart`, `homey-mount`, `homey-unmount`, DevToken 관리, 로그 콘솔 토글, Docker 업데이트
-  - 로그 뷰어: `homey-logging`, `homey-logging --dir <경로>`
-  - Git 동기화: `git pull …`, `git push …`
-  - 도움말/종료: `help`, `h`
-
-### 2. 구현 요구사항
-
-- 모든 로직은 **Node.js (TypeScript)** 로 구현.
-- **프로세스 실행은 child_process.spawn 기반**(PowerShell/`/bin/sh -c`)으로 표준화.
-- **네이티브 SCP/SFTP 미의존**: 파일 전송은 **SSH 표준 I/O + tar/base64 파이프** 방식으로 구현.
-- **취소/정리 일관성**: VS Code Webview dispose/패널 닫힘/사용자 취소 → AbortController로 모든 하위 작업(SSH/압축/인코딩) **전파 취소**.
-
-### 3. 성능/품질 요구사항
-
-- **성능 계측 지원**: Extension Host와 Webview 모두 프로파일링/메모리 계측 가능.
-- **개발 중 성능 로깅**: 특정 로직에 성능 측정 래퍼를 두어 실행 시간·메모리를 로깅.
-- **메모리 관리 전략**: 로그는 스트리밍+chunk 단위로 전달, Webview는 가상 스크롤과 줄 수 제한 적용.
-- **버퍼 모니터링 API**: HybridLogBuffer `getMetrics()` 제공, Extension Panel에서 시각화.
-
----
-
 ## 📌 중요 로직
-
-### 1. Log File Integration Logic (시간 역순 병합)
-
-- **목적**: 여러 로그 타입(system, homey, application 등)을 시간 역순으로 병합, 최신 로그를 먼저 보여줌.
-- **핵심 요소**
-  - `LogTypeData`: 타입별 파일/상태/타임존/진행 상황 관리.
-  - `LogFileIntegration`: 전체 컨트롤러, 병렬 청크 처리, 타임존 보정, HybridLogBuffer 연동.
-- **주요 기능**
-  - 로그 파일 스캔 및 타입 분류.
-  - 타임존 점프 감지/보정.
-  - 청크 단위 처리 (streaming 방식).
-  - 타입별 역순 정렬 후, **우선순위 큐 기반 k-way merge**로 전체 병합.
-- **강점**: 최신 로그 우선 UX, 대용량 안전 처리, 에러 허용성, 확장 용이.
-
----
-
-### 2. 로그 버퍼링 시스템 아키텍처 (4-버퍼 하이브리드)
-
-- **목적**: 실시간 로그 모니터링 + 대용량 로그 분석 동시 지원.
-- **구성 요소**
-  - `HybridLogBuffer`: 중앙 버퍼 시스템, 4-버퍼 관리(realtime / viewportN / search / spill).
-  - `ViewportRange`: 캐시 범위 메타데이터.
-  - `LogFileStorage`: 파일 저장소(JSONL, 압축, 청크 분할, 범위 로드).
-  - `LogBufferWriter`: 실시간 입력(ADB/SSH).
-  - `LogFileIntegration`: 파일 입력 병합.
-  - `InputSource`: 소스 메타데이터 관리.
-- **검색**
-  - 대상: realtime + viewport + LogFileStorage.
-  - 방식: contains + regex/time-range/pagination.
-- **최적화**
-  - LRU/ARC 기반 뷰포트 캐시 교체, Prefetch.
-  - 파일은 청크 단위 비동기 로드, 인덱스 활용.
-  - 네트워크는 배치 전송 + 증분 업데이트 + 압축 옵션.
-
----
-
 ### 3. FileTransferService (tar/base64 over SSH)
 
 - **목표**: SCP/SFTP 불가 환경에서도 SSH 표준 입출력만으로 신뢰성 있게 업/다운로드.
@@ -121,33 +40,6 @@
 
 ---
 
-### 4. 실시간 로그 스트리밍 로직
-
-- **파일 소스**: `tail -f <file>`
-- **명령 소스**: `journalctl -f`, `dmesg -w` 등
-- **구성**
-  - Extension Host에서 spawn으로 SSH/ADB 실행
-  - stdout 라인을 Webview로 전달
-  - 취소/패널 닫힘 시 프로세스 종료
-
----
-
-### 5. Webview 구조 & UX (MVU 아키텍처)
-
-- **핵심 아키텍처**: 단일 상태(Store) + 순수 업데이트(리듀서) + 모듈화된 뷰/서비스의 미니 MVU(Elm 스타일) 흐름
-- **데이터 흐름**: 사용자 입력/호스트 이벤트 → Action → dispatch → reducer → state update → subscribe → render
-- **컴포넌트 계층**: AppView (루트, Grid 5행 구성/토글), ControlsView (섹션 카드/버튼), Layout/ (Panel, Splitter), Explorer/ (ExplorerView, TreeView, ContextMenu), Logs/LogsView
-- **상태 모델**: AppState { ui: { showExplorer, showLogs, ctrlHeightPx, splitRatio }, explorer: { path, root, nodesByPath, selection }, logs: { lines }, controls: Section[] }
-- **메시지 계층**: types/messages.ts에 Host ↔ Webview DTO 명시 (InitState, ExplorerListResult, AppendLog 등)
-- **CSS 전략**: tokens.css (VS Code 테마 토큰→로컬 변수), components.css (Panel/Titlebar/Tree 등 스타일 캡슐화), --splitter-thick-width로 두꺼운 바 길이 노출
-- **UX 정책**
-  - 자동 스크롤: 하단 5% 이내면 유지, 벗어나면 해제
-  - 검색: Ctrl+F, 실시간 하이라이트, 네비게이션
-  - 북마크: 더블클릭 토글, 저장
-  - 툴팁: 상세 보기, 복사 지원
-  - 통계: totalLogs, 필터 후 개수 표시
-
----
 
 ### 6. Extension Panel
 
@@ -165,101 +57,6 @@ VS Code 확장(Extension Host ↔ Webview) 간의 `postMessage` 통신은
 따라서 잘못 설계하면 WebSocket 기반보다도 느려질 수 있습니다.
 
 아래는 실제 운영에서 성능 병목을 피하기 위한 **실전 권장 전략 (효과 큰 순)** 입니다.
-
----
-
-## 1️⃣ 배치 전송 (Chunking)
-- 작은 로그 여러 개를 한 번에 묶어 전송합니다.  
-- **크기 기준:** 약 32–128KB 단위로 묶기  
-- **주기 기준:** 16–60Hz 이내 (예: 30–100ms 간격으로 전송)  
-- **예시:**
-  ```ts
-  // Host → Webview
-  sendLogs(batch.slice(0, 500)); // 500줄 단위
-  ```
-
-## 2️⃣ ACK 기반 백프레셔 (Backpressure)
-
-- Webview가 **`ack`** 를 보내기 전까지 **동시에 전송 중인 배치 수를 제한**합니다.  
-- 보통 **`in-flight` 1~2개** 정도로 유지합니다.  
-- 기존 **`Envelope`** 프로토콜의 `id` / `inReplyTo` 필드를 활용하여  
-  요청–응답 상관관계를 관리합니다.  
-
-**예시:**
-```ts
-// Host → Webview
-sendLogs(batch, { id: '1234' });
-
-// Webview → Host (ACK)
-postMessage({ v: 1, type: 'ack', payload: { inReplyTo: '1234' } });
-```
-
-## 3️⃣ 전달 형식 최소화
-
-- **JSON 직렬화 비용**을 줄이기 위해 전송 필드를 최소화합니다.  
-- 로그 엔트리는 최소한의 필드만 포함하도록 합니다.  
-  - 기본: `{ ts, text }`  
-  - 옵션: `level`, `source` 등은 필요한 경우에만 포함  
-
-**예시 (간소화된 로그 구조):**
-```json
-[
-  { "ts": 1739262000000, "text": "Homey connected" },
-  { "ts": 1739262000123, "text": "Fetching logs..." }
-]
-```
-
-## 4️⃣ 초기 스냅샷 + 스트리밍 분리
-
-- **대용량 로그를 한 번에 전송하지 않고**,  
-  **초기 스냅샷 + 실시간 tail 스트림**으로 분리합니다.  
-- 이렇게 하면 초기 로딩 지연을 최소화하면서, 실시간 로그도 즉시 표시할 수 있습니다.
-
-### 📘 전략
-- **(A)** 최근 **N줄(예: 10,000줄)** 을 한 번에 **스냅샷**으로 전송  
-- **(B)** 이후 새 로그는 **실시간 스트리밍(배치 전송)**  
-- **(C)** 과거 로그는 사용자가 스크롤/검색 요청 시 **on-demand 로딩**
-
-**예시 시퀀스:**
-```ts
-// 1) 초기 스냅샷 (once)
-webview.postMessage({
-  v: 1,
-  type: 'logs.snapshot',
-  payload: { logs: latest10k }
-});
-
-// 2) 실시간 tail 스트리밍
-setInterval(() => {
-  const newBatch = collectNewLogs();
-  webview.postMessage({ v: 1, type: 'logs.batch', payload: { logs: newBatch } });
-}, 100);
-
-// 3) 사용자가 과거 탐색 요청 시
-webview.onDidReceiveMessage((msg) => {
-  if (msg.type === 'logs.requestRange') {
-    const rangeLogs = readLogsFromFile(msg.payload.range);
-    webview.postMessage({ v: 1, type: 'logs.range', payload: { logs: rangeLogs } });
-  }
-});
-```
-
-## 5️⃣ Webview 렌더링 최적화
-
-- DOM 조작은 DocumentFragment 로 모아서 한 번에 append 합니다.
-- 대량 로그(수만~수십만 행)는 가상 스크롤(Virtualized List) 로 렌더링합니다.
-- 렌더링/파싱 부하는 Web Worker 로 분리하면 더욱 효율적입니다.
-
-## 6️⃣ 검색 및 필터링은 Host에서 수행
-
-- 대용량 데이터를 Webview로 전송하지 말고, Host에서 미리 필터링/검색 후 요약 결과만 전송합니다.
-- 예: "총 120,000건 중 50건 일치" + "상위 5개 미리보기"
-- 상세 내용은 사용자가 요청할 때 페이징 전송합니다.
-
-## 7️⃣ 압축 / 인코딩
-
-- 초대용량 로그 전송 시 Host에서 gzip → base64 로 압축 전송합니다.
-- Webview에서 pako 등으로 해제합니다.
 
 ---
 

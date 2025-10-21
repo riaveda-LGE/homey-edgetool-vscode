@@ -1,3 +1,5 @@
+// === src/shared/const.ts ===
+
 // 공용 상수 모음 (Node/VSCode 런타임 모두에서 사용)
 
 // Extension 식별자
@@ -48,7 +50,11 @@ export const MAX_SSH_PORT = 65535;
 export const MIN_SSH_PORT = 1;
 
 // Logs & Buffers
+/** 기본 배치 크기(SSOT). 웜업/최초 방출 배치도 이 값을 사용한다. */
 export const DEFAULT_BATCH_SIZE = 200;
+/** 테스트 및 외부 모듈에서 참조하는 공식 명칭(별칭). SSOT는 DEFAULT_BATCH_SIZE */
+export const FIRST_BATCH_SIZE = DEFAULT_BATCH_SIZE;
+
 export const REALTIME_BUFFER_MAX = 1000;
 export const PERF_DATA_MAX = 1000;
 export const LOG_TOTAL_CALLS_THRESHOLD = 1000;

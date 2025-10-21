@@ -1,0 +1,14 @@
+[
+  {
+    "time": "[Oct 12 14:00:00.001]",
+    "process": "cpcd",
+    "pid": null,
+    "message": "starting..."
+  },
+  {
+    "time": "[Oct 12 14:00:01.002]",
+    "process": "cpcd",
+    "pid": null,
+    "message": "ready"
+  }
+]

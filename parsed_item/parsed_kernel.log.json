@@ -1,0 +1,20 @@
+[
+  {
+    "time": "[Sep  5 09:10:11.123]",
+    "process": "kernel",
+    "pid": null,
+    "message": "boot complete"
+  },
+  {
+    "time": "[Sep  5 09:10:12.456]",
+    "process": "kernel",
+    "pid": null,
+    "message": "init driver"
+  },
+  {
+    "time": "[Sep  5 09:10:13.789]",
+    "process": "kernel",
+    "pid": null,
+    "message": "no pid case is also fine"
+  }
+]
