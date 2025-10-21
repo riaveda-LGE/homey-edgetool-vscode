@@ -1,0 +1,562 @@
+[Oct 20 23:33:38.626] clip.bin[297]:  			=================================@@
+[Oct 20 23:35:54.959] clip.bin[8845]:  			=================================@@
+[Oct 20 23:38:15.028] clip.bin[5499]:  			=================================@@
+[Oct 20 23:39:57.605] clip.bin[2109]:  	hexstr_len: [18]
+[Oct 20 23:42:00.885] clip.bin[7171]:  			=================================@@
+[Oct 20 23:45:09.371] clip.bin[5476]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:745)
+[Oct 20 23:49:21.880] clip.bin[1723]:  @@=================================
+[Oct 20 23:50:48.696] clip.bin[9953]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 20 23:51:59.947] clip.bin[6041]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 20 23:56:19.175] clip.bin[4156]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:554)
+[Oct 20 23:58:36.085] clip.bin[3677]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:606)
+[Oct 20 23:59:42.593] clip.bin[1559]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 00:00:58.302] clip.bin[4577]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:762)
+[Oct 21 00:07:29.605] clip.bin[4379]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:572)
+[Oct 21 00:08:01.514] clip.bin[7622]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 00:10:04.156] clip.bin[7464]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 00:10:25.909] clip.bin[5577]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2474)
+[Oct 21 00:12:11.314] clip.bin[4989]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 00:15:15.674] clip.bin[1105]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:118)
+[Oct 21 00:21:26.384] clip.bin[1704]:  			=================================@@
+[Oct 21 00:27:22.962] clip.bin[1223]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2543)
+[Oct 21 00:30:24.960] clip.bin[9532]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 00:30:43.231] clip.bin[6746]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 00:33:09.466] clip.bin[5824]:  @@=================================
+[Oct 21 00:37:29.081] clip.bin[9361]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 00:38:21.474] clip.bin[2923]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 00:41:50.690] clip.bin[282]:  			=================================@@
+[Oct 21 00:45:55.467] clip.bin[7245]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:667)
+[Oct 21 00:47:04.426] clip.bin[2097]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:803)
+[Oct 21 00:47:38.212] clip.bin[4140]:  @@=================================
+[Oct 21 00:52:18.203] clip.bin[2836]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:377)
+[Oct 21 00:57:11.887] clip.bin[6893]:  	hexstr_len: [45]
+[Oct 21 00:58:40.927] clip.bin[5934]:  	hexstr_len: [51]
+[Oct 21 01:03:16.637] clip.bin[4664]:  	hexstr_len: [24]
+[Oct 21 01:07:22.319] clip.bin[8459]:  			=================================@@
+[Oct 21 01:10:03.989] clip.bin[1256]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 01:11:06.266] clip.bin[1661]:  @@=================================
+[Oct 21 01:11:28.776] clip.bin[7962]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 01:18:46.985] clip.bin[6078]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:780)
+[Oct 21 01:19:05.619] clip.bin[9840]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:496)
+[Oct 21 01:19:15.491] clip.bin[5677]:  @@=================================
+[Oct 21 01:19:31.918] clip.bin[3428]:  			=================================@@
+[Oct 21 01:22:27.535] clip.bin[7023]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2734)
+[Oct 21 01:24:28.345] clip.bin[6894]:  @@=================================
+[Oct 21 01:27:46.321] clip.bin[887]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 01:29:58.189] clip.bin[2800]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:489)
+[Oct 21 01:33:56.454] clip.bin[9531]:  			=================================@@
+[Oct 21 01:34:01.888] clip.bin[7823]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 01:36:37.533] clip.bin[7844]:  	hexstr_len: [44]
+[Oct 21 01:39:45.042] clip.bin[5642]:  @@=================================
+[Oct 21 01:40:49.349] clip.bin[6988]:  @@=================================
+[Oct 21 01:49:49.250] clip.bin[3134]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 01:51:15.791] clip.bin[4941]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:570)
+[Oct 21 01:54:15.497] clip.bin[8527]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2563)
+[Oct 21 01:54:24.041] clip.bin[9454]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:791)
+[Oct 21 01:54:37.444] clip.bin[9045]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2002)
+[Oct 21 02:00:06.619] clip.bin[3553]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:358)
+[Oct 21 02:01:12.086] clip.bin[5013]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:693)
+[Oct 21 02:02:53.502] clip.bin[1826]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:934)
+[Oct 21 02:03:39.715] clip.bin[1620]:  	hexstr_len: [56]
+[Oct 21 02:04:51.352] clip.bin[691]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2697)
+[Oct 21 02:07:25.492] clip.bin[3963]:  			=================================@@
+[Oct 21 02:07:46.106] clip.bin[5245]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2543)
+[Oct 21 02:11:37.267] clip.bin[5677]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2604)
+[Oct 21 02:12:52.383] clip.bin[5326]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 02:13:02.091] clip.bin[6339]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2398)
+[Oct 21 02:15:04.877] clip.bin[3417]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2283)
+[Oct 21 02:15:17.140] clip.bin[3289]:  	hexstr_len: [8]
+[Oct 21 02:15:38.913] clip.bin[452]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 02:17:10.448] clip.bin[5850]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2111)
+[Oct 21 02:17:33.978] clip.bin[9798]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2227)
+[Oct 21 02:20:25.471] clip.bin[7156]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2757)
+[Oct 21 02:24:26.980] clip.bin[2305]:  @@=================================
+[Oct 21 02:26:30.973] clip.bin[5026]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 02:27:32.161] clip.bin[4570]:  			=================================@@
+[Oct 21 02:29:20.490] clip.bin[6246]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:682)
+[Oct 21 02:34:36.329] clip.bin[7887]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 02:35:48.434] clip.bin[1185]:  @@=================================
+[Oct 21 02:35:49.261] clip.bin[1457]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:970)
+[Oct 21 02:45:47.238] clip.bin[5410]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 02:48:42.258] clip.bin[5816]:  	hexstr_len: [43]
+[Oct 21 02:51:28.640] clip.bin[735]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3932)
+[Oct 21 02:54:41.857] clip.bin[4173]:  @@=================================
+[Oct 21 02:57:03.526] clip.bin[2793]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:203)
+[Oct 21 02:57:16.190] clip.bin[1331]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 02:58:43.413] clip.bin[4458]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 03:00:28.040] clip.bin[8222]:  @@=================================
+[Oct 21 03:01:24.910] clip.bin[5436]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 03:02:05.373] clip.bin[9487]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:277)
+[Oct 21 03:07:33.381] clip.bin[8911]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 03:08:42.250] clip.bin[4924]:  	hexstr_len: [17]
+[Oct 21 03:09:14.010] clip.bin[1939]:  			=================================@@
+[Oct 21 03:10:00.138] clip.bin[1019]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2857)
+[Oct 21 03:10:24.253] clip.bin[7535]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 03:11:23.638] clip.bin[4809]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 03:11:25.192] clip.bin[252]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 03:11:25.824] clip.bin[7467]:  @@=================================
+[Oct 21 03:13:50.796] clip.bin[8551]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 03:13:54.488] clip.bin[302]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 03:17:10.743] clip.bin[4454]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:591)
+[Oct 21 03:22:54.090] clip.bin[1234]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:512)
+[Oct 21 03:26:28.499] clip.bin[6224]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2450)
+[Oct 21 03:27:17.917] clip.bin[544]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3451)
+[Oct 21 03:30:56.432] clip.bin[9213]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:373)
+[Oct 21 03:32:01.816] clip.bin[2225]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 03:36:50.760] clip.bin[2261]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:627)
+[Oct 21 03:40:09.138] clip.bin[4657]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 03:41:50.376] clip.bin[8208]:  @@=================================
+[Oct 21 03:44:39.512] clip.bin[2089]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:380)
+[Oct 21 03:44:42.691] clip.bin[8866]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:927)
+[Oct 21 03:46:23.288] clip.bin[5927]:  			=================================@@
+[Oct 21 03:50:02.718] clip.bin[2786]:  	hexstr_len: [17]
+[Oct 21 03:50:37.714] clip.bin[8588]:  	hexstr_len: [55]
+[Oct 21 03:53:04.902] clip.bin[3500]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:548)
+[Oct 21 03:56:38.435] clip.bin[8487]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 04:01:28.992] clip.bin[5161]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:372)
+[Oct 21 04:07:58.023] clip.bin[3709]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:696)
+[Oct 21 04:10:09.689] clip.bin[4348]:  			=================================@@
+[Oct 21 04:11:33.144] clip.bin[3601]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:281)
+[Oct 21 04:16:40.246] clip.bin[4658]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:271)
+[Oct 21 04:16:49.992] clip.bin[6412]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:423)
+[Oct 21 04:23:07.549] clip.bin[5798]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2389)
+[Oct 21 04:23:24.365] clip.bin[5375]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 04:30:15.151] clip.bin[1965]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 04:34:21.316] clip.bin[534]:  	hexstr_len: [28]
+[Oct 21 04:37:51.514] clip.bin[2462]:  			=================================@@
+[Oct 21 04:38:13.326] clip.bin[8440]:  			=================================@@
+[Oct 21 04:38:28.852] clip.bin[1571]:  @@=================================
+[Oct 21 04:38:55.797] clip.bin[6334]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:747)
+[Oct 21 04:39:20.458] clip.bin[3922]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 04:44:24.776] clip.bin[9558]:  @@=================================
+[Oct 21 04:49:25.698] clip.bin[4022]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 04:50:43.234] clip.bin[7852]:  @@=================================
+[Oct 21 04:54:19.578] clip.bin[8199]:  			=================================@@
+[Oct 21 04:56:01.804] clip.bin[9635]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:459)
+[Oct 21 04:57:48.253] clip.bin[1350]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2750)
+[Oct 21 04:58:08.669] clip.bin[7863]:  			=================================@@
+[Oct 21 04:58:29.042] clip.bin[1109]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:245)
+[Oct 21 04:59:32.923] clip.bin[7521]:  			=================================@@
+[Oct 21 05:00:39.324] clip.bin[5345]:  @@=================================
+[Oct 21 05:01:47.938] clip.bin[8994]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3503)
+[Oct 21 05:02:47.874] clip.bin[3036]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:751)
+[Oct 21 05:03:17.855] clip.bin[3477]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2514)
+[Oct 21 05:05:06.518] clip.bin[2695]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:493)
+[Oct 21 05:07:30.841] clip.bin[3542]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 05:07:51.146] clip.bin[9776]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2293)
+[Oct 21 05:12:04.740] clip.bin[1875]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 05:13:26.069] clip.bin[8425]:  	hexstr_len: [19]
+[Oct 21 05:16:45.002] clip.bin[458]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:836)
+[Oct 21 05:17:18.043] clip.bin[4322]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2348)
+[Oct 21 05:28:50.484] clip.bin[8760]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:196)
+[Oct 21 05:34:26.083] clip.bin[1725]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 05:36:11.411] clip.bin[6613]:  	hexstr_len: [54]
+[Oct 21 05:37:23.965] clip.bin[2388]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 05:38:25.999] clip.bin[9129]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:105)
+[Oct 21 05:43:30.101] clip.bin[8727]:  			=================================@@
+[Oct 21 05:48:30.434] clip.bin[7102]:  			=================================@@
+[Oct 21 05:55:09.562] clip.bin[7566]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2140)
+[Oct 21 05:55:17.650] clip.bin[2293]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 05:56:16.976] clip.bin[1983]:  @@=================================
+[Oct 21 05:57:09.766] clip.bin[7964]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 05:57:43.825] clip.bin[4852]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3812)
+[Oct 21 06:00:10.431] clip.bin[9747]:  	hexstr_len: [10]
+[Oct 21 06:01:07.505] clip.bin[3247]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:397)
+[Oct 21 06:01:50.701] clip.bin[5110]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:202)
+[Oct 21 06:04:10.064] clip.bin[3136]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:335)
+[Oct 21 06:10:55.319] clip.bin[6453]:  	hexstr_len: [20]
+[Oct 21 06:12:44.130] clip.bin[7746]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3663)
+[Oct 21 06:13:08.461] clip.bin[8419]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3877)
+[Oct 21 06:13:56.183] clip.bin[6479]:  	hexstr_len: [47]
+[Oct 21 06:18:21.730] clip.bin[3866]:  			=================================@@
+[Oct 21 06:21:19.620] clip.bin[7691]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 06:27:02.820] clip.bin[1824]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 06:28:36.747] clip.bin[9319]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 06:31:32.535] clip.bin[252]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 06:32:39.469] clip.bin[5898]:  	hexstr_len: [27]
+[Oct 21 06:39:20.140] clip.bin[2374]:  			=================================@@
+[Oct 21 06:40:27.974] clip.bin[4502]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:827)
+[Oct 21 06:40:55.658] clip.bin[2359]:  	hexstr_len: [19]
+[Oct 21 06:41:06.711] clip.bin[1265]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 06:42:15.075] clip.bin[423]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:353)
+[Oct 21 06:44:50.540] clip.bin[3879]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 06:47:39.694] clip.bin[7974]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:841)
+[Oct 21 06:54:54.411] clip.bin[660]:  			=================================@@
+[Oct 21 06:55:36.580] clip.bin[8480]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3823)
+[Oct 21 07:01:44.075] clip.bin[329]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2752)
+[Oct 21 07:05:52.722] clip.bin[6992]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 07:06:03.598] clip.bin[4270]:  	hexstr_len: [39]
+[Oct 21 07:09:39.001] clip.bin[5629]:  @@=================================
+[Oct 21 07:13:16.349] clip.bin[6692]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 07:17:38.656] clip.bin[2141]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 07:19:32.422] clip.bin[8361]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3991)
+[Oct 21 07:25:17.811] clip.bin[1054]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3991)
+[Oct 21 07:30:21.664] clip.bin[7114]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:938)
+[Oct 21 07:32:22.757] clip.bin[8861]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 07:34:35.900] clip.bin[8004]:  	hexstr_len: [13]
+[Oct 21 07:34:59.027] clip.bin[5267]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 07:46:55.557] clip.bin[8983]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 07:49:57.170] clip.bin[8906]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:505)
+[Oct 21 07:50:57.159] clip.bin[8480]:  			=================================@@
+[Oct 21 07:52:20.744] clip.bin[3181]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:164)
+[Oct 21 07:54:16.797] clip.bin[9385]:  			=================================@@
+[Oct 21 08:00:45.986] clip.bin[8346]:  	hexstr_len: [9]
+[Oct 21 08:01:23.113] clip.bin[8087]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:653)
+[Oct 21 08:15:24.207] clip.bin[2591]:  			=================================@@
+[Oct 21 08:17:45.511] clip.bin[4094]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 08:20:43.493] clip.bin[6677]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2052)
+[Oct 21 08:20:57.755] clip.bin[5163]:  @@=================================
+[Oct 21 08:24:04.347] clip.bin[6800]:  	hexstr_len: [53]
+[Oct 21 08:24:32.488] clip.bin[3061]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:613)
+[Oct 21 08:29:21.593] clip.bin[1508]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 08:29:50.582] clip.bin[474]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:977)
+[Oct 21 08:32:18.452] clip.bin[2211]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 08:32:36.111] clip.bin[2784]:  	hexstr_len: [60]
+[Oct 21 08:32:56.399] clip.bin[5657]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 08:34:16.003] clip.bin[4823]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 08:42:49.787] clip.bin[6316]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2974)
+[Oct 21 08:43:21.690] clip.bin[9365]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:484)
+[Oct 21 08:46:58.013] clip.bin[886]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 08:47:02.699] clip.bin[2503]:  	hexstr_len: [46]
+[Oct 21 08:47:34.083] clip.bin[6011]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:672)
+[Oct 21 08:47:41.915] clip.bin[3063]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 08:50:07.823] clip.bin[3563]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 08:50:21.813] clip.bin[7891]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:181)
+[Oct 21 08:51:15.599] clip.bin[9151]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:803)
+[Oct 21 08:58:36.917] clip.bin[857]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2375)
+[Oct 21 09:05:59.643] clip.bin[9391]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2931)
+[Oct 21 09:09:04.373] clip.bin[7547]:  @@=================================
+[Oct 21 09:12:42.361] clip.bin[3097]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:424)
+[Oct 21 09:15:26.240] clip.bin[880]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:996)
+[Oct 21 09:16:19.898] clip.bin[3962]:  			=================================@@
+[Oct 21 09:23:29.956] clip.bin[3041]:  			=================================@@
+[Oct 21 09:29:40.866] clip.bin[657]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 09:33:43.355] clip.bin[6996]:  			=================================@@
+[Oct 21 09:42:04.482] clip.bin[8146]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:679)
+[Oct 21 09:43:22.825] clip.bin[3817]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 09:45:36.512] clip.bin[7137]:  	hexstr_len: [62]
+[Oct 21 09:46:48.313] clip.bin[5525]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:831)
+[Oct 21 09:48:29.388] clip.bin[9891]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:297)
+[Oct 21 09:52:23.720] clip.bin[6420]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 09:53:22.984] clip.bin[5480]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:600)
+[Oct 21 09:55:25.153] clip.bin[7863]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 09:56:31.324] clip.bin[6518]:  			=================================@@
+[Oct 21 09:59:59.192] clip.bin[8787]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 10:00:10.381] clip.bin[7656]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:196)
+[Oct 21 10:00:19.128] clip.bin[8839]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 10:01:26.741] clip.bin[8341]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:885)
+[Oct 21 10:02:12.543] clip.bin[4442]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:349)
+[Oct 21 10:05:59.800] clip.bin[2562]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 10:06:39.321] clip.bin[517]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 10:08:29.399] clip.bin[3961]:  			=================================@@
+[Oct 21 10:10:57.440] clip.bin[4790]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2886)
+[Oct 21 10:16:59.337] clip.bin[3939]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2525)
+[Oct 21 10:18:53.340] clip.bin[4509]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:130)
+[Oct 21 10:21:20.482] clip.bin[1315]:  			=================================@@
+[Oct 21 10:26:01.572] clip.bin[2450]:  @@=================================
+[Oct 21 10:26:12.170] clip.bin[7843]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:369)
+[Oct 21 10:27:49.428] clip.bin[9172]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:623)
+[Oct 21 10:28:42.473] clip.bin[7968]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 10:29:24.148] clip.bin[7712]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 10:31:10.376] clip.bin[1329]:  	hexstr_len: [59]
+[Oct 21 10:32:02.511] clip.bin[8965]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2958)
+[Oct 21 10:33:40.265] clip.bin[6949]:  @@=================================
+[Oct 21 10:34:49.756] clip.bin[3859]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:615)
+[Oct 21 10:36:41.088] clip.bin[7800]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 10:37:02.828] clip.bin[735]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2090)
+[Oct 21 10:38:34.777] clip.bin[7314]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2846)
+[Oct 21 10:43:07.713] clip.bin[4151]:  			=================================@@
+[Oct 21 10:43:43.442] clip.bin[6468]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:269)
+[Oct 21 10:50:10.124] clip.bin[2738]:  			=================================@@
+[Oct 21 10:52:09.488] clip.bin[9555]:  @@=================================
+[Oct 21 10:53:33.910] clip.bin[8119]:  @@=================================
+[Oct 21 10:53:59.700] clip.bin[3482]:  			=================================@@
+[Oct 21 10:57:54.057] clip.bin[4585]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2936)
+[Oct 21 11:03:39.410] clip.bin[4795]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:777)
+[Oct 21 11:11:08.646] clip.bin[6801]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:953)
+[Oct 21 11:20:23.101] clip.bin[7227]:  			=================================@@
+[Oct 21 11:20:52.752] clip.bin[671]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2377)
+[Oct 21 11:25:33.353] clip.bin[505]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 11:26:31.522] clip.bin[3409]:  			=================================@@
+[Oct 21 11:28:14.566] clip.bin[567]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:342)
+[Oct 21 11:29:51.939] clip.bin[5628]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:575)
+[Oct 21 11:30:28.864] clip.bin[7629]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2704)
+[Oct 21 11:35:45.031] clip.bin[6353]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:990)
+[Oct 21 11:39:00.518] clip.bin[1838]:  @@=================================
+[Oct 21 11:39:41.956] clip.bin[2523]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:961)
+[Oct 21 11:45:04.485] clip.bin[1586]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3661)
+[Oct 21 11:45:37.976] clip.bin[5581]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:224)
+[Oct 21 11:47:36.588] clip.bin[5223]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:875)
+[Oct 21 11:51:26.756] clip.bin[1807]:  	hexstr_len: [16]
+[Oct 21 11:56:11.701] clip.bin[8745]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:109)
+[Oct 21 11:57:08.403] clip.bin[2573]:  @@=================================
+[Oct 21 11:59:24.799] clip.bin[4524]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 11:59:57.538] clip.bin[7721]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2072)
+[Oct 21 12:03:00.368] clip.bin[1030]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2395)
+[Oct 21 12:05:15.786] clip.bin[3951]:  			=================================@@
+[Oct 21 12:08:52.479] clip.bin[4843]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 12:09:50.652] clip.bin[954]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2598)
+[Oct 21 12:10:35.900] clip.bin[9969]:  	hexstr_len: [56]
+[Oct 21 12:11:40.761] clip.bin[6962]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 12:15:41.394] clip.bin[6124]:  			=================================@@
+[Oct 21 12:16:34.848] clip.bin[329]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:422)
+[Oct 21 12:20:26.418] clip.bin[498]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 12:26:44.867] clip.bin[789]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2666)
+[Oct 21 12:27:16.592] clip.bin[9984]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3960)
+[Oct 21 12:29:24.070] clip.bin[4765]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2780)
+[Oct 21 12:31:36.244] clip.bin[8061]:  @@=================================
+[Oct 21 12:35:23.714] clip.bin[618]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 12:41:53.968] clip.bin[2670]:  @@=================================
+[Oct 21 12:44:53.149] clip.bin[1479]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3309)
+[Oct 21 12:46:35.856] clip.bin[9392]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 12:56:18.128] clip.bin[5563]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:639)
+[Oct 21 13:02:40.673] clip.bin[6345]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:566)
+[Oct 21 13:02:58.571] clip.bin[8641]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:757)
+[Oct 21 13:04:03.313] clip.bin[8452]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2020)
+[Oct 21 13:05:18.609] clip.bin[4214]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3481)
+[Oct 21 13:06:48.180] clip.bin[2382]:  	hexstr_len: [32]
+[Oct 21 13:09:12.302] clip.bin[1535]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 13:10:04.139] clip.bin[1114]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 13:11:18.697] clip.bin[6955]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:760)
+[Oct 21 13:13:01.145] clip.bin[8163]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:900)
+[Oct 21 13:13:51.870] clip.bin[5842]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 13:14:14.455] clip.bin[2483]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:976)
+[Oct 21 13:18:41.205] clip.bin[8275]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:679)
+[Oct 21 13:20:26.272] clip.bin[5089]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:366)
+[Oct 21 13:21:01.081] clip.bin[6666]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 13:22:27.653] clip.bin[4606]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:229)
+[Oct 21 13:22:29.855] clip.bin[8914]:  			=================================@@
+[Oct 21 13:23:37.233] clip.bin[2521]:  @@=================================
+[Oct 21 13:24:07.124] clip.bin[9339]:  	hexstr_len: [44]
+[Oct 21 13:26:26.629] clip.bin[5414]:  			=================================@@
+[Oct 21 13:29:47.980] clip.bin[2455]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 13:39:08.663] clip.bin[4598]:  @@=================================
+[Oct 21 13:39:22.502] clip.bin[6015]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:372)
+[Oct 21 13:46:59.578] clip.bin[6825]:  			=================================@@
+[Oct 21 13:48:38.936] clip.bin[1177]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:934)
+[Oct 21 13:49:29.182] clip.bin[8957]:  	hexstr_len: [64]
+[Oct 21 13:51:01.750] clip.bin[1274]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:492)
+[Oct 21 13:53:07.849] clip.bin[3202]:  			=================================@@
+[Oct 21 13:54:48.848] clip.bin[8043]:  @@=================================
+[Oct 21 13:58:25.307] clip.bin[628]:  @@=================================
+[Oct 21 13:58:26.159] clip.bin[6962]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:521)
+[Oct 21 14:00:46.520] clip.bin[5278]:  	hexstr_len: [10]
+[Oct 21 14:02:13.848] clip.bin[1008]:  			=================================@@
+[Oct 21 14:03:55.610] clip.bin[3109]:  			=================================@@
+[Oct 21 14:08:24.568] clip.bin[2936]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 14:08:55.387] clip.bin[6726]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:282)
+[Oct 21 14:10:56.753] clip.bin[9663]:  			=================================@@
+[Oct 21 14:11:00.426] clip.bin[2401]:  			=================================@@
+[Oct 21 14:11:24.097] clip.bin[6349]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:741)
+[Oct 21 14:15:48.244] clip.bin[3526]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 14:17:21.575] clip.bin[8414]:  			=================================@@
+[Oct 21 14:17:52.639] clip.bin[9433]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:839)
+[Oct 21 14:21:26.238] clip.bin[6492]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:651)
+[Oct 21 14:23:30.505] clip.bin[2437]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2966)
+[Oct 21 14:24:48.500] clip.bin[6157]:  	hexstr_len: [24]
+[Oct 21 14:27:57.825] clip.bin[1712]:  			=================================@@
+[Oct 21 14:29:10.756] clip.bin[2173]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:698)
+[Oct 21 14:39:58.322] clip.bin[1945]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3780)
+[Oct 21 14:44:44.229] clip.bin[3218]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:3000)
+[Oct 21 14:47:20.338] clip.bin[3424]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 14:48:53.385] clip.bin[1819]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 14:49:46.004] clip.bin[3951]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2543)
+[Oct 21 14:50:20.269] clip.bin[6786]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2110)
+[Oct 21 14:54:58.264] clip.bin[6819]:  @@=================================
+[Oct 21 14:56:31.221] clip.bin[6924]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 15:02:00.709] clip.bin[5386]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 15:03:59.470] clip.bin[8664]:  			=================================@@
+[Oct 21 15:07:54.105] clip.bin[9163]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:876)
+[Oct 21 15:18:20.823] clip.bin[5438]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2621)
+[Oct 21 15:19:58.429] clip.bin[1025]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 15:20:50.878] clip.bin[7991]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 15:21:03.076] clip.bin[4533]:  	hexstr_len: [30]
+[Oct 21 15:23:37.873] clip.bin[5546]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 15:25:22.298] clip.bin[6377]:  			=================================@@
+[Oct 21 15:30:32.467] clip.bin[2312]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:882)
+[Oct 21 15:32:23.617] clip.bin[6597]:  			=================================@@
+[Oct 21 15:36:17.856] clip.bin[2586]:  	hexstr_len: [49]
+[Oct 21 15:39:19.531] clip.bin[6492]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:703)
+[Oct 21 15:42:07.928] clip.bin[4943]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 15:44:12.027] clip.bin[2348]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 15:47:18.281] clip.bin[5592]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:750)
+[Oct 21 15:53:16.012] clip.bin[8236]:  			=================================@@
+[Oct 21 15:56:57.294] clip.bin[9913]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 15:57:32.987] clip.bin[8602]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2685)
+[Oct 21 16:00:32.150] clip.bin[4780]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2435)
+[Oct 21 16:00:44.689] clip.bin[8426]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 16:02:07.810] clip.bin[5233]:  	hexstr_len: [45]
+[Oct 21 16:02:48.736] clip.bin[3345]:  	hexstr_len: [11]
+[Oct 21 16:07:21.318] clip.bin[4741]:  	hexstr_len: [43]
+[Oct 21 16:10:10.726] clip.bin[8230]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:590)
+[Oct 21 16:10:24.843] clip.bin[8976]:  @@=================================
+[Oct 21 16:14:12.033] clip.bin[2524]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:716)
+[Oct 21 16:15:19.361] clip.bin[9404]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2932)
+[Oct 21 16:23:49.738] clip.bin[3365]:  			=================================@@
+[Oct 21 16:25:33.439] clip.bin[7975]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2200)
+[Oct 21 16:26:18.925] clip.bin[420]:  			=================================@@
+[Oct 21 16:28:15.252] clip.bin[9064]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:622)
+[Oct 21 16:35:12.578] clip.bin[5831]:  @@=================================
+[Oct 21 16:35:16.656] clip.bin[2633]:  			=================================@@
+[Oct 21 16:35:20.786] clip.bin[9002]:  			=================================@@
+[Oct 21 16:40:08.873] clip.bin[5970]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2858)
+[Oct 21 16:41:10.758] clip.bin[4237]:  	hexstr_len: [31]
+[Oct 21 16:48:02.317] clip.bin[7901]:  			=================================@@
+[Oct 21 16:48:06.049] clip.bin[8404]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:565)
+[Oct 21 16:48:47.527] clip.bin[3138]:  			=================================@@
+[Oct 21 16:53:15.611] clip.bin[3040]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 16:53:57.394] clip.bin[6359]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 16:55:29.444] clip.bin[1505]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2823)
+[Oct 21 16:57:12.922] clip.bin[2397]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2361)
+[Oct 21 17:00:50.926] clip.bin[4728]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:817)
+[Oct 21 17:01:09.087] clip.bin[4327]:  @@=================================
+[Oct 21 17:12:26.326] clip.bin[5833]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:104)
+[Oct 21 17:12:36.784] clip.bin[9201]:  			=================================@@
+[Oct 21 17:13:46.599] clip.bin[1486]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:738)
+[Oct 21 17:14:41.441] clip.bin[7793]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:351)
+[Oct 21 17:15:01.011] clip.bin[9888]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:554)
+[Oct 21 17:15:09.864] clip.bin[7177]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3024)
+[Oct 21 17:16:05.523] clip.bin[9421]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2091)
+[Oct 21 17:16:55.219] clip.bin[1562]:  			=================================@@
+[Oct 21 17:17:06.610] clip.bin[4495]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 17:17:13.219] clip.bin[3302]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:509)
+[Oct 21 17:21:35.770] clip.bin[1406]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 17:22:29.079] clip.bin[2991]:  			=================================@@
+[Oct 21 17:27:22.716] clip.bin[595]:  			=================================@@
+[Oct 21 17:28:45.213] clip.bin[2722]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3000)
+[Oct 21 17:29:39.178] clip.bin[1152]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:949)
+[Oct 21 17:37:12.649] clip.bin[5552]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 17:42:42.544] clip.bin[2213]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 17:45:39.760] clip.bin[1771]:  			=================================@@
+[Oct 21 17:49:46.840] clip.bin[1912]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3369)
+[Oct 21 17:51:19.251] clip.bin[830]:  @@=================================
+[Oct 21 17:52:35.985] clip.bin[8111]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 17:52:51.519] clip.bin[9281]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:214)
+[Oct 21 17:56:01.871] clip.bin[9883]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:210)
+[Oct 21 17:58:58.485] clip.bin[9811]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:984)
+[Oct 21 17:59:24.954] clip.bin[6681]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:718)
+[Oct 21 18:07:59.657] clip.bin[1995]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 18:08:08.863] clip.bin[4185]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:791)
+[Oct 21 18:10:17.377] clip.bin[5240]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:718)
+[Oct 21 18:12:21.084] clip.bin[5034]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 18:12:39.393] clip.bin[2446]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2421)
+[Oct 21 18:14:38.414] clip.bin[8611]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 18:17:37.125] clip.bin[6829]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3278)
+[Oct 21 18:20:13.699] clip.bin[6333]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2282)
+[Oct 21 18:21:28.324] clip.bin[9789]:  			=================================@@
+[Oct 21 18:21:56.775] clip.bin[2140]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 18:30:31.810] clip.bin[9825]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:873)
+[Oct 21 18:31:11.728] clip.bin[4292]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3715)
+[Oct 21 18:38:19.134] clip.bin[9390]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2131)
+[Oct 21 18:40:56.124] clip.bin[4800]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:748)
+[Oct 21 18:46:35.992] clip.bin[2851]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2519)
+[Oct 21 18:48:26.381] clip.bin[4944]:  	hexstr_len: [40]
+[Oct 21 18:48:30.272] clip.bin[9049]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2444)
+[Oct 21 18:49:15.398] clip.bin[2686]:  @@=================================
+[Oct 21 18:55:08.548] clip.bin[4225]:  	hexstr_len: [24]
+[Oct 21 19:03:06.640] clip.bin[8144]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:654)
+[Oct 21 19:11:02.207] clip.bin[7404]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:397)
+[Oct 21 19:16:09.745] clip.bin[3109]:  @@=================================
+[Oct 21 19:16:18.666] clip.bin[2385]:  	hexstr_len: [38]
+[Oct 21 19:26:54.199] clip.bin[4740]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3751)
+[Oct 21 19:28:05.644] clip.bin[4040]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:887)
+[Oct 21 19:29:52.809] clip.bin[840]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:597)
+[Oct 21 19:37:04.050] clip.bin[1097]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2053)
+[Oct 21 19:43:45.469] clip.bin[3425]:  			=================================@@
+[Oct 21 19:44:37.510] clip.bin[359]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 19:45:09.640] clip.bin[7929]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:796)
+[Oct 21 19:50:40.107] clip.bin[6822]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:414)
+[Oct 21 19:52:11.140] clip.bin[2941]:  			=================================@@
+[Oct 21 19:56:21.505] clip.bin[213]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:293)
+[Oct 21 20:00:00.548] clip.bin[9867]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:329)
+[Oct 21 20:02:17.658] clip.bin[6655]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:615)
+[Oct 21 20:03:15.259] clip.bin[2239]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 20:05:23.959] clip.bin[8649]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:789)
+[Oct 21 20:05:53.889] clip.bin[6930]:  			=================================@@
+[Oct 21 20:07:02.340] clip.bin[7273]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:310)
+[Oct 21 20:09:37.461] clip.bin[6015]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 20:11:49.129] clip.bin[1495]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 20:12:41.246] clip.bin[6213]:  			=================================@@
+[Oct 21 20:14:28.207] clip.bin[4068]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:192)
+[Oct 21 20:14:47.227] clip.bin[5109]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 20:21:11.501] clip.bin[2472]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 20:21:52.758] clip.bin[8090]:  			=================================@@
+[Oct 21 20:25:30.870] clip.bin[3303]:  			=================================@@
+[Oct 21 20:31:53.846] clip.bin[5856]:  			=================================@@
+[Oct 21 20:32:21.699] clip.bin[6686]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 20:38:55.711] clip.bin[5367]:  @@=================================
+[Oct 21 20:39:41.238] clip.bin[7309]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2398)
+[Oct 21 20:42:25.510] clip.bin[7451]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2009)
+[Oct 21 20:44:17.008] clip.bin[2222]:  			=================================@@
+[Oct 21 20:44:47.581] clip.bin[336]:  @@=================================
+[Oct 21 20:52:45.123] clip.bin[3073]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2683)
+[Oct 21 20:55:02.311] clip.bin[522]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:794)
+[Oct 21 20:55:06.606] clip.bin[1668]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:459)
+[Oct 21 20:55:24.586] clip.bin[6214]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:148)
+[Oct 21 20:55:25.477] clip.bin[8583]:  			=================================@@
+[Oct 21 20:56:20.947] clip.bin[4872]:  [CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2771)
+[Oct 21 21:01:17.476] clip.bin[1297]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 21:04:07.091] clip.bin[773]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 21:09:39.164] clip.bin[5560]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2415)
+[Oct 21 21:10:18.471] clip.bin[5642]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 21:14:18.933] clip.bin[1328]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 21:14:48.653] clip.bin[5260]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:566)
+[Oct 21 21:18:00.220] clip.bin[1229]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 21:18:37.758] clip.bin[8610]:  			=================================@@
+[Oct 21 21:21:55.074] clip.bin[1177]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 21:22:29.903] clip.bin[866]:  	hexstr_len: [41]
+[Oct 21 21:24:53.699] clip.bin[5133]:  @@=================================
+[Oct 21 21:26:34.972] clip.bin[4502]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:159)
+[Oct 21 21:27:44.936] clip.bin[9906]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3253)
+[Oct 21 21:31:53.091] clip.bin[3429]:  			=================================@@
+[Oct 21 21:38:46.238] clip.bin[4189]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:496)
+[Oct 21 21:39:48.022] clip.bin[2371]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 21:42:31.396] clip.bin[8127]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:234)
+[Oct 21 21:42:49.555] clip.bin[1424]:  			=================================@@
+[Oct 21 21:43:12.343] clip.bin[1785]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2774)
+[Oct 21 21:45:16.847] clip.bin[9678]:  			=================================@@
+[Oct 21 21:51:13.014] clip.bin[3113]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:561)
+[Oct 21 21:53:15.860] clip.bin[9429]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 22:01:40.824] clip.bin[5622]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3687)
+[Oct 21 22:01:53.290] clip.bin[353]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 22:02:06.891] clip.bin[1973]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3853)
+[Oct 21 22:06:13.531] clip.bin[9633]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:960)
+[Oct 21 22:08:55.977] clip.bin[5082]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:734)
+[Oct 21 22:11:54.918] clip.bin[8300]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 22:12:29.812] clip.bin[2217]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3342)
+[Oct 21 22:14:19.861] clip.bin[7658]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3444)
+[Oct 21 22:14:32.516] clip.bin[8750]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:706)
+[Oct 21 22:14:39.460] clip.bin[320]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 22:16:39.725] clip.bin[2851]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 22:20:49.602] clip.bin[946]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3017)
+[Oct 21 22:26:35.421] clip.bin[4628]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 22:40:45.323] clip.bin[6082]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:481)
+[Oct 21 22:43:15.129] clip.bin[9962]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:338)
+[Oct 21 22:44:11.351] clip.bin[5848]:  			=================================@@
+[Oct 21 23:03:14.501] clip.bin[4945]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:715)
+[Oct 21 23:07:39.338] clip.bin[6186]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:492)
+[Oct 21 23:07:57.286] clip.bin[9857]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:676)
+[Oct 21 23:12:20.936] clip.bin[8530]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3940)
+[Oct 21 23:13:25.948] clip.bin[5538]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:119)
+[Oct 21 23:14:54.484] clip.bin[8844]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3799)
+[Oct 21 23:17:13.248] clip.bin[9089]:  	hexstr_len: [52]
+[Oct 21 23:17:47.875] clip.bin[883]:  			=================================@@
+[Oct 21 23:18:22.797] clip.bin[3877]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 23:23:34.606] clip.bin[3861]:  @@=================================
+[Oct 21 23:26:08.420] clip.bin[4630]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3747)
+[Oct 21 23:39:28.398] clip.bin[1805]:  [TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]
+[Oct 21 23:39:29.913] clip.bin[2764]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 23:39:37.809] clip.bin[5620]:  @@=================================
+[Oct 21 23:41:28.064] clip.bin[2024]:  	hexstr_len: [50]
+[Oct 21 23:45:04.572] clip.bin[1638]:  			=================================@@
+[Oct 21 23:49:42.638] clip.bin[6974]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB
+[Oct 21 23:52:26.850] clip.bin[2543]:  [CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:714)
+[Oct 21 23:52:40.912] clip.bin[4291]:  [MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1
+[Oct 21 23:54:24.230] clip.bin[1438]:  [CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3918)
+[Oct 21 23:55:39.678] clip.bin[4497]:  [CLIP_INFO] 			Got MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:592)
+[Oct 21 23:56:36.266] clip.bin[4513]:  	hexstr_len: [28]
+[Oct 21 23:57:35.162] clip.bin[1277]:  			=================================@@
+[Oct 21 23:58:07.235] clip.bin[6128]:  	hexstr_len: [12]
+[Oct 21 23:58:15.893] clip.bin[9042]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:250)
+[Oct 21 23:58:26.973] clip.bin[3960]:  [CLIP_INFO] 			=================================@@ (_process_cloudlet_rx_pkt_msg:394)
+[Oct 21 23:59:40.282] clip.bin[9067]:  			[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB

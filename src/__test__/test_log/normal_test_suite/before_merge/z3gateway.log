@@ -1,0 +1,125 @@
+[Oct 20 00:24:11.028] homey-z3gateway[2411]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 00:34:29.669] homey-z3gateway[1893]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 01:07:21.245] homey-z3gateway[1820]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 01:12:58.770] homey-z3gateway[2187]:  Reset info: 20 (SOFTWARE)
+[Oct 20 01:13:17.958] homey-z3gateway[1956]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 01:18:35.220] homey-z3gateway[2173]:  Reset info: 5 (SOFTWARE)
+[Oct 20 01:22:33.032] homey-z3gateway[1894]:  Reset info: 4 (SOFTWARE)
+[Oct 20 01:34:18.154] homey-z3gateway[2454]:  Reset info: 15 (SOFTWARE)
+[Oct 20 02:31:29.071] homey-z3gateway[2011]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 02:53:26.089] homey-z3gateway[2145]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 03:01:54.469] homey-z3gateway[1815]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 03:32:58.131] homey-z3gateway[2043]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 03:58:20.875] homey-z3gateway[2150]:  Reset info: 1 (SOFTWARE)
+[Oct 20 04:09:23.287] homey-z3gateway[2024]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 04:11:40.437] homey-z3gateway[2036]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 04:23:51.833] homey-z3gateway[2380]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 06:34:18.574] homey-z3gateway[2325]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 07:04:06.194] homey-z3gateway[2091]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 07:25:43.940] homey-z3gateway[2192]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 08:09:52.614] homey-z3gateway[2402]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 08:49:12.972] homey-z3gateway[2270]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 08:49:21.114] homey-z3gateway[1836]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 08:50:08.840] homey-z3gateway[2059]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 09:03:24.083] homey-z3gateway[2407]:  Reset info: 20 (SOFTWARE)
+[Oct 20 09:17:34.748] homey-z3gateway[1851]:  Reset info: 14 (SOFTWARE)
+[Oct 20 09:20:36.046] homey-z3gateway[2070]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 09:35:06.385] homey-z3gateway[2029]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 09:51:32.498] homey-z3gateway[1816]:  Reset info: 8 (SOFTWARE)
+[Oct 20 10:04:09.078] homey-z3gateway[2060]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 10:11:39.671] homey-z3gateway[2037]:  Reset info: 12 (SOFTWARE)
+[Oct 20 10:14:18.130] homey-z3gateway[2217]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 11:01:09.010] homey-z3gateway[2352]:  Reset info: 4 (SOFTWARE)
+[Oct 20 11:39:55.471] homey-z3gateway[1917]:  Reset info: 7 (SOFTWARE)
+[Oct 20 12:04:15.878] homey-z3gateway[2333]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 12:35:15.593] homey-z3gateway[2105]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 13:08:34.962] homey-z3gateway[2083]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 13:14:11.355] homey-z3gateway[2384]:  Reset info: 8 (SOFTWARE)
+[Oct 20 13:32:40.110] homey-z3gateway[2312]:  Reset info: 1 (SOFTWARE)
+[Oct 20 13:51:23.304] homey-z3gateway[2468]:  Reset info: 13 (SOFTWARE)
+[Oct 20 14:30:27.202] homey-z3gateway[2403]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 14:40:14.749] homey-z3gateway[2204]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 15:10:41.343] homey-z3gateway[2229]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 15:27:29.272] homey-z3gateway[2076]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 15:42:09.791] homey-z3gateway[1855]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 15:44:35.281] homey-z3gateway[1849]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 15:48:54.838] homey-z3gateway[2377]:  Reset info: 9 (SOFTWARE)
+[Oct 20 16:22:58.187] homey-z3gateway[2425]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 16:38:51.266] homey-z3gateway[2070]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 16:50:08.556] homey-z3gateway[2410]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 17:08:22.953] homey-z3gateway[2424]:  Reset info: 1 (SOFTWARE)
+[Oct 20 17:33:07.109] homey-z3gateway[2443]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 17:46:56.692] homey-z3gateway[2241]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 18:19:17.406] homey-z3gateway[2151]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 18:19:52.909] homey-z3gateway[1863]:  Reset info: 15 (SOFTWARE)
+[Oct 20 19:01:55.832] homey-z3gateway[2084]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 19:18:45.458] homey-z3gateway[1932]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 19:19:29.052] homey-z3gateway[2490]:  Reset info: 6 (SOFTWARE)
+[Oct 20 19:36:48.607] homey-z3gateway[1856]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 19:40:57.031] homey-z3gateway[2138]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 20:03:37.542] homey-z3gateway[2258]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 21:15:50.538] homey-z3gateway[2355]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 21:45:07.521] homey-z3gateway[1874]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 21:48:37.814] homey-z3gateway[2164]:  Reset info: 7 (SOFTWARE)
+[Oct 20 22:23:24.142] homey-z3gateway[2301]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 22:53:11.251] homey-z3gateway[2405]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 22:54:24.578] homey-z3gateway[2060]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 20 23:11:21.610] homey-z3gateway[2127]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 20 23:22:19.418] homey-z3gateway[2254]:  Reset info: 8 (SOFTWARE)
+[Oct 20 23:27:43.744] homey-z3gateway[2254]:  Reset info: 4 (SOFTWARE)
+[Oct 21 00:06:35.951] homey-z3gateway[2009]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 00:28:34.467] homey-z3gateway[1928]:  Reset info: 8 (SOFTWARE)
+[Oct 21 01:05:49.934] homey-z3gateway[1895]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 01:16:03.741] homey-z3gateway[2176]:  Reset info: 5 (SOFTWARE)
+[Oct 21 02:14:00.277] homey-z3gateway[2291]:  Reset info: 15 (SOFTWARE)
+[Oct 21 02:29:33.742] homey-z3gateway[1920]:  Reset info: 16 (SOFTWARE)
+[Oct 21 03:23:18.487] homey-z3gateway[1987]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 03:37:41.907] homey-z3gateway[2003]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 03:58:19.448] homey-z3gateway[2435]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 04:11:03.065] homey-z3gateway[2114]:  Reset info: 12 (SOFTWARE)
+[Oct 21 04:34:42.051] homey-z3gateway[1963]:  Reset info: 20 (SOFTWARE)
+[Oct 21 04:37:19.008] homey-z3gateway[1896]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 04:46:54.616] homey-z3gateway[2380]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 06:10:32.781] homey-z3gateway[2019]:  Reset info: 14 (SOFTWARE)
+[Oct 21 06:16:51.809] homey-z3gateway[1967]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 06:19:14.518] homey-z3gateway[2263]:  Reset info: 7 (SOFTWARE)
+[Oct 21 06:24:43.501] homey-z3gateway[1913]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 06:25:49.508] homey-z3gateway[1879]:  Reset info: 17 (SOFTWARE)
+[Oct 21 06:36:58.494] homey-z3gateway[2150]:  Reset info: 16 (SOFTWARE)
+[Oct 21 06:44:39.830] homey-z3gateway[2465]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 08:39:00.148] homey-z3gateway[2067]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 08:49:13.965] homey-z3gateway[2221]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 09:07:27.218] homey-z3gateway[1870]:  Reset info: 10 (SOFTWARE)
+[Oct 21 09:18:19.402] homey-z3gateway[2167]:  Reset info: 4 (SOFTWARE)
+[Oct 21 10:40:33.561] homey-z3gateway[2387]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 11:32:26.747] homey-z3gateway[1962]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 11:53:49.352] homey-z3gateway[1939]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 12:46:35.533] homey-z3gateway[2400]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 12:52:00.876] homey-z3gateway[2071]:  Reset info: 17 (SOFTWARE)
+[Oct 21 13:17:56.690] homey-z3gateway[2071]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 13:24:06.157] homey-z3gateway[2474]:  Reset info: 14 (SOFTWARE)
+[Oct 21 13:41:05.404] homey-z3gateway[2376]:  Reset info: 15 (SOFTWARE)
+[Oct 21 14:16:57.758] homey-z3gateway[2402]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 14:22:44.713] homey-z3gateway[1890]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 14:25:56.887] homey-z3gateway[1925]:  Reset info: 14 (SOFTWARE)
+[Oct 21 14:27:15.183] homey-z3gateway[2425]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 14:50:28.579] homey-z3gateway[2496]:  Reset info: 13 (SOFTWARE)
+[Oct 21 14:51:10.298] homey-z3gateway[1889]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 15:33:07.113] homey-z3gateway[2119]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 16:08:20.946] homey-z3gateway[2393]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 17:20:39.078] homey-z3gateway[2231]:  Reset info: 8 (SOFTWARE)
+[Oct 21 17:39:16.737] homey-z3gateway[2385]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 18:12:01.971] homey-z3gateway[2075]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 18:15:08.926] homey-z3gateway[2395]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 18:27:47.558] homey-z3gateway[2144]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 18:31:11.855] homey-z3gateway[2265]:  Reset info: 6 (SOFTWARE)
+[Oct 21 18:32:13.513] homey-z3gateway[1982]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 19:32:31.971] homey-z3gateway[2272]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 19:34:20.792] homey-z3gateway[2064]:  Reset info: 12 (SOFTWARE)
+[Oct 21 19:43:51.461] homey-z3gateway[2059]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 19:46:58.011] homey-z3gateway[1827]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 20:05:58.797] homey-z3gateway[2489]:  Reset info: 1 (SOFTWARE)
+[Oct 21 21:05:11.367] homey-z3gateway[2109]:  [info - Z3GatewayRpcService] SetUpStack
+[Oct 21 21:07:17.280] homey-z3gateway[2430]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP
+[Oct 21 22:25:58.837] homey-z3gateway[2053]:  Reset info: 15 (SOFTWARE)
+[Oct 21 23:29:31.487] homey-z3gateway[2259]:  [info - Z3GatewayRpcService] StartZ3Gateway NCP path: /dev/ttyZigbeeNCP

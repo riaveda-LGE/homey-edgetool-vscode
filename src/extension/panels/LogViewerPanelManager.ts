@@ -14,6 +14,7 @@ import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
 import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
 import { readParserWhitelistGlobs } from '../../core/config/userdata.js';
+import { readParserConfigJson } from '../../core/config/userdata.js';
 import { ensureWorkspaceInitialized } from '../../core/workspace/init.js';
 
 export class LogViewerPanelManager {
@@ -179,10 +180,24 @@ export class LogViewerPanelManager {
       this.log.warn(`merge: failed to read parser whitelist globs (${e?.message ?? e})`);
     }
 
+    // ⬇️ 파서 설정 전체 읽기
+    let parserConfig: any;
+    try {
+      parserConfig = await readParserConfigJson(this.context);
+      if (parserConfig) {
+        this.log.info(`merge: parser config loaded`);
+      } else {
+        this.log.info(`merge: no parser config found`);
+      }
+    } catch (e: any) {
+      this.log.warn(`merge: failed to read parser config (${e?.message ?? e})`);
+    }
+
     await this.session.startFileMergeSession({
       dir,
       indexOutDir,
       whitelistGlobs,
+      parserConfig,
       onBatch: (logs, total, seq) => {
         if (this.initialSent) return;
         this.log.info(

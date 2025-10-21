@@ -24,6 +24,8 @@ import {
   warmupTailPrepass,
   compileWhitelistPathRegexes,
 } from '../logs/LogFileIntegration.js';
+import { compileParserConfig } from '../logs/ParserEngine.js';
+import type { ParserConfig } from '../config/schema.js';
 import { ManifestWriter } from '../logs/ManifestWriter.js';
 import { paginationService } from '../logs/PaginationService.js';
 
@@ -243,7 +245,7 @@ export class LogSessionManager {
    */
   @measure()
   async startFileMergeSession(
-    opts: { dir: string; signal?: AbortSignal; indexOutDir?: string; whitelistGlobs?: string[] } & SessionCallbacks,
+    opts: { dir: string; signal?: AbortSignal; indexOutDir?: string; whitelistGlobs?: string[]; parserConfig?: ParserConfig } & SessionCallbacks,
   ) {
     this.log.info(`[debug] LogSessionManager.startFileMergeSession: start dir=${opts.dir}`);
     let seq = 0;
@@ -307,6 +309,9 @@ export class LogSessionManager {
     const outDir = await this.prepareCleanOutputDir(baseOut);
     this.log.info(`T1: outDir=${outDir}`);
 
+    // 파서 컴파일
+    const compiledParser = opts.parserConfig ? compileParserConfig(opts.parserConfig) : undefined;
+
     // manifest / chunk writer 준비
     const manifest = await ManifestWriter.loadOrCreate(outDir);
     manifest.setTotal(total);
@@ -342,6 +347,7 @@ export class LogSessionManager {
       // Manager가 T0 웜업을 수행했으므로 여기서는 비활성화
       warmup: false,
       whitelistGlobs: opts.whitelistGlobs,
+      parser: opts.parserConfig,
       onBatch: async (logs: LogEntry[]) => {
         // 1) 메모리 버퍼 업데이트
         this.hb.addBatch(logs);

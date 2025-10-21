@@ -1,0 +1,125 @@
+[Oct 20 00:11:33.169] bt_player[739]:  10:15:53, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760886693] play[KIT_IDLE] vol[60]
+[Oct 20 01:06:14.872] bt_player[963]:  13:41:51, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760889974] play[KIT_IDLE] vol[60]
+[Oct 20 01:26:21.438] bt_player[723]:  18:32:48, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760891181] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 01:38:32.240] bt_player[751]:  03:03:30, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760891912] play[KIT_IDLE] vol[60]
+[Oct 20 01:39:25.911] bt_player[934]:  07:11:22, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760891965] play[KIT_IDLE] vol[60]
+[Oct 20 01:41:13.035] bt_player[329]:  05:38:25, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760892073] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 02:45:14.284] bt_player[816]:  13:34:25, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760895914] play[KIT_IDLE] vol[60]
+[Oct 20 03:09:16.316] bt_player[383]:  03:12:07, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760897356] play[KIT_IDLE] vol[60]
+[Oct 20 03:26:46.709] bt_player[410]:  20:52:39, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760898406] play[KIT_IDLE] vol[60]
+[Oct 20 03:57:24.048] bt_player[274]:  14:23:16, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760900244] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 04:16:10.486] bt_player[786]:  14:29:53, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760901370] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 04:47:05.834] bt_player[329]:  16:46:28, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760903225] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 04:53:29.821] bt_player[847]:  08:58:25, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760903609] play[KIT_IDLE] vol[60]
+[Oct 20 06:08:05.392] bt_player[832]:  11:37:55, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760908085] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 06:30:18.722] bt_player[170]:  15:36:43, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760909418] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 06:59:23.074] bt_player[308]:  14:58:34, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760911163] play[KIT_IDLE] vol[60]
+[Oct 20 07:58:09.280] bt_player[816]:  13:11:19, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760914689] play[KIT_IDLE] vol[60]
+[Oct 20 08:12:32.242] bt_player[472]:  12:26:00, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760915552] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 08:19:11.934] bt_player[662]:  15:09:58, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760915951] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 08:53:57.844] bt_player[741]:  00:37:02, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760918037] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 09:01:27.683] bt_player[750]:  03:21:49, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760918487] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 09:37:58.219] bt_player[972]:  21:25:14, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760920678] play[KIT_IDLE] vol[60]
+[Oct 20 10:12:06.128] bt_player[963]:  05:19:27, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760922726] play[KIT_IDLE] vol[60]
+[Oct 20 10:18:38.631] bt_player[122]:  11:40:16, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760923118] play[KIT_IDLE] vol[60]
+[Oct 20 10:25:35.522] bt_player[350]:  16:30:48, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760923535] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 10:26:20.552] bt_player[208]:  21:01:52, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760923580] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 10:43:06.423] bt_player[611]:  04:20:14, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760924586] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 10:52:48.279] bt_player[421]:  01:28:00, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760925168] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 10:58:21.376] bt_player[297]:  20:33:24, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760925501] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 11:13:14.598] bt_player[461]:  17:47:17, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760926394] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 12:19:14.669] bt_player[362]:  08:14:31, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760930354] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 12:44:45.784] bt_player[575]:  17:25:47, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760931885] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 13:22:25.300] bt_player[497]:  05:43:36, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760934145] play[KIT_IDLE] vol[60]
+[Oct 20 13:37:06.488] bt_player[961]:  02:34:58, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760935026] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 13:47:43.915] bt_player[917]:  00:09:50, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760935663] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 14:08:26.924] bt_player[202]:  20:56:02, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760936906] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 14:20:58.382] bt_player[390]:  04:47:47, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760937658] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 14:30:08.433] bt_player[948]:  06:27:45, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760938208] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 15:05:24.573] bt_player[395]:  06:47:20, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760940324] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 15:11:02.517] bt_player[963]:  11:38:46, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760940662] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 15:28:38.018] bt_player[499]:  23:09:39, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760941718] play[KIT_IDLE] vol[60]
+[Oct 20 16:04:41.837] bt_player[310]:  04:18:41, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760943881] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 16:18:17.527] bt_player[547]:  01:42:55, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760944697] play[KIT_IDLE] vol[60]
+[Oct 20 16:45:30.115] bt_player[147]:  17:33:29, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760946330] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 17:04:51.267] bt_player[699]:  19:41:05, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760947491] play[KIT_IDLE] vol[60]
+[Oct 20 17:35:32.100] bt_player[976]:  10:36:28, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760949332] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 17:41:07.664] bt_player[565]:  05:09:53, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760949667] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 17:44:23.363] bt_player[841]:  04:22:44, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760949863] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 17:45:16.173] bt_player[731]:  08:33:10, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760949916] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 17:47:10.451] bt_player[240]:  23:42:19, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760950030] play[KIT_IDLE] vol[60]
+[Oct 20 18:16:10.967] bt_player[648]:  14:18:25, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760951770] play[KIT_IDLE] vol[60]
+[Oct 20 18:23:06.734] bt_player[202]:  23:13:26, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760952186] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 18:51:26.365] bt_player[719]:  12:56:51, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760953886] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 19:11:40.800] bt_player[307]:  09:45:56, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760955100] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 19:18:07.481] bt_player[619]:  20:57:22, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760955487] play[KIT_IDLE] vol[60]
+[Oct 20 19:45:20.366] bt_player[347]:  19:04:01, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760957120] play[KIT_IDLE] vol[60]
+[Oct 20 19:47:11.861] bt_player[695]:  02:06:48, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760957231] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 20:01:37.062] bt_player[928]:  20:56:18, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760958097] play[KIT_IDLE] vol[60]
+[Oct 20 22:30:07.277] bt_player[931]:  04:36:25, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760967007] play[KIT_IDLE] vol[60]
+[Oct 20 22:40:06.417] bt_player[119]:  07:20:11, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760967606] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 20 23:26:55.803] bt_player[311]:  20:29:44, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760970415] play[KIT_IDLE] vol[60]
+[Oct 20 23:27:46.290] bt_player[193]:  19:57:34, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760970466] play[KIT_IDLE] vol[60]
+[Oct 20 23:37:39.361] bt_player[551]:  07:03:47, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760971059] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 20 23:50:52.804] bt_player[330]:  21:46:50, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760971852] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 00:36:26.385] bt_player[522]:  12:48:50, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760974586] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 00:57:57.612] bt_player[656]:  00:44:58, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760975877] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 01:00:21.791] bt_player[831]:  22:22:19, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760976021] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 01:02:02.450] bt_player[229]:  11:26:32, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760976122] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 01:03:07.209] bt_player[159]:  07:11:05, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760976187] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 01:40:46.898] bt_player[903]:  21:45:09, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760978446] play[KIT_IDLE] vol[60]
+[Oct 21 01:46:58.166] bt_player[343]:  20:21:43, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760978818] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 01:53:33.824] bt_player[883]:  06:55:45, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760979213] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 03:05:16.621] bt_player[809]:  20:24:55, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760983516] play[KIT_IDLE] vol[60]
+[Oct 21 03:07:20.695] bt_player[438]:  17:43:35, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760983640] play[KIT_IDLE] vol[60]
+[Oct 21 03:21:06.223] bt_player[818]:  22:08:21, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760984466] play[KIT_IDLE] vol[60]
+[Oct 21 03:25:02.034] bt_player[200]:  23:41:20, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760984702] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 03:33:37.595] bt_player[125]:  03:20:14, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760985217] play[KIT_IDLE] vol[60]
+[Oct 21 03:57:27.952] bt_player[160]:  20:03:38, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760986647] play[KIT_IDLE] vol[60]
+[Oct 21 04:09:49.679] bt_player[728]:  15:24:07, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760987389] play[KIT_IDLE] vol[60]
+[Oct 21 04:47:50.108] bt_player[151]:  00:33:44, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760989670] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 05:11:12.275] bt_player[711]:  19:42:25, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760991072] play[KIT_IDLE] vol[60]
+[Oct 21 05:18:53.017] bt_player[250]:  12:16:59, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760991533] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 05:34:35.214] bt_player[202]:  20:07:23, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1760992475] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 06:05:25.475] bt_player[620]:  13:17:37, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760994325] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 06:20:21.309] bt_player[690]:  17:47:20, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760995221] play[KIT_IDLE] vol[60]
+[Oct 21 06:25:37.522] bt_player[871]:  06:43:56, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1760995537] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 07:18:26.633] bt_player[996]:  16:36:04, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760998706] play[KIT_IDLE] vol[60]
+[Oct 21 07:28:52.528] bt_player[479]:  19:02:05, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1760999332] play[KIT_IDLE] vol[60]
+[Oct 21 08:23:35.154] bt_player[561]:  03:28:13, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761002615] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 08:35:17.676] bt_player[351]:  18:11:22, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761003317] play[KIT_IDLE] vol[60]
+[Oct 21 08:55:59.968] bt_player[842]:  10:57:50, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761004559] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 09:08:21.442] bt_player[197]:  15:16:35, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761005301] play[KIT_IDLE] vol[60]
+[Oct 21 10:44:17.437] bt_player[649]:  08:43:24, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761011057] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 11:34:51.516] bt_player[147]:  18:21:11, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761014091] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 11:43:28.996] bt_player[904]:  08:54:50, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761014608] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 11:56:24.635] bt_player[639]:  04:36:30, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761015384] play[KIT_IDLE] vol[60]
+[Oct 21 12:12:26.569] bt_player[106]:  14:40:14, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761016346] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 12:40:55.179] bt_player[942]:  22:12:25, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761018055] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 13:59:40.897] bt_player[933]:  09:25:12, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761022780] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 14:36:00.185] bt_player[974]:  06:08:16, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761024960] play[KIT_IDLE] vol[60]
+[Oct 21 15:13:41.560] bt_player[993]:  00:13:23, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761027221] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 15:44:17.842] bt_player[525]:  13:21:29, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761029057] play[KIT_IDLE] vol[60]
+[Oct 21 15:58:31.570] bt_player[868]:  02:23:27, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761029911] play[KIT_IDLE] vol[60]
+[Oct 21 16:17:40.072] bt_player[785]:  09:28:12, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761031060] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 16:24:48.390] bt_player[879]:  21:30:22, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761031488] play[KIT_IDLE] vol[60]
+[Oct 21 16:40:59.530] bt_player[482]:  19:57:22, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761032459] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 16:59:09.639] bt_player[281]:  20:33:01, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761033549] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 17:02:26.801] bt_player[317]:  09:22:46, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761033746] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 17:28:23.651] bt_player[608]:  22:02:20, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761035303] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 17:51:36.202] bt_player[915]:  21:31:15, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761036696] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 19:11:04.977] bt_player[607]:  06:39:19, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761041464] play[KIT_IDLE] vol[60]
+[Oct 21 19:33:19.809] bt_player[899]:  15:27:41, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761042799] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 19:38:27.875] bt_player[715]:  03:16:56, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761043107] play[KIT_IDLE] vol[60]
+[Oct 21 19:52:34.325] bt_player[227]:  12:08:57, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761043954] play[KIT_IDLE] vol[60]
+[Oct 21 20:00:53.989] bt_player[897]:  17:30:10, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761044453] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 20:02:55.922] bt_player[956]:  05:49:24, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761044575] play[KIT_IDLE] vol[60]
+[Oct 21 20:14:15.741] bt_player[257]:  18:23:32, [32mINFO [0m [90mprint_monitor:223:[0m  TTS   <X:X> [1761045255] play[KIT_IDLE] vol[60]
+[Oct 21 20:17:13.445] bt_player[246]:  02:39:22, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761045433] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 21:10:22.212] bt_player[144]:  21:08:55, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761048622] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 21:17:13.990] bt_player[866]:  18:56:19, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761049033] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 21:24:58.705] bt_player[723]:  21:42:43, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761049498] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 22:20:16.948] bt_player[508]:  14:35:56, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761052816] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 22:41:00.825] bt_player[903]:  16:17:59, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761054060] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]
+[Oct 21 23:00:14.881] bt_player[653]:  15:51:12, [32mINFO [0m [90mprint_monitor:191:[0m  BT    <X:X> [1761055214] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])
+[Oct 21 23:18:50.708] bt_player[814]:  02:00:47, [32mINFO [0m [90mprint_monitor:205:[0m  MEDIA <X:X> [1761056330] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]

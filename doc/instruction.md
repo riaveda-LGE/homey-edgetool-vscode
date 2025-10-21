@@ -1,10 +1,10 @@
-네가 정리한 주요 로직을 다음 파일의 내용에 업데이트해서 파일단위로 저장할 수 있게 만들어줘. 해당 파일은 preparation - processing - transmission - display 단계로 로깅 준비부터 출력까지 단계를 누락없이 나눴다는거야.
-따라서 네가 분석한 내용중에 중요한 사항을 각 단계중 해당하는 단계에 정리해 줘야되.
-지켜야될 중요한점
-- 장황하지 말것
-- 중요한 내용을 빠트리지 말것
-- 가시적으로 보여주면 더욱 좋음
-- 각 단계에서 관련 파일이 어떤 역할을 한다는게 보여지면 더 좋음
-- 중요한 수정(로직적으로)이 있으면 업데이트를 해줘.
-
-다음은 파일 내용이야. 업데이트가 필요한 파일은 업데이트 후 파일형태로 다운받을 수 있게 만들어줘.
+# 프로젝트 구조 업데이트 지시
+프로젝트에 새 파일들이 추가 되고 기존 파일들이 삭제 되었어.
+아래 두개의 명령을 이용해 폴더/파일 구조를 확실히 잡고 내용을 확인한 뒤 copilot-instruction.md 에 project tree를 업데이트 해줘.
+특히 프로젝트들의 내용을 깊이있게 분석해서 "Project function list" 에 있는 기능에 직접적인 연관이 있을  경우 태그를 달아줘.
+Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode\src" -Recurse -File `
+| Where-Object { $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\test_log\* -and $_.FullName -notlike "*\out\*" } `
+| Select-Object -ExpandProperty FullName
+Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode\doc" -Recurse -File | Select-Object FullName
+Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode\media" -Recurse -File | Select-Object FullName
+Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode" -File | Select-Object Name

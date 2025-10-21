@@ -9,6 +9,7 @@ import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { guessLevel, parseTs } from './time/TimeParser.js';
 import { TimezoneCorrector } from './time/TimezoneHeuristics.js';
+import { compileParserConfig, shouldUseParserForFile, lineToEntryWithParser } from './ParserEngine.js';
 
 const log = getLogger('LogFileIntegration');
 
@@ -42,6 +43,7 @@ export type MergeOptions = {
   warmupTarget?: number;
   /** 커스텀 파서 설정에서 온 files 화이트리스트(glob). 지정되면 여기에 매칭되는 파일만 수집 */
   whitelistGlobs?: string[];
+  parser?: import('./ParserEngine.js').ParserConfig;
 };
 
 /**
@@ -52,6 +54,8 @@ export type MergeOptions = {
 export async function mergeDirectory(opts: MergeOptions) {
   try {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
+    // 파서 컴파일
+    const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
     // 화이트리스트(glob) → "상대경로" 매칭용 정규식 셋으로 변환
     const allowPathRegexes = opts.whitelistGlobs?.length
       ? compileWhitelistPathRegexes(opts.whitelistGlobs)
@@ -105,6 +109,7 @@ export async function mergeDirectory(opts: MergeOptions) {
           (entries: LogEntry[]) => opts.onBatch(entries),
           batchSize,
           opts.signal,
+          compiledParser,
         );
         if (opts.signal?.aborted) {
           log.warn('mergeDirectory: aborted');
@@ -143,11 +148,19 @@ export async function mergeDirectory(opts: MergeOptions) {
       // 모든 파일을 ReverseLineReader로 읽음 → 각 파일 끝→시작(최신→오래된)으로 라인 푸시
       for (const fileName of orderedFiles) {
         const fullPath = path.join(opts.dir, fileName);
+        // ── 커스텀 파서 프리플라이트(파일당 1회) ──
+        let useParserForThisFile = false;
+        if (compiledParser) {
+          try {
+            const rel = fileName.replace(/\\/g, '/'); // opts.dir 기준 상대경로
+            useParserForThisFile = await shouldUseParserForFile(fullPath, rel, compiledParser);
+          } catch {}
+        }
         const rr = await ReverseLineReader.open(fullPath);
         let line: string | null;
         while ((line = await rr.nextLine()) !== null) {
           // fullPath를 넘겨 path/file 일관성 유지
-          const entry = lineToEntry(fullPath, line);
+          const entry = lineToEntryWithParser(fullPath, line, useParserForThisFile ? compiledParser : undefined);
           logs.push(entry); // 전체 logs가 최신→오래된 순
         }
         await rr.close();
@@ -477,8 +490,16 @@ async function streamFileForward(
   emit: (batch: LogEntry[]) => void,
   batchSize: number,
   signal?: AbortSignal,
+  compiledParser?: import('./ParserEngine.js').CompiledParser,
 ) {
   const rs = fs.createReadStream(filePath, { encoding: 'utf8' });
+  // 파일당 1회 프리플라이트
+  let useParserForThisFile = false;
+  if (compiledParser) {
+    try {
+      useParserForThisFile = await shouldUseParserForFile(filePath, filePath.replace(/\\/g,'/'), compiledParser);
+    } catch {}
+  }
   let residual = '';
   const batch: LogEntry[] = [];
 
@@ -497,14 +518,14 @@ async function streamFileForward(
       residual = parts.pop() ?? '';
       for (const line of parts) {
         if (!line) continue;
-        const e = lineToEntry(filePath, line);
+        const e = lineToEntryWithParser(filePath, line, useParserForThisFile ? compiledParser : undefined);
         batch.push(e);
         if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
       }
     });
     rs.on('end', () => {
       if (residual) {
-        const e = lineToEntry(filePath, residual);
+        const e = lineToEntryWithParser(filePath, residual, useParserForThisFile ? compiledParser : undefined);
         batch.push(e);
       }
       // Abort 되었다면 끝부분 잔여 배치도 내보내지 않음
@@ -899,7 +920,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   // 헬퍼: 라인 -> LogEntry (파일명을 source로)
   const toEntry = (fileName: string, line: string): LogEntry => {
     const full = path.join(dir, fileName);
-    return lineToEntry(full, line);
+    return lineToEntryWithParser(full, line, undefined);
   };
 
   // 4) 1차 수집: 균등 할당만큼 per-type 로딩
