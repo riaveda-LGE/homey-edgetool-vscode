@@ -313,6 +313,8 @@ export async function doWork() {
 `edgepanel.buttons.ts`는 버튼 정의의 Single Source of Truth (SSOT)로, 버튼 메타데이터와 DTO 변환을 담당합니다.
 
 ## Homey EdgeTool — Project function list
+### function: 확장_초기화
+> edgetool 확장 모듈이 VS Code에 로드되면서 초기화를 진행 및 확장 패널에 Control/Explorer/Log 뷰어를 생성하는 기능. 확장 패널의 모든 뷰가 정상적으로 보이는데 책임을 짐
 ### function: 로그파싱
 > 파일병합모드로 로그를 열었을 때 주어진 폴더에 있는 로그파일을 읽고 해당 로그의 내용을 파싱해서 버퍼에 저장을 할 수 있도록 하는 기능
 ### function: 로그병합
@@ -341,6 +343,9 @@ homey-edgetool/
 ├─ scripts/                               # 빌드/배포 및 유틸리티 스크립트
 │  ├─ clean-reinstall.ps1                 # 클린 재설치 PowerShell 스크립트
 │  ├─ deploy.js                           # 배포 JavaScript 스크립트
+│  ├─ dummy_log/                          # 더미 로그 생성 스크립트
+│  │  ├─ generate-homey-merged.js         # 병합된 Homey 로그 생성
+│  │  └─ split-log-by-type.js             # 로그 타입별 분할
 │  ├─ get_source/                         # 소스 가져오기 관련 스크립트
 │  │  ├─ export_source_list.ps1           # 소스 목록 내보내기 스크립트
 │  │  ├─ extract_source_list_via_function.ps1 # 함수를 통한 소스 목록 추출 스크립트
@@ -351,19 +356,21 @@ homey-edgetool/
 │     └─ run-merge-bench.ts               # 로그 병합 벤치마크 실행 스크립트
 ├─ src/
 │  ├─ __test__/                           # 중앙화된 테스트 파일들
+│  │  ├─ DefaultBatchSizeIntent.test.ts   # 기본 배치 크기 의도 테스트 # 로그병합
 │  │  ├─ helpers/                         # 테스트 헬퍼 유틸리티
 │  │  │  └─ testFs.ts                     # 테스트 파일 시스템 유틸리티
-│  │  ├─ LogFileIntegration.test.ts       # 로그 파일 통합 테스트 # 로그파싱 # custom_log_parser_설정
+│  │  ├─ LogFileIntegration.test.ts       # 로그 파일 통합 테스트 # 로그병합
 │  │  ├─ MergeMode.test.ts                # 병합 모드 테스트 # 로그병합
-│  │  └─ WarmupVsFull.test.ts             # 워밍업 vs 전체 모드 테스트
+│  │  ├─ ParserTemplateIntegration.test.ts # 파서 템플릿 통합 테스트 # custom_log_parser_설정 # 로그파싱
+│  │  └─ WarmupVsFull.test.ts             # 워밍업 vs 전체 모드 테스트 # 로그병합
 │  │
 │  ├─ extension/                          # VS Code 확장 진입점 및 확장 전용 코드
-│  │  ├─ main.ts                          # 확장 메인 진입점
+│  │  ├─ main.ts                          # 확장 메인 진입점 # 확장_초기화 # custom_log_parser_설정
 │  │  ├─ readme.md                        # 확장 모듈 설명 및 구조 문서
 │  │  ├─ setup/
 │  │  │  └─ parserConfigSeeder.ts         # 파서 설정 초기화 및 시딩 로직 # custom_log_parser_설정
 │  │  ├─ commands/
-│  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅 및 버튼 이벤트 처리
+│  │  │  ├─ commandHandlers.ts            # 메인 명령 핸들러 라우팅 및 버튼 이벤트 처리 # custom_log_parser_설정
 │  │  │  ├─ CommandHandlersConnect.ts     # 연결 관련 명령 핸들러 (호스트 연결/해제)
 │  │  │  ├─ CommandHandlersGit.ts         # Git 관련 명령 핸들러 (pull/push 등)
 │  │  │  ├─ CommandHandlersHomey.ts       # Homey 디바이스 제어 명령 핸들러
@@ -371,7 +378,7 @@ homey-edgetool/
 │  │  │  ├─ CommandHandlersLogging.ts     # 로깅 관련 명령 핸들러
 │  │  │  ├─ CommandHandlersParser.ts      # 로그 파서 관련 명령 핸들러 # custom_log_parser_설정
 │  │  │  ├─ CommandHandlersUpdate.ts      # 업데이트 관련 명령 핸들러
-│  │  │  ├─ CommandHandlersWorkspace.ts   # 워크스페이스 관련 명령 핸들러
+│  │  │  ├─ CommandHandlersWorkspace.ts   # 워크스페이스 관련 명령 핸들러 # custom_log_parser_설정
 │  │  │  ├─ edgepanel.buttons.ts           # Edge Panel 버튼 정의 및 메타데이터 SSOT
 │  │  │  └─ ICommandHandlers.ts           # 명령 핸들러 인터페이스 정의
 │  │  ├─ editors/
@@ -387,15 +394,15 @@ homey-edgetool/
 │  │  │  ├─ IPerfMonitorComponents.ts     # 성능 모니터 컴포넌트 인터페이스
 │  │  │  └─ IPerfMonitorPanelComponents.ts # 성능 모니터 패널 컴포넌트 인터페이스
 │  │  ├─ messaging/
-│  │  │  ├─ hostWebviewBridge.ts          # 호스트 ↔ 웹뷰 메시지 브리지 구현
+│  │  │  ├─ hostWebviewBridge.ts          # 호스트 ↔ 웹뷰 메시지 브리지 구현 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ messageTypes.ts               # 공용 메시지 타입 정의
 │  │  │  └─ bridge.ts                     # 메시징 브리지 유틸리티
 │  │  ├─ panels/
-│  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자 및 Webview 관리
-│  │  │  ├─ EdgePanelActionRouter.ts      # 버튼 이벤트 → 액션 라우팅 로직
+│  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자 및 Webview 관리 # 확장_초기화
+│  │  │  ├─ EdgePanelActionRouter.ts      # 버튼 이벤트 → 액션 라우팅 로직 # 확장_초기화
 │  │  │  ├─ LogConnectionPicker.ts        # 로그 연결 선택 QuickPick 구현
-│  │  │  ├─ LogViewerPanelManager.ts      # 독립 로그 뷰어 패널 컨트롤러 # custom_log_parser_설정
-│  │  │  └─ explorerBridge.ts             # 파일 탐색기 브리지 구현
+│  │  │  ├─ LogViewerPanelManager.ts      # 독립 로그 뷰어 패널 컨트롤러 # 로그파싱 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신 # custom_log_parser_설정
+│  │  │  └─ explorerBridge.ts             # 파일 탐색기 브리지 구현 # 확장_초기화
 │  │  └─ update/
 │  │     └─ updater.ts                    # 확장 업데이트 관리 로직
 │  │
@@ -403,7 +410,7 @@ homey-edgetool/
 │  │  ├─ readme.md                        # 코어 모듈 설명 문서
 │  │  ├─ config/
 │  │  │  ├─ schema.ts                     # 사용자 설정 스키마 정의 # custom_log_parser_설정
-│  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리 구현 # custom_log_parser_설정
+│  │  │  └─ userdata.ts                   # 워크스페이스 설정 관리 구현 # custom_log_parser_설정 # 확장_초기화
 │  │  ├─ connection/
 │  │  │  ├─ ConnectionManager.ts          # 호스트별 연결 상태 관리
 │  │  │  ├─ ExecRunner.ts                 # 프로세스 실행 표준화 유틸리티
@@ -414,37 +421,37 @@ homey-edgetool/
 │  │  │  ├─ extension-logger.ts           # OutputChannel 기반 로깅 싱크 구현
 │  │  │  └─ perf.ts                       # 성능 계측 데코레이터
 │  │  ├─ logs/
-│  │  │  ├─ ChunkWriter.ts                # 로그 청크 쓰기 유틸리티
-│  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼 관리 (4-버퍼 시스템) # 로그파싱
-│  │  │  ├─ IndexedLogStore.ts            # 인덱스 기반 로그 저장소
-│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합 및 병합 컨트롤러 # 로그파싱 # custom_log_parser_설정
-│  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기 구현 # 로그파싱
+│  │  │  ├─ ChunkWriter.ts                # 로그 청크 쓰기 유틸리티 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼 관리 (4-버퍼 시스템) # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ IndexedLogStore.ts            # 인덱스 기반 로그 저장소 # 로그병합
+│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합 및 병합 컨트롤러 # 로그파싱 # custom_log_parser_설정 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기 구현 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ LogSearch.ts                  # 로그 검색 기능 구현
-│  │  │  ├─ ManifestTypes.ts              # 로그 매니페스트 타입 정의 # 로그파싱
-│  │  │  ├─ ManifestWriter.ts             # 로그 매니페스트 쓰기 로직 # 로그파싱
-│  │  │  ├─ PagedReader.ts                # 페이지드 로그 리더 구현
-│  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스
+│  │  │  ├─ ManifestTypes.ts              # 로그 매니페스트 타입 정의 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ ManifestWriter.ts             # 로그 매니페스트 쓰기 로직 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ PagedReader.ts                # 페이지드 로그 리더 구현 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ ParserEngine.ts               # 로그 파싱 엔진 구현 # 로그파싱 # custom_log_parser_설정
 │  │  │  ├─ time/                         # 시간 관련 유틸리티
 │  │  │  │  ├─ TimeParser.ts              # 로그 시간 파서 # 로그파싱
 │  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱 로직 # 로그파싱
 │  │  ├─ sessions/
 │  │  │  └─ LogSessionManager.ts          # 로그 세션 관리 구현 # custom_log_parser_설정
-│  │  └─ transfer/
-│  │     └─ FileTransferService.ts        # 파일 전송 서비스 (tar/base64 over SSH)
+│  │  ├─ transfer/
+│  │  │  └─ FileTransferService.ts        # 파일 전송 서비스 (tar/base64 over SSH)
 │  │  └─ workspace/
 │  │     └─ init.ts                        # 워크스페이스 초기화 로직
 │  │
 │  ├─ shared/                             # 공용 유틸리티 및 타입
-│  │  ├─ const.ts                         # 상수 정의 모음 # custom_log_parser_설정
-│  │  ├─ env.ts                           # 환경 변수 관리 유틸리티
+│  │  ├─ const.ts                         # 상수 정의 모음 # custom_log_parser_설정 # 확장_초기화 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합
+│  │  ├─ env.ts                           # 환경 변수 관리 유틸리티 # 확장_초기화
 │  │  ├─ errors.ts                        # 에러 처리 및 정의
-│  │  ├─ featureFlags.ts                  # 기능 플래그 관리
+│  │  ├─ featureFlags.ts                  # 기능 플래그 관리 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  ├─ ipc/                             # IPC 메시지 관련
-│  │  │  └─ messages.ts                   # IPC 메시지 정의 및 타입
+│  │  │  └─ messages.ts                   # IPC 메시지 정의 및 타입 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합 # 확장_초기화
 │  │  ├─ types.ts                         # 공용 타입 정의
 │  │  ├─ ui-input.ts                      # UI 입력 유틸리티 (입력창/선택창 표준화)
-│  │  └─ utils.ts                         # 공용 유틸리티 함수들
+│  │  └─ utils.ts                         # 공용 유틸리티 함수들 # custom_log_parser_설정
 │  │
 │  ├─ types/                              # 타입 정의 파일들
 │  │  ├─ style.d.ts                       # 스타일 관련 타입 정의
@@ -453,36 +460,36 @@ homey-edgetool/
 │  └─ webviewers/                         # Webview 리소스 (ES 모듈 기반)
 │     ├─ readme.md                        # Webviewers 모듈 설명 문서
 │     ├─ edge-panel/
-│     │  ├─ index.html                    # Edge Panel 웹뷰 HTML 엔트리
+│     │  ├─ index.html                    # Edge Panel 웹뷰 HTML 엔트리 # 확장_초기화
 │     │  ├─ app/
-│     │  │  ├─ index.ts                   # Edge Panel 부트스트랩 및 스토어 초기화
+│     │  │  ├─ index.ts                   # Edge Panel 부트스트랩 및 스토어 초기화 # 확장_초기화 # 스크롤에_따른_로그_뷰_로드_갱신
 │     │  │  ├─ store.ts                   # Zustand 기반 상태 관리 스토어
-│     │  │  ├─ reducer.ts                 # 상태 업데이트 순수 함수 (MVU 패턴)
-│     │  │  ├─ actions.ts                 # 액션 타입 및 크리에이터 정의
-│     │  │  └─ effects.ts                 # 부수효과 처리 (postMessage, 타이머 등)
+│     │  │  ├─ reducer.ts                 # 상태 업데이트 순수 함수 (MVU 패턴) # 확장_초기화 # 스크롤에_따른_로그_뷰_로드_갱신
+│     │  │  ├─ actions.ts                 # 액션 타입 및 크리에이터 정의 # 확장_초기화 # 스크롤에_따른_로그_뷰_로드_갱신
+│     │  │  └─ effects.ts                 # 부수효과 처리 (postMessage, 타이머 등) # 확장_초기화
 │     │  ├─ views/
-│     │  │  ├─ AppView.ts                 # 루트 앱 뷰 및 그리드 레이아웃 관리
-│     │  │  ├─ ControlsView.ts            # 컨트롤 섹션 뷰 및 버튼 렌더링
+│     │  │  ├─ AppView.ts                 # 루트 앱 뷰 및 그리드 레이아웃 관리 # 확장_초기화 # 스크롤에_따른_로그_뷰_로드_갱신
+│     │  │  ├─ ControlsView.ts            # 컨트롤 섹션 뷰 및 버튼 렌더링 # 확장_초기화
 │     │  │  ├─ Layout/
-│     │  │  │  ├─ Panel.ts                # 공통 패널 컨테이너 및 타이틀바 컴포넌트
-│     │  │  │  └─ Splitter.ts             # 상단/중단 스플리터 컴포넌트
+│     │  │  │  ├─ Panel.ts                # 공통 패널 컨테이너 및 타이틀바 컴포넌트 # 확장_초기화
+│     │  │  │  └─ Splitter.ts             # 상단/중단 스플리터 컴포넌트 # 확장_초기화
 │     │  │  ├─ Explorer/
-│     │  │  │  ├─ ExplorerView.ts         # 파일 탐색기 패널 전체 뷰
-│     │  │  │  ├─ TreeView.ts             # 트리 렌더링, 키보드 내비게이션, 가상화
-│     │  │  │  └─ ContextMenu.ts          # 우클릭 메뉴 및 인라인 폼/확인 컴포넌트
+│     │  │  │  ├─ ExplorerView.ts         # 파일 탐색기 패널 전체 뷰 # 확장_초기화
+│     │  │  │  ├─ TreeView.ts             # 트리 렌더링, 키보드 내비게이션, 가상화 # 확장_초기화
+│     │  │  │  └─ ContextMenu.ts          # 우클릭 메뉴 및 인라인 폼/확인 컴포넌트 # 확장_초기화
 │     │  │  └─ Logs/LogsView.ts           # 로그 패널 뷰, 줄 누적 및 가상 스크롤 # 스크롤에_따른_로그_뷰_로드_갱신
 │     │  ├─ services/
-│     │  │  ├─ HostBridge.ts              # postMessage 이벤트 → 액션 변환 브리지
-│     │  │  ├─ ExplorerService.ts         # 파일 탐색기 API 래핑 서비스
-│     │  │  ├─ LogService.ts              # 로그 추가/리셋 래핑 서비스
-│     │  │  └─ PersistService.ts          # 패널 상태 저장/복원 서비스
+│     │  │  ├─ HostBridge.ts              # postMessage 이벤트 → 액션 변환 브리지 # 확장_초기화
+│     │  │  ├─ ExplorerService.ts         # 파일 탐색기 API 래핑 서비스 # 확장_초기화
+│     │  │  ├─ LogService.ts              # 로그 추가/리셋 래핑 서비스 # 스크롤에_따른_로그_뷰_로드_갱신
+│     │  │  └─ PersistService.ts          # 패널 상태 저장/복원 서비스 # 확장_초기화
 │     │  ├─ styles/
-│     │  │  ├─ tokens.css                 # VS Code 테마 토큰 → 로컬 변수 매핑
-│     │  │  ├─ base.css                   # 리셋, 타이포그래피, 색상 토큰
-│     │  │  ├─ layout.css                 # #root 그리드 및 패널 배치 스타일
-│     │  │  └─ components.css             # Panel/Titlebar/Tree/ContextMenu 컴포넌트 스타일
+│     │  │  ├─ tokens.css                 # VS Code 테마 토큰 → 로컬 변수 매핑 # 확장_초기화
+│     │  │  ├─ base.css                   # 리셋, 타이포그래피, 색상 토큰 # 확장_초기화
+│     │  │  ├─ layout.css                 # #root 그리드 및 패널 배치 스타일 # 확장_초기화
+│     │  │  └─ components.css             # Panel/Titlebar/Tree/ContextMenu 컴포넌트 스타일 # 확장_초기화
 │     │  └─ types/
-│     │     └─ model.ts                   # Edge Panel 상태/트리노드/섹션 타입 정의
+│     │     └─ model.ts                   # Edge Panel 상태/트리노드/섹션 타입 정의 # 확장_초기화
 │     ├─ log-viewer/                        # 로그 뷰어 웹뷰 리소스
 │     │  ├─ index.html                    # 로그 뷰어 웹뷰 HTML 엔트리
 │     │  ├─ react/
@@ -491,16 +498,16 @@ homey-edgetool/
 │     │  │  │  ├─ Bookmarks.tsx           # 북마크 관리 컴포넌트
 │     │  │  │  ├─ BookmarkSquare.tsx      # 북마크 사각형 표시 컴포넌트
 │     │  │  │  ├─ FilterDialog.tsx        # 필터 설정 다이얼로그
-│     │  │  │  ├─ Grid.tsx                # 로그 그리드 컴포넌트
+│     │  │  │  ├─ Grid.tsx                # 로그 그리드 컴포넌트 # 스크롤에_따른_로그_뷰_로드_갱신
 │     │  │  │  ├─ GridHeader.tsx          # 그리드 헤더 컴포넌트
 │     │  │  │  ├─ HighlightPopover.tsx    # 하이라이트 팝오버 컴포넌트
 │     │  │  │  ├─ MessageDialog.tsx       # 메시지 다이얼로그 컴포넌트
 │     │  │  │  ├─ SearchDialog.tsx        # 검색 설정 다이얼로그
 │     │  │  │  ├─ SearchPanel.tsx         # 검색 패널 컴포넌트
-│     │  │  │  └─ Toolbar.tsx             # 툴바 컴포넌트
-│     │  │  ├─ ipc.ts                     # React 앱 IPC 통신 유틸리티
+│     │  │  │  └─ Toolbar.tsx             # 툴바 컴포넌트 # 스크롤에_따른_로그_뷰_로드_갱신
+│     │  │  ├─ ipc.ts                     # React 앱 IPC 통신 유틸리티 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합
 │     │  │  ├─ main.tsx                   # React 앱 진입점 및 렌더링
-│     │  │  ├─ store.ts                   # Zustand 기반 상태 관리
+│     │  │  ├─ store.ts                   # Zustand 기반 상태 관리 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합
 │     │  │  └─ types.ts                   # React 앱 타입 정의
 │     │  └─ styles/
 │     │     ├─ tailwind.css               # Tailwind CSS 스타일시트
@@ -516,6 +523,7 @@ homey-edgetool/
 ├─ .gitignore                             # Git 제외 파일
 ├─ .prettierignore                        # Prettier 제외 파일
 ├─ .prettierrc                            # Prettier 설정
+├─ diff.txt                               # 차이점 파일
 ├─ eslint.config.js                       # ESLint 설정
 ├─ homey-edgetool-0.0.2.vsix              # 빌드된 VS Code 확장 파일
 ├─ jest.setup.ts                          # Jest 테스트 설정

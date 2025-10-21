@@ -143,8 +143,9 @@ foreach ($relPath in $lines) {
         $full = (Get-Item -LiteralPath $filePath).FullName
         if (-not $seen.Add($full)) { continue }
 
-        # 제목 줄에 목록 그대로 남김
-        [void]$sb.AppendLine($relPath)
+        # 제목 줄에 프로젝트 루트 기준 상대 경로로 남김
+        $relFilePath = $full.Substring($ProjectRoot.Length + 1).Replace('\', '/')
+        [void]$sb.AppendLine($relFilePath)
         $currentLineCount++
 
         # 파일을 UTF-8로 강제 읽기

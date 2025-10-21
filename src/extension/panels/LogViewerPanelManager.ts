@@ -15,7 +15,6 @@ import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
 import { readParserWhitelistGlobs } from '../../core/config/userdata.js';
 import { readParserConfigJson } from '../../core/config/userdata.js';
-import { ensureWorkspaceInitialized } from '../../core/workspace/init.js';
 
 export class LogViewerPanelManager {
   private log = getLogger('LogViewerPanelManager');
@@ -148,8 +147,7 @@ export class LogViewerPanelManager {
     this.initialSent = false;
     this.log.info(`merge: start (dir=${dir})`);
 
-    // 워크스페이스 준비(초기 1회 초기화 포함) 보장
-    await ensureWorkspaceInitialized(this.context);
+    // 워크스페이스 준비는 확장 활성화/변경 단계에서 이미 보장됨
 
     // 🔒 샘플링 상태 리셋 (권장)
     this.progAcc = 0;

@@ -8,6 +8,7 @@ import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
+import { RAW_DIR_NAME } from '../../shared/const.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 import { migrateParserConfigIfNeeded } from '../setup/parserConfigSeeder.js';
 
@@ -67,6 +68,15 @@ export class CommandHandlersWorkspace {
       this.workspaceInfoCache = undefined; // 강제 무효화
       const nextInfo = await this.getCachedWorkspaceInfo();
       log.debug(`[debug] changeWorkspaceQuick: next ws=${nextInfo.wsDirUri.fsPath}`);
+
+      // 정책: 워크스페이스 변경 시 새 워크스페이스의 raw 폴더 제거
+      try {
+        const rawUri = vscode.Uri.joinPath(nextInfo.wsDirUri, RAW_DIR_NAME);
+        await vscode.workspace.fs.delete(rawUri, { recursive: true, useTrash: false });
+        log.info(`removed raw folder in new workspace: ${rawUri.fsPath}`);
+      } catch {
+        log.debug('no raw folder to remove in new workspace');
+      }
 
       // .config 마이그레이션(새 ws에 없으면 이전 ws의 .config 복사, 둘 다 없으면 템플릿 시드)
       try {
