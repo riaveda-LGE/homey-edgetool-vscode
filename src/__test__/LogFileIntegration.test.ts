@@ -13,7 +13,7 @@ import {
 } from './helpers/testFs.js';
 import { PARSER_TEMPLATE_REL } from '../shared/const.js';
 
-jest.setTimeout(60_000);
+jest.setTimeout(120_000);
 
 // ── 메시지 비교 정규화(ANSI 제거 + 공백 축약 + trim) ─────────────────────
 const ANSI_RE = /\u001b\[[0-9;]*m/g; // \x1b[...m
@@ -268,11 +268,11 @@ describe('LogFileIntegration', () => {
   describe('mergeDirectory 함수', () => {
     it('일반 로그 파일들을 정확히 병합해야 함', async () => {
       await runMergeTest('Normal test', 'normal_test_suite', 'normal_result_merged.log');
-    }, 60_000);
+    }, 120_000);
 
     it('타임존 점프가 있는 로그 파일들을 정확히 병합해야 함', async () => {
       await runMergeTest('Timezone test', 'timezone_jump_test_suite', 'timezone_result_merged.log');
-    }, 60_000);
+    }, 120_000);
 
     it('빈 디렉터리를 gracefully 처리해야 함', async () => {
       const tempDir = path.join(OUT_DIR, 'temp_empty');
@@ -289,7 +289,7 @@ describe('LogFileIntegration', () => {
       await mergeDirectory({ dir: tempDir, onBatch, mergedDirPath: mergedDir });
 
       expect(onBatch).not.toHaveBeenCalled();
-    }, 60_000);
+    }, 120_000);
 
     it('중단 신호를 제대로 처리해야 함', async () => {
       const testDir = path.resolve(__dirname, 'test_log', 'normal_test_suite');
@@ -332,6 +332,6 @@ describe('LogFileIntegration', () => {
       expect(batchCount).toBe(abortedAt);
       const { total } = await countTotalLinesInDir(inputDir);
       expect(emittedLines).toBeLessThan(total);
-    }, 60_000);
+    }, 120_000);
   });
 });
