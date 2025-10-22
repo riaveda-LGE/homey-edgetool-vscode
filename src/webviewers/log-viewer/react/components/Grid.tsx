@@ -214,7 +214,8 @@ export function Grid() {
     // 점프 시에만 프로그램적 스크롤 적용(+ onScroll 무시)
     ignoreScrollRef.current = true;
     lastWindowStartChangeTimeRef.current = Date.now();
-    parentRef.current.scrollTop = Math.max(0, (idx - 1) * m.rowH);
+    const headerOffset = listRef.current?.offsetTop ?? 0;
+    parentRef.current.scrollTop = headerOffset + Math.max(0, (idx - 1) * m.rowH);
     // 다음 프레임에서 해제
     requestAnimationFrame(() => {
       ignoreScrollRef.current = false;

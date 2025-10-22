@@ -1,0 +1,752 @@
+[
+  {
+    "time": "Oct 20 00:23:38.168",
+    "process": "homey-matter",
+    "pid": "1672",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 00:33:21.515",
+    "process": "homey-matter",
+    "pid": "2939",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 00:53:23.917",
+    "process": "homey-matter",
+    "pid": "1551",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 01:08:31.748",
+    "process": "homey-matter",
+    "pid": "2626",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 01:19:22.662",
+    "process": "homey-matter",
+    "pid": "2244",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 01:23:50.005",
+    "process": "homey-matter",
+    "pid": "1562",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 01:48:45.685",
+    "process": "homey-matter",
+    "pid": "2182",
+    "message": "[1760892525.622585][2182:2182] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 01:56:39.652",
+    "process": "homey-matter",
+    "pid": "1641",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 02:21:18.502",
+    "process": "homey-matter",
+    "pid": "2565",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 02:41:50.466",
+    "process": "homey-matter",
+    "pid": "2812",
+    "message": "[1760895710.173774][2812:2812] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 03:28:41.873",
+    "process": "homey-matter",
+    "pid": "1842",
+    "message": "[1760898521.272735][1842:1842] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 03:56:31.330",
+    "process": "homey-matter",
+    "pid": "1954",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 03:58:46.129",
+    "process": "homey-matter",
+    "pid": "2258",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 04:00:04.329",
+    "process": "homey-matter",
+    "pid": "1721",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 05:05:36.380",
+    "process": "homey-matter",
+    "pid": "2591",
+    "message": "[1760904336.524116][2591:2591] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 05:16:40.352",
+    "process": "homey-matter",
+    "pid": "2680",
+    "message": "[1760905000.942096][2680:2680] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 05:33:03.674",
+    "process": "homey-matter",
+    "pid": "2271",
+    "message": "[1760905983.143792][2271:2271] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 05:36:12.458",
+    "process": "homey-matter",
+    "pid": "1958",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 05:47:38.862",
+    "process": "homey-matter",
+    "pid": "1535",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 06:27:51.826",
+    "process": "homey-matter",
+    "pid": "1948",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 06:59:57.988",
+    "process": "homey-matter",
+    "pid": "2694",
+    "message": "[1760911197.238469][2694:2694] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 07:58:27.492",
+    "process": "homey-matter",
+    "pid": "2904",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 08:30:45.755",
+    "process": "homey-matter",
+    "pid": "1652",
+    "message": "[1760916645.303124][1652:1652] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 08:41:53.783",
+    "process": "homey-matter",
+    "pid": "2195",
+    "message": "[1760917313.657632][2195:2195] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 09:07:24.601",
+    "process": "homey-matter",
+    "pid": "1845",
+    "message": "[1760918844.961371][1845:1845] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 09:26:01.118",
+    "process": "homey-matter",
+    "pid": "2664",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 09:28:02.674",
+    "process": "homey-matter",
+    "pid": "1601",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 09:33:59.835",
+    "process": "homey-matter",
+    "pid": "2788",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 09:36:55.437",
+    "process": "homey-matter",
+    "pid": "2904",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 09:49:40.749",
+    "process": "homey-matter",
+    "pid": "2862",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 09:52:05.754",
+    "process": "homey-matter",
+    "pid": "1542",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 11:00:21.679",
+    "process": "homey-matter",
+    "pid": "2353",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 11:10:07.154",
+    "process": "homey-matter",
+    "pid": "2170",
+    "message": "[1760926207.477010][2170:2170] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 11:32:50.961",
+    "process": "homey-matter",
+    "pid": "1543",
+    "message": "[1760927570.667975][1543:1543] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 11:34:15.618",
+    "process": "homey-matter",
+    "pid": "1877",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 11:41:48.716",
+    "process": "homey-matter",
+    "pid": "2258",
+    "message": "[1760928108.389451][2258:2258] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 11:45:07.570",
+    "process": "homey-matter",
+    "pid": "2024",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 12:25:25.413",
+    "process": "homey-matter",
+    "pid": "2335",
+    "message": "[1760930725.998289][2335:2335] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 12:52:41.926",
+    "process": "homey-matter",
+    "pid": "1906",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 12:58:45.495",
+    "process": "homey-matter",
+    "pid": "2689",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 13:18:13.859",
+    "process": "homey-matter",
+    "pid": "1663",
+    "message": "[1760933893.622891][1663:1663] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 13:19:21.718",
+    "process": "homey-matter",
+    "pid": "2128",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 13:29:31.963",
+    "process": "homey-matter",
+    "pid": "2246",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 13:31:50.237",
+    "process": "homey-matter",
+    "pid": "1550",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 13:54:26.691",
+    "process": "homey-matter",
+    "pid": "2719",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 14:05:32.389",
+    "process": "homey-matter",
+    "pid": "2448",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 15:34:58.290",
+    "process": "homey-matter",
+    "pid": "2776",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 16:03:18.542",
+    "process": "homey-matter",
+    "pid": "2314",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 17:13:27.406",
+    "process": "homey-matter",
+    "pid": "2832",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 19:13:07.299",
+    "process": "homey-matter",
+    "pid": "2426",
+    "message": "[1760955187.983025][2426:2426] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 20 19:16:39.088",
+    "process": "homey-matter",
+    "pid": "2104",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 19:32:06.592",
+    "process": "homey-matter",
+    "pid": "2971",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 19:41:12.829",
+    "process": "homey-matter",
+    "pid": "1693",
+    "message": "[1760956872.862638][1693:1693] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 19:45:50.812",
+    "process": "homey-matter",
+    "pid": "2692",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 20:43:40.356",
+    "process": "homey-matter",
+    "pid": "1665",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 20:45:05.131",
+    "process": "homey-matter",
+    "pid": "2940",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 21:28:00.531",
+    "process": "homey-matter",
+    "pid": "2450",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 20 21:51:32.733",
+    "process": "homey-matter",
+    "pid": "1576",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 22:10:42.171",
+    "process": "homey-matter",
+    "pid": "2209",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 20 22:12:46.862",
+    "process": "homey-matter",
+    "pid": "2749",
+    "message": "[1760965966.139887][2749:2749] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 20 22:33:08.943",
+    "process": "homey-matter",
+    "pid": "2201",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 20 23:58:31.578",
+    "process": "homey-matter",
+    "pid": "1892",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 00:03:55.812",
+    "process": "homey-matter",
+    "pid": "2520",
+    "message": "[1760972635.378950][2520:2520] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 00:09:06.288",
+    "process": "homey-matter",
+    "pid": "2389",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 00:31:28.236",
+    "process": "homey-matter",
+    "pid": "1991",
+    "message": "[1760974288.679805][1991:1991] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 00:38:24.875",
+    "process": "homey-matter",
+    "pid": "2149",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 00:54:41.332",
+    "process": "homey-matter",
+    "pid": "2655",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 02:08:31.528",
+    "process": "homey-matter",
+    "pid": "1530",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 02:20:20.920",
+    "process": "homey-matter",
+    "pid": "2890",
+    "message": "[1760980820.472892][2890:2890] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 02:23:20.149",
+    "process": "homey-matter",
+    "pid": "2503",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 02:38:59.882",
+    "process": "homey-matter",
+    "pid": "1893",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 02:42:02.105",
+    "process": "homey-matter",
+    "pid": "2517",
+    "message": "[1760982122.508065][2517:2517] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 02:50:51.408",
+    "process": "homey-matter",
+    "pid": "2555",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 03:04:29.613",
+    "process": "homey-matter",
+    "pid": "1810",
+    "message": "[1760983469.509670][1810:1810] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 03:23:27.093",
+    "process": "homey-matter",
+    "pid": "1996",
+    "message": "[1760984607.984246][1996:1996] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 03:40:31.457",
+    "process": "homey-matter",
+    "pid": "2497",
+    "message": "[1760985631.658350][2497:2497] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 04:00:39.196",
+    "process": "homey-matter",
+    "pid": "2944",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 04:01:07.279",
+    "process": "homey-matter",
+    "pid": "2013",
+    "message": "[1760986867.161263][2013:2013] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 04:39:00.250",
+    "process": "homey-matter",
+    "pid": "1503",
+    "message": "[1760989140.120225][1503:1503] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 04:48:24.280",
+    "process": "homey-matter",
+    "pid": "2115",
+    "message": "[1760989704.626016][2115:2115] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 05:11:36.095",
+    "process": "homey-matter",
+    "pid": "2258",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 05:24:03.242",
+    "process": "homey-matter",
+    "pid": "2714",
+    "message": "[1760991843.287761][2714:2714] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 05:29:08.244",
+    "process": "homey-matter",
+    "pid": "2282",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 05:40:28.255",
+    "process": "homey-matter",
+    "pid": "2478",
+    "message": "[1760992828.540403][2478:2478] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 05:51:44.149",
+    "process": "homey-matter",
+    "pid": "1961",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 05:57:13.961",
+    "process": "homey-matter",
+    "pid": "1587",
+    "message": "[1760993833.908974][1587:1587] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 05:57:43.790",
+    "process": "homey-matter",
+    "pid": "2392",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 06:02:42.325",
+    "process": "homey-matter",
+    "pid": "2397",
+    "message": "[1760994162.538360][2397:2397] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 06:25:31.416",
+    "process": "homey-matter",
+    "pid": "2737",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 07:59:44.674",
+    "process": "homey-matter",
+    "pid": "2078",
+    "message": "[1761001184.271193][2078:2078] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 08:52:51.797",
+    "process": "homey-matter",
+    "pid": "2883",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 08:54:21.200",
+    "process": "homey-matter",
+    "pid": "1598",
+    "message": "[1761004461.231141][1598:1598] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 09:16:51.242",
+    "process": "homey-matter",
+    "pid": "2073",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 09:50:39.804",
+    "process": "homey-matter",
+    "pid": "1975",
+    "message": "[1761007839.446169][1975:1975] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 10:23:37.782",
+    "process": "homey-matter",
+    "pid": "1808",
+    "message": "[1761009817.624098][1808:1808] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 10:33:16.802",
+    "process": "homey-matter",
+    "pid": "2082",
+    "message": "[1761010396.906075][2082:2082] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 10:53:23.966",
+    "process": "homey-matter",
+    "pid": "2239",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 12:31:16.650",
+    "process": "homey-matter",
+    "pid": "2472",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 12:38:58.780",
+    "process": "homey-matter",
+    "pid": "2777",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 12:43:40.039",
+    "process": "homey-matter",
+    "pid": "1672",
+    "message": "[1761018220.989042][1672:1672] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 13:45:33.413",
+    "process": "homey-matter",
+    "pid": "2772",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 14:01:17.624",
+    "process": "homey-matter",
+    "pid": "2903",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 14:50:42.403",
+    "process": "homey-matter",
+    "pid": "2990",
+    "message": "[1761025842.299372][2990:2990] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 14:52:53.551",
+    "process": "homey-matter",
+    "pid": "2182",
+    "message": "[1761025973.281007][2182:2182] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 15:18:53.247",
+    "process": "homey-matter",
+    "pid": "2290",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 15:38:33.721",
+    "process": "homey-matter",
+    "pid": "2060",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 15:55:54.754",
+    "process": "homey-matter",
+    "pid": "2039",
+    "message": "[1761029754.662019][2039:2039] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 15:59:07.053",
+    "process": "homey-matter",
+    "pid": "2892",
+    "message": "[1761029947.128482][2892:2892] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 16:07:53.838",
+    "process": "homey-matter",
+    "pid": "2547",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 16:29:10.748",
+    "process": "homey-matter",
+    "pid": "2358",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 16:41:43.651",
+    "process": "homey-matter",
+    "pid": "2913",
+    "message": "[1761032503.667865][2913:2913] CHIP:TOO: Set up stack"
+  },
+  {
+    "time": "Oct 21 16:57:15.714",
+    "process": "homey-matter",
+    "pid": "2876",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 16:59:54.866",
+    "process": "homey-matter",
+    "pid": "1711",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 17:42:00.631",
+    "process": "homey-matter",
+    "pid": "1599",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 17:45:48.444",
+    "process": "homey-matter",
+    "pid": "2352",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 17:53:17.380",
+    "process": "homey-matter",
+    "pid": "1716",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 18:21:40.818",
+    "process": "homey-matter",
+    "pid": "1988",
+    "message": "[1761038500.154801][1988:1988] CHIP:-: initSealStorage Result = 0"
+  },
+  {
+    "time": "Oct 21 19:56:09.917",
+    "process": "homey-matter",
+    "pid": "1601",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 19:58:54.238",
+    "process": "homey-matter",
+    "pid": "1968",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 21:57:08.645",
+    "process": "homey-matter",
+    "pid": "1788",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 22:00:08.857",
+    "process": "homey-matter",
+    "pid": "2589",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 22:30:58.929",
+    "process": "homey-matter",
+    "pid": "2243",
+    "message": "[info - Matter] Constructing service"
+  },
+  {
+    "time": "Oct 21 23:01:20.852",
+    "process": "homey-matter",
+    "pid": "2932",
+    "message": "[info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock"
+  },
+  {
+    "time": "Oct 21 23:02:42.200",
+    "process": "homey-matter",
+    "pid": "1544",
+    "message": "[info - Matter] Initializing service"
+  },
+  {
+    "time": "Oct 21 23:52:23.961",
+    "process": "homey-matter",
+    "pid": "1507",
+    "message": "[info - Matter] Initializing service"
+  }
+]

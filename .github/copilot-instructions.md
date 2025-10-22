@@ -226,8 +226,8 @@ homey-edgetool/
 │  │  │  ├─ LogSearch.ts                  # 로그 검색 기능 구현
 │  │  │  ├─ ManifestTypes.ts              # 로그 매니페스트 타입 정의 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ ManifestWriter.ts             # 로그 매니페스트 쓰기 로직 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
-│  │  │  ├─ PagedReader.ts                # 페이지드 로그 리더 구현 # 스크롤에_따른_로그_뷰_로드_갱신
-│  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ PagedReader.ts                # 페이지드 로그 리더 구현 # 스크롤에_따른_로그_뷰_로드_갱신 #로그병합
+│  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스 # 스크롤에_따른_로그_뷰_로드_갱신 #로그병합
 │  │  │  ├─ ParserEngine.ts               # 로그 파싱 엔진 구현 # 로그파싱 # custom_log_parser_설정
 │  │  │  ├─ time/                         # 시간 관련 유틸리티
 │  │  │  │  ├─ TimeParser.ts              # 로그 시간 파서 # 로그파싱
@@ -245,7 +245,7 @@ homey-edgetool/
 │  │  ├─ errors.ts                        # 에러 처리 및 정의
 │  │  ├─ featureFlags.ts                  # 기능 플래그 관리 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  ├─ ipc/                             # IPC 메시지 관련
-│  │  │  └─ messages.ts                   # IPC 메시지 정의 및 타입 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합 # 확장_초기화
+│  │  │  └─ messages.ts                   # IPC 메시지 정의 및 타입 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합 # 확장_초기화 # 로그파싱 # custom_log_parser_설정
 │  │  ├─ types.ts                         # 공용 타입 정의
 │  │  ├─ ui-input.ts                      # UI 입력 유틸리티 (입력창/선택창 표준화)
 │  │  └─ utils.ts                         # 공용 유틸리티 함수들 # custom_log_parser_설정

@@ -1,5 +1,12 @@
-// === src/shared/ipc/messages.ts ===
 // Host ↔ Webview 공용 메시지 타입 (런타임 의존 없음: 타입만 정의)
+
+export type ParsedPayload = {
+  /** 대괄호 제거 등 최소 정규화된 원문 토큰 */
+  time?: string | null;
+  process?: string | null;
+  pid?: string | null;
+  message?: string | null;
+};
 
 export type LogEntry = {
   id: number;
@@ -26,6 +33,11 @@ export type LogEntry = {
   pid?: string | number;
   process?: string;
   text: string;
+  /** 파싱 결과 원문 필드(테스트/필터/검색용) */
+  parsed?: ParsedPayload;
+  /** 병합 타이브레이커 메타(내부용) */
+  _fRank?: number;
+  _rev?: number;
 };
 
 export type EdgePanelState = {
@@ -47,6 +59,15 @@ export type Envelope<TType extends string, TPayload> = {
 };
 
 type Empty = Record<string, never>;
+
+// 병합 저장 완료 payload(공용 타입)
+export type MergeSavedInfo = {
+  outDir: string;
+  manifestPath: string;
+  chunkCount: number;
+  total?: number;
+  merged: number;
+};
 
 // ── 서버측 필터 모델 ────────────────────────────────────────────────────────
 export type LogFilter = {
@@ -115,10 +136,7 @@ export type H2W =
   /** Debug Log Panel 전체 복사 완료(선택적 통계) */
   | Envelope<'debuglog.copy.done', { bytes?: number; lines?: number }>
   /** 파일 병합 저장 완료/정보 */
-  | Envelope<
-      'logmerge.saved',
-      { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }
-    >
+  | Envelope<'logmerge.saved', MergeSavedInfo>
   /** 병합 진행률(증분/완료) */
   | Envelope<'merge.progress', { inc?: number; total?: number; done?: number; active?: boolean }>
   /** 사용자 환경설정 전달 */

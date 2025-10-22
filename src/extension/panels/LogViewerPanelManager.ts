@@ -15,6 +15,7 @@ import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
 import { readParserWhitelistGlobs } from '../../core/config/userdata.js';
 import { readParserConfigJson } from '../../core/config/userdata.js';
+import type { MergeSavedInfo } from '../../shared/ipc/messages.js';
 
 export class LogViewerPanelManager {
   private log = getLogger('LogViewerPanelManager');
@@ -206,7 +207,7 @@ export class LogViewerPanelManager {
         this._send('logs.batch', { logs, total, seq, version: ver });
         this.initialSent = true;
       },
-      onSaved: (info) => {
+      onSaved: (info: MergeSavedInfo) => {
         this.log.info(
           `merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`,
         );

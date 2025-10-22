@@ -4,6 +4,13 @@ import type { LogEntry } from '@ipc/messages';
 import { getLogger } from '../logging/extension-logger.js';
 import { PagedReader } from './PagedReader.js';
 
+// 경로에서 basename만 추출 (Node path 미의존, 슬래시/역슬래시 모두 지원)
+function basename(p: string): string {
+  if (!p) return '';
+  const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
+  return i >= 0 ? p.slice(i + 1) : p;
+}
+
 class PaginationService {
   private manifestDir?: string;
   private reader?: PagedReader;
@@ -178,8 +185,7 @@ class PaginationService {
       if (N === 0) return [];
       const s = Math.max(1, Math.min(N, startIdx));
       const e = Math.max(1, Math.min(N, endIdx));
-      const physStart = Math.max(0, N - e);
-      const physEndExcl = Math.min(N, N - s + 1);
+      const { physStart, physEndExcl } = mapAscToDescRange(N, s, e);
       const picked = buf.slice(physStart, physEndExcl).slice().reverse(); // 오름차순으로 반환
       for (let i = 0; i < picked.length; i++) {
         const e = picked[i] as any;
@@ -207,8 +213,7 @@ class PaginationService {
     const e = Math.max(1, Math.min(total, endIdx));
     if (e < s) return [];
     // 논리(오름차순) → 물리(내림차순 저장) 매핑
-    const physStart = Math.max(0, total - e);
-    const physEndExcl = Math.min(total, total - s + 1);
+    const { physStart, physEndExcl } = mapAscToDescRange(total, s, e);
     if (physEndExcl <= physStart) return [];
     const rowsDesc = await this.reader.readLineRange(physStart, physEndExcl, { skipInvalid: true });
     const rowsAsc = rowsDesc.slice().reverse();
@@ -322,8 +327,10 @@ class PaginationService {
     const msg = String(parsed.msg || '');
     const proc = String(parsed.proc || '');
     const pid = String(parsed.pid || '');
-    // 파일/경로/소스 중 하나라도 매칭되면 통과
-    const srcCands = [(e as any).file, (e as any).path, e.source].map((v) => String(v ?? ''));
+    // ⬇︎ 세그먼트 키 일관성: file → basename(path)만을 후보로 사용 (source 미사용)
+    const file = String((e as any).file ?? '');
+    const p = String((e as any).path ?? '');
+    const srcCands = [file || (p ? basename(p) : '')];
     const has = (s?: string) => !!(s && String(s).trim());
     if (has(f.msg) && !this.matchTextByGroups(msg, f.msg)) return false;
     if (has(f.proc) && !this.matchTextByGroups(proc, f.proc)) return false;
@@ -433,3 +440,11 @@ class PaginationService {
 }
 
 export const paginationService = new PaginationService();
+
+// ────────────────────────────────────────────────────────────────────
+// 중앙 매핑 유틸: 논리 오름차순 [s..e] → 물리 내림차순 [physStart, physEndExcl)
+function mapAscToDescRange(total: number, s: number, e: number) {
+  const physStart = Math.max(0, total - e);
+  const physEndExcl = Math.min(total, total - s + 1);
+  return { physStart, physEndExcl };
+}

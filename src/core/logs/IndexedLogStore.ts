@@ -58,7 +58,16 @@ export class IndexedLogStore {
   onBatch(logs: LogEntry[]) {
     this.log.debug('[debug] IndexedLogStore onBatch: start');
     for (const e of logs) {
-      const name = e.source || 'unknown';
+      // 파일 세그먼트 이름 결정: file → basename(path) → source
+      let name: string | undefined =
+        (e as any).file && String((e as any).file).trim()
+          ? String((e as any).file)
+          : undefined;
+      if (!name) {
+        const p = (e as any).path ? String((e as any).path) : '';
+        name = p ? path.basename(p) : undefined;
+      }
+      name = name || e.source || 'unknown';
       this.total++;
 
       // 파일 전환 감지(플랜이 없는 경우에만 새로운 구간 생성)

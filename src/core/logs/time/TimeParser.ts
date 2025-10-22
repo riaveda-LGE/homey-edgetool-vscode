@@ -1,7 +1,4 @@
 // === src/core/logs/time/TimeParser.ts ===
-import { getLogger } from '../../logging/extension-logger.js';
-
-const log = getLogger('TimeParser');
 
 /** 라인에서 타임스탬프(epoch ms)를 추출; 실패 시 undefined */
 export function parseTs(line: string): number | undefined {

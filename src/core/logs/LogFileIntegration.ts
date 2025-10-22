@@ -25,8 +25,8 @@ export type WarmupOptions = Pick<
 
 export type MergeOptions = {
   dir: string;
-  /** false(기본) = 최신→오래된 순으로 병합
-   *   true        = 오래된→최신 (디버그용; k-way 대신 순차합치기로 전환)
+  /** false(기본) = 최신→오래된 (타입별 JSONL → k-way)
+   *   true        = 오래된→최신 (파일 단위가 아니라 **전역 타임스탬프 기준** k-way 병합, 타입 무관)
    */
   reverse?: boolean;
   signal?: AbortSignal;
@@ -44,6 +44,12 @@ export type MergeOptions = {
   /** 커스텀 파서 설정에서 온 files 화이트리스트(glob). 지정되면 여기에 매칭되는 파일만 수집 */
   whitelistGlobs?: string[];
   parser?: import('./ParserEngine.js').ParserConfig;
+  /**
+   * 파서 적용 시에도 테스트/골든 비교를 위해 원래 한 줄 포맷(`[time] proc[pid]: message`)을 유지.
+   * - parser가 message-only로 바꾸더라도 parsed 필드(time/proc/pid/message)로 헤더를 복원해 `entry.text`를 채움
+   * - 복원된 **헤더 기반**으로 parseTs 재적용(메시지 내부 ISO 타임스탬프 무시, 정렬 일관성 유지)
+   */
+  preserveFullText?: boolean;
 };
 
 /**
@@ -56,7 +62,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
     // 파서 컴파일
     const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
-    // 화이트리스트(glob) → "상대경로" 매칭용 정규식 셋으로 변환
+    // 화이트리스트(files 토큰) → "베이스네임" 매칭 정규식 셋으로 변환
     const allowPathRegexes = opts.whitelistGlobs?.length
       ? compileWhitelistPathRegexes(opts.whitelistGlobs)
       : undefined;
@@ -98,24 +104,75 @@ export async function mergeDirectory(opts: MergeOptions) {
       return;
     }
 
-    // 디버그용: 오래된→최신 순차 스트리밍
+    // 디버그/검증: reverse 모드 = 전역 타임스탬프 기준 k-way 병합(오래된→최신, 타입 무관)
     if (opts.reverse) {
-      const ordered = files.sort(compareLogOrderAsc); // .2 → .1 → .log
-      log.debug?.(`mergeDirectory: reverse mode, files=${ordered.length}`);
-      for (const f of ordered) {
-        const full = path.join(opts.dir, f);
-        await streamFileForward(
-          full,
-          (entries: LogEntry[]) => opts.onBatch(entries),
-          batchSize,
-          opts.signal,
-          compiledParser,
-        );
+      // 1) 파일 목록을 "타입 키 사전순 → 각 타입 내 회전번호 asc(.2→.1→.log)"로 평탄화해 fileRank 안정화
+      const grouped = groupByType(files);
+      const typeKeys = Array.from(grouped.keys()).sort();
+      const all: string[] = [];
+      for (const k of typeKeys) {
+        const arr = (grouped.get(k) ?? []).slice().sort(compareLogOrderAsc);
+        all.push(...arr);
+      }
+      log.info(
+        `mergeDirectory: reverse(ts-asc, global) files=${all.length} batchSize=${batchSize}`,
+      );
+
+      // 2) 각 파일에 대한 forward 커서 생성(+ parser 프리플라이트)
+      const cursors: FileForwardCursor[] = [];
+      for (let i = 0; i < all.length; i++) {
+        const full = path.join(opts.dir, all[i]);
+        const cur = await FileForwardCursor.create(full, i, compiledParser);
+        cursors.push(cur);
+      }
+
+      // 3) ts 오름차순(min-heap 동작) 병합
+      type RevHeapItem = { ts: number; entry: LogEntry; cursor: FileForwardCursor; seq: number };
+      const heap = new MaxHeap<RevHeapItem>((a, b) => {
+        // ⬇︎ min-heap: 작은 ts가 우선
+        if (a.ts !== b.ts) return b.ts - a.ts;
+        // tie-breakers(안정성): fileRank asc → filename asc → revIdx asc → seq asc
+        const aRank = (a.entry as any)._fRank ?? 9999;
+        const bRank = (b.entry as any)._fRank ?? 9999;
+        if (aRank !== bRank) return bRank - aRank; // aRank < bRank 면 a 우선(양수)
+        const aFile = a.entry.file ?? '';
+        const bFile = b.entry.file ?? '';
+        if (aFile !== bFile) return bFile.localeCompare(aFile); // filename asc (a<b → 양수)
+        const aRev = (a.entry as any)._rev ?? 9999;
+        const bRev = (b.entry as any)._rev ?? 9999;
+        if (aRev !== bRev) return bRev - aRev;
+        return b.seq - a.seq;
+      });
+
+      // 초기 주입: 각 파일에서 1줄
+      for (const cur of cursors) {
+        const first = await cur.next();
+        if (first) heap.push({ ...first, cursor: cur, seq: 0 });
+      }
+
+      const out: LogEntry[] = [];
+      let emitted = 0;
+      while (!heap.isEmpty()) {
         if (opts.signal?.aborted) {
-          log.warn('mergeDirectory: aborted');
+          log.warn('mergeDirectory: aborted(reverse)');
           break;
         }
+        const top = heap.pop()!;
+        out.push(top.entry);
+        if (out.length >= batchSize) {
+          emitted += out.length;
+          opts.onBatch(out.splice(0, out.length));
+        }
+        const next = await top.cursor.next();
+        if (next) heap.push({ ...next, cursor: top.cursor, seq: top.seq + 1 });
       }
+      if (!opts.signal?.aborted && out.length) {
+        emitted += out.length;
+        opts.onBatch(out);
+      }
+      // 자원 정리
+      for (const c of cursors) await c.close();
+      log.info(`mergeDirectory: reverse(ts-asc) done emitted=${emitted}`);
       return;
     }
 
@@ -146,7 +203,8 @@ export async function mergeDirectory(opts: MergeOptions) {
       const orderedFiles = fileList.sort(compareLogOrderDesc);
 
       // 모든 파일을 ReverseLineReader로 읽음 → 각 파일 끝→시작(최신→오래된)으로 라인 푸시
-      for (const fileName of orderedFiles) {
+      for (let fileIdx = 0; fileIdx < orderedFiles.length; fileIdx++) {
+        const fileName = orderedFiles[fileIdx];
         const fullPath = path.join(opts.dir, fileName);
         // ── 커스텀 파서 프리플라이트(파일당 1회) ──
         let useParserForThisFile = false;
@@ -158,9 +216,15 @@ export async function mergeDirectory(opts: MergeOptions) {
         }
         const rr = await ReverseLineReader.open(fullPath);
         let line: string | null;
+        let revIdx = 0;
         while ((line = await rr.nextLine()) !== null) {
           // fullPath를 넘겨 path/file 일관성 유지
-          const entry = lineToEntryWithParser(fullPath, line, useParserForThisFile ? compiledParser : undefined);
+          const entry = lineToEntryWithParser(fullPath, line, useParserForThisFile ? compiledParser : undefined, {
+            fileRank: fileIdx,
+            revIdx: revIdx++,
+          });
+          // 테스트/골든 일관성: 파서가 message-only로 바꿨다면 헤더 복원(+ ts 재계산)
+          restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
           logs.push(entry); // 전체 logs가 최신→오래된 순
         }
         await rr.close();
@@ -226,9 +290,23 @@ export async function mergeDirectory(opts: MergeOptions) {
 
     // k-way max-heap: ts 큰 것(최신) 우선
     const heap = new MaxHeap<HeapItem>((a, b) => {
+      // ts desc
       if (a.ts !== b.ts) return a.ts - b.ts;
-      if (a.typeKey !== b.typeKey) return a.typeKey < b.typeKey ? -1 : 1;
-      return b.seq - a.seq; // 동일 ts일 때 먼저 읽힌 것(작은 seq)을 우선
+      // fileRank asc (작은 숫자 우선)
+      const aRank = (a.entry as any)._fRank ?? 9999;
+      const bRank = (b.entry as any)._fRank ?? 9999;
+      if (aRank !== bRank) return bRank - aRank;
+      // filename asc (사전순)
+      const aFile = a.entry.file ?? '';
+      const bFile = b.entry.file ?? '';
+      if (aFile !== bFile) return bFile.localeCompare(aFile); // a<b → 양수(=a 우선)
+      // revIdx asc (작은 숫자 우선)
+      const aRev = (a.entry as any)._rev ?? 9999;
+      const bRev = (b.entry as any)._rev ?? 9999;
+      if (aRev !== bRev) return bRev - aRev;
+      // fallback: typeKey asc(사전순), seq asc
+      if (a.typeKey !== b.typeKey) return b.typeKey.localeCompare(a.typeKey); // a<b → 양수
+      return b.seq - a.seq;
     });
 
     // 초기 주입: 각 타입에서 100줄(순방향=가장 최신부터)
@@ -283,7 +361,8 @@ export async function mergeDirectory(opts: MergeOptions) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 입력 로그 파일(.log/.log.N/.txt) 유틸 — 재귀 검색 + 경로 글롭 매칭
+ * 입력 로그 파일(.log/.log.N/.txt) 유틸 — **루트(비재귀)** 검색 + 경로 글롭 매칭
+ *   - 요구사항: 로그는 루트에 있다고 가정, 하위경로는 고려하지 않음
  * ────────────────────────────────────────────────────────────────────────── */
 
 export async function listInputLogFiles(
@@ -306,7 +385,7 @@ export async function listInputLogFiles(
   }
 }
 
-/** 재귀 디렉터리 워커: 상대경로 기준으로 필터링 */
+/** 루트 디렉터리 워커(비재귀): 상대경로 기준으로 필터링 */
 async function walk(
   root: string,
   rel: string,
@@ -329,10 +408,8 @@ async function walk(
     } catch {
       continue;
     }
-    if (st.isDirectory()) {
-      await walk(root, relPath, out, allowPathRegexes);
-      continue;
-    }
+    // ⬇︎ 비재귀: 디렉터리는 탐색하지 않음
+    if (st.isDirectory()) continue;
     if (!st.isFile()) continue;
     // 기본 허용: *.log / *.log.N / *.txt
     const bn = path.basename(relPath);
@@ -429,57 +506,43 @@ function groupByType(files: string[]): Map<string, string[]> {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 화이트리스트(globs) → "상대경로" 매칭 정규식
- *   - 지원: **, *, ?  (경로 기준)
- *   - 예: "**\/homey-pro.log*", "**\/*.log*", "**\/bt\/*\/clip.log*"
+ * 화이트리스트(파일명 토큰) → "베이스네임" 매칭 정규식
+ *   - 경로/글롭 미지원. 루트 폴더에 있다고 가정.
+ *   - 규칙:
+ *     · "^"로 시작하면 정규식(그대로 사용, i 플래그)
+ *     · 그 외는 리터럴 파일명으로 간주 → ^…$ 로 앵커링(i 플래그)
  * ────────────────────────────────────────────────────────────────────────── */
 export function compileWhitelistPathRegexes(globs: string[]): RegExp[] {
   const out: RegExp[] = [];
   for (const g of globs ?? []) {
-    const rx = globToRegExp(g);
+    const rx = nameTokenToRegex(g);
     if (rx) out.push(rx);
   }
   return out;
 }
 
 export function pathMatchesWhitelist(relPath: string, allow: RegExp[]): boolean {
-  const norm = relPath.replace(/\\/g, '/'); // Windows 대비
-  for (const rx of allow) if (rx.test(norm)) return true;
+  // 베이스네임만 매칭
+  const bn = path.basename(relPath.replace(/\\/g, '/'));
+  for (const rx of allow) if (rx.test(bn)) return true;
   return false;
 }
 
-function globToRegExp(glob: string): RegExp | null {
-  if (!glob || typeof glob !== 'string') return null;
-  // 경로 구분자를 '/'로 정규화
-  const g = glob.replace(/\\/g, '/');
-  // 글롭 토큰을 먼저 해석하고, 그 외 문자는 이스케이프한다.
-  //  - **  : 경로 구분자 포함 임의 길이 => .*
-  //  - *   : 경로 구분자 제외 임의 길이 => [^/]*
-  //  - ?   : 경로 구분자 제외 1글자    => [^/]
-  //  - 나머지 메타문자는 이스케이프
-  let rx = '^';
-  for (let i = 0; i < g.length; ) {
-    const c = g[i];
-    if (c === '*') {
-      if (g[i + 1] === '*') {
-        rx += '.*';
-        i += 2;
-      } else {
-        rx += '[^/]*';
-        i += 1;
-      }
-    } else if (c === '?') {
-      rx += '[^/]';
-      i += 1;
-    } else {
-      // 정규식 메타문자 이스케이프
-      if ('.+^$()[]{}|\\'.includes(c)) rx += '\\' + c;
-      else rx += c;
-      i += 1;
+function escapeRe(s: string) {
+  // RFC 7613 호환: 일반적인 RegExp 이스케이프 안전 집합
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function nameTokenToRegex(token: string): RegExp | null {
+  if (!token || typeof token !== 'string') return null;
+  const t = token.trim();
+  if (t.startsWith('^')) {
+    try {
+      return new RegExp(t, 'i');
+    } catch {
+      return null;
     }
   }
-  rx += '$';
-  return new RegExp(rx, 'i');
+  return new RegExp(`^${escapeRe(t)}$`, 'i');
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -491,6 +554,7 @@ async function streamFileForward(
   batchSize: number,
   signal?: AbortSignal,
   compiledParser?: import('./ParserEngine.js').CompiledParser,
+  fileRank?: number,
 ) {
   const rs = fs.createReadStream(filePath, { encoding: 'utf8' });
   // 파일당 1회 프리플라이트
@@ -504,6 +568,7 @@ async function streamFileForward(
   }
   let residual = '';
   const batch: LogEntry[] = [];
+  let revIdx = 0;
 
   const onAbort = () => {
     try {
@@ -524,7 +589,9 @@ async function streamFileForward(
           filePath,
           line,
           useParserForThisFile ? compiledParser : undefined,
+          { fileRank, revIdx: revIdx++ },
         );
+        restoreFullTextIfNeeded(e, /*preserve*/ true); // forward 경로에서도 동일 복원
         batch.push(e);
         if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
       }
@@ -535,7 +602,9 @@ async function streamFileForward(
           filePath,
           residual,
           useParserForThisFile ? compiledParser : undefined,
+          { fileRank, revIdx: revIdx++ },
         );
+        restoreFullTextIfNeeded(e, /*preserve*/ true);
         batch.push(e);
       }
       // Abort 되었다면 끝부분 잔여 배치도 내보내지 않음
@@ -698,6 +767,60 @@ class ForwardLineReader {
   }
 }
 
+/** 일반 텍스트 로그 파일용 forward 커서(라인→LogEntry) */
+class FileForwardCursor {
+  private reader: ForwardLineReader | null = null;
+  private useParser = false;
+  public isExhausted = false;
+  private seq = 0;
+
+  private constructor(
+    public readonly filePath: string,
+    private readonly fileRank: number,
+    private readonly compiledParser?: import('./ParserEngine.js').CompiledParser,
+  ) {}
+
+  static async create(
+    filePath: string,
+    fileRank: number,
+    compiledParser?: import('./ParserEngine.js').CompiledParser,
+  ): Promise<FileForwardCursor> {
+    const c = new FileForwardCursor(filePath, fileRank, compiledParser);
+    c.reader = new ForwardLineReader(filePath);
+    if (compiledParser) {
+      try {
+        const bn = path.basename(filePath).replace(/\\/g, '/');
+        c.useParser = await shouldUseParserForFile(filePath, bn, compiledParser);
+      } catch {
+        c.useParser = false;
+      }
+    }
+    return c;
+  }
+
+  async next(): Promise<{ ts: number; entry: LogEntry } | null> {
+    if (this.isExhausted || !this.reader) return null;
+    const lines = await this.reader.nextLines(1);
+    if (!lines.length) {
+      this.isExhausted = true;
+      await this.reader.close();
+      this.reader = null;
+      return null;
+    }
+    const line = lines[0];
+    const e = lineToEntryWithParser(
+      this.filePath,
+      line,
+      this.useParser ? this.compiledParser : undefined,
+      { fileRank: this.fileRank, revIdx: this.seq++ },
+    );
+    restoreFullTextIfNeeded(e, /*preserve*/ true);
+    return { ts: e.ts, entry: e };
+  }
+
+  async close() { try { await this.reader?.close(); } catch {} this.isExhausted = true; }
+}
+
 /** JSONL에서 "앞에서부터" size줄 읽기 */
 class MergedCursor {
   private reader: ForwardLineReader | null = null;
@@ -747,6 +870,12 @@ class MergedCursor {
     return batch;
   }
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Test-only exports (do not use in production)
+//  - 내부 커서/유틸을 단위/회귀 테스트에서만 직접 검증할 수 있도록 노출
+// ────────────────────────────────────────────────────────────────────────────
+export const __testOnly = { MergedCursor, listMergedJsonlFiles, typeKeyFromJsonl };
 
 type HeapItem = { ts: number; entry: LogEntry; typeKey: string; seq: number };
 
@@ -813,6 +942,33 @@ function lineToEntry(filePath: string, line: string): LogEntry {
     path: filePath,
     text: line,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parser 적용 시 헤더 복원 유틸
+//  - parser가 message-only로 만든 경우에도 테스트/골든 비교를 위해 원 포맷을 재구성
+//  - 복원된 전체 라인으로 parseTs 재계산(정렬 일관성)
+function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
+  if (!preserve) return;
+  const p = (e as any)?.parsed as
+    | { time?: string | null; process?: string | null; pid?: string | number | null; message?: string | null }
+    | undefined;
+  if (!p) return;
+  const time = (p.time ?? '').toString().trim();
+  const proc = (p.process ?? '').toString().trim();
+  if (!time || !proc) return;
+  const pid =
+    p.pid === undefined || p.pid === null || String(p.pid).trim() === ''
+      ? ''
+      : `[${String(p.pid).trim()}]`;
+  const msg = (p.message ?? e.text ?? '').toString();
+  const full = `[${time}] ${proc}${pid ? `${pid}` : ''}: ${msg}`;
+  // 헤더 우선으로 ts를 계산하고, 실패 시에만 전체 라인 파싱을 사용
+  const tHeader = parseTs(`[${time}]`);
+  const tFull = parseTs(full);
+  const t = typeof tHeader === 'number' ? tHeader : tFull;
+  if (typeof t === 'number') e.ts = t;
+  e.text = full;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -930,7 +1086,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   // 헬퍼: 라인 -> LogEntry (파일명을 source로)
   const toEntry = (fileName: string, line: string): LogEntry => {
     const full = path.join(dir, fileName);
-    return lineToEntryWithParser(full, line, undefined);
+    return lineToEntryWithParser(full, line, undefined, {});
   };
 
   // 4) 1차 수집: 균등 할당만큼 per-type 로딩

@@ -21,9 +21,18 @@ if (-not (Test-Path -LiteralPath $ListPath)) {
 }
 
 # 목록을 UTF-8로 읽고(# 주석/빈줄 무시)
-$lines = Get-Content -Path $ListPath -Encoding UTF8 |
-         ForEach-Object { $_.Trim() } |
-         Where-Object { $_ -and -not $_.StartsWith('#') }
+$rawLines = Get-Content -Path $ListPath -Encoding UTF8 |
+           ForEach-Object { $_.Trim() } |
+           Where-Object { $_ -and -not $_.StartsWith('#') }
+
+# git status 형식 파싱: "status:   path" → path 추출
+$lines = $rawLines | ForEach-Object {
+    if ($_ -match '^(modified|new file|deleted|renamed):\s+(.+)$') {
+        $matches[2]
+    } else {
+        $_
+    }
+}
 
 $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 $maxLinesPerFile = 5000

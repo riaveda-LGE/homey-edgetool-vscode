@@ -1,0 +1,752 @@
+[
+  {
+    "time": "Oct 20 00:11:33.169",
+    "process": "bt_player",
+    "pid": "739",
+    "message": "10:15:53, INFO  print_monitor:223:  TTS   <X:X> [1760886693] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 01:06:14.872",
+    "process": "bt_player",
+    "pid": "963",
+    "message": "13:41:51, INFO  print_monitor:223:  TTS   <X:X> [1760889974] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 01:26:21.438",
+    "process": "bt_player",
+    "pid": "723",
+    "message": "18:32:48, INFO  print_monitor:191:  BT    <X:X> [1760891181] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 01:38:32.240",
+    "process": "bt_player",
+    "pid": "751",
+    "message": "03:03:30, INFO  print_monitor:223:  TTS   <X:X> [1760891912] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 01:39:25.911",
+    "process": "bt_player",
+    "pid": "934",
+    "message": "07:11:22, INFO  print_monitor:223:  TTS   <X:X> [1760891965] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 01:41:13.035",
+    "process": "bt_player",
+    "pid": "329",
+    "message": "05:38:25, INFO  print_monitor:191:  BT    <X:X> [1760892073] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 02:45:14.284",
+    "process": "bt_player",
+    "pid": "816",
+    "message": "13:34:25, INFO  print_monitor:223:  TTS   <X:X> [1760895914] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 03:09:16.316",
+    "process": "bt_player",
+    "pid": "383",
+    "message": "03:12:07, INFO  print_monitor:223:  TTS   <X:X> [1760897356] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 03:26:46.709",
+    "process": "bt_player",
+    "pid": "410",
+    "message": "20:52:39, INFO  print_monitor:223:  TTS   <X:X> [1760898406] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 03:57:24.048",
+    "process": "bt_player",
+    "pid": "274",
+    "message": "14:23:16, INFO  print_monitor:191:  BT    <X:X> [1760900244] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 04:16:10.486",
+    "process": "bt_player",
+    "pid": "786",
+    "message": "14:29:53, INFO  print_monitor:205:  MEDIA <X:X> [1760901370] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 04:47:05.834",
+    "process": "bt_player",
+    "pid": "329",
+    "message": "16:46:28, INFO  print_monitor:205:  MEDIA <X:X> [1760903225] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 04:53:29.821",
+    "process": "bt_player",
+    "pid": "847",
+    "message": "08:58:25, INFO  print_monitor:223:  TTS   <X:X> [1760903609] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 06:08:05.392",
+    "process": "bt_player",
+    "pid": "832",
+    "message": "11:37:55, INFO  print_monitor:191:  BT    <X:X> [1760908085] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 06:30:18.722",
+    "process": "bt_player",
+    "pid": "170",
+    "message": "15:36:43, INFO  print_monitor:191:  BT    <X:X> [1760909418] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 06:59:23.074",
+    "process": "bt_player",
+    "pid": "308",
+    "message": "14:58:34, INFO  print_monitor:223:  TTS   <X:X> [1760911163] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 07:58:09.280",
+    "process": "bt_player",
+    "pid": "816",
+    "message": "13:11:19, INFO  print_monitor:223:  TTS   <X:X> [1760914689] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 08:12:32.242",
+    "process": "bt_player",
+    "pid": "472",
+    "message": "12:26:00, INFO  print_monitor:191:  BT    <X:X> [1760915552] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 08:19:11.934",
+    "process": "bt_player",
+    "pid": "662",
+    "message": "15:09:58, INFO  print_monitor:191:  BT    <X:X> [1760915951] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 08:53:57.844",
+    "process": "bt_player",
+    "pid": "741",
+    "message": "00:37:02, INFO  print_monitor:191:  BT    <X:X> [1760918037] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 09:01:27.683",
+    "process": "bt_player",
+    "pid": "750",
+    "message": "03:21:49, INFO  print_monitor:205:  MEDIA <X:X> [1760918487] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 09:37:58.219",
+    "process": "bt_player",
+    "pid": "972",
+    "message": "21:25:14, INFO  print_monitor:223:  TTS   <X:X> [1760920678] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 10:12:06.128",
+    "process": "bt_player",
+    "pid": "963",
+    "message": "05:19:27, INFO  print_monitor:223:  TTS   <X:X> [1760922726] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 10:18:38.631",
+    "process": "bt_player",
+    "pid": "122",
+    "message": "11:40:16, INFO  print_monitor:223:  TTS   <X:X> [1760923118] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 10:25:35.522",
+    "process": "bt_player",
+    "pid": "350",
+    "message": "16:30:48, INFO  print_monitor:191:  BT    <X:X> [1760923535] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 10:26:20.552",
+    "process": "bt_player",
+    "pid": "208",
+    "message": "21:01:52, INFO  print_monitor:191:  BT    <X:X> [1760923580] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 10:43:06.423",
+    "process": "bt_player",
+    "pid": "611",
+    "message": "04:20:14, INFO  print_monitor:191:  BT    <X:X> [1760924586] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 10:52:48.279",
+    "process": "bt_player",
+    "pid": "421",
+    "message": "01:28:00, INFO  print_monitor:191:  BT    <X:X> [1760925168] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 10:58:21.376",
+    "process": "bt_player",
+    "pid": "297",
+    "message": "20:33:24, INFO  print_monitor:205:  MEDIA <X:X> [1760925501] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 11:13:14.598",
+    "process": "bt_player",
+    "pid": "461",
+    "message": "17:47:17, INFO  print_monitor:191:  BT    <X:X> [1760926394] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 12:19:14.669",
+    "process": "bt_player",
+    "pid": "362",
+    "message": "08:14:31, INFO  print_monitor:191:  BT    <X:X> [1760930354] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 12:44:45.784",
+    "process": "bt_player",
+    "pid": "575",
+    "message": "17:25:47, INFO  print_monitor:205:  MEDIA <X:X> [1760931885] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 13:22:25.300",
+    "process": "bt_player",
+    "pid": "497",
+    "message": "05:43:36, INFO  print_monitor:223:  TTS   <X:X> [1760934145] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 13:37:06.488",
+    "process": "bt_player",
+    "pid": "961",
+    "message": "02:34:58, INFO  print_monitor:191:  BT    <X:X> [1760935026] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 13:47:43.915",
+    "process": "bt_player",
+    "pid": "917",
+    "message": "00:09:50, INFO  print_monitor:191:  BT    <X:X> [1760935663] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 14:08:26.924",
+    "process": "bt_player",
+    "pid": "202",
+    "message": "20:56:02, INFO  print_monitor:205:  MEDIA <X:X> [1760936906] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 14:20:58.382",
+    "process": "bt_player",
+    "pid": "390",
+    "message": "04:47:47, INFO  print_monitor:191:  BT    <X:X> [1760937658] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 14:30:08.433",
+    "process": "bt_player",
+    "pid": "948",
+    "message": "06:27:45, INFO  print_monitor:205:  MEDIA <X:X> [1760938208] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 15:05:24.573",
+    "process": "bt_player",
+    "pid": "395",
+    "message": "06:47:20, INFO  print_monitor:191:  BT    <X:X> [1760940324] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 15:11:02.517",
+    "process": "bt_player",
+    "pid": "963",
+    "message": "11:38:46, INFO  print_monitor:191:  BT    <X:X> [1760940662] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 15:28:38.018",
+    "process": "bt_player",
+    "pid": "499",
+    "message": "23:09:39, INFO  print_monitor:223:  TTS   <X:X> [1760941718] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 16:04:41.837",
+    "process": "bt_player",
+    "pid": "310",
+    "message": "04:18:41, INFO  print_monitor:205:  MEDIA <X:X> [1760943881] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 16:18:17.527",
+    "process": "bt_player",
+    "pid": "547",
+    "message": "01:42:55, INFO  print_monitor:223:  TTS   <X:X> [1760944697] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 16:45:30.115",
+    "process": "bt_player",
+    "pid": "147",
+    "message": "17:33:29, INFO  print_monitor:191:  BT    <X:X> [1760946330] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 17:04:51.267",
+    "process": "bt_player",
+    "pid": "699",
+    "message": "19:41:05, INFO  print_monitor:223:  TTS   <X:X> [1760947491] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 17:35:32.100",
+    "process": "bt_player",
+    "pid": "976",
+    "message": "10:36:28, INFO  print_monitor:191:  BT    <X:X> [1760949332] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 17:41:07.664",
+    "process": "bt_player",
+    "pid": "565",
+    "message": "05:09:53, INFO  print_monitor:191:  BT    <X:X> [1760949667] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 17:44:23.363",
+    "process": "bt_player",
+    "pid": "841",
+    "message": "04:22:44, INFO  print_monitor:205:  MEDIA <X:X> [1760949863] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 17:45:16.173",
+    "process": "bt_player",
+    "pid": "731",
+    "message": "08:33:10, INFO  print_monitor:191:  BT    <X:X> [1760949916] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 17:47:10.451",
+    "process": "bt_player",
+    "pid": "240",
+    "message": "23:42:19, INFO  print_monitor:223:  TTS   <X:X> [1760950030] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 18:16:10.967",
+    "process": "bt_player",
+    "pid": "648",
+    "message": "14:18:25, INFO  print_monitor:223:  TTS   <X:X> [1760951770] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 18:23:06.734",
+    "process": "bt_player",
+    "pid": "202",
+    "message": "23:13:26, INFO  print_monitor:205:  MEDIA <X:X> [1760952186] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 18:51:26.365",
+    "process": "bt_player",
+    "pid": "719",
+    "message": "12:56:51, INFO  print_monitor:191:  BT    <X:X> [1760953886] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 19:11:40.800",
+    "process": "bt_player",
+    "pid": "307",
+    "message": "09:45:56, INFO  print_monitor:191:  BT    <X:X> [1760955100] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 19:18:07.481",
+    "process": "bt_player",
+    "pid": "619",
+    "message": "20:57:22, INFO  print_monitor:223:  TTS   <X:X> [1760955487] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 19:45:20.366",
+    "process": "bt_player",
+    "pid": "347",
+    "message": "19:04:01, INFO  print_monitor:223:  TTS   <X:X> [1760957120] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 19:47:11.861",
+    "process": "bt_player",
+    "pid": "695",
+    "message": "02:06:48, INFO  print_monitor:205:  MEDIA <X:X> [1760957231] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 20:01:37.062",
+    "process": "bt_player",
+    "pid": "928",
+    "message": "20:56:18, INFO  print_monitor:223:  TTS   <X:X> [1760958097] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 22:30:07.277",
+    "process": "bt_player",
+    "pid": "931",
+    "message": "04:36:25, INFO  print_monitor:223:  TTS   <X:X> [1760967007] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 22:40:06.417",
+    "process": "bt_player",
+    "pid": "119",
+    "message": "07:20:11, INFO  print_monitor:191:  BT    <X:X> [1760967606] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 20 23:26:55.803",
+    "process": "bt_player",
+    "pid": "311",
+    "message": "20:29:44, INFO  print_monitor:223:  TTS   <X:X> [1760970415] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 23:27:46.290",
+    "process": "bt_player",
+    "pid": "193",
+    "message": "19:57:34, INFO  print_monitor:223:  TTS   <X:X> [1760970466] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 20 23:37:39.361",
+    "process": "bt_player",
+    "pid": "551",
+    "message": "07:03:47, INFO  print_monitor:205:  MEDIA <X:X> [1760971059] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 20 23:50:52.804",
+    "process": "bt_player",
+    "pid": "330",
+    "message": "21:46:50, INFO  print_monitor:191:  BT    <X:X> [1760971852] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 00:36:26.385",
+    "process": "bt_player",
+    "pid": "522",
+    "message": "12:48:50, INFO  print_monitor:205:  MEDIA <X:X> [1760974586] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 00:57:57.612",
+    "process": "bt_player",
+    "pid": "656",
+    "message": "00:44:58, INFO  print_monitor:205:  MEDIA <X:X> [1760975877] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 01:00:21.791",
+    "process": "bt_player",
+    "pid": "831",
+    "message": "22:22:19, INFO  print_monitor:205:  MEDIA <X:X> [1760976021] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 01:02:02.450",
+    "process": "bt_player",
+    "pid": "229",
+    "message": "11:26:32, INFO  print_monitor:191:  BT    <X:X> [1760976122] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 01:03:07.209",
+    "process": "bt_player",
+    "pid": "159",
+    "message": "07:11:05, INFO  print_monitor:191:  BT    <X:X> [1760976187] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 01:40:46.898",
+    "process": "bt_player",
+    "pid": "903",
+    "message": "21:45:09, INFO  print_monitor:223:  TTS   <X:X> [1760978446] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 01:46:58.166",
+    "process": "bt_player",
+    "pid": "343",
+    "message": "20:21:43, INFO  print_monitor:205:  MEDIA <X:X> [1760978818] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 01:53:33.824",
+    "process": "bt_player",
+    "pid": "883",
+    "message": "06:55:45, INFO  print_monitor:191:  BT    <X:X> [1760979213] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 03:05:16.621",
+    "process": "bt_player",
+    "pid": "809",
+    "message": "20:24:55, INFO  print_monitor:223:  TTS   <X:X> [1760983516] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 03:07:20.695",
+    "process": "bt_player",
+    "pid": "438",
+    "message": "17:43:35, INFO  print_monitor:223:  TTS   <X:X> [1760983640] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 03:21:06.223",
+    "process": "bt_player",
+    "pid": "818",
+    "message": "22:08:21, INFO  print_monitor:223:  TTS   <X:X> [1760984466] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 03:25:02.034",
+    "process": "bt_player",
+    "pid": "200",
+    "message": "23:41:20, INFO  print_monitor:205:  MEDIA <X:X> [1760984702] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 03:33:37.595",
+    "process": "bt_player",
+    "pid": "125",
+    "message": "03:20:14, INFO  print_monitor:223:  TTS   <X:X> [1760985217] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 03:57:27.952",
+    "process": "bt_player",
+    "pid": "160",
+    "message": "20:03:38, INFO  print_monitor:223:  TTS   <X:X> [1760986647] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 04:09:49.679",
+    "process": "bt_player",
+    "pid": "728",
+    "message": "15:24:07, INFO  print_monitor:223:  TTS   <X:X> [1760987389] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 04:47:50.108",
+    "process": "bt_player",
+    "pid": "151",
+    "message": "00:33:44, INFO  print_monitor:205:  MEDIA <X:X> [1760989670] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 05:11:12.275",
+    "process": "bt_player",
+    "pid": "711",
+    "message": "19:42:25, INFO  print_monitor:223:  TTS   <X:X> [1760991072] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 05:18:53.017",
+    "process": "bt_player",
+    "pid": "250",
+    "message": "12:16:59, INFO  print_monitor:205:  MEDIA <X:X> [1760991533] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 05:34:35.214",
+    "process": "bt_player",
+    "pid": "202",
+    "message": "20:07:23, INFO  print_monitor:191:  BT    <X:X> [1760992475] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 06:05:25.475",
+    "process": "bt_player",
+    "pid": "620",
+    "message": "13:17:37, INFO  print_monitor:205:  MEDIA <X:X> [1760994325] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 06:20:21.309",
+    "process": "bt_player",
+    "pid": "690",
+    "message": "17:47:20, INFO  print_monitor:223:  TTS   <X:X> [1760995221] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 06:25:37.522",
+    "process": "bt_player",
+    "pid": "871",
+    "message": "06:43:56, INFO  print_monitor:205:  MEDIA <X:X> [1760995537] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 07:18:26.633",
+    "process": "bt_player",
+    "pid": "996",
+    "message": "16:36:04, INFO  print_monitor:223:  TTS   <X:X> [1760998706] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 07:28:52.528",
+    "process": "bt_player",
+    "pid": "479",
+    "message": "19:02:05, INFO  print_monitor:223:  TTS   <X:X> [1760999332] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 08:23:35.154",
+    "process": "bt_player",
+    "pid": "561",
+    "message": "03:28:13, INFO  print_monitor:205:  MEDIA <X:X> [1761002615] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 08:35:17.676",
+    "process": "bt_player",
+    "pid": "351",
+    "message": "18:11:22, INFO  print_monitor:223:  TTS   <X:X> [1761003317] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 08:55:59.968",
+    "process": "bt_player",
+    "pid": "842",
+    "message": "10:57:50, INFO  print_monitor:191:  BT    <X:X> [1761004559] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 09:08:21.442",
+    "process": "bt_player",
+    "pid": "197",
+    "message": "15:16:35, INFO  print_monitor:223:  TTS   <X:X> [1761005301] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 10:44:17.437",
+    "process": "bt_player",
+    "pid": "649",
+    "message": "08:43:24, INFO  print_monitor:191:  BT    <X:X> [1761011057] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 11:34:51.516",
+    "process": "bt_player",
+    "pid": "147",
+    "message": "18:21:11, INFO  print_monitor:191:  BT    <X:X> [1761014091] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 11:43:28.996",
+    "process": "bt_player",
+    "pid": "904",
+    "message": "08:54:50, INFO  print_monitor:191:  BT    <X:X> [1761014608] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 11:56:24.635",
+    "process": "bt_player",
+    "pid": "639",
+    "message": "04:36:30, INFO  print_monitor:223:  TTS   <X:X> [1761015384] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 12:12:26.569",
+    "process": "bt_player",
+    "pid": "106",
+    "message": "14:40:14, INFO  print_monitor:191:  BT    <X:X> [1761016346] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 12:40:55.179",
+    "process": "bt_player",
+    "pid": "942",
+    "message": "22:12:25, INFO  print_monitor:191:  BT    <X:X> [1761018055] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 13:59:40.897",
+    "process": "bt_player",
+    "pid": "933",
+    "message": "09:25:12, INFO  print_monitor:191:  BT    <X:X> [1761022780] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 14:36:00.185",
+    "process": "bt_player",
+    "pid": "974",
+    "message": "06:08:16, INFO  print_monitor:223:  TTS   <X:X> [1761024960] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 15:13:41.560",
+    "process": "bt_player",
+    "pid": "993",
+    "message": "00:13:23, INFO  print_monitor:191:  BT    <X:X> [1761027221] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 15:44:17.842",
+    "process": "bt_player",
+    "pid": "525",
+    "message": "13:21:29, INFO  print_monitor:223:  TTS   <X:X> [1761029057] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 15:58:31.570",
+    "process": "bt_player",
+    "pid": "868",
+    "message": "02:23:27, INFO  print_monitor:223:  TTS   <X:X> [1761029911] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 16:17:40.072",
+    "process": "bt_player",
+    "pid": "785",
+    "message": "09:28:12, INFO  print_monitor:191:  BT    <X:X> [1761031060] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 16:24:48.390",
+    "process": "bt_player",
+    "pid": "879",
+    "message": "21:30:22, INFO  print_monitor:223:  TTS   <X:X> [1761031488] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 16:40:59.530",
+    "process": "bt_player",
+    "pid": "482",
+    "message": "19:57:22, INFO  print_monitor:205:  MEDIA <X:X> [1761032459] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 16:59:09.639",
+    "process": "bt_player",
+    "pid": "281",
+    "message": "20:33:01, INFO  print_monitor:191:  BT    <X:X> [1761033549] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 17:02:26.801",
+    "process": "bt_player",
+    "pid": "317",
+    "message": "09:22:46, INFO  print_monitor:191:  BT    <X:X> [1761033746] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 17:28:23.651",
+    "process": "bt_player",
+    "pid": "608",
+    "message": "22:02:20, INFO  print_monitor:191:  BT    <X:X> [1761035303] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 17:51:36.202",
+    "process": "bt_player",
+    "pid": "915",
+    "message": "21:31:15, INFO  print_monitor:205:  MEDIA <X:X> [1761036696] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 19:11:04.977",
+    "process": "bt_player",
+    "pid": "607",
+    "message": "06:39:19, INFO  print_monitor:223:  TTS   <X:X> [1761041464] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 19:33:19.809",
+    "process": "bt_player",
+    "pid": "899",
+    "message": "15:27:41, INFO  print_monitor:191:  BT    <X:X> [1761042799] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 19:38:27.875",
+    "process": "bt_player",
+    "pid": "715",
+    "message": "03:16:56, INFO  print_monitor:223:  TTS   <X:X> [1761043107] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 19:52:34.325",
+    "process": "bt_player",
+    "pid": "227",
+    "message": "12:08:57, INFO  print_monitor:223:  TTS   <X:X> [1761043954] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 20:00:53.989",
+    "process": "bt_player",
+    "pid": "897",
+    "message": "17:30:10, INFO  print_monitor:205:  MEDIA <X:X> [1761044453] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 20:02:55.922",
+    "process": "bt_player",
+    "pid": "956",
+    "message": "05:49:24, INFO  print_monitor:223:  TTS   <X:X> [1761044575] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 20:14:15.741",
+    "process": "bt_player",
+    "pid": "257",
+    "message": "18:23:32, INFO  print_monitor:223:  TTS   <X:X> [1761045255] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Oct 21 20:17:13.445",
+    "process": "bt_player",
+    "pid": "246",
+    "message": "02:39:22, INFO  print_monitor:191:  BT    <X:X> [1761045433] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 21:10:22.212",
+    "process": "bt_player",
+    "pid": "144",
+    "message": "21:08:55, INFO  print_monitor:205:  MEDIA <X:X> [1761048622] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 21:17:13.990",
+    "process": "bt_player",
+    "pid": "866",
+    "message": "18:56:19, INFO  print_monitor:205:  MEDIA <X:X> [1761049033] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 21:24:58.705",
+    "process": "bt_player",
+    "pid": "723",
+    "message": "21:42:43, INFO  print_monitor:205:  MEDIA <X:X> [1761049498] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 22:20:16.948",
+    "process": "bt_player",
+    "pid": "508",
+    "message": "14:35:56, INFO  print_monitor:191:  BT    <X:X> [1761052816] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 22:41:00.825",
+    "process": "bt_player",
+    "pid": "903",
+    "message": "16:17:59, INFO  print_monitor:205:  MEDIA <X:X> [1761054060] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Oct 21 23:00:14.881",
+    "process": "bt_player",
+    "pid": "653",
+    "message": "15:51:12, INFO  print_monitor:191:  BT    <X:X> [1761055214] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Oct 21 23:18:50.708",
+    "process": "bt_player",
+    "pid": "814",
+    "message": "02:00:47, INFO  print_monitor:205:  MEDIA <X:X> [1761056330] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  }
+]

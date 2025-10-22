@@ -250,17 +250,15 @@ function parseLine(line: string) {
 }
 
 /**
- * 파일/경로/소스 중에서 "파일명"을 우선적으로 고르고, 경로가 오면 basename만 반환.
- * 호스트가 file/path를 주지 않는 구버전이라면 기존 source를 그대로 사용.
+ * "파일/경로"만을 사용해 표시용 소스를 결정한다.
+ * - 우선순위: file → basename(path)
+ * - 세그먼트 키 일관성 유지를 위해 source 텍스트에는 의존하지 않는다.
  */
 function pickSrcName(e: any): string {
-  const cand =
-    (typeof e?.file === 'string' && e.file) ||
-    (typeof e?.path === 'string' && e.path) ||
-    (typeof e?.source === 'string' && e.source) ||
-    '';
-  const bn = basename(cand);
-  return bn || cand;
+  const file = (typeof e?.file === 'string' && e.file) ? e.file : '';
+  const p = (typeof e?.path === 'string' && e.path) ? e.path : '';
+  const cand = file || p;
+  return basename(cand);
 }
 
 function basename(p: string): string {

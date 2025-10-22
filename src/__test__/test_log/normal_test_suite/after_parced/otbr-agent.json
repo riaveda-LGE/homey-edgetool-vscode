@@ -1,0 +1,752 @@
+[
+  {
+    "time": "Oct 20 00:06:26.508",
+    "process": "otbr-agent",
+    "pid": "1701",
+    "message": "13:57:41.594 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 00:13:52.294",
+    "process": "otbr-agent",
+    "pid": "1804",
+    "message": "17:50:49.304 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 00:29:31.280",
+    "process": "otbr-agent",
+    "pid": "1820",
+    "message": "00:31:22.442 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 00:33:25.024",
+    "process": "otbr-agent",
+    "pid": "1991",
+    "message": "16:04:32.445 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 00:38:46.901",
+    "process": "otbr-agent",
+    "pid": "1740",
+    "message": "11:21:20.911 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 01:24:34.128",
+    "process": "otbr-agent",
+    "pid": "1968",
+    "message": "17:42:25.065 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 01:43:58.656",
+    "process": "otbr-agent",
+    "pid": "1605",
+    "message": "07:52:45.181 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 02:14:17.994",
+    "process": "otbr-agent",
+    "pid": "1635",
+    "message": "15:18:33.876 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 02:33:17.986",
+    "process": "otbr-agent",
+    "pid": "1623",
+    "message": "03:24:32.403 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 02:45:50.612",
+    "process": "otbr-agent",
+    "pid": "1603",
+    "message": "16:36:47.921 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 02:51:10.963",
+    "process": "otbr-agent",
+    "pid": "1759",
+    "message": "16:52:59.591 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 02:58:47.186",
+    "process": "otbr-agent",
+    "pid": "1684",
+    "message": "16:26:37.360 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 03:00:31.419",
+    "process": "otbr-agent",
+    "pid": "1741",
+    "message": "14:41:56.610 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 03:44:20.344",
+    "process": "otbr-agent",
+    "pid": "1977",
+    "message": "19:01:13.628 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 03:48:02.963",
+    "process": "otbr-agent",
+    "pid": "1973",
+    "message": "04:05:22.917 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 04:09:24.068",
+    "process": "otbr-agent",
+    "pid": "1645",
+    "message": "13:30:33.205 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 04:42:10.737",
+    "process": "otbr-agent",
+    "pid": "1993",
+    "message": "18:52:49.821 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 05:18:14.908",
+    "process": "otbr-agent",
+    "pid": "1871",
+    "message": "07:01:58.223 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 05:41:03.048",
+    "process": "otbr-agent",
+    "pid": "1850",
+    "message": "17:34:49.214 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 06:07:18.345",
+    "process": "otbr-agent",
+    "pid": "1648",
+    "message": "13:32:49.094 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 06:41:07.531",
+    "process": "otbr-agent",
+    "pid": "1694",
+    "message": "01:15:45.676 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 07:39:26.566",
+    "process": "otbr-agent",
+    "pid": "1928",
+    "message": "15:51:36.385 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 08:09:54.177",
+    "process": "otbr-agent",
+    "pid": "1919",
+    "message": "04:25:51.987 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 08:36:08.587",
+    "process": "otbr-agent",
+    "pid": "1868",
+    "message": "10:41:18.853 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 08:44:21.455",
+    "process": "otbr-agent",
+    "pid": "1994",
+    "message": "01:26:01.461 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 09:23:50.434",
+    "process": "otbr-agent",
+    "pid": "1642",
+    "message": "18:34:35.370 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 09:31:10.027",
+    "process": "otbr-agent",
+    "pid": "1605",
+    "message": "14:22:42.748 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 09:42:53.119",
+    "process": "otbr-agent",
+    "pid": "1748",
+    "message": "08:25:13.137 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 09:50:19.597",
+    "process": "otbr-agent",
+    "pid": "1615",
+    "message": "02:07:24.453 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 10:14:59.231",
+    "process": "otbr-agent",
+    "pid": "1767",
+    "message": "12:16:17.102 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 10:35:06.687",
+    "process": "otbr-agent",
+    "pid": "1731",
+    "message": "07:07:33.608 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 10:37:47.286",
+    "process": "otbr-agent",
+    "pid": "1929",
+    "message": "02:28:34.458 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 11:54:26.968",
+    "process": "otbr-agent",
+    "pid": "1888",
+    "message": "20:41:36.781 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 12:07:30.912",
+    "process": "otbr-agent",
+    "pid": "1882",
+    "message": "05:30:37.654 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 12:12:52.683",
+    "process": "otbr-agent",
+    "pid": "1793",
+    "message": "14:17:27.915 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 12:25:46.842",
+    "process": "otbr-agent",
+    "pid": "1894",
+    "message": "02:22:10.699 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 12:59:03.318",
+    "process": "otbr-agent",
+    "pid": "1728",
+    "message": "08:13:08.990 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 13:18:15.227",
+    "process": "otbr-agent",
+    "pid": "1818",
+    "message": "20:18:53.219 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 13:28:55.531",
+    "process": "otbr-agent",
+    "pid": "1772",
+    "message": "18:36:10.832 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 13:44:45.407",
+    "process": "otbr-agent",
+    "pid": "1778",
+    "message": "03:36:18.944 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 13:54:25.195",
+    "process": "otbr-agent",
+    "pid": "1912",
+    "message": "04:24:27.722 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 14:33:35.643",
+    "process": "otbr-agent",
+    "pid": "1786",
+    "message": "00:49:35.919 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 14:39:12.408",
+    "process": "otbr-agent",
+    "pid": "1997",
+    "message": "13:04:55.654 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 15:08:32.979",
+    "process": "otbr-agent",
+    "pid": "1942",
+    "message": "15:46:51.815 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 15:16:01.406",
+    "process": "otbr-agent",
+    "pid": "1947",
+    "message": "11:53:08.126 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 15:59:49.446",
+    "process": "otbr-agent",
+    "pid": "1862",
+    "message": "00:22:01.167 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 16:25:40.156",
+    "process": "otbr-agent",
+    "pid": "1756",
+    "message": "09:51:33.397 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 16:42:02.472",
+    "process": "otbr-agent",
+    "pid": "1778",
+    "message": "12:03:45.868 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 18:09:28.634",
+    "process": "otbr-agent",
+    "pid": "1675",
+    "message": "22:09:17.294 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 18:34:18.065",
+    "process": "otbr-agent",
+    "pid": "1778",
+    "message": "10:05:06.739 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 18:50:33.647",
+    "process": "otbr-agent",
+    "pid": "1767",
+    "message": "06:16:30.684 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 19:22:51.261",
+    "process": "otbr-agent",
+    "pid": "1770",
+    "message": "17:33:03.501 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 19:49:15.676",
+    "process": "otbr-agent",
+    "pid": "1836",
+    "message": "15:58:45.281 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 20:36:14.570",
+    "process": "otbr-agent",
+    "pid": "1608",
+    "message": "19:05:11.533 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 20:50:34.338",
+    "process": "otbr-agent",
+    "pid": "1604",
+    "message": "21:49:51.915 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 21:23:50.298",
+    "process": "otbr-agent",
+    "pid": "1872",
+    "message": "06:19:50.650 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 21:28:53.188",
+    "process": "otbr-agent",
+    "pid": "1845",
+    "message": "12:34:14.065 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 21:32:23.938",
+    "process": "otbr-agent",
+    "pid": "1724",
+    "message": "21:02:33.114 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 22:00:14.302",
+    "process": "otbr-agent",
+    "pid": "1789",
+    "message": "00:20:11.915 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 22:44:37.853",
+    "process": "otbr-agent",
+    "pid": "1632",
+    "message": "09:38:01.636 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 22:58:34.140",
+    "process": "otbr-agent",
+    "pid": "1867",
+    "message": "04:33:12.728 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 23:03:58.162",
+    "process": "otbr-agent",
+    "pid": "1881",
+    "message": "07:27:10.048 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 20 23:07:40.608",
+    "process": "otbr-agent",
+    "pid": "1779",
+    "message": "05:27:05.479 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 20 23:10:44.359",
+    "process": "otbr-agent",
+    "pid": "1610",
+    "message": "13:45:02.365 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 20 23:58:54.088",
+    "process": "otbr-agent",
+    "pid": "1980",
+    "message": "05:26:09.567 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 00:24:39.793",
+    "process": "otbr-agent",
+    "pid": "1634",
+    "message": "21:43:54.606 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 00:38:28.249",
+    "process": "otbr-agent",
+    "pid": "1644",
+    "message": "20:23:49.523 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 01:14:06.676",
+    "process": "otbr-agent",
+    "pid": "1962",
+    "message": "01:33:16.505 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 01:18:34.705",
+    "process": "otbr-agent",
+    "pid": "1743",
+    "message": "09:29:18.618 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 01:41:41.299",
+    "process": "otbr-agent",
+    "pid": "1698",
+    "message": "03:29:20.301 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 02:05:05.871",
+    "process": "otbr-agent",
+    "pid": "1667",
+    "message": "10:46:57.364 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 03:29:58.656",
+    "process": "otbr-agent",
+    "pid": "1868",
+    "message": "07:55:14.777 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 03:36:55.026",
+    "process": "otbr-agent",
+    "pid": "1732",
+    "message": "14:13:36.574 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 03:39:33.450",
+    "process": "otbr-agent",
+    "pid": "1921",
+    "message": "14:33:23.493 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 03:56:06.935",
+    "process": "otbr-agent",
+    "pid": "1902",
+    "message": "23:38:43.630 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 04:01:26.265",
+    "process": "otbr-agent",
+    "pid": "1768",
+    "message": "05:48:53.090 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 04:24:09.580",
+    "process": "otbr-agent",
+    "pid": "1830",
+    "message": "09:25:00.799 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 05:04:46.433",
+    "process": "otbr-agent",
+    "pid": "1632",
+    "message": "13:39:05.959 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 05:27:06.326",
+    "process": "otbr-agent",
+    "pid": "1933",
+    "message": "16:47:06.996 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 05:29:35.573",
+    "process": "otbr-agent",
+    "pid": "1771",
+    "message": "13:18:52.263 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 05:31:32.077",
+    "process": "otbr-agent",
+    "pid": "1863",
+    "message": "19:30:07.716 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 05:33:36.486",
+    "process": "otbr-agent",
+    "pid": "1707",
+    "message": "21:03:50.423 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 05:37:01.546",
+    "process": "otbr-agent",
+    "pid": "1932",
+    "message": "03:25:49.206 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 06:18:07.172",
+    "process": "otbr-agent",
+    "pid": "1812",
+    "message": "03:10:43.059 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 06:26:54.252",
+    "process": "otbr-agent",
+    "pid": "1811",
+    "message": "14:37:12.807 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 06:39:57.938",
+    "process": "otbr-agent",
+    "pid": "1706",
+    "message": "23:25:49.653 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 06:42:11.069",
+    "process": "otbr-agent",
+    "pid": "1660",
+    "message": "01:25:20.173 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 06:44:27.995",
+    "process": "otbr-agent",
+    "pid": "1676",
+    "message": "21:54:16.276 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 06:52:01.211",
+    "process": "otbr-agent",
+    "pid": "1735",
+    "message": "19:17:06.046 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 07:30:04.130",
+    "process": "otbr-agent",
+    "pid": "1651",
+    "message": "01:45:42.779 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 07:49:06.988",
+    "process": "otbr-agent",
+    "pid": "1613",
+    "message": "02:50:06.365 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 08:48:36.058",
+    "process": "otbr-agent",
+    "pid": "1957",
+    "message": "01:44:28.212 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 09:05:19.389",
+    "process": "otbr-agent",
+    "pid": "1701",
+    "message": "22:58:49.763 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 09:21:10.532",
+    "process": "otbr-agent",
+    "pid": "1796",
+    "message": "12:48:41.096 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 09:56:21.537",
+    "process": "otbr-agent",
+    "pid": "1863",
+    "message": "08:03:52.960 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 10:33:58.716",
+    "process": "otbr-agent",
+    "pid": "1923",
+    "message": "07:12:15.983 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 10:54:10.924",
+    "process": "otbr-agent",
+    "pid": "1939",
+    "message": "14:29:40.486 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 11:41:43.504",
+    "process": "otbr-agent",
+    "pid": "1923",
+    "message": "23:14:29.334 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 12:00:26.609",
+    "process": "otbr-agent",
+    "pid": "1752",
+    "message": "08:39:44.767 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 13:10:02.285",
+    "process": "otbr-agent",
+    "pid": "1617",
+    "message": "17:51:32.659 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 13:15:54.154",
+    "process": "otbr-agent",
+    "pid": "1882",
+    "message": "03:41:04.006 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 13:32:55.367",
+    "process": "otbr-agent",
+    "pid": "1714",
+    "message": "07:59:39.870 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 13:36:35.886",
+    "process": "otbr-agent",
+    "pid": "1866",
+    "message": "09:52:06.437 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 14:37:45.958",
+    "process": "otbr-agent",
+    "pid": "1952",
+    "message": "04:22:22.534 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 15:04:50.663",
+    "process": "otbr-agent",
+    "pid": "1734",
+    "message": "02:04:59.822 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 15:20:44.515",
+    "process": "otbr-agent",
+    "pid": "1603",
+    "message": "21:58:25.612 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 15:29:32.756",
+    "process": "otbr-agent",
+    "pid": "1806",
+    "message": "07:06:30.451 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 15:52:31.383",
+    "process": "otbr-agent",
+    "pid": "1882",
+    "message": "19:05:12.996 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 16:08:18.218",
+    "process": "otbr-agent",
+    "pid": "1641",
+    "message": "15:19:29.856 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 16:20:24.716",
+    "process": "otbr-agent",
+    "pid": "1979",
+    "message": "05:32:44.840 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 16:26:25.793",
+    "process": "otbr-agent",
+    "pid": "1985",
+    "message": "09:33:43.906 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 17:49:54.322",
+    "process": "otbr-agent",
+    "pid": "1818",
+    "message": "09:10:16.232 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 17:50:29.736",
+    "process": "otbr-agent",
+    "pid": "1916",
+    "message": "19:28:08.476 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 17:57:48.904",
+    "process": "otbr-agent",
+    "pid": "1953",
+    "message": "08:51:29.837 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 18:02:16.332",
+    "process": "otbr-agent",
+    "pid": "1617",
+    "message": "14:05:45.582 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 19:32:30.079",
+    "process": "otbr-agent",
+    "pid": "1830",
+    "message": "07:15:04.256 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 19:34:56.484",
+    "process": "otbr-agent",
+    "pid": "1734",
+    "message": "10:26:49.227 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 20:06:00.193",
+    "process": "otbr-agent",
+    "pid": "1854",
+    "message": "15:23:55.250 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 20:35:27.562",
+    "process": "otbr-agent",
+    "pid": "1715",
+    "message": "00:02:53.538 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 21:13:04.597",
+    "process": "otbr-agent",
+    "pid": "1947",
+    "message": "09:35:15.318 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 21:17:16.723",
+    "process": "otbr-agent",
+    "pid": "1935",
+    "message": "21:20:39.654 [D] P-RadioSpinel-: Received spinel frame, flg:0x2, iid:2, tid:9, cmd:PROP_VALUE_IS, key:LAST_STATUS, status:OK"
+  },
+  {
+    "time": "Oct 21 21:30:20.537",
+    "process": "otbr-agent",
+    "pid": "1897",
+    "message": "01:19:40.656 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 21:37:10.199",
+    "process": "otbr-agent",
+    "pid": "1754",
+    "message": "18:59:12.085 [D] Mac-----------: ================="
+  },
+  {
+    "time": "Oct 21 22:27:18.475",
+    "process": "otbr-agent",
+    "pid": "1803",
+    "message": "20:26:44.970 [D] SubMac--------: RadioState: Transmit -> Receive"
+  },
+  {
+    "time": "Oct 21 23:16:37.997",
+    "process": "otbr-agent",
+    "pid": "1621",
+    "message": "09:43:30.858 [D] SubMac--------: RadioState: Transmit -> Receive"
+  }
+]

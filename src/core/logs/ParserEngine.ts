@@ -8,6 +8,7 @@ import type {
 } from '../config/schema.js';
 import { parseTs } from './time/TimeParser.js';
 import { guessLevel } from './time/TimeParser.js'; // same module에서 export 중이면 병합, 아니면 적절히 import
+import type { ParsedPayload } from '@ipc/messages';
 
 export type { ParserConfig };
 
@@ -17,6 +18,20 @@ export type ParsedFields = {
   pid?: string;
   message?: string;
 };
+
+// ANSI escape 제거(표준 범위)
+function stripAnsi(s: string | undefined): string | undefined {
+  if (!s) return s;
+  return s.replace(/[\u001B\u009B][[\]()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g, '');
+}
+
+// time 토큰 정리: 혹시 남아있을 수도 있는 대괄호 제거 + trim
+function normalizeTimeToken(s: string | undefined): string | undefined {
+  if (!s) return s;
+  const t = s.trim();
+  const m = t.match(/^\[(.*)\]$/);
+  return m ? m[1] : t;
+}
 
 /** 단일 정규식 문자열을 적용해 named capture 를 반환(없으면 undefined) */
 function applyCompiledOne(rx: RegExp | undefined, line: string): string | undefined {
@@ -34,11 +49,18 @@ function applyCompiledOne(rx: RegExp | undefined, line: string): string | undefi
 function extractFieldsByCompiledRule(line: string, regex: {
   time?: RegExp; process?: RegExp; pid?: RegExp; message?: RegExp;
 }): ParsedFields {
-  return {
+  const raw = {
     time:    applyCompiledOne(regex.time, line),
     process: applyCompiledOne(regex.process, line),
     pid:     applyCompiledOne(regex.pid, line),
     message: applyCompiledOne(regex.message, line),
+  };
+  // 정규화: time 대괄호 제거(방어적), message ANSI 스트립
+  return {
+    time: normalizeTimeToken(raw.time),
+    process: raw.process ?? undefined,
+    pid: raw.pid ?? undefined,
+    message: stripAnsi(raw.message),
   };
 }
 
@@ -46,38 +68,14 @@ function extractFieldsByCompiledRule(line: string, regex: {
  * Custom Parser Compiler / Matcher / Preflight
  * ──────────────────────────────────────────────────────────── */
 
-// 글롭을 경로용 정규식으로 변환(**,*,? 지원)
-function globToRegExp(glob: string): RegExp | null {
-  if (!glob || typeof glob !== 'string') return null;
-  const g = glob.replace(/\\/g, '/');
-  let rx = '^';
-  for (let i = 0; i < g.length; ) {
-    const c = g[i];
-    if (c === '*') {
-      if (g[i + 1] === '*') {
-        rx += '.*';
-        i += 2;
-      } else {
-        rx += '[^/]*';
-        i += 1;
-      }
-    } else if (c === '?') {
-      rx += '[^/]';
-      i += 1;
-    } else {
-      if ('.+^$()[]{}|\\'.includes(c)) rx += '\\' + c;
-      else rx += c;
-      i += 1;
-    }
-  }
-  rx += '$';
-  return new RegExp(rx, 'i');
+function escapeRe(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /** 템플릿 files 토큰을 "파일명(basename) 전용" 정규식으로 컴파일
- *  - 정규식 형태(^...$)면 그대로 i 플래그로 컴파일
- *  - 아니면 글롭으로 간주하여 정규식으로 변환(역시 i 플래그)
- *  - 매칭은 항상 basename 에만 수행됨
+ *  - **정규식**: '^'로 시작하면 그대로(i 플래그)
+ *  - **리터럴**: 그 외는 정확히 그 파일명만 매칭하도록 ^…$ 앵커링(i 플래그)
+ *  - 매칭 대상은 항상 **basename**.
  */
 function fileTokenToRegex(token: string): RegExp | null {
   if (!token || typeof token !== 'string') return null;
@@ -90,8 +88,8 @@ function fileTokenToRegex(token: string): RegExp | null {
       return null;
     }
   }
-  // 그 외는 글롭으로 처리 (예: "kernel.log*", "bt_player.log*")
-  return globToRegExp(t);
+  // 글롭 미지원: 리터럴 파일명 그대로 매칭
+  return new RegExp(`^${escapeRe(t)}$`, 'i');
 }
 
 export type CompiledRule = {
@@ -250,18 +248,21 @@ export function lineToEntryWithParser(
   filePath: string,
   line: string,
   cp?: CompiledParser,
+  opts?: { fallbackTs?: number; fileRank?: number; revIdx?: number },
 ): import('@ipc/messages').LogEntry {
   const bn = path.basename(filePath);
-  let ts = parseTs(line) ?? Date.now();
+  // ⬇️ 파싱 실패 시 '고정' fallback: prevTs(or 0)
+  let ts = parseTs(line) ?? (opts?.fallbackTs ?? 0);
   let level: 'D' | 'I' | 'W' | 'E' = guessLevel(line);
   let type: 'system' | 'homey' | 'application' | 'other' = 'system';
   let source = bn;
   let file = bn;
   let path_ = filePath;
   let text = line;
+  let parsed: ParsedPayload | undefined;
 
   if (cp) {
-    // ⚠️ 항상 파일명 기준으로 룰 매칭
+    // warmup/T1 모두 basename 기준 일관 매칭
     const rule = matchRuleForPath(bn, cp);
     if (rule) {
       const fields = extractByCompiledRule(line, rule);
@@ -271,10 +272,17 @@ export function lineToEntryWithParser(
       if (fields.message) text = fields.message;
       // 레벨은 메시지/라인에서 휴리스틱
       level = guessLevel(fields.message ?? line);
+      // ⬇️ 파싱 필드 보관(대괄호 제거/ANSI 제거된 최소 정규화 상태)
+      parsed = {
+        time: fields.time ?? null,
+        process: fields.process ?? null,
+        pid: fields.pid ?? null,
+        message: fields.message ?? null,
+      };
     }
   }
 
-  return {
+  const entry: import('@ipc/messages').LogEntry = {
     id: Date.now(),
     ts,
     level,
@@ -283,5 +291,11 @@ export function lineToEntryWithParser(
     file,
     path: path_,
     text,
+    parsed,
   };
+
+  // 병합 tie-break 용 메타 (선택 필드)
+  (entry as any)._fRank = opts?.fileRank;
+  (entry as any)._rev = opts?.revIdx;
+  return entry;
 }

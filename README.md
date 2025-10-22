@@ -53,6 +53,11 @@ npm test -- --testNamePattern="일반 로그 파일들을 정확히 병합해야
 npm test -- --testNamePattern="타임존 점프가 있는 로그 파일들을 정확히 병합해야 함"
 ```
 
+파일 테스트 실행:
+```bash
+npm test -- --testPathPattern="LogFileIntegration"
+```
+
 ## 검증
 
 TypeScript 컴파일 검증:
