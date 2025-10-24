@@ -60,6 +60,15 @@ npm run test -- --f="LogWebviewAscendingOrder"
 npm run test -- --f="LogPipelineE2E"
 ```
 
+실제로직이 정상적인 상태일 경우 하기 경로에 로그가 존재하면 Golden을 만들수 있음
+준비파일: 
+- src\__test__\test_log\normal_test_suite\before_merge
+- src\__test__\test_log\timezone_jump_test_suite\before_merge
+```bash
+$env:UPDATE_GOLDEN='1'; npm test -- --testPathPattern=LogFileIntegration
+```
+테스트의 실패여부와 상관없이(Golden이 잘못 된것이므로) before의 로그로부터 병합된 최종 로그를 after폴더에 저장
+
 ## 검증
 
 TypeScript 컴파일 검증:
