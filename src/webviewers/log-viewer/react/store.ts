@@ -80,7 +80,16 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   receiveRows(startIdx, rows) {
     get().measureUi('store.receiveRows', () => {
       const state = get();
-      const maxId = Math.max(state.nextId, (rows.at(-1)?.id ?? 0) + 1);
+      const maxIdInBatch = rows.reduce((m, r) => Math.max(m, r.id ?? 0), 0);
+      const maxId = Math.max(state.nextId, maxIdInBatch + 1);
+      // ── PROBE: 수신 버퍼 정합성
+      const first = rows[0]?.idx;
+      const last  = rows.length ? rows[rows.length - 1]?.idx : undefined;
+      const asc   = rows.every((r, i, arr) =>
+        i === 0 || ((arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity)));
+      (get() as any).__ui?.info?.(
+        `[probe:store] receive start=${startIdx} len=${rows.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
+      );
       // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
       let selectedRowId = state.selectedRowId;
       if (state.pendingJumpIdx) {
@@ -96,6 +105,15 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       // 과도한 로그 방지: 범위 바뀔 때만 간단 요약
       const end = startIdx + rows.length - 1;
       (get() as any).__ui?.debug?.(`store.receiveRows ${startIdx}-${end} (${rows.length})`);
+      // ── PROBE: 머지 후 창 범위/샘플
+      const s2 = get();
+      const winStart = s2.windowStart ?? 1;
+      const winEnd   = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
+      const sample   = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
+      const sampleStr = sample.map((r: any) => `${r.idx ?? '?'}|${r.time ?? '-'}`).join(', ');
+      (get() as any).__ui?.info?.(
+        `[probe:store] window=${winStart}-${winEnd} sample(top10)=${sampleStr} nextId(after)=${s2.nextId}`,
+      );
     });
   },
 

@@ -267,6 +267,10 @@ export async function shouldUseParserForFile(
   if (pf.hardSkip.length) {
     for (const line of sample) {
       if (pf.hardSkip.some((rx) => rx.test(line))) {
+        log.info(
+          `preflight.summary: file=${relPath || filePath} decision=false reason=hard-skip ` +
+          `req=${JSON.stringify(cp.requirements.fields)}`
+        );
         log.debug?.(`shouldUseParserForFile: hard skip matched for ${relPath || filePath}`);
         return false;
       }
@@ -279,7 +283,13 @@ export async function shouldUseParserForFile(
   }
   const ratio = matched / sample.length;
   log.debug?.(`shouldUseParserForFile: match ratio ${ratio.toFixed(2)} (${matched}/${sample.length}) for ${relPath || filePath}`);
-  return ratio >= pf.min_match_ratio;
+  const decision = ratio >= pf.min_match_ratio;
+  log.info(
+    `preflight.summary: file=${relPath || filePath} decision=${decision} ` +
+    `ratio=${ratio.toFixed(2)} matched=${matched} sample=${sample.length} ` +
+    `min=${pf.min_match_ratio} req=${JSON.stringify(cp.requirements.fields)}`
+  );
+  return decision;
 }
 
 export function extractByCompiledRule(line: string, rule: CompiledRule): ParsedFields {

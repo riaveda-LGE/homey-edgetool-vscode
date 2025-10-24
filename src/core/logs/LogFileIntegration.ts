@@ -17,6 +17,28 @@ const log = getLogger('LogFileIntegration');
 const BOM_RE = /^\uFEFF/;
 function stripBomStart(s: string): string { return s.replace(BOM_RE, ''); }
 
+// ────────────────────────────────────────────────────────────────────────────
+// DESC 병합 검증 헬퍼(노이즈 억제형): 역전(inversion) 집계와 범위만 로그
+// ────────────────────────────────────────────────────────────────────────────
+function countDescInversions(arr: { ts: number }[]): number {
+  let inv = 0;
+  for (let i = 1; i < arr.length; i++) {
+    // 내림차순에서 앞 원소(ts[i-1])보다 뒤(ts[i])가 크면 역전
+    if (arr[i].ts > arr[i - 1].ts) inv++;
+  }
+  return inv;
+}
+function tsRange(arr: { ts: number }[]): { max?: number; min?: number } {
+  if (!arr.length) return {};
+  let mx = arr[0].ts, mn = arr[0].ts;
+  for (let i = 1; i < arr.length; i++) {
+    const t = arr[i].ts;
+    if (t > mx) mx = t; if (t < mn) mn = t;
+  }
+  return { max: mx, min: mn };
+}
+const toIso = (t?: number) => (typeof t === 'number' ? new Date(t).toISOString() : 'n/a');
+
 /* ──────────────────────────────────────────────────────────────────────────
  * 공개 API
  * ────────────────────────────────────────────────────────────────────────── */
@@ -202,6 +224,18 @@ export async function mergeDirectory(opts: MergeOptions) {
 
       log.debug(`T1: processing type=${typeKey} files=${fileList.length}`);
       const logs: LogEntry[] = [];
+      // 타입 단위 집계(파일 요약을 함께 찍기 위함)
+      const fileSummaries: Array<{
+        file: string;
+        lines: number;
+        parsedTime: number;
+        noParsedTime: number;
+        headerOk: number;
+        headerFallbackFullOk: number;
+        headerFailBoth: number;
+        tsZero: number;
+        parserOn: boolean;
+      }> = [];
 
       // 최신 파일부터( *.log → *.log.1 → *.log.2 … )
       const orderedFiles = fileList.sort(compareLogOrderDesc);
@@ -218,6 +252,22 @@ export async function mergeDirectory(opts: MergeOptions) {
             useParserForThisFile = await shouldUseParserForFile(fullPath, rel, compiledParser);
           } catch {}
         }
+        log.info(
+          `[probe:file-open] type=${typeKey} file=${fileName} parser=${useParserForThisFile}`
+        );
+        // 파일별 집계용 카운터
+        const sum = {
+          file: fileName,
+          lines: 0,
+          parsedTime: 0,
+          noParsedTime: 0,
+          headerOk: 0,
+          headerFallbackFullOk: 0,
+          headerFailBoth: 0,
+          tsZero: 0,
+          parserOn: useParserForThisFile,
+        };
+
         const rr = await ReverseLineReader.open(fullPath);
         let line: string | null;
         let revIdx = 0;
@@ -227,13 +277,51 @@ export async function mergeDirectory(opts: MergeOptions) {
             fileRank: fileIdx,
             revIdx: revIdx++,
           });
+          // ── ts 출처·품질 집계 ─────────────────────────────────────────
+          sum.lines++;
+          const p = (entry as any)?.parsed as
+            | { time?: string | null; process?: string | null; pid?: string | number | null; message?: string | null }
+            | undefined;
+          if (p?.time) {
+            sum.parsedTime++;
+            // 헤더/풀라인 재해석으로 출처 구분(로직 변경 없음, 집계만)
+            const tHeader = parseTs(`[${String(p.time).trim()}]`);
+            // 복원 라인을 로컬에서 생성(restoreFullTextIfNeeded과 동일 포맷)
+            const pidRaw = p.pid == null ? '' : String(p.pid).trim();
+            const pidBlock = pidRaw ? `[${pidRaw}]` : '';
+            const full = `[${String(p.time).trim()}] ${String(p.process ?? '').trim()}${pidBlock}: ${String(p.message ?? entry.text ?? '')}`;
+            const tFull = parseTs(full);
+            if (typeof tHeader === 'number') sum.headerOk++;
+            else if (typeof tFull === 'number') sum.headerFallbackFullOk++;
+            else sum.headerFailBoth++;
+          } else {
+            sum.noParsedTime++;
+          }
+          if (!entry.ts) sum.tsZero++;
           // 테스트/골든 일관성: 파서가 message-only로 바꿨다면 헤더 복원(+ ts 재계산)
           await restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
           logs.push(entry); // 전체 logs가 최신→오래된 순
         }
         await rr.close();
+        fileSummaries.push(sum);
       }
       log.info(`T1: loaded ${logs.length} logs for type=${typeKey}`);
+      // 파일별 요약 출력(스팸 방지를 위해 info 1줄/파일)
+      for (const s of fileSummaries) {
+        log.info(
+          `[probe:file-summary] type=${typeKey} file=${s.file} parser=${s.parserOn} lines=${s.lines} ` +
+          `parsed.time=${s.parsedTime}/${s.lines} no.parsed=${s.noParsedTime} tsZero=${s.tsZero} ` +
+          `hdrOK=${s.headerOk} hdr→full=${s.headerFallbackFullOk} hdrFail=${s.headerFailBoth}`
+        );
+      }
+
+      // ── 병합 DESC 검증(타임존 보정 전) 요약 ──
+      if (logs.length) {
+        const r0 = tsRange(logs);
+        const inv0 = countDescInversions(logs);
+        log.info(`[probe:merge-desc] type=${typeKey} beforeTZ len=${logs.length}` +
+          ` range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`);
+      }
 
       // (옵션) RAW 저장 — 최신→오래된 그대로
       if (rawDir && logs.length) {
@@ -244,21 +332,22 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
 
       // 타임존 보정 (국소 소급 보정 지원)
-      // 물리 배열(최신→오래된)을 "뒤→앞"으로 돌리며 asc 인덱스를 0.. 증가시킨다.
+      // ✅ 보정기는 "최신→오래된" 순으로 feed되는 것을 전제한다.
+      // logs[]는 이미 최신→오래된 물리 순서이므로 0..N-1로 전진하며 처리한다.
       const tzc = new TimezoneCorrector(typeKey);
       let tzRetroSegmentsApplied = 0;
-      for (let k = logs.length - 1, asc = 0; k >= 0; k--, asc++) {
-        const corrected = tzc.adjust(logs[k].ts, asc);
-        logs[k].ts = corrected;
+      for (let asc = 0; asc < logs.length; asc++) {
+        const corrected = tzc.adjust(logs[asc].ts, asc);
+        logs[asc].ts = corrected;
 
-        // 복귀 확정 시 asc 구간을 물리 인덱스로 역투영해서 Δoffset 적용
+        // 복귀 확정 시 같은 asc 인덱스 구간에 Δoffset 직접 적용
         const segs = tzc.drainRetroSegments();
         if (segs.length) {
           tzRetroSegmentsApplied += segs.length;
           for (const seg of segs) {
-            const startK = (logs.length - 1) - seg.end;
-            const endK   = (logs.length - 1) - seg.start;
-            for (let j = startK; j <= Math.min(endK, logs.length - 1); j++) {
+            const startK = Math.max(0, seg.start);
+            const endK   = Math.min(logs.length - 1, seg.end);
+            for (let j = startK; j <= endK; j++) {
               logs[j].ts += seg.deltaMs;
             }
           }
@@ -270,8 +359,25 @@ export async function mergeDirectory(opts: MergeOptions) {
         `T1: timezone correction type=${typeKey} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
       );
 
+      // ── 병합 DESC 검증(타임존 보정 후, 소트 전) 요약 ──
+      if (logs.length) {
+        const r1 = tsRange(logs);
+        const inv1 = countDescInversions(logs);
+        log.info(`[probe:merge-desc] type=${typeKey} afterTZ(beforeSort)` +
+          ` range=[${toIso(r1.max)}..${toIso(r1.min)}] inversions=${inv1}`);
+      }
+
       // ⬇️ JSONL 저장은 "최신→오래된(내림차순)"으로 저장
       logs.sort((a, b) => b.ts - a.ts);
+
+      // ── 최종 정렬 후 역전 검증 ──
+      if (logs.length) {
+        const r2 = tsRange(logs);
+        const inv2 = countDescInversions(logs);
+        const lvl = inv2 === 0 ? 'info' : 'error';
+        (log as any)[lvl](`[probe:merge-desc] type=${typeKey} afterSort(range ok)` +
+          ` range=[${toIso(r2.max)}..${toIso(r2.min)}] inversions=${inv2}`);
+      }
       const mergedFile = path.join(mergedDir, `${typeKey}.jsonl`);
       for (const logEntry of logs) {
         await fs.promises.appendFile(mergedFile, JSON.stringify(logEntry) + '\n');
@@ -323,6 +429,10 @@ export async function mergeDirectory(opts: MergeOptions) {
     }
 
     let emitted = 0;
+    // k-way 전역 방출 순서 검증(desc): 위반만 샘플 3건
+    let lastEmittedTs = Number.POSITIVE_INFINITY;
+    let violations = 0;
+    const violSamples: Array<{ ts: number; typeKey: string; file?: string; rev?: number }> = [];
     const outBatch: LogEntry[] = [];
     while (!heap.isEmpty()) {
       if (opts.signal?.aborted) {
@@ -331,6 +441,18 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
       const top = heap.pop()!;
       outBatch.push(top.entry);
+
+      // 전역 내림차순 방출 검증
+      if (top.ts > lastEmittedTs) {
+        violations++;
+        if (violSamples.length < 3) {
+          violSamples.push({
+            ts: top.ts, typeKey: top.typeKey,
+            file: (top.entry as any).file, rev: (top.entry as any)._rev
+          });
+        }
+      }
+      lastEmittedTs = top.ts;
 
       if (outBatch.length >= batchSize) {
         emitted += outBatch.length;
@@ -356,6 +478,12 @@ export async function mergeDirectory(opts: MergeOptions) {
       for (const [, cursor] of cursors) await cursor.close();
     }
     log.info(`T1: done emitted=${emitted}`);
+    if (emitted > 0) {
+      const firstIso = toIso(lastEmittedTs); // 마지막 갱신값은 최종 최소(가장 오래된)
+      log.info(`[probe:kway-desc] emitted=${emitted} violations=${violations}` +
+        (violations ? ` samples=${violSamples.map(s=>`${s.typeKey}:${toIso(s.ts)}:${s.file ?? ''}#${s.rev ?? ''}`).join(',')}` : '') +
+        ` tail_min=${firstIso}`);
+    }
   });
 }
 
@@ -792,6 +920,7 @@ class FileForwardCursor {
         c.useParser = false;
       }
     }
+    log.info(`[probe:forward-cursor] file=${path.basename(filePath)} parser=${c.useParser}`);
     return c;
   }
 
@@ -823,6 +952,8 @@ class MergedCursor {
   private reader: ForwardLineReader | null = null;
   public seq = 0;
   public isExhausted = false;
+  // 배치 간 단조비증가(desc) 검증용
+  private lastTsDesc?: number;
 
   private constructor(public typeKey: string) {}
 
@@ -863,6 +994,24 @@ class MergedCursor {
       } catch {
         // malformed 라인은 건너뜀
       }
+    }
+    // 배치 내부는 desc로 저장되어 있어야 함(단조비증가)
+    if (batch.length) {
+      let inv = 0;
+      for (let i = 1; i < batch.length; i++) if (batch[i].ts > batch[i - 1].ts) inv++;
+      if (inv > 0) {
+        const a = new Date(batch[0].ts).toISOString();
+        const z = new Date(batch[batch.length - 1].ts).toISOString();
+        log.warn(`[probe:cursor-desc] type=${this.typeKey} batch inversions=${inv} range=[${a}..${z}]`);
+      }
+      // 배치 경계(desc) 유지 확인: 다음 배치의 첫 ts ≤ 이전 배치의 마지막 ts
+      const curFirst = batch[0].ts;
+      if (this.lastTsDesc !== undefined && curFirst > this.lastTsDesc) {
+        log.warn(`[probe:cursor-desc] type=${this.typeKey} cross-batch order violation: ` +
+          `cur_first=${toIso(curFirst)} prev_last=${toIso(this.lastTsDesc)}`);
+      }
+      // 현재 배치의 마지막(ts가 가장 작은 값)을 보관
+      this.lastTsDesc = batch[batch.length - 1].ts;
     }
     return batch;
   }
@@ -1190,19 +1339,23 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   for (const k of typeKeys) {
     const arr = buffers.get(k)!;
     if (!arr.length) continue;
+    // before TZ: 역전/범위 요약 (warm 전용 프로브)
+    const r0 = tsRange(arr);
+    const inv0 = countDescInversions(arr);
+    log.info(`[probe:warm-desc] type=${k} beforeTZ len=${arr.length} range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`);
     const tzc = new TimezoneCorrector(k);
     let tzRetroSegmentsApplied = 0;
-    // warm 버퍼도 물리 배열은 최신→오래된. 뒤→앞 순회하며 asc 인덱스를 0.. 증가
-    for (let kIdx = arr.length - 1, asc = 0; kIdx >= 0; kIdx--, asc++) {
-      const corrected = tzc.adjust(arr[kIdx].ts, asc);
-      arr[kIdx].ts = corrected;
+    // warm 버퍼도 물리 배열은 최신→오래된. ✅ 앞→뒤(0..N-1)로 feed
+    for (let asc = 0; asc < arr.length; asc++) {
+      const corrected = tzc.adjust(arr[asc].ts, asc);
+      arr[asc].ts = corrected;
       const segs = tzc.drainRetroSegments();
       if (segs.length) {
         tzRetroSegmentsApplied += segs.length;
         for (const seg of segs) {
-          const startK = (arr.length - 1) - seg.end;
-          const endK   = (arr.length - 1) - seg.start;
-          for (let j = startK; j <= Math.min(endK, arr.length - 1); j++) {
+          const startK = Math.max(0, seg.start);
+          const endK   = Math.min(arr.length - 1, seg.end);
+          for (let j = startK; j <= endK; j++) {
             arr[j].ts += seg.deltaMs;
           }
         }
@@ -1212,7 +1365,15 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     log.debug?.(
       `warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
     );
+    // after TZ(before sort)
+    const r1 = tsRange(arr);
+    const inv1 = countDescInversions(arr);
+    log.info(`[probe:warm-desc] type=${k} afterTZ(beforeSort) range=[${toIso(r1.max)}..${toIso(r1.min)}] inversions=${inv1}`);
     arr.sort((a, b) => b.ts - a.ts); // 최신순
+    // after sort
+    const r2 = tsRange(arr);
+    const inv2 = countDescInversions(arr);
+    log.info(`[probe:warm-desc] type=${k} afterSort(range ok) range=[${toIso(r2.max)}..${toIso(r2.min)}] inversions=${inv2}`);
     // ⬇︎ 파일명은 그대로 유지. 구버전 엔트리엔 file을 보강.
     for (const e of arr) {
       if (!(e as any).file) {

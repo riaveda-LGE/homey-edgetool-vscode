@@ -16,6 +16,10 @@ export class TimezoneCorrector {
   private lastCorrected?: number; // 직전 반환한 보정 ts(단조감소 체크용)
   private lastRawTs?: number; // 직전 rawTs
   private readonly log = getLogger('TimezoneCorrector');
+  // feed 방향 계측
+  private lastFeedTs?: number;
+  private feedInc = 0; // rawTs 증가(오래된→최신) 카운트
+  private feedDec = 0; // rawTs 감소(최신→오래된) 카운트
 
   // 집계 카운터(스팸 억제용)
   private clampCount = 0;        // per-line 클램프 누적
@@ -48,7 +52,7 @@ export class TimezoneCorrector {
   private readonly MIN_JUMP_HOURS = 3; // 점프 의심 임계값(현행 3h 유지)
   private readonly MIN_RETURN_HOURS = 1; // 복귀 최소 차이(요청하신 1h)
 
-  constructor(public readonly label: string) {}
+  constructor(public readonly label: string, private readonly expectDescFeed = true) {}
 
   /**
    * 최신→오래된 순으로 rawTs가 들어온다.
@@ -57,6 +61,13 @@ export class TimezoneCorrector {
    */
   @measure()
   adjust(rawTs: number, index: number): number {
+    // ── feed 방향 계측 ─────────────────
+    if (this.lastFeedTs !== undefined) {
+      if (rawTs > this.lastFeedTs) this.feedInc++;
+      else if (rawTs < this.lastFeedTs) this.feedDec++;
+    }
+    this.lastFeedTs = rawTs;
+
     // 1) suspected가 있으면 "복귀"를 **먼저** 판정 (분기 순서가 핵심!)
     if (this.suspected) {
       const s = this.suspected;
@@ -177,15 +188,26 @@ export class TimezoneCorrector {
   // 집계 요약을 출력하고 카운터 초기화
   @measure()
   private flushSummary() {
-    if (this.suspectedCount || this.fixedCount || this.clampCount) {
+    if (this.suspectedCount || this.fixedCount || this.clampCount || this.feedInc || this.feedDec) {
       const worst =
         this.worstJumpAt != null
           ? `${this.worstJumpHours.toFixed(1)}h @ ${new Date(this.worstJumpAt).toISOString()}`
           : 'n/a';
+      const wrongDir =
+        this.expectDescFeed && this.feedInc > Math.max(10, this.feedDec * 4);
+      if (wrongDir) {
+        this.log.error(
+          `TZ feed direction anomaly [${this.label}]: expected latest→older, ` +
+          `but feed_inc=${this.feedInc} >> feed_dec=${this.feedDec}`,
+        );
+      }
       this.log.info(
-        `TZ summary [${this.label}] suspected=${this.suspectedCount}, fixed=${this.fixedCount}, clamped=${this.clampCount}, worst_jump=${worst}`,
+        `TZ summary [${this.label}] suspected=${this.suspectedCount}, fixed=${this.fixedCount}, ` +
+        `clamped=${this.clampCount}, worst_jump=${worst}, feed_inc=${this.feedInc}, feed_dec=${this.feedDec}`,
       );
     }
+    this.feedInc = 0;
+    this.feedDec = 0;
     this.clampCount = 0;
     this.suspectedCount = 0;
     this.fixedCount = 0;

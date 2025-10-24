@@ -118,26 +118,28 @@ export function setupIpc() {
         const total = typeof payload?.total === 'number' ? payload.total : undefined;
         const v = typeof payload?.version === 'number' ? payload.version : undefined;
         if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
-        let nextId = useLogStore.getState().nextId;
-        const rows = measureUi('ipc.logs.batch.map', () => {
+        const baseId = useLogStore.getState().nextId;
+        const mapped = measureUi('ipc.logs.batch.map', () => {
           return logs.map((e) => {
             const raw = String(e.text ?? '');
             const p = parseLine(raw);
             const src = pickSrcName(e);
-            return { id: nextId++, idx: e.idx, ...p, src, raw };
+            return { idx: e.idx, ...p, src, raw };
           });
         });
+        // ✅ idx 오름차순 정렬 후 id를 정렬 순서대로 부여
+        const sorted = mapped.slice().sort((a, b) => (a.idx ?? 0) - (b.idx ?? 0));
+        let nextId = baseId;
+        const rows = sorted.map((r) => ({ ...r, id: nextId++ }));
+        probeRows('batch', rows);
         // ✅ 파일기반 버전만 채택(구버전 seq fallback은 page.response와 충돌 가능)
         if (typeof v === 'number') {
           updateSessionVersion(v, 'logs.batch');
         }
 
         ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'} ver=${v ?? 'n/a'}`);
-        // 🚩 rows 는 오름차순 idx 를 포함하므로, 실제 시작 인덱스로 수신
-        const startIdx =
-          rows.length && typeof rows[0].idx === 'number'
-            ? Math.min(...rows.map((r) => r.idx ?? Number.POSITIVE_INFINITY))
-            : 1;
+        // 🚩 정렬 이후 첫 원소의 idx를 startIdx로 사용
+        const startIdx = rows.length && typeof rows[0].idx === 'number' ? rows[0].idx! : 1;
         useLogStore.getState().receiveRows(startIdx, rows);
         // FOLLOW 모드가 아닐 때는 새 로그 도착을 알림
         if (!useLogStore.getState().follow && rows.length > 0) {
@@ -166,7 +168,6 @@ export function setupIpc() {
         return;
       }
       case 'logs.page.response': {
-        const startIdx = Number(payload?.startIdx) || 1;
         const respVersion = typeof payload?.version === 'number' ? payload.version : undefined;
         if (
           typeof respVersion === 'number' &&
@@ -186,16 +187,21 @@ export function setupIpc() {
           updateSessionVersion(respVersion, 'logs.page.response(adopt-on-first)');
         }
         const items = z.array(ZLogEntry).parse(payload?.logs ?? []);
-        let nextId = useLogStore.getState().nextId;
-        const rows = measureUi('ipc.page.response.map', () => {
+        const baseId = useLogStore.getState().nextId;
+        const mapped = measureUi('ipc.page.response.map', () => {
           return items.map((e) => {
             const raw = String(e.text ?? '');
             const p = parseLine(raw);
             const src = pickSrcName(e);
-            return { id: nextId++, idx: e.idx, ...p, src, raw };
+            return { idx: e.idx, ...p, src, raw };
           });
         });
-        ui.debug?.(`page: response ${startIdx}-${payload?.endIdx} count=${rows.length} v=${respVersion ?? 'n/a'}`);
+        const sorted = mapped.slice().sort((a, b) => (a.idx ?? 0) - (b.idx ?? 0));
+        let nextId = baseId;
+        const rows = sorted.map((r) => ({ ...r, id: nextId++ }));
+        probeRows('page', rows);
+        const startIdx = rows.length && typeof rows[0].idx === 'number' ? rows[0].idx! : 1;
+        ui.debug?.(`page: response ${startIdx}-${rows.at(-1)?.idx} count=${rows.length} v=${respVersion ?? 'n/a'}`);
         useLogStore.getState().receiveRows(startIdx, rows);
         return;
       }
@@ -315,4 +321,19 @@ function flushFilter(next: { pid: string; src: string; proc: string; msg: string
   ui.info(`filter.update → host ${JSON.stringify(payload.filter)}`);
   vscode?.postMessage({ v: 1, type: 'logs.filter.update', payload });
   ui.debug?.('[debug] flushFilter: end');
+}
+
+// ────────────── PROBE: 수신 배치 내용 요약 ──────────────
+function probeRows(tag: 'batch' | 'page', rows: Array<{idx?: number; time?: string; src?: string}>) {
+  const fmt = (r: any) => `${r.idx ?? '?'}|${r.time ?? '-'}|${r.src ?? ''}`;
+  const head = rows.slice(0, 5).map(fmt).join(' || ');
+  const tail = rows.slice(-5).map(fmt).join(' || ');
+  const mono = isMonoAsc(rows.map(r => (typeof r.idx === 'number' ? r.idx : Infinity)));
+  ui.info(`[probe:${tag}] rows=len=${rows.length} idxAsc=${mono}`);
+  ui.debug?.(`[probe:${tag}] head ${head}`);
+  ui.debug?.(`[probe:${tag}] tail ${tail}`);
+}
+function isMonoAsc(a: number[]) {
+  for (let i = 1; i < a.length; i++) if (a[i-1] > a[i]) return false;
+  return true;
 }

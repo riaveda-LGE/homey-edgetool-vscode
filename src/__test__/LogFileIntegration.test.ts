@@ -47,9 +47,89 @@ function extractMergedHeader(line: string): string | null {
   return `[${m.groups.time}] ${m.groups.proc}${pid}: `;
 }
 
-// ⬇️ 주의: 이 통합 테스트는 **원본 라인 전체**(time/process/pid/message)를 비교합니다.
-// parser는 내장 템플릿(JSON)을 로드해서 사용하고, mergeDirectory 옵션 `preserveFullText`로
-// 헤더를 복원해 비교합니다(운영과 동일한 ParserEngine 경로를 강제).
+// ⬇️ 추가: 시간 파서(연도 앵커 고정) + 단조성 검증 유틸
+const MONTH = new Map<string, number>([
+  ['Jan', 0], ['Feb', 1], ['Mar', 2], ['Apr', 3], ['May', 4], ['Jun', 5],
+  ['Jul', 6], ['Aug', 7], ['Sep', 8], ['Oct', 9], ['Nov', 10], ['Dec', 11],
+]);
+const HEADER_TIME_RE =
+  /^(?<mon>[A-Za-z]{3})\s+(?<dd>\d{1,2})\s+(?<hh>\d{2}):(?<mm>\d{2}):(?<ss>\d{2})(?:\.(?<ms>\d{3,6}))?$/;
+function parseHeaderTimeToMs(s: string, yearAnchor = 2025): number | null {
+  const m = HEADER_TIME_RE.exec(s);
+  if (!m?.groups) return null;
+  const mon = MONTH.get(m.groups.mon);
+  if (mon == null) return null;
+  const dd = Number(m.groups.dd);
+  const hh = Number(m.groups.hh);
+  const mm = Number(m.groups.mm);
+  const ss = Number(m.groups.ss);
+  let ms = 0;
+  if (m.groups.ms) {
+    const raw = m.groups.ms;
+    // 마이크로초까지 들어오면 밀리초로 보정(반올림)
+    ms = Math.round(Number(raw.padEnd(3, '0').slice(0, 3)));
+  }
+  return Date.UTC(yearAnchor, mon, dd, hh, mm, ss, ms);
+}
+
+function assertMonotonicDesc(label: string, arr: Array<number | null>) {
+  const errs: string[] = [];
+  for (let i = 0; i + 1 < arr.length; i++) {
+    const a = arr[i];
+    const b = arr[i + 1];
+    if (a == null || b == null) continue; // 정보 없는 라인은 스킵
+    if (a < b) {
+      errs.push(`non-desc at index ${i} → ${i + 1}: ${a} < ${b}`);
+      if (errs.length >= 20) break;
+    }
+  }
+  if (errs.length) {
+    throw new Error(`[${label}] time must be non-increasing (latest→oldest). First issues:\n` + errs.join('\n'));
+  }
+}
+
+// JSONL 스캔: mergedDir 안의 *.jsonl에서 최대 N라인 읽고 객체 배열 반환(필드가 있으면 불변식 검증에 활용)
+const DEBUG_SCAN_LIMIT = 100_000;
+function readMergedJsonlObjects(mergedDir: string): any[] {
+  if (!fs.existsSync(mergedDir)) return [];
+  const names = fs.readdirSync(mergedDir).filter(n => n.endsWith('.jsonl'));
+  const out: any[] = [];
+  for (const n of names) {
+    const fp = path.join(mergedDir, n);
+    const data = fs.readFileSync(fp, 'utf8');
+    const lines = data.split('\n');
+    for (const ln of lines) {
+      if (!ln || ln[0] !== '{') continue;
+      try {
+        out.push(JSON.parse(ln));
+        if (out.length >= DEBUG_SCAN_LIMIT) return out;
+      } catch {
+        // skip
+      }
+    }
+  }
+  return out;
+}
+
+// 내부 ts/원시 ts 키 후보를 스캔해서 "가장 많이 보이는" 키를 선택
+function pickBestNumericKey(objs: any[], candidates: string[]): string | null {
+  const cnt = new Map<string, number>();
+  for (const c of candidates) cnt.set(c, 0);
+  for (const o of objs) {
+    for (const c of candidates) {
+      const v = (o as any)[c];
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        cnt.set(c, (cnt.get(c) || 0) + 1);
+      }
+    }
+  }
+  let best: string | null = null;
+  let bestN = 0;
+  for (const [k, v] of cnt) {
+    if (v > bestN) { best = k; bestN = v; }
+  }
+  return bestN > 0 ? best : null;
+}
 
 let OUT_DIR: string;
 
@@ -105,7 +185,7 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
     lastProgressAt = Date.now();
   };
 
-  // ⏱️ 무진행 감시: 45초 + merged/*.jsonl 크기 증가를 진행으로 인정(오탐 방지)
+  // ⏱️ 무진행 감시
   const WATCHDOG_MS = 600_000;
   let watchdogTimer: NodeJS.Timeout | undefined;
   let statTimer: NodeJS.Timeout | undefined;
@@ -148,8 +228,7 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
         mergedDirPath: mergedDir,
         onBatch,
         batchSize: 1000,
-        // ✅ 내장 템플릿 파서 적용 + 헤더 복원: 운영 경로와 동일하게 ParserEngine을 거치되
-        //    테스트 비교는 전체 헤더 형태로 수행
+        // ✅ ParserEngine 경로 강제 + 헤더 복원
         parser: loadTemplateParserConfig(),
         preserveFullText: true,
       })
@@ -221,6 +300,8 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
     'utf8',
   );
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // ✅ 1) 스냅샷 비교(기존)
   const mismatches: string[] = [];
   for (let i = 0; i < expectedLines.length; i++) {
     const exp = expectedParsed[i]!;
@@ -251,12 +332,113 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
       fs.writeFileSync(structuredOut, JSON.stringify(actualParsed, null, 2), 'utf8');
       console.log(`🟡 Golden updated: ${expectedOutputPath}`);
       console.log(`🟡 Structured golden: ${structuredOut}`);
-      return;
+    } else {
+      throw new Error(`Test failed with ${mismatches.length} line mismatches\n` + mismatches.join('\n'));
     }
-    throw new Error(`Test failed with ${mismatches.length} line mismatches\n` + mismatches.join('\n'));
   }
 
-  console.log(`✅ ${testName} passed: ${actualResults.length} lines merged correctly`);
+  // ────────────────────────────────────────────────────────────────────────────
+  // ✅ 2) “헤더 시간” 단조성(내림차순) 검증 → 화면이 보정 결과와 불일치해도 최소한 역행은 방지
+  const headerTimes = actualParsed.map(p => (p.time ? parseHeaderTimeToMs(p.time!) : null));
+  assertMonotonicDesc(`${testName}: header-time`, headerTimes);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // ✅ 3) merged/*.jsonl 내부 타임스탬프/타임존 품질 지표 검증(있으면)
+  const jsonlObjs = readMergedJsonlObjects(mergedDir);
+  if (jsonlObjs.length > 0) {
+    // 3-1) 내부 병합 타임스탬프 단조성(ts 계열)
+    const tsKey = pickBestNumericKey(jsonlObjs, ['ts', 'tsMs', 'timeMs', 't', 'mergedTs']);
+    if (tsKey) {
+      const arr = jsonlObjs.map(o => {
+        const v = o?.[tsKey];
+        return (typeof v === 'number' && Number.isFinite(v)) ? v : null;
+      });
+      assertMonotonicDesc(`${testName}: internal-${tsKey}`, arr);
+    } else {
+      console.warn(`[${testName}] skip: no internal ts key found in JSONL`);
+    }
+
+    // 3-2) 입력(raw) 타임 피드 방향(대부분 감소해야 함)
+    const rawKey = pickBestNumericKey(jsonlObjs, ['srcTs', 'srcTsMs', 'rawTs', 'tsRaw', 'origTs', 'sourceTs']);
+    if (rawKey) {
+      let inc = 0, dec = 0, same = 0, prev: number | null = null;
+      for (const o of jsonlObjs) {
+        const v = o?.[rawKey];
+        if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+        if (prev != null) {
+          if (v > prev) inc++; else if (v < prev) dec++; else same++;
+        }
+        prev = v;
+      }
+      const totalPairs = inc + dec + same;
+      if (totalPairs > 50) { // 유의미할 때만
+        const decRatio = dec / Math.max(1, (inc + dec));
+        expect(decRatio).toBeGreaterThanOrEqual(0.7); // 최신→오래됨 방향성 대략 보장
+      }
+    } else {
+      console.warn(`[${testName}] skip: no raw-ts key found in JSONL`);
+    }
+
+    // 3-3) 타임존 점프 품질 지표(있으면 검증)
+    // 라인 단위 플래그 후보: tzSuspected, tzFixed, tzClamped 혹은 tz:{suspected,fixed,clamped}
+    let suspected = 0, fixed = 0, clamped = 0, total = 0;
+    for (const o of jsonlObjs) {
+      const tz = o?.tz;
+      const s = (tz?.suspected ?? o?.tzSuspected) ? 1 : 0;
+      const f = (tz?.fixed ?? o?.tzFixed) ? 1 : 0;
+      const c = (tz?.clamped ?? o?.tzClamped ?? o?.clamped) ? 1 : 0;
+      suspected += s; fixed += f; clamped += c; total++;
+    }
+    if (suspected > 0 || fixed > 0 || clamped > 0) {
+      // “의심이 있었으면” “수정도 있었어야”
+      expect(fixed).toBeGreaterThan(0);
+      // 과도한 클램프 방지(기본 5%)
+      const clampRatio = clamped / Math.max(1, total);
+      expect(clampRatio).toBeLessThanOrEqual(0.05);
+    } else {
+      console.warn(`[${testName}] skip: no tz quality flags found in JSONL`);
+    }
+  }
+
+  console.log(`✅ ${testName} passed: ${actualResults.length} lines merged correctly (with invariants)`);
+}
+
+// 배치 크기에 무관한 결정적 결과 보장 테스트(추가)
+async function runDeterminismTest(testName: string, testSuiteDir: string) {
+  const testDir = path.resolve(__dirname, 'test_log', testSuiteDir);
+  const inputDir = path.join(testDir, 'before_merge');
+
+  const outA = prepareUniqueOutDir('detA'); cleanAndEnsureDir(outA);
+  const outB = prepareUniqueOutDir('detB'); cleanAndEnsureDir(outB);
+
+  const runOnce = async (out: string, batchSize: number) => {
+    const mergedDir = path.join(out, 'merged');
+    cleanAndEnsureDir(mergedDir);
+    const texts: string[] = [];
+    await measureBlock(`${testName}-det-${batchSize}`, () =>
+      mergeDirectory({
+        dir: inputDir,
+        mergedDirPath: mergedDir,
+        batchSize,
+        parser: loadTemplateParserConfig(),
+        preserveFullText: true,
+        onBatch: (logs) => { for (const l of logs) texts.push(l.text); },
+      })
+    );
+    return texts;
+  };
+
+  const a = await runOnce(outA, 1);
+  const b = await runOnce(outB, 1000);
+
+  expect(a.length).toBe(b.length);
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      throw new Error(
+        `Determinism mismatch at ${i + 1}\nA: ${a[i]}\nB: ${b[i]}`
+      );
+    }
+  }
 }
 
 describe('LogFileIntegration', () => {
@@ -269,11 +451,11 @@ describe('LogFileIntegration', () => {
   });
 
   describe('mergeDirectory 함수', () => {
-    it('일반 로그 파일들을 정확히 병합해야 함', async () => {
+    it('일반 로그 파일들을 정확히 병합해야 함(+불변식 검증)', async () => {
       await runMergeTest('Normal test', 'normal_test_suite', 'normal_result_merged.log');
     }, 600_000);
 
-    it('타임존 점프가 있는 로그 파일들을 정확히 병합해야 함', async () => {
+    it('타임존 점프가 있는 로그 파일들을 정확히 병합해야 함(+불변식 검증)', async () => {
       await runMergeTest('Timezone test', 'timezone_jump_test_suite', 'timezone_result_merged.log');
     }, 600_000);
 
@@ -341,6 +523,11 @@ describe('LogFileIntegration', () => {
         countTotalLinesInDir(inputDir)
       );
       expect(emittedLines).toBeLessThan(total);
+    }, 600_000);
+
+    // ⬇️ 추가: 결정성(배치 크기 변화에도 동일 결과)
+    it('배치 크기에 상관없이 결정적 결과를 내야 함', async () => {
+      await runDeterminismTest('Determinism', 'timezone_jump_test_suite');
     }, 600_000);
   });
 });

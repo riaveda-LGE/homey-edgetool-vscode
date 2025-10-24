@@ -1,119 +1,97 @@
-# Homey EdgeTool 로그 병합 모드 & 정렬 가이드
+# Homey EdgeTool — 로그 파이프라인 점검 결과 (updated 2025-10-24)
 
-> 이 문서는 **T1(기본 경로)**, **Reverse 모드(검증용)**, **Warmup(선행 프리뷰)**의 차이와
-> 각 단계의 **정렬 방향(오름/내림)**, **중간 산출물**, **타임존(TZ) 보정** 여부를 한눈에 정리합니다.
-> 또한 k-way 힙의 **tie‑breaker 부호 정리** 권장 diff를 포함합니다.
+> 목적: 사용자가 요약한 파이프라인(커스텀 파서 → 타입별 버퍼/정렬 → 타임존 보정 → 통합 병합 ↓ → 페이지 서비스(오름차순 매핑) → 웹뷰 전달)이 **첨부 코드**에 실제로 구현되어 있는지 확인하고, 핵심 근거와 흐름을 간결하게 정리.
 
 ---
 
-## TL;DR
+## 1) 커스텀 파서 적용
+- **구성 파일/시드**
+  - `PARSER_TEMPLATE_REL = media/resources/custom_log_parser.template.v1.json` → 워크스페이스에 `.config/custom_log_parser.json`으로 시딩: `src/extension/setup/parserConfigSeeder.ts`
+- **동작 핵심**
+  - 파서 스키마: `src/core/config/schema.ts` (`ParserRequirements`, `ParserPreflight`, `ParserConfig`)
+  - 엔진: `src/core/logs/ParserEngine.ts`
+    - `compileParserConfig()`로 JSON 규칙 컴파일
+    - `shouldUseParserForFile()` / `preflight`로 샘플 매칭률·하드스킵 규칙 평가
+    - `lineToEntryWithParser()`에서 정규식 캡처로 **헤더 필드(time/process/pid/message) 파싱** 후, `parseTs()`/`guessLevel()`로 정규화
+    - 타이브레이커 메타: `_fRank`, `_rev` 부여(후술 k‑way 병합 시 안정 정렬 근거)
 
-- **T1(기본)**: _타입별 최신→오래된_ 로딩 → **TZ 보정** → **타입별 JSONL(최신순)** 저장 →
-  JSONL에서 **최신→오래된(전역)** k-way 병합 → UI/콜백 배출.
-- **Reverse 모드**: **모든 파일을 전역 타임스탬프 ASC(오래된→최신)**로 k-way 병합 **(TZ 보정 없음, 중간파일 없음)**.
-  현재 **프로덕션 경로에서는 미사용(검증/디버그 전용)**.
-- **Warmup(선행 프리뷰)**: 타입별로 최근 꼬리만 살짝 읽어 **TZ 보정 후 최신순** 정렬 → 소량 k-way →
-  **즉시 미리보기용 배출**(디스크 산출물 없이 메모리만). T1 완료 시 파일 기반으로 전환.
-
----
-
-## 1) T1(기본) – 타입별 로딩 → TZ 보정 → JSONL 저장
-
-- **입력 읽기**: 파일별로 **뒤에서 앞으로(최신→오래된)** 역방향 라인 리더.
-- **타입별 버퍼**: 읽은 순서를 그대로 쌓아 **최신→오래된(내림차순)**.
-- **TZ 보정**: `TimezoneCorrector`로 국소 소급 보정 적용.
-- **저장**: 타입별로 ts **내림차순(최신→오래된)** 정렬 후 `merged/<type>.jsonl`에 저장.
-
-```
-[파일별 tail]  ──►  [type 버퍼: 최신→오래된]  ──(TZ)──►  [type.jsonl: ts desc(최신순)]
-```
-
-### 1‑B) T1(기본) – 최종 k‑way 병합
-
-- 입력: `merged/*.jsonl` (각 파일 **최신→오래된** 정렬로 저장됨).
-- 커서: 각 타입에서 **앞에서부터**(=가장 최신부터) 100줄씩 가져옴.
-- 힙: **ts 내림차순(큰 값 우선 = 최신 우선)** k‑way.
-- **출력/배출**: **최신→오래된**(내림차순)으로 onBatch 콜백.
+**판정:** ✅  커스텀 파서 파일을 읽어 적용하고, 라인 단위로 헤더 필드를 파싱하는 구현이 확인됨.
 
 ---
 
-## 2) Reverse 모드 (`reverse:true`) – 전역 ASC 병합 (검증/디버그용)
+## 2) 로그 타입별 수집 및 내림차순 정렬
+- **타입 그룹화/내림차순 수집**
+  - `src/core/logs/LogFileIntegration.ts`
+    - 입력 파일 수집 후 `groupByType(files)`로 타입별 그룹 생성
+    - **최신 → 오래된** 순으로 각 타입 로그를 메모리에 적재
+- **보조 스토어/인덱스**
+  - `IndexedLogStore.ts`, `LogFileStorage.ts`, `ChunkWriter.ts`, `ManifestWriter.ts` (후술 통합 병합/청크/매니페스트 단계에서 사용)
 
-- **읽기**: 모든 입력 로그를 **정방향(파일 앞→뒤)**.
-- **TZ 보정**: **없음**.
-- **중간산출물(JSONL/manifest)**: **없음** (디스크에 남기지 않음).
-- **힙 병합**: **ts 오름차순(작은 값 우선 = 오래된 우선)** k‑way.
-- **용도**: 파서/타임스탬프 정합 **검증 전용** 루트.
-- **실사용 경로**: 현재 **미사용** (UI/테스트에서 기본적으로 호출하지 않음).
-
-> 정리: “모든 로그를 한 줄 타임라인으로 **오래된→최신** 합쳐 **빠르지 않지만 보정 없는** 진짜 원시 정렬을 보고 싶을 때” 쓰는 Dev 전용 모드.
-
----
-
-## 3) Warmup(선행 빠른 프리뷰)
-
-- **목표**: 사용자에게 “몇 백~천 줄 정도의 최신 미리보기”를 **즉시** 보여주기.
-- **읽기**: 타입별 tail에서 균등/재분배로 필요한 줄 수만 **최신→오래된** 수집.
-- **TZ 보정**: **적용**.
-- **정렬**: 타입별 버퍼를 **최신순(ts desc)** 정렬 후 소량 k‑way로 합침.
-- **배출**: 메모리에서 **즉시** onWarmupBatch/onBatch로 전달(파일 저장 없음).
-- **전환**: 이후 **T1 완료 시** 파일 기반(PagedReader)으로 **스위치**.
+**판정:** ✅  타입별 버퍼링과 “최신→오래된(내림차순)” 처리 흐름이 코드 주석·루틴에서 확인됨.
 
 ---
 
-## 4) 한눈에 비교표
+## 3) 타임존 점프 감지 및 보정
+- **휴리스틱 보정기**
+  - `src/core/logs/time/TimezoneHeuristics.ts` (`TimezoneCorrector`)
+    - 병합 가정: “**최신 → 오래된**” 순
+    - 급격한 오프셋 점프(임계 이상 시간 변화) 탐지 → 복귀 구간 확인 시 **국소 소급 보정(Δoffset)** 적용
+    - 보정 세그먼트는 drain 후 병합 시 반영
+- **타임 파싱**
+  - `src/core/logs/time/TimeParser.ts`의 `parseTs()` 등으로 기본 파싱/정규화
 
-| 항목 | T1(타입별 로딩) | T1(최종 k‑way) | Reverse 모드 | Warmup |
-|---|---|---|---|---|
-| 입력 읽기 방향 | 파일별 **역방향**(최신→오래된) | JSONL **순방향** | 파일별 **정방향** | tail from files |
-| 내부 버퍼 정렬 | 타입별 **최신→오래된** | 타입별 JSONL **최신→오래된** | (없음) | 타입별 **최신→오래된** |
-| 힙 우선순위(ts) | 저장 전에 정렬만 | **내림차순(최신 우선)** | **오름차순(오래된 우선)** | **내림차순(최신 우선)** |
-| TZ 보정 | **적용** | (이미 적용된 결과 사용) | **미적용** | **적용** |
-| 중간 산출물 | `merged/<type>.jsonl` | 사용 | **없음** | **없음** |
-| 배출 순서 | (없음) | **최신→오래된** | **오래된→최신** | **최신→오래된** |
-| 주 용도 | 영속 인덱스 생성 | 최종 결과/페이징 | 검증/디버그 | 초기 미리보기 |
-
----
-
-## 5) 힙 tie‑breaker(타이브레이커) 규칙 요약
-
-> 공통: `MaxHeap(cmp)`를 사용하므로 “**cmp(a,b) > 0이면 a가 더 우선**”입니다.
-
-### T1 최종 k‑way (최신 우선)
-
-1) **ts 내림차순**: `return a.ts - b.ts`  
-2) **fileRank 오름차순**(숫자 작을수록 최신 파일): `return bRank - aRank`  
-3) **filename 오름차순**(사전순): **`return aFile < bFile ? 1 : -1` (권장 부호)**  
-4) **revIdx 오름차순**: `return bRev - aRev`  
-5) **typeKey 오름차순**: **`return aType < bType ? 1 : -1` (권장 부호)**  
-6) **seq 오름차순**(같은 커서 내 먼저 읽힌 것): `return b.seq - a.seq`
-
-> **왜 filename/typeKey는 부호 반전이 필요한가?**  
-> `MaxHeap`에서 “작은 문자열이 우선”을 표현하려면 `a < b`일 때 **양수**를 반환해야 합니다.
-> 따라서 `a < b ? 1 : -1` 형태가 되어야 일관성이 맞습니다.
-
-
-## 7) 실사용 여부 (Reverse 모드)
-
-- 현재 제공된 소스 기준으로는 **Reverse 모드가 호출되는 경로가 없음**.
-  - `LogViewerPanelManager.startFileMerge()`는 `reverse`를 전달하지 않음 → 항상 T1 경로.
-  - 통합 테스트(`LogFileIntegration.test.ts`)도 `reverse:true`를 사용하지 않음.
-- 따라서 Reverse는 **개발/검증용 기능 플래그**에 가깝습니다. 필요 시 주석으로 dev‑only 표기하거나
-  작은 회귀 테스트를 추가해 “정렬만 비교(TZ 제외)” 용도로 유지하는 것을 권장합니다.
+**판정:** ✅  점프 감지 및 국소 보정 로직이 존재하며 병합 흐름에 연결됨.
 
 ---
 
-### 부록: 정렬/흐름 치트시트
+## 4) 통합 버퍼에 내림차순 병합(k‑way)
+- **핵심 구현**
+  - `src/core/logs/LogFileIntegration.ts`
+    - 타입별 정렬/보정 완료 후 **우선순위 큐 기반 k‑way merge**로 단일 스트림 생성(최신→오래된)
+    - `ChunkWriter`로 **NDJSON 청크** 단위 저장, `ManifestWriter`가 전역 **매니페스트**(`LogManifest`) 작성
+    - tie‑break에 `_fRank`, `_rev` 활용(파일 순서/역인덱스 등) → 안정·결정적 병합
+- **결과 스냅샷/인덱싱**
+  - `ManifestTypes.ts`, `IndexedLogStore.ts`로 **전역 라인 인덱스**/파일 세그먼트 기록
 
-- **파일 읽기**  
-  - T1: 파일별 **역방향**(tail→head) → 타입별 버퍼 **최신→오래된**  
-  - Reverse: 파일별 **정방향**(head→tail) → 힙에서 **오래된 우선**  
-  - Warmup: 타입별 tail에서 일부만 **최신→오래된**
+**판정:** ✅  내림차순(최신 우선) 통합 병합과 청크/매니페스트 저장 구조가 확인됨.
 
-- **최종 배출 순서**  
-  - T1/ Warmup: **최신→오래된**  
-  - Reverse: **오래된→최신**
+---
 
-- **TZ 보정**  
-  - T1/ Warmup: **적용**  
-  - Reverse: **미적용**
+## 5) PaginationService: 오름차순 매핑 후 전달
+- **페이지 리더**
+  - `src/core/logs/PagedReader.ts`: 매니페스트 기반으로 **청크 범위 읽기**
+- **페이지 서비스**
+  - `src/core/logs/PaginationService.ts`:
+    - 전역 총량/필터 캐시 관리
+    - **요청된 범위에 대해 “내림차순 저장본”을 “오름차순 좌표계”로 매핑**해 반환
+    - 필터가 있으면 **오름차순 인덱스**를 기준으로 부분 집합 계산
+- **웹뷰 계약**
+  - `src/ipc/messages.ts`:
+    - `LogEntry.id`: “**오름차순(과거=1, 최신=total)**” 명시 — UI/브리지는 항상 오름차순 좌표계를 사용
+  - `src/webviewers/log-viewer/react/ipc.ts`:
+    - 코멘트: “표시 순서는 오름차순, 최신에 초점 → ‘마지막 페이지’를 요청”
+
+**판정:** ✅  저장은 내림차순이지만, **전달은 오름차순 매핑**으로 이뤄짐이 타입/주석/계약에서 명시됨.
+
+---
+
+## 6) 웹뷰 동작 개요
+- 초기 상태/프리페치(워밍업)는 `HostWebviewBridge` ↔ `LogViewerPanelManager`로 라우팅
+- 웹뷰는 특정 범위 페이지를 요청 → **오름차순으로 정렬된 LogEntry[]** 수신 후 렌더
+  - UI 상태 관리: `react/store.ts`(Zustand), 가상 스크롤/그리드: `react/components/Grid.tsx`
+
+**판정:** ✅  “범위 요청 → 오름차순 데이터 수신 → 렌더” 흐름 일치.
+
+---
+
+## 결론 (요약)
+- 커스텀 파서 JSON을 읽어 **헤더 파싱** → **타입별 최신순 수집** → **타임존 점프 보정** → **k‑way 내림차순 병합 + 청크/매니페스트** → **PaginationService가 요청 시 오름차순으로 매핑해 전달** → **웹뷰는 오름차순으로 표시**  
+→ **사용자 설명과 구현이 실질적으로 일치**합니다.
+
+### 부록: 빠른 근거 맵
+- 시드/경로: `const.ts`(PARSER_*), `parserConfigSeeder.ts`
+- 파서: `ParserEngine.ts`, `schema.ts`, `TimeParser.ts`
+- 병합: `LogFileIntegration.ts`, `ChunkWriter.ts`, `ManifestWriter.ts`, `ManifestTypes.ts`, `IndexedLogStore.ts`
+- 보정: `TimezoneHeuristics.ts`
+- 페이징: `PaginationService.ts`, `PagedReader.ts`
+- 계약/웹뷰: `messages.ts`, `extension/messaging/hostWebviewBridge.ts`, `webviewers/log-viewer/react/ipc.ts`, `react/store.ts`, `react/components/*.tsx`

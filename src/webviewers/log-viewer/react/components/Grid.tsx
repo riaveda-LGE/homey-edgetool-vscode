@@ -346,6 +346,36 @@ export function Grid() {
     if (shouldLog('commit', 400, payload)) {
       measureUi('Grid.commit', () => ui.info(`Grid.commit ${payload}`));
     }
+
+    // ── PROBE: 논리 페인트 순서 & DOM 순서 ────────────────────────────
+    try {
+      const bufferStart0 = Math.max(0, m.windowStart - 1);
+      const logical = virtualItems
+        .map(v => {
+          const offset = v.index - bufferStart0;
+          const r = offset >= 0 && offset < visibleRows.length ? visibleRows[offset] : undefined;
+          return typeof r?.idx === 'number' ? r.idx : undefined;
+        })
+        .filter((x): x is number => typeof x === 'number');
+      if (logical.length) {
+        const asc = logical.every((x, i, a) => i === 0 || a[i - 1] <= x);
+        const head = logical.slice(0, 6).join(',');
+        const tail = logical.slice(-6).join(',');
+        const probePayload = `asc=${asc} h=${head} t=${tail}`;
+        if (shouldLog('probe.grid.paint', 400, probePayload)) {
+          measureUi('Grid.probe.paint', () =>
+            ui.info(`[probe:grid] paint logical asc=${asc} head=[${head}] tail=[${tail}]`));
+        }
+      }
+      const cont = listRef.current;
+      if (cont) {
+        const nodes = Array.from(cont.querySelectorAll('[data-vidx]')).slice(0, 8);
+        const domSeq = nodes.map(n => (n as HTMLElement).dataset['vidx']).join(',');
+        if (shouldLog('probe.grid.dom', 400, domSeq)) {
+          measureUi('Grid.probe.dom', () => ui.info(`[probe:grid] DOM order first8=[${domSeq}]`));
+        }
+      }
+    } catch {}
   }, [virtualItems, m.windowStart, visibleRows.length, m.totalRows]);
 
   // clamp: 빈번 호출이므로 로그 금지(상위 onScroll에서 결과만 출력)
@@ -380,7 +410,7 @@ export function Grid() {
       >
         {/* 헤더를 스크롤 컨테이너 내부로 이동 → 툴바는 고정, 헤더는 sticky */}
         <GridHeader />
-        <div ref={listRef} style={{ height: totalSize, position: 'relative' }}>
+        <div ref={listRef} data-grid-root style={{ height: totalSize, position: 'relative' }}>
           {virtualItems.map((v) => {
             // ── 가상 스크롤 인덱스 매핑 로직 ────────────────────────────────
             const bufferStart0 = Math.max(0, m.windowStart - 1);
@@ -400,6 +430,7 @@ export function Grid() {
             return (
               <div
                 key={r.id}
+                data-vidx={r.idx}
                 className={[
                   'tw-grid',
                   r.bookmarked
