@@ -1,5 +1,4 @@
 // === src/__test__/DefaultBatchSizeIntent.test.ts ===
-import { __setWarmupFlagsForTests } from '../shared/featureFlags.js';
 import { DEFAULT_BATCH_SIZE } from '../shared/const.js';
 import type { LogEntry } from '../shared/ipc/messages.js';
 import { mergeDirectory } from '../core/logs/LogFileIntegration.js';
@@ -35,30 +34,4 @@ it('DEFAULT_BATCH_SIZE(200)이 mergeDirectory의 기본 배치 크기로 동작�
   expect(DEFAULT_BATCH_SIZE).toBe(200);
 });
 
-it('kway mode (warmup=false) runs without errors', async () => {
-  const batches: number[] = [];
-  await measureBlock('kway-mode-test', () =>
-    mergeDirectory({
-      dir: FIX,
-      onBatch: (logs: LogEntry[]) => batches.push(logs.length),
-      warmup: false,
-      warmupPerTypeLimit: 0,
-      batchSize: DEFAULT_BATCH_SIZE,
-    })
-  );
-  expect(batches.length).toBeGreaterThan(0);
-});
-
-it('warmup mode (warmup=true) is accepted (no crash) and still emits batches', async () => {
-  const batches: number[] = [];
-  await measureBlock('warmup-mode-test', () =>
-    mergeDirectory({
-      dir: FIX,
-      onBatch: (logs: LogEntry[]) => batches.push(logs.length),
-      warmup: true,
-      warmupPerTypeLimit: 500,
-      batchSize: DEFAULT_BATCH_SIZE,
-    })
-  );
-  expect(batches.length).toBeGreaterThan(0);
-});
+// warmup/kway 모드 스모크는 MergeMode.test.ts에서 커버합니다.

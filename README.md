@@ -57,6 +57,7 @@ npm run test -- -t="타임존 점프가 있는 로그 파일들을 정확히 병
 ```bash
 npm run test -- --f="LogFileIntegration"
 npm run test -- --f="LogWebviewAscendingOrder"
+npm run test -- --f="LogPipelineE2E"
 ```
 
 ## 검증
