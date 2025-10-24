@@ -1,125 +1,375 @@
-[Oct 20 00:21:10.548] kernel:  wlan0: 
-[Oct 20 00:23:23.094] kernel:  wlan: Send EAPOL pkt to 09:55:20:f4:6f:0a
-[Oct 20 00:36:09.108] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 00:37:37.682] kernel:  wlan0: 
-[Oct 20 01:28:45.215] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 01:53:20.374] kernel:  [  3917.794745] wlan: Send EAPOL pkt to ee:38:7b:cf:29:0e
-[Oct 20 02:13:55.928] kernel:  wlan0: 
-[Oct 20 02:24:23.475] kernel:  wlan: Send EAPOL pkt to b6:81:27:fe:20:66
-[Oct 20 02:24:26.857] kernel:  [  3744.114075] wlan: Send EAPOL pkt to 5a:15:9d:a0:2c:3b
-[Oct 20 03:15:46.783] kernel:  wlan0: 
-[Oct 20 03:41:46.371] kernel:  [  4727.323928] wlan: Send EAPOL pkt to ad:dd:35:34:0b:25
-[Oct 20 04:30:40.342] kernel:  [  1065.474691] wlan: Send EAPOL pkt to 78:27:af:36:eb:16
-[Oct 20 04:38:56.576] kernel:  wlan: Send EAPOL pkt to 79:48:cc:fe:24:d6
-[Oct 20 04:47:00.073] kernel:  wlan0: 
-[Oct 20 04:49:56.379] kernel:  wlan: Send EAPOL pkt to c9:29:64:9a:6f:1f
-[Oct 20 04:56:57.220] kernel:  [  1009.776879] wlan: Send EAPOL pkt to ca:f6:3b:5a:dd:70
-[Oct 20 05:04:57.189] kernel:  [  3126.449898] wlan: Send EAPOL pkt to 7f:71:22:12:92:2e
-[Oct 20 05:51:51.146] kernel:  wlan0: 
-[Oct 20 06:35:10.238] kernel:  wlan: Send EAPOL pkt to b8:fe:4e:b8:79:13
-[Oct 20 06:55:29.827] kernel:  [  6838.832643] wlan: Send EAPOL pkt to eb:30:2b:fd:2f:2e
-[Oct 20 07:01:04.724] kernel:  wlan: Send EAPOL pkt to a3:75:bf:88:e8:57
-[Oct 20 07:09:43.743] kernel:  wlan0: 
-[Oct 20 07:14:06.382] kernel:  [  4342.979672] wlan: Send EAPOL pkt to ab:57:80:e7:ed:f6
-[Oct 20 07:18:09.372] kernel:  wlan0: 
-[Oct 20 07:29:52.991] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 07:47:00.983] kernel:  wlan0: 
-[Oct 20 07:55:31.552] kernel:  [  6504.150782] wlan: Send EAPOL pkt to a5:f1:f7:6e:b4:9b
-[Oct 20 07:58:31.410] kernel:  wlan0: 
-[Oct 20 08:33:18.839] kernel:  wlan: Send EAPOL pkt to 1c:8e:98:1c:81:2e
-[Oct 20 08:48:41.912] kernel:  [  4863.233440] wlan: Send EAPOL pkt to 42:b0:d4:4b:b5:fd
-[Oct 20 09:15:04.270] kernel:  wlan: Send EAPOL pkt to c9:59:be:dc:f7:c2
-[Oct 20 09:15:57.972] kernel:  [  2194.596621] wlan: Send EAPOL pkt to 80:90:87:4d:fb:d9
-[Oct 20 09:24:46.194] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 09:30:53.466] kernel:  [  8307.345498] wlan: Send EAPOL pkt to 31:c4:0a:8f:5b:cd
-[Oct 20 09:42:10.593] kernel:  wlan0: 
-[Oct 20 09:48:04.967] kernel:  wlan0: 
-[Oct 20 11:13:55.664] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 11:32:20.138] kernel:  wlan: Send EAPOL pkt to db:81:a9:2a:78:4f
-[Oct 20 11:33:16.222] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 12:28:24.661] kernel:  wlan: Send EAPOL pkt to d8:1b:21:80:8e:5b
-[Oct 20 12:31:49.481] kernel:  wlan: Send EAPOL pkt to 09:e1:0f:7a:6d:99
-[Oct 20 13:00:40.769] kernel:  [  8860.748293] wlan: Send EAPOL pkt to 09:d3:4f:84:cd:59
-[Oct 20 13:13:48.805] kernel:  wlan0: 
-[Oct 20 13:17:07.328] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 13:22:56.590] kernel:  [  2298.637457] wlan: Send EAPOL pkt to 44:9e:b2:f1:b7:c5
-[Oct 20 13:31:08.278] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 13:57:55.329] kernel:  [  7762.808666] wlan: Send EAPOL pkt to cf:74:77:bf:1a:31
-[Oct 20 14:00:00.570] kernel:  wlan0: 
-[Oct 20 15:12:18.220] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 15:28:22.643] kernel:  wlan: Send EAPOL pkt to cf:7e:8f:6a:8d:84
-[Oct 20 15:53:40.663] kernel:  wlan: Send EAPOL pkt to ef:4c:a3:3c:b6:fe
-[Oct 20 16:40:16.970] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 17:15:48.097] kernel:  [  2301.706029] wlan: Send EAPOL pkt to 65:c0:a0:45:58:ff
-[Oct 20 17:17:31.402] kernel:  [  8448.108597] wlan: Send EAPOL pkt to 15:9c:52:d6:09:ff
-[Oct 20 18:02:40.737] kernel:  [  1085.671933] wlan: Send EAPOL pkt to f9:7c:fe:1a:8d:aa
-[Oct 20 18:41:35.310] kernel:  wlan0: 
-[Oct 20 19:21:59.911] kernel:  [  3943.572424] wlan: Send EAPOL pkt to b1:89:4b:f0:10:83
-[Oct 20 19:49:04.472] kernel:  [  5717.516976] wlan: Send EAPOL pkt to 73:e0:54:47:47:2a
-[Oct 20 19:53:12.516] kernel:  [  8959.949020] wlan: Send EAPOL pkt to ee:4a:ed:27:e6:3d
-[Oct 20 20:02:26.001] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 20:07:16.289] kernel:  wlan: Send EAPOL pkt to 74:84:a2:64:38:7e
-[Oct 20 20:27:08.109] kernel:  wlan0: 
-[Oct 20 20:42:18.372] kernel:  wlan0: 
-[Oct 20 23:00:22.267] kernel:  wlan: Send EAPOL pkt to 78:9b:d5:f3:c3:a0
-[Oct 20 23:25:55.802] kernel:  wlan0: 
-[Oct 20 23:36:27.880] kernel:  wlan: Send EAPOL pkt to 3a:a3:64:1e:0a:de
-[Oct 20 23:44:56.579] kernel:  [  4948.953959] wlan: Send EAPOL pkt to 39:f7:b9:7a:6c:f2
-[Oct 20 23:45:08.177] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 20 23:59:36.699] kernel:  wlan0: 
-[Oct 21 00:17:35.471] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 00:38:09.413] kernel:  wlan: Send EAPOL pkt to 68:6c:d3:ca:cf:f6
-[Oct 21 01:07:01.180] kernel:  [  2779.495102] wlan: Send EAPOL pkt to cf:55:b6:45:79:b2
-[Oct 21 01:22:12.769] kernel:  [  4826.936294] wlan: Send EAPOL pkt to fa:2a:c0:2c:14:aa
-[Oct 21 01:41:27.893] kernel:  [  5301.231378] wlan: Send EAPOL pkt to 30:93:39:b4:c9:5c
-[Oct 21 02:06:07.701] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 02:39:45.762] kernel:  wlan0: 
-[Oct 21 03:13:47.612] kernel:  wlan: Send EAPOL pkt to a2:ca:c3:55:c6:2e
-[Oct 21 03:16:50.468] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 03:29:41.614] kernel:  [  2834.779327] wlan: Send EAPOL pkt to a2:89:4d:ec:1f:0a
-[Oct 21 03:53:53.034] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 04:03:40.903] kernel:  wlan: Send EAPOL pkt to 4d:26:5e:f3:f5:9d
-[Oct 21 04:34:54.992] kernel:  wlan: Send EAPOL pkt to 23:ba:31:e7:bf:f0
-[Oct 21 04:43:24.560] kernel:  wlan0: 
-[Oct 21 05:06:30.675] kernel:  wlan0: 
-[Oct 21 05:19:42.169] kernel:  wlan: Send EAPOL pkt to 81:c7:77:af:66:84
-[Oct 21 05:42:44.076] kernel:  wlan0: 
-[Oct 21 06:01:47.127] kernel:  wlan: Send EAPOL pkt to 2a:6c:b5:8b:b7:29
-[Oct 21 06:02:54.418] kernel:  wlan0: 
-[Oct 21 06:29:27.522] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 07:13:30.538] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 07:29:55.286] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 07:50:21.879] kernel:  wlan: Send EAPOL pkt to 9e:84:af:00:df:7b
-[Oct 21 08:15:23.399] kernel:  wlan0: 
-[Oct 21 09:15:51.887] kernel:  [  3045.782488] wlan: Send EAPOL pkt to 69:1b:87:7a:be:fa
-[Oct 21 09:31:31.906] kernel:  wlan0: 
-[Oct 21 09:34:59.914] kernel:  wlan0: 
-[Oct 21 10:13:50.503] kernel:  wlan: Send EAPOL pkt to d7:a4:85:7a:85:95
-[Oct 21 10:20:54.207] kernel:  wlan0: 
-[Oct 21 10:24:50.216] kernel:  wlan0: 
-[Oct 21 10:37:10.294] kernel:  [  7187.602009] wlan: Send EAPOL pkt to 02:f4:fc:ad:66:64
-[Oct 21 11:07:42.508] kernel:  wlan: Send EAPOL pkt to bd:92:ac:32:c2:d4
-[Oct 21 12:28:26.084] kernel:  wlan0: 
-[Oct 21 12:50:55.540] kernel:  [  6577.492227] wlan: Send EAPOL pkt to 88:95:16:0e:e2:e1
-[Oct 21 13:24:53.988] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 13:34:11.917] kernel:  [  4262.885784] wlan: Send EAPOL pkt to 2f:2b:ca:15:ac:57
-[Oct 21 14:15:01.236] kernel:  wlan: Send EAPOL pkt to 46:af:26:c2:13:c6
-[Oct 21 14:18:46.017] kernel:  [  5573.385218] wlan: Send EAPOL pkt to 07:c3:32:e2:2c:2d
-[Oct 21 14:19:20.360] kernel:  wlan: Send EAPOL pkt to cd:33:20:d7:bb:e6
-[Oct 21 14:35:59.696] kernel:  wlan0: 
-[Oct 21 15:33:54.372] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 16:23:28.370] kernel:  [  3074.344244] wlan: Send EAPOL pkt to 95:ae:d8:cc:c9:8d
-[Oct 21 16:55:14.059] kernel:  [  4146.594159] wlan: Send EAPOL pkt to 71:e5:7c:54:ba:38
-[Oct 21 18:16:22.536] kernel:  [  2101.231172] wlan: Send EAPOL pkt to 0c:ff:a4:2f:00:dd
-[Oct 21 19:10:19.874] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 19:12:28.894] kernel:  [  8031.561080] wlan: Send EAPOL pkt to 8a:3a:4d:66:0d:5c
-[Oct 21 20:07:41.164] kernel:  wlan: Send EAPOL pkt to ae:38:d3:35:5c:7b
-[Oct 21 21:14:55.695] kernel:  wlan0: 
-[Oct 21 22:01:53.789] kernel:  [  5586.680052] wlan: Send EAPOL pkt to c7:3c:67:10:c6:c2
-[Oct 21 22:05:02.850] kernel:  wlan0: 
-[Oct 21 22:12:31.132] kernel:  wlan0: 
-[Oct 21 22:12:40.937] kernel:  [  3237.420744] wlan: Send EAPOL pkt to 57:fd:af:8d:92:c6
-[Oct 21 22:19:56.140] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 22:40:08.717] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
-[Oct 21 23:46:57.781] kernel:  wlan: Send EAPOL pkt to 82:3d:7a:6a:a2:a4
-[Oct 21 23:47:31.025] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+﻿[Sep 20 15:56:14.942] kernel:  wlan: Send EAPOL pkt to BB:F7:4C:90:ED:7C
+[Sep 20 15:51:13.089] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 15:40:27.572] kernel:  wlan: Send EAPOL pkt to 3C:4D:9D:25:4F:12
+[Sep 20 15:40:07.770] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 15:40:00.882] kernel:  [  8671.864996] wlan: Send EAPOL pkt to 08:4E:7A:F2:86:60
+[Sep 20 15:40:00.025] kernel:  wlan0: 
+[Sep 20 15:38:47.587] kernel:  wlan0: 
+[Sep 20 15:38:34.629] kernel:  wlan0: 
+[Sep 20 15:38:09.827] kernel:  [  7505.231408] wlan: Send EAPOL pkt to C5:AA:D0:94:4A:D7
+[Sep 20 15:33:13.178] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 15:32:56.276] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 15:31:04.833] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 15:28:37.358] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 15:28:19.426] kernel:  wlan: Send EAPOL pkt to 21:FA:DE:16:4C:BA
+[Sep 20 15:25:37.952] kernel:  wlan: Send EAPOL pkt to 9B:69:EE:46:DD:60
+[Sep 20 15:21:57.413] kernel:  wlan: Send EAPOL pkt to F4:81:51:E5:B7:04
+[Sep 20 15:13:27.709] kernel:  [  1854.215379] wlan: Send EAPOL pkt to 62:ED:7B:94:87:1F
+[Sep 20 15:13:05.669] kernel:  [  8153.400035] wlan: Send EAPOL pkt to E3:1C:F1:E9:D5:0E
+[Sep 20 15:12:47.327] kernel:  wlan: Send EAPOL pkt to 4B:6F:71:EE:3C:B8
+[Sep 20 14:56:58.864] kernel:  wlan: Send EAPOL pkt to 9D:A5:E4:17:AB:11
+[Sep 20 14:52:16.061] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:51:12.643] kernel:  [  1437.492689] wlan: Send EAPOL pkt to 3B:5A:D7:D2:91:7E
+[Sep 20 14:51:06.227] kernel:  [  1663.319749] wlan: Send EAPOL pkt to B5:D4:0F:48:79:81
+[Sep 20 14:49:10.792] kernel:  wlan: Send EAPOL pkt to D3:2A:CB:FE:2D:13
+[Sep 20 14:49:00.162] kernel:  wlan0: 
+[Sep 20 14:39:22.643] kernel:  wlan: Send EAPOL pkt to 29:4D:43:70:BD:36
+[Sep 20 14:38:39.323] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:37:33.673] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:34:03.623] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:33:19.281] kernel:  [  8926.176956] wlan: Send EAPOL pkt to E1:40:C8:27:AF:C5
+[Sep 20 14:31:03.412] kernel:  [  7621.178045] wlan: Send EAPOL pkt to DE:84:AD:9C:4A:B4
+[Sep 20 14:28:46.837] kernel:  wlan: Send EAPOL pkt to 6A:9E:6B:E8:6B:BF
+[Sep 20 14:20:32.447] kernel:  wlan: Send EAPOL pkt to FC:35:68:62:39:61
+[Sep 20 14:18:56.496] kernel:  wlan0: 
+[Sep 20 14:17:19.482] kernel:  wlan: Send EAPOL pkt to 46:6E:DA:F5:58:05
+[Sep 20 14:16:53.015] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:16:18.316] kernel:  wlan: Send EAPOL pkt to 9E:A4:0A:92:85:A2
+[Sep 20 14:15:34.842] kernel:  [  4867.634364] wlan: Send EAPOL pkt to 00:4D:1B:64:E1:8E
+[Sep 20 14:12:24.177] kernel:  wlan: Send EAPOL pkt to 65:FC:A9:A2:6C:D3
+[Sep 20 14:10:42.721] kernel:  wlan: Send EAPOL pkt to 70:E8:48:E8:DD:B8
+[Sep 20 14:06:34.089] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:04:32.857] kernel:  [  3876.180757] wlan: Send EAPOL pkt to 04:A9:15:CB:6C:4A
+[Sep 20 14:04:14.198] kernel:  [  3719.955107] wlan: Send EAPOL pkt to BF:B9:C2:28:68:93
+[Sep 20 14:02:58.303] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:02:53.308] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 14:00:09.615] kernel:  [  1082.147257] wlan: Send EAPOL pkt to 47:53:AF:4A:85:7E
+[Sep 20 13:54:30.905] kernel:  [  2559.119858] wlan: Send EAPOL pkt to B0:B7:EA:2F:95:CF
+[Sep 20 13:53:20.762] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 13:49:05.289] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 13:47:53.061] kernel:  [  5983.707331] wlan: Send EAPOL pkt to 6A:28:7C:E2:E0:7C
+[Sep 20 13:43:46.642] kernel:  wlan0: 
+[Sep 20 13:42:51.331] kernel:  [  4084.835978] wlan: Send EAPOL pkt to 8C:E7:A3:09:DD:FE
+[Sep 20 13:42:44.085] kernel:  [  5047.820246] wlan: Send EAPOL pkt to E3:DD:93:BB:B9:27
+[Sep 20 13:35:51.835] kernel:  wlan0: 
+[Sep 20 13:35:30.419] kernel:  wlan: Send EAPOL pkt to A0:2C:6C:0F:CE:16
+[Sep 20 13:34:01.070] kernel:  [  2486.668437] wlan: Send EAPOL pkt to 04:D4:97:78:DC:B1
+[Sep 20 13:31:43.372] kernel:  [  8776.640347] wlan: Send EAPOL pkt to BC:39:B1:C9:03:BA
+[Sep 20 13:28:01.336] kernel:  wlan0: 
+[Sep 20 13:26:30.239] kernel:  wlan: Send EAPOL pkt to EC:51:FA:80:F1:98
+[Sep 20 13:23:20.044] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 13:14:37.397] kernel:  wlan: Send EAPOL pkt to 75:16:85:A3:81:1F
+[Sep 20 13:12:03.466] kernel:  wlan0: 
+[Sep 20 13:11:21.876] kernel:  wlan0: 
+[Sep 20 13:08:32.846] kernel:  wlan0: 
+[Sep 20 13:06:58.460] kernel:  wlan0: 
+[Sep 20 13:05:12.562] kernel:  wlan: Send EAPOL pkt to C2:E6:47:22:A3:62
+[Sep 20 12:55:58.389] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 12:50:03.906] kernel:  [  1770.262332] wlan: Send EAPOL pkt to 00:6E:A9:BD:CE:3B
+[Sep 20 12:49:54.368] kernel:  wlan: Send EAPOL pkt to 78:B9:EB:28:47:92
+[Sep 20 12:48:16.713] kernel:  wlan: Send EAPOL pkt to 47:BC:CF:B0:53:E7
+[Sep 20 12:42:43.877] kernel:  wlan0: 
+[Sep 20 12:35:24.582] kernel:  wlan0: 
+[Sep 20 12:32:48.358] kernel:  wlan0: 
+[Sep 20 12:32:28.312] kernel:  wlan0: 
+[Sep 20 12:31:45.948] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 12:30:43.848] kernel:  wlan0: 
+[Sep 20 12:27:58.290] kernel:  [  5391.461482] wlan: Send EAPOL pkt to C6:30:78:18:7E:98
+[Sep 20 12:26:32.166] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 12:23:15.750] kernel:  wlan0: 
+[Sep 20 12:20:58.564] kernel:  wlan: Send EAPOL pkt to 5A:73:DA:99:F5:4C
+[Sep 20 12:20:12.098] kernel:  wlan0: 
+[Sep 20 12:15:50.523] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 12:15:28.680] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 12:14:10.070] kernel:  wlan: Send EAPOL pkt to 8F:7D:77:1C:A8:4A
+[Sep 20 12:13:58.152] kernel:  wlan: Send EAPOL pkt to 2D:7E:45:ED:36:16
+[Sep 20 12:13:26.621] kernel:  wlan: Send EAPOL pkt to A2:10:04:CD:ED:26
+[Sep 20 12:03:56.499] kernel:  [  7640.544128] wlan: Send EAPOL pkt to A1:0D:5A:21:AB:6B
+[Sep 20 12:03:49.110] kernel:  wlan0: 
+[Sep 20 11:58:50.154] kernel:  [  7806.854450] wlan: Send EAPOL pkt to 03:EE:29:39:7E:62
+[Sep 20 11:58:43.917] kernel:  wlan0: 
+[Sep 20 11:54:21.326] kernel:  [  5326.527323] wlan: Send EAPOL pkt to DA:1E:AD:48:D8:FF
+[Sep 20 11:53:54.057] kernel:  wlan0: 
+[Sep 20 11:53:14.580] kernel:  wlan: Send EAPOL pkt to 16:9D:2C:ED:CF:88
+[Sep 20 11:52:58.057] kernel:  [  6738.704425] wlan: Send EAPOL pkt to AD:6D:96:E6:A7:89
+[Sep 20 11:52:41.324] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 11:50:50.230] kernel:  wlan: Send EAPOL pkt to 85:62:77:41:69:47
+[Sep 20 11:44:08.337] kernel:  wlan0: 
+[Sep 20 11:41:45.596] kernel:  wlan: Send EAPOL pkt to 7B:A8:21:96:B0:08
+[Sep 20 11:41:18.683] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 11:37:57.842] kernel:  [  8556.951243] wlan: Send EAPOL pkt to C4:4E:D6:9B:5C:B6
+[Sep 20 11:36:30.037] kernel:  wlan: Send EAPOL pkt to A9:6B:70:D3:37:D5
+[Sep 20 11:35:57.830] kernel:  wlan0: 
+[Sep 20 11:32:34.852] kernel:  [  2904.592243] wlan: Send EAPOL pkt to 04:4D:78:E2:9F:42
+[Sep 20 11:29:12.417] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 11:25:27.047] kernel:  wlan0: 
+[Sep 20 11:23:08.342] kernel:  wlan0: 
+[Sep 20 11:23:07.129] kernel:  [  6611.993292] wlan: Send EAPOL pkt to 1B:3B:D7:41:2C:02
+[Sep 20 11:21:03.087] kernel:  wlan0: 
+[Sep 20 11:20:10.447] kernel:  [  6722.906107] wlan: Send EAPOL pkt to 1F:2F:50:9B:CA:F8
+[Sep 20 11:18:20.649] kernel:  [  7147.174985] wlan: Send EAPOL pkt to F5:63:FA:C4:CC:9E
+[Sep 20 11:16:20.643] kernel:  [  4670.443219] wlan: Send EAPOL pkt to DC:18:5B:F6:22:58
+[Sep 20 11:14:43.756] kernel:  [  2509.414215] wlan: Send EAPOL pkt to 27:C1:5C:65:79:F6
+[Sep 20 11:10:04.802] kernel:  wlan0: 
+[Sep 20 11:09:15.701] kernel:  wlan0: 
+[Sep 20 11:04:50.605] kernel:  wlan0: 
+[Sep 20 11:04:04.270] kernel:  [  6637.935325] wlan: Send EAPOL pkt to 40:5D:A0:D0:2C:B9
+[Sep 20 11:01:25.457] kernel:  [  5386.785556] wlan: Send EAPOL pkt to B5:31:0A:9A:44:76
+[Sep 20 10:59:07.505] kernel:  wlan: Send EAPOL pkt to 7D:AD:57:70:CC:FE
+[Sep 20 10:57:39.906] kernel:  wlan: Send EAPOL pkt to 9B:F1:3F:CE:4F:19
+[Sep 20 10:56:38.270] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:53:09.212] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:52:31.682] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:45:19.192] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:44:53.759] kernel:  wlan: Send EAPOL pkt to FB:93:88:8B:6B:3F
+[Sep 20 10:38:31.158] kernel:  wlan: Send EAPOL pkt to B8:7C:3C:3D:3F:EF
+[Sep 20 10:38:22.768] kernel:  [  7554.712304] wlan: Send EAPOL pkt to 72:5F:BE:B0:EB:04
+[Sep 20 10:21:54.458] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:21:44.154] kernel:  wlan: Send EAPOL pkt to E6:60:E2:5D:BC:7D
+[Sep 20 10:20:53.974] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:15:31.890] kernel:  wlan: Send EAPOL pkt to 6A:05:58:58:57:EE
+[Sep 20 10:13:16.177] kernel:  [  5153.391556] wlan: Send EAPOL pkt to 24:31:41:EB:37:F1
+[Sep 20 10:06:42.252] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 10:06:02.321] kernel:  [  1946.603179] wlan: Send EAPOL pkt to B8:70:9D:97:D5:1B
+[Sep 20 10:05:36.918] kernel:  [  8497.385722] wlan: Send EAPOL pkt to FD:23:85:05:97:EF
+[Sep 20 10:01:34.909] kernel:  wlan0: 
+[Sep 20 09:59:11.993] kernel:  wlan0: 
+[Sep 20 09:52:26.498] kernel:  wlan: Send EAPOL pkt to 75:8D:22:AA:74:9E
+[Sep 20 09:49:32.901] kernel:  wlan0: 
+[Sep 20 09:49:28.891] kernel:  wlan: Send EAPOL pkt to 1B:B1:EE:9A:51:09
+[Sep 20 09:46:38.419] kernel:  [  4774.521712] wlan: Send EAPOL pkt to E4:01:55:51:49:C5
+[Sep 20 09:46:28.336] kernel:  [  4711.534591] wlan: Send EAPOL pkt to 83:4E:EB:6D:7D:8A
+[Sep 20 09:45:09.057] kernel:  [  2667.288872] wlan: Send EAPOL pkt to D8:62:26:E1:CF:61
+[Sep 20 09:44:00.142] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 09:43:44.287] kernel:  wlan: Send EAPOL pkt to 5F:4D:81:83:A1:22
+[Sep 20 09:42:07.132] kernel:  [  5352.255473] wlan: Send EAPOL pkt to 8C:B7:E5:44:7F:96
+[Sep 20 09:41:30.296] kernel:  wlan0: 
+[Sep 20 09:34:05.660] kernel:  wlan0: 
+[Sep 20 09:31:14.151] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 09:29:49.661] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 09:26:02.818] kernel:  wlan0: 
+[Sep 20 09:24:31.192] kernel:  wlan0: 
+[Sep 20 09:21:39.280] kernel:  wlan: Send EAPOL pkt to 32:70:8A:B8:DA:1E
+[Sep 20 09:21:33.729] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 09:14:46.301] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 09:11:19.743] kernel:  [  2957.782463] wlan: Send EAPOL pkt to 66:EA:AB:31:CD:3C
+[Sep 20 09:08:39.308] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 09:05:44.473] kernel:  [  6445.345052] wlan: Send EAPOL pkt to CA:A2:4B:34:EA:DF
+[Sep 20 08:59:01.680] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 08:53:28.999] kernel:  wlan: Send EAPOL pkt to 9E:08:CA:2D:D6:66
+[Sep 20 08:52:39.754] kernel:  [  7026.956498] wlan: Send EAPOL pkt to 21:DF:85:E0:C3:B6
+[Sep 20 08:51:19.928] kernel:  [  3890.484121] wlan: Send EAPOL pkt to 5A:6F:DF:E3:4F:13
+[Sep 20 08:51:12.561] kernel:  wlan0: 
+[Sep 20 08:50:52.510] kernel:  wlan0: 
+[Sep 20 08:48:42.980] kernel:  wlan0: 
+[Sep 20 08:47:52.924] kernel:  wlan: Send EAPOL pkt to 9C:BA:44:D5:2B:9E
+[Sep 20 08:47:18.402] kernel:  [  2298.517796] wlan: Send EAPOL pkt to 62:49:B8:84:6B:46
+[Sep 20 08:47:11.482] kernel:  wlan: Send EAPOL pkt to 8F:63:6B:7A:2E:7B
+[Sep 20 08:46:23.886] kernel:  wlan: Send EAPOL pkt to BE:32:25:8E:4D:5D
+[Sep 20 08:41:51.120] kernel:  wlan0: 
+[Sep 20 08:38:23.812] kernel:  [  2944.101967] wlan: Send EAPOL pkt to 57:47:0B:01:26:C4
+[Sep 20 08:37:34.486] kernel:  [  7811.838860] wlan: Send EAPOL pkt to 14:D3:D1:06:D5:FD
+[Sep 20 08:26:49.677] kernel:  [  1448.458734] wlan: Send EAPOL pkt to BF:70:79:23:FE:D3
+[Sep 20 08:26:47.824] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 08:26:25.024] kernel:  wlan0: 
+[Sep 20 08:26:22.513] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 08:26:07.709] kernel:  [  5118.587810] wlan: Send EAPOL pkt to 9B:09:7B:FB:BA:76
+[Sep 20 08:24:12.096] kernel:  wlan: Send EAPOL pkt to 1E:10:F1:57:3A:92
+[Sep 20 08:24:07.554] kernel:  [  1240.853588] wlan: Send EAPOL pkt to A9:70:62:39:92:98
+[Sep 20 08:21:10.515] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 08:18:01.981] kernel:  wlan: Send EAPOL pkt to A3:BC:E7:A1:B1:E3
+[Sep 20 08:13:40.090] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 08:11:18.994] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 08:07:09.280] kernel:  wlan0: 
+[Sep 20 08:00:53.784] kernel:  wlan0: 
+[Sep 20 08:00:37.347] kernel:  wlan0: 
+[Sep 20 07:59:14.268] kernel:  wlan: Send EAPOL pkt to 08:40:8D:2B:A9:46
+[Sep 20 07:55:15.029] kernel:  [  7485.290056] wlan: Send EAPOL pkt to A8:A1:7F:F6:B9:07
+[Sep 20 07:52:44.464] kernel:  [  6656.643792] wlan: Send EAPOL pkt to A6:08:C1:34:48:A0
+[Sep 20 07:44:53.619] kernel:  [  6214.194096] wlan: Send EAPOL pkt to 6B:13:0E:7C:BC:4F
+[Sep 20 07:41:02.665] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 07:39:49.214] kernel:  [  8801.487182] wlan: Send EAPOL pkt to B9:E7:0A:D5:58:9B
+[Sep 20 07:35:46.811] kernel:  [  6708.917930] wlan: Send EAPOL pkt to 88:82:5F:E8:F4:A6
+[Sep 20 07:35:44.682] kernel:  [  7298.493342] wlan: Send EAPOL pkt to CD:40:EA:C5:A2:23
+[Sep 20 07:33:32.355] kernel:  wlan: Send EAPOL pkt to 3E:B5:17:75:BB:84
+[Sep 20 07:31:50.343] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 07:31:04.040] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 07:26:02.962] kernel:  wlan0: 
+[Sep 20 07:24:34.950] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 07:23:39.937] kernel:  wlan: Send EAPOL pkt to 7E:AA:05:9E:CF:79
+[Sep 20 07:21:40.014] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 07:19:18.919] kernel:  [  1945.615754] wlan: Send EAPOL pkt to F4:E8:95:06:82:37
+[Sep 20 07:16:25.329] kernel:  wlan: Send EAPOL pkt to 68:30:F0:92:80:33
+[Sep 20 07:11:16.093] kernel:  wlan0: 
+[Sep 20 07:07:14.418] kernel:  [  1523.365169] wlan: Send EAPOL pkt to 6F:83:CC:AD:C9:25
+[Sep 20 07:05:47.727] kernel:  [  8934.487041] wlan: Send EAPOL pkt to 03:06:8D:7E:F3:A5
+[Sep 20 07:03:25.111] kernel:  wlan0: 
+[Sep 20 06:58:25.717] kernel:  wlan0: 
+[Sep 20 06:56:31.844] kernel:  wlan: Send EAPOL pkt to A8:42:C3:67:C6:6C
+[Sep 20 06:53:06.070] kernel:  wlan0: 
+[Sep 20 06:51:13.109] kernel:  wlan0: 
+[Sep 20 06:48:30.669] kernel:  [  6828.850956] wlan: Send EAPOL pkt to 3D:E3:A7:AC:34:1F
+[Sep 20 06:41:58.581] kernel:  wlan: Send EAPOL pkt to A6:22:5A:B7:15:6E
+[Sep 20 06:40:22.324] kernel:  [  2793.584972] wlan: Send EAPOL pkt to C1:16:B9:DA:E8:56
+[Sep 20 06:39:47.821] kernel:  wlan0: 
+[Sep 20 06:38:42.591] kernel:  wlan0: 
+[Sep 20 06:32:04.411] kernel:  wlan: Send EAPOL pkt to 4C:48:72:0C:07:70
+[Sep 20 06:31:06.822] kernel:  [  2021.808986] wlan: Send EAPOL pkt to 93:B4:72:3B:BF:C1
+[Sep 20 06:30:22.102] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 06:29:36.879] kernel:  [  2561.663469] wlan: Send EAPOL pkt to B3:81:0E:D1:6D:A1
+[Sep 20 06:28:29.366] kernel:  wlan0: 
+[Sep 20 06:27:12.713] kernel:  wlan0: 
+[Sep 20 06:19:41.745] kernel:  wlan0: 
+[Sep 20 06:18:57.196] kernel:  [  4778.126692] wlan: Send EAPOL pkt to 8F:A6:E9:79:75:10
+[Sep 20 06:15:52.429] kernel:  [  1103.658620] wlan: Send EAPOL pkt to ED:EA:56:DC:55:C9
+[Sep 20 06:12:17.585] kernel:  wlan: Send EAPOL pkt to DA:97:00:FF:F9:06
+[Sep 20 06:09:36.162] kernel:  [  6815.283658] wlan: Send EAPOL pkt to BE:02:BA:2E:41:15
+[Sep 20 06:08:16.119] kernel:  wlan: Send EAPOL pkt to 87:4E:2B:BF:FE:30
+[Sep 20 06:08:03.389] kernel:  [  4800.520352] wlan: Send EAPOL pkt to 15:D9:A5:82:91:68
+[Sep 20 06:07:41.675] kernel:  [  4077.700802] wlan: Send EAPOL pkt to 5B:2D:7C:70:B2:09
+[Sep 20 06:07:30.624] kernel:  [  1460.298496] wlan: Send EAPOL pkt to A5:DB:00:87:24:AE
+[Sep 20 06:06:23.979] kernel:  [  8578.728629] wlan: Send EAPOL pkt to B3:B7:7F:0E:D3:68
+[Sep 20 06:04:05.794] kernel:  [  1230.206761] wlan: Send EAPOL pkt to 48:68:E1:A3:46:BB
+[Sep 20 06:02:26.550] kernel:  wlan: Send EAPOL pkt to D8:5D:C8:78:70:85
+[Sep 20 06:01:49.196] kernel:  wlan: Send EAPOL pkt to 71:23:65:EF:11:25
+[Sep 20 05:59:22.810] kernel:  wlan: Send EAPOL pkt to CF:44:AB:AA:5E:2C
+[Sep 20 05:56:51.450] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:54:22.763] kernel:  wlan0: 
+[Sep 20 05:50:23.590] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:48:27.661] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:46:43.551] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:41:24.252] kernel:  wlan: Send EAPOL pkt to A5:17:D6:52:2D:B2
+[Sep 20 05:40:37.407] kernel:  [  5793.754427] wlan: Send EAPOL pkt to 50:6E:35:6E:25:B0
+[Sep 20 05:40:24.250] kernel:  wlan0: 
+[Sep 20 05:37:01.040] kernel:  wlan: Send EAPOL pkt to CE:C6:BD:78:3E:EA
+[Sep 20 05:30:37.473] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:26:40.654] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:26:23.659] kernel:  wlan0: 
+[Sep 20 05:22:23.400] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:21:43.301] kernel:  [  4881.515685] wlan: Send EAPOL pkt to 2D:BF:45:9B:CF:19
+[Sep 20 05:17:16.143] kernel:  [  8452.763714] wlan: Send EAPOL pkt to 9B:20:4A:EA:35:91
+[Sep 20 05:16:26.239] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:15:42.351] kernel:  wlan0: 
+[Sep 20 05:13:01.754] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:10:27.736] kernel:  wlan0: 
+[Sep 20 05:08:49.664] kernel:  [  4378.146864] wlan: Send EAPOL pkt to 08:9A:85:EA:DB:52
+[Sep 20 05:08:07.266] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 05:04:51.144] kernel:  wlan0: 
+[Sep 20 05:04:14.971] kernel:  wlan: Send EAPOL pkt to 0F:33:42:4E:FD:2B
+[Sep 20 05:00:49.868] kernel:  wlan0: 
+[Sep 20 04:56:20.759] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:56:17.834] kernel:  wlan0: 
+[Sep 20 04:53:13.774] kernel:  wlan0: 
+[Sep 20 04:52:52.926] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:52:13.901] kernel:  [  7619.970220] wlan: Send EAPOL pkt to 4C:2F:C0:D2:E5:B9
+[Sep 20 04:49:38.330] kernel:  wlan: Send EAPOL pkt to 66:57:9B:BC:06:1B
+[Sep 20 04:49:11.930] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:48:53.030] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:48:36.771] kernel:  wlan: Send EAPOL pkt to 69:AF:27:CE:15:7C
+[Sep 20 04:45:06.800] kernel:  wlan0: 
+[Sep 20 04:44:56.878] kernel:  wlan: Send EAPOL pkt to 1D:3E:F5:FE:DD:47
+[Sep 20 04:43:53.564] kernel:  wlan: Send EAPOL pkt to 60:D7:B2:9F:EE:C8
+[Sep 20 04:36:27.640] kernel:  wlan0: 
+[Sep 20 04:33:57.059] kernel:  wlan: Send EAPOL pkt to 9F:7F:9A:8A:68:A8
+[Sep 20 04:33:29.361] kernel:  wlan0: 
+[Sep 20 04:32:14.436] kernel:  wlan: Send EAPOL pkt to BA:A9:8B:91:19:DC
+[Sep 20 04:30:33.701] kernel:  wlan: Send EAPOL pkt to 24:44:64:D1:C5:6D
+[Sep 20 04:27:05.874] kernel:  [  2291.449958] wlan: Send EAPOL pkt to C0:A5:A0:BA:D5:6D
+[Sep 20 04:25:43.600] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:24:54.097] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:24:43.970] kernel:  [  6380.202829] wlan: Send EAPOL pkt to 30:D3:6B:87:E7:2B
+[Sep 20 04:24:38.488] kernel:  [  4589.414323] wlan: Send EAPOL pkt to 33:9D:17:F1:6C:14
+[Sep 20 04:24:35.123] kernel:  [  1350.748311] wlan: Send EAPOL pkt to 1B:F2:97:9C:4E:EE
+[Sep 20 04:22:43.941] kernel:  wlan: Send EAPOL pkt to B3:05:7A:C6:AE:95
+[Sep 20 04:21:41.280] kernel:  wlan: Send EAPOL pkt to F9:88:A2:07:ED:4B
+[Sep 20 04:20:21.739] kernel:  wlan: Send EAPOL pkt to FA:A1:F3:0F:02:CF
+[Sep 20 04:19:07.173] kernel:  wlan: Send EAPOL pkt to EA:51:A7:80:2A:72
+[Sep 20 04:18:33.834] kernel:  wlan0: 
+[Sep 20 04:18:30.288] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:18:06.440] kernel:  wlan0: 
+[Sep 20 04:16:54.195] kernel:  [  3398.690021] wlan: Send EAPOL pkt to 79:6A:F5:8D:2D:B2
+[Sep 20 04:08:54.367] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:07:44.183] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 04:03:08.430] kernel:  wlan0: 
+[Sep 20 04:03:02.094] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:58:00.255] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:54:18.703] kernel:  [  2231.379277] wlan: Send EAPOL pkt to 5A:EC:F2:88:51:17
+[Sep 20 03:44:19.766] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:43:05.218] kernel:  [  7131.509506] wlan: Send EAPOL pkt to A9:1E:18:E6:B3:37
+[Sep 20 03:41:54.077] kernel:  wlan: Send EAPOL pkt to 06:05:33:40:1E:E5
+[Sep 20 03:41:09.919] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:40:18.933] kernel:  [  6977.663523] wlan: Send EAPOL pkt to 27:47:4B:8E:F0:12
+[Sep 20 03:38:40.853] kernel:  wlan0: 
+[Sep 20 03:36:51.182] kernel:  [  7755.235051] wlan: Send EAPOL pkt to 0F:54:C0:79:21:D5
+[Sep 20 03:35:20.186] kernel:  wlan: Send EAPOL pkt to 21:E2:2B:2A:BF:97
+[Sep 20 03:33:17.362] kernel:  wlan0: 
+[Sep 20 03:31:20.105] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:29:41.901] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:28:19.819] kernel:  wlan: Send EAPOL pkt to F0:B5:1D:53:9F:E9
+[Sep 20 03:25:03.166] kernel:  wlan0: 
+[Sep 20 03:23:08.472] kernel:  [  1270.401483] wlan: Send EAPOL pkt to 12:F3:B5:5A:7D:AC
+[Sep 20 03:23:00.716] kernel:  wlan: Send EAPOL pkt to 7E:89:C1:73:1E:10
+[Sep 20 03:20:59.680] kernel:  [  6107.586061] wlan: Send EAPOL pkt to 0B:CE:E7:06:80:82
+[Sep 20 03:20:18.477] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:18:06.244] kernel:  wlan0: 
+[Sep 20 03:15:27.260] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:14:42.934] kernel:  wlan: Send EAPOL pkt to 71:D5:90:EB:67:B4
+[Sep 20 03:12:33.656] kernel:  [  4777.785357] wlan: Send EAPOL pkt to 42:9C:24:8A:E2:54
+[Sep 20 03:10:33.874] kernel:  wlan0: 
+[Sep 20 03:09:38.210] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 03:08:13.791] kernel:  [  1366.600539] wlan: Send EAPOL pkt to E1:FA:4C:10:ED:62
+[Sep 20 02:56:17.979] kernel:  [  2853.593337] wlan: Send EAPOL pkt to BC:DE:72:1D:01:E0
+[Sep 20 02:55:02.491] kernel:  wlan0: 
+[Sep 20 02:52:30.226] kernel:  wlan: Send EAPOL pkt to C4:80:6B:9E:05:CB
+[Sep 20 02:47:43.847] kernel:  [  2691.457317] wlan: Send EAPOL pkt to 30:AB:65:68:BF:BB
+[Sep 20 02:47:23.113] kernel:  [  4661.566471] wlan: Send EAPOL pkt to 5F:49:86:55:7B:0B
+[Sep 20 02:40:27.343] kernel:  wlan0: 
+[Sep 20 02:30:44.060] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 02:30:39.303] kernel:  wlan: Send EAPOL pkt to 50:7F:0C:E0:C1:ED
+[Sep 20 02:30:26.489] kernel:  wlan: Send EAPOL pkt to C7:B5:53:F3:C7:EC
+[Sep 20 02:30:04.836] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 02:26:54.177] kernel:  wlan: Send EAPOL pkt to 91:A9:4E:7F:BC:E1
+[Sep 20 02:22:16.087] kernel:  [  8846.759077] wlan: Send EAPOL pkt to 81:3D:8D:5B:4A:F3
+[Sep 20 02:18:04.844] kernel:  wlan: Send EAPOL pkt to 71:B6:F7:03:9D:7A
+[Sep 20 02:12:02.195] kernel:  [  5208.651707] wlan: Send EAPOL pkt to 4C:FB:8C:46:6A:B7
+[Sep 20 02:07:41.578] kernel:  wlan0: 
+[Sep 20 02:06:26.765] kernel:  wlan0: 
+[Sep 20 02:02:02.465] kernel:  wlan: Send EAPOL pkt to FE:89:CF:64:BF:15
+[Sep 20 02:01:40.685] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 02:00:06.116] kernel:  [  2606.551208] wlan: Send EAPOL pkt to E9:2D:F5:7F:5B:D4
+[Sep 20 01:58:55.275] kernel:  wlan0: 
+[Sep 20 01:56:51.738] kernel:  wlan0: 
+[Sep 20 01:54:41.189] kernel:  wlan: Send EAPOL pkt to E1:D5:48:9A:41:EC
+[Sep 20 01:52:08.909] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 01:51:55.057] kernel:  wlan: Send EAPOL pkt to 37:06:8A:8A:6B:1A
+[Sep 20 01:51:27.248] kernel:  [  3308.841631] wlan: Send EAPOL pkt to 7E:A9:8B:40:8C:9E
+[Sep 20 01:49:48.120] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 01:43:03.825] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 01:42:12.527] kernel:  wlan: Send EAPOL pkt to 3D:D9:E8:F8:EC:C4
+[Sep 20 01:40:51.753] kernel:  [  6751.984129] wlan: Send EAPOL pkt to 2B:9E:F4:98:76:D3
+[Sep 20 01:37:05.341] kernel:  wlan0: 
+[Sep 20 01:36:48.059] kernel:  wlan0: 
+[Sep 20 01:35:22.751] kernel:  wlan0: 
+[Sep 20 01:25:41.257] kernel:  wlan0: 
+[Sep 20 01:25:08.187] kernel:  wlan0: 
+[Sep 20 01:09:01.402] kernel:  wlan0: 
+[Sep 20 01:01:23.979] kernel:  wlan0: 
+[Sep 20 01:01:12.877] kernel:  wlan0: 
+[Sep 20 00:49:56.879] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 00:49:25.222] kernel:  wlan: Send EAPOL pkt to A3:53:E8:93:1B:DD
+[Sep 20 00:48:32.903] kernel:  [  1370.521564] wlan: Send EAPOL pkt to C5:B6:8F:B1:81:63
+[Sep 20 00:45:55.300] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 00:43:09.731] kernel:  [  3399.659234] wlan: Send EAPOL pkt to F8:B6:7B:6D:7B:E9
+[Sep 20 00:38:50.615] kernel:  wlan0: 
+[Sep 20 00:37:37.613] kernel:  wlan0: 
+[Sep 20 00:35:48.167] kernel:  wlan: Send EAPOL pkt to B4:7F:02:F9:34:A6
+[Sep 20 00:24:48.200] kernel:  [  4030.694112] wlan: Send EAPOL pkt to D5:88:3F:AA:1E:BE
+[Sep 20 00:19:47.187] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 00:18:39.804] kernel:  wlan0: 
+[Sep 20 00:16:48.504] kernel:  [  3471.925295] wlan: Send EAPOL pkt to 83:AB:E7:2C:B4:69
+[Sep 20 00:09:41.679] kernel:  [  5422.239131] wlan: Send EAPOL pkt to 23:19:E8:5F:68:99
+[Sep 20 00:05:22.096] kernel:  [  3406.903220] wlan: Send EAPOL pkt to E8:82:36:44:6B:39
+[Sep 20 00:04:39.273] kernel:  wlan0: 
+[Sep 20 00:03:41.882] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE
+[Sep 20 00:02:01.724] kernel:  wlan0: 
+[Sep 20 00:00:04.577] kernel:  woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE

@@ -2,6 +2,7 @@
 // === src/extension/panels/LogViewerPanelManager.ts ===
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { measure, globalProfiler, perfNow } from '../../core/logging/perf.js';
 
 import {
   getCurrentWorkspacePathFs,
@@ -54,6 +55,7 @@ export class LogViewerPanelManager {
     this.log.debug('[debug] LogViewerPanelManager dispose: end');
   }
 
+  @measure()
   async handleHomeyLoggingCommand() {
     const already = !!this.panel;
     this.log.debug(`[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`);
@@ -115,6 +117,7 @@ export class LogViewerPanelManager {
   }
 
   /** 실시간 세션 시작: 라인 들어오는 대로 즉시 UI 전송 */
+  @measure()
   async startRealtime(filter?: string) {
     this.log.debug('[debug] LogViewerPanelManager startRealtime: start');
     if (!this.panel) await this.handleHomeyLoggingCommand();
@@ -141,6 +144,7 @@ export class LogViewerPanelManager {
   }
 
   /** 파일 병합 세션 시작: 최초 최신 LOG_WINDOW_SIZE만 보내고, 이후는 스크롤 요청에 따른 페이지 읽기 */
+  @measure()
   async startFileMerge(dir: string) {
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: start');
     if (!this.panel) await this.handleHomeyLoggingCommand();
@@ -278,6 +282,7 @@ export class LogViewerPanelManager {
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: end');
   }
 
+  @measure()
   stop() {
     this.log.debug('[debug] LogViewerPanelManager stop: start');
     this.session?.stopAll();
@@ -286,6 +291,8 @@ export class LogViewerPanelManager {
   }
 
   private _send<T extends string>(type: T, payload: any) {
+    const profOn = globalProfiler.isOn();
+    const t0 = profOn ? perfNow() : 0;
     try {
       if (type === 'logs.batch') {
         const now = Date.now();
@@ -312,12 +319,17 @@ export class LogViewerPanelManager {
         this.log.debug(`[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`);
       }
       this.bridge?.send({ v: 1, type, payload } as any);
-    } catch {}
+    } catch {
+      // no-op: 전송 실패는 상위 브리지에서 추가 로깅됨
+    } finally {
+      if (profOn) globalProfiler.recordFunctionCall('viewer._send', t0, perfNow() - t0);
+    }
   }
 
   // ─────────────────────────────────────────────────────────
   // Workspace helpers — userdata 우선 → 표준 VS Code → fallback
   // ─────────────────────────────────────────────────────────
+  @measure()
   private async _resolveWorkspaceRoot(): Promise<string | undefined> {
     // 1) userdata 기반
     try {
@@ -357,6 +369,7 @@ export class LogViewerPanelManager {
   // ─────────────────────────────────────────────────────────
   // 정식 UI HTML 로드 (CSP/nonce 및 리소스 경로 재작성)
   // ─────────────────────────────────────────────────────────
+  @measure()
   private _randomNonce(len = 32) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let out = '';
@@ -364,6 +377,7 @@ export class LogViewerPanelManager {
     return out;
   }
 
+  @measure()
   private async _getHtmlFromFiles(webview: vscode.Webview, root: vscode.Uri) {
     try {
       const indexHtml = vscode.Uri.joinPath(root, 'index.html');

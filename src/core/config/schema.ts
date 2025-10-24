@@ -19,7 +19,9 @@ export const defaultConfig: AppConfig = {
 
 /* ─────────────────────────────────────────────────────────────
  * Custom Parser Config (workspace .config/custom_log_parser.json)
- *  - files: string[] (glob whitelist)
+ *  - files: string[] (화이트리스트: "베이스네임 토큰" 또는 "^"로 시작하는 정규식)
+ *      · 예: ["homey-pro.log", "clip.log", "^app-\\d+\\.log$"]
+ *      · 경로/글롭(**\/*.log)은 지원하지 않고, 파일명(베이스네임)만 매칭합니다.
  *  - regex: { time, process, pid, message } (각 항목 개별 캡처 정규식)
  * ───────────────────────────────────────────────────────────── */
 export type ParserFieldRegex = {

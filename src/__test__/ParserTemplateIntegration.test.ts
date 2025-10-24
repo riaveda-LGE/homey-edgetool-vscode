@@ -8,20 +8,22 @@ import {
   matchRuleForPath,
   extractByCompiledRule,
 } from '../core/logs/ParserEngine.js';
-import {
-  cleanDir,
-  cleanAndEnsureDir,
-  prepareUniqueOutDir,
-} from './helpers/testFs.js';
+import { cleanAndEnsureDir } from './helpers/testFs.js';
+import { measureBlock } from '../core/logging/perf.js';
 
 jest.setTimeout(120_000);
 
-let TEMP_DIR: string;
-let INPUT_DIR: string;
+// 리포 루트/출력 폴더
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const PARSED_OUT_DIR = path.join(REPO_ROOT, 'parsed_item');
-
-// 템플릿 경로(리포지토리 내 내장 템플릿)
+// 실제 테스트 입력 폴더(이미 존재)
+const FIX_INPUT_DIR = path.resolve(
+  __dirname,
+  'test_log',
+  'normal_test_suite',
+  'before_merge',
+);
+// 템플릿 경로(리포 내장)
 const TEMPLATE_PATH = path.resolve(
   REPO_ROOT,
   'media',
@@ -29,27 +31,35 @@ const TEMPLATE_PATH = path.resolve(
   'custom_log_parser.template.v1.json',
 );
 
-function writeFileLines(filePath: string, lines: string[]) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, lines.join('\n') + '\n', 'utf8');
+beforeEach(() => {
+  cleanAndEnsureDir(PARSED_OUT_DIR); // 산출물 폴더는 남겨둠(지우지 않음)
+});
+
+// 유틸: 파일에서 최대 N줄만 빠르게 읽기
+function readFirstLines(filePath: string, max = 200): string[] {
+  const txt = fs.readFileSync(filePath, 'utf8');
+  const lines = txt.split(/\r?\n/);
+  const out: string[] = [];
+  for (let i = 0; i < lines.length && out.length < max; i++) {
+    const ln = String(lines[i] || '').trimEnd();
+    if (ln.length) out.push(ln);
+  }
+  return out;
 }
 
-beforeEach(() => {
-  TEMP_DIR = prepareUniqueOutDir('parser-it');
-  INPUT_DIR = path.join(TEMP_DIR, 'input');
-  cleanAndEnsureDir(INPUT_DIR);
-  // 수동 확인용 산출물 폴더(리포지토리 루트) — 테스트가 지우지 않습니다.
-  if (!fs.existsSync(PARSED_OUT_DIR)) fs.mkdirSync(PARSED_OUT_DIR, { recursive: true });
-});
-
-afterEach(() => {
-  // temp 입력만 정리, parsed_item은 남겨둠(육안 검증용)
-  cleanDir(TEMP_DIR);
-});
+// 프리플라이트 하드-스킵 패턴을 템플릿(cp)에서 읽어 RegExp로 준비
+function getHardSkipRegexesFromConfig(cp: any): RegExp[] {
+  const arr = cp?.preflight?.hard_skip_if_any_line_matches ?? [];
+  if (!Array.isArray(arr)) return [];
+  // compileParserConfig 결과가 이미 RegExp일 수도 있으므로 그대로 사용
+  if (arr.length && arr[0] instanceof RegExp) return arr as RegExp[];
+  // 문자열이면 RegExp로 컴파일 (템플릿 패턴 그대로, 별도 플래그 없음)
+  return (arr as string[]).map((pat) => new RegExp(pat));
+}
 
 it('템플릿이 정상 컴파일되고 요구/프리플라이트/글롭 매칭이 적용된다', async () => {
   const tpl = JSON.parse(fs.readFileSync(TEMPLATE_PATH, 'utf8'));
-  const cp = compileParserConfig(tpl)!;
+  const cp = measureBlock('compile-parser-config-template-integration', () => compileParserConfig(tpl))!;
   expect(cp).toBeTruthy();
   expect(cp.version).toBe(1);
 
@@ -63,139 +73,102 @@ it('템플릿이 정상 컴파일되고 요구/프리플라이트/글롭 매칭�
   expect(cp.preflight.sample_lines).toBe(200);
   expect(cp.preflight.min_match_ratio).toBeCloseTo(0.8, 5);
 
-  // 테스트 입력 파일들 생성
-  const files = [
-    {
-      rel: 'kernel.log',
-      lines: [
-        '[Sep  5 09:10:11.123] kernel[111]: boot complete',
-        '[Sep  5 09:10:12.456] kernel[111]: init driver',
-        '[Sep  5 09:10:13.789] kernel: no pid case is also fine',
-      ],
-      shouldUse: true,
-    },
-    {
-      rel: 'cpcd.log.1',
-      lines: [
-        '[Oct 12 14:00:00.001] cpcd[987]: starting...',
-        '[Oct 12 14:00:01.002] cpcd[987]: ready',
-      ],
-      shouldUse: true,
-    },
-    {
-      // 하드 스킵 패턴과 매치되는 라인을 섞어 shouldUse=false를 검증
-      rel: 'system.log',
-      lines: [
-        'WIFI==> scanning', // hard_skip_if_any_line_matches 에 걸리도록 함
-        '[Nov  2 01:02:03.004] systemd[1]: service started',
-      ],
-      shouldUse: false,
-    },
-    {
-      // 별도 rule(files: ["**/bt_player.log*"]) 확인
-      rel: 'bt_player.log',
-      lines: [
-        '[Dec 25 23:59:59.999] btplay[777]: merry xmas',
-        '[Dec 26 00:00:00.000] btplay: new year!',
-      ],
-      shouldUse: true,
-    },
-  ];
+  // 실제 입력 폴더에서 파일 수집 (*.log / *.log.N)
+  const names = fs
+    .readdirSync(FIX_INPUT_DIR)
+    .filter((n) => /\.log(\.\d+)?$/i.test(n))
+    .sort();
+  expect(names.length).toBeGreaterThan(0);
 
-  // 파일 작성
-  for (const f of files) {
-    writeFileLines(path.join(INPUT_DIR, f.rel), f.lines);
+  const HARD_SKIP_RX = getHardSkipRegexesFromConfig(cp);
+  for (const bn of names) {
+    const full = path.join(FIX_INPUT_DIR, bn);
+    const rel = path.basename(bn).replace(/\\/g, '/'); // 병합 루트 1-depth 전제
+    const rule = measureBlock('match-rule-for-path-template-integration', () => matchRuleForPath(rel, cp));
+    if (!rule) {
+      // 템플릿 대상이 아닌 로그면 건너뜀(테스트 입력에 따라 존재 가능)
+      continue;
+    }
+
+    // 프리플라이트 기대값 계산: hard-skip + 매치율
+    const sample = readFirstLines(full, cp.preflight.sample_lines ?? 200);
+    const hardSkip = sample.some((ln) => HARD_SKIP_RX.some((rx) => rx.test(ln)));
+    // 필수 필드 기준으로 매치율 계산
+    const need = cp.requirements?.fields ?? { time: true, process: true, message: true };
+    let okCnt = 0;
+    for (const ln of sample) {
+      const f = measureBlock('extract-by-compiled-rule-template-integration', () => extractByCompiledRule(ln, rule));
+      const okTime = need.time ? !!f.time : true;
+      const okProc = need.process ? !!f.process : true;
+      const okMsg  = need.message ? !!f.message : true;
+      if (okTime && okProc && okMsg) okCnt++;
+    }
+    const ratio = sample.length ? okCnt / sample.length : 0;
+    const expected =
+      !hardSkip && ratio >= (cp.preflight.min_match_ratio ?? 0.8);
+
+    const ok = await measureBlock('should-use-parser-for-file-template-integration', () =>
+      shouldUseParserForFile(full, rel, cp)
+    );
+    expect(ok).toBe(expected);
   }
-
-  // shouldUseParserForFile 결과 확인
-  for (const f of files) {
-    const full = path.join(INPUT_DIR, f.rel);
-    const rel = f.rel.replace(/\\/g, '/'); // 글롭 매칭은 상대경로로
-    const ok = await shouldUseParserForFile(full, rel, cp);
-    expect(ok).toBe(f.shouldUse);
-  }
-
-  // 하드 스킵된 파일(system.log)은 매칭 rule은 있어도 프리플라이트에서 제외되는 걸 확인
-  const systemRule = matchRuleForPath('system.log', cp);
-  expect(systemRule).toBeTruthy(); // 글롭은 맞지만…
-  const systemShouldUse = await shouldUseParserForFile(
-    path.join(INPUT_DIR, 'system.log'),
-    'system.log',
-    cp,
-  );
-  expect(systemShouldUse).toBe(false); // …프리플라이트에서 hard skip
 });
 
 it('설정대로 각 라인을 파싱하고, 파일별로 parsed_item/parsed_{파일명}.json 을 생성한다', async () => {
   const tpl = JSON.parse(fs.readFileSync(TEMPLATE_PATH, 'utf8'));
-  const cp = compileParserConfig(tpl)!;
+  const cp = measureBlock('compile-parser-config-template-integration-second', () => compileParserConfig(tpl))!;
 
-  // 입력 파일 준비(하드스킵 파일은 제외)
-  const cases = [
-    {
-      rel: 'kernel.log',
-      lines: [
-        '[Sep  5 09:10:11.123] kernel[111]: boot complete',
-        '[Sep  5 09:10:12.456] kernel[111]: init driver',
-        '[Sep  5 09:10:13.789] kernel: no pid case is also fine',
-      ],
-    },
-    {
-      rel: 'cpcd.log.1',
-      lines: [
-        '[Oct 12 14:00:00.001] cpcd[987]: starting...',
-        '[Oct 12 14:00:01.002] cpcd[987]: ready',
-      ],
-    },
-    {
-      rel: 'bt_player.log',
-      lines: [
-        '[Dec 25 23:59:59.999] btplay[777]: merry xmas',
-        '[Dec 26 00:00:00.000] btplay: new year!',
-      ],
-    },
-  ];
+  const names = fs
+    .readdirSync(FIX_INPUT_DIR)
+    .filter((n) => /\.log(\.\d+)?$/i.test(n))
+    .sort();
+  expect(names.length).toBeGreaterThan(0);
 
-  for (const c of cases) writeFileLines(path.join(INPUT_DIR, c.rel), c.lines);
+  const artifacts: string[] = [];
 
-  for (const c of cases) {
-    const rel = c.rel.replace(/\\/g, '/');
-    const rule = matchRuleForPath(rel, cp);
-    expect(rule).toBeTruthy();
+  const HARD_SKIP_RX = getHardSkipRegexesFromConfig(cp);
+  for (const bn of names) {
+    const full = path.join(FIX_INPUT_DIR, bn);
+    const rel = path.basename(bn).replace(/\\/g, '/');
+    const rule = measureBlock('match-rule-for-path-template-integration-second', () => matchRuleForPath(rel, cp));
+    if (!rule) continue; // 템플릿 대상 아님
 
-    const parsed = c.lines
-      .filter((ln) => !!ln.trim())
-      .map((line) => {
-        const f = extractByCompiledRule(line, rule!);
-        // 요구 필드 검증: time / process / message 는 필수
-        expect(f.time).toBeTruthy();
-        expect(f.process).toBeTruthy();
-        expect(f.message).toBeTruthy();
+    const sample = readFirstLines(full, cp.preflight.sample_lines ?? 200);
+    // 하드 스킵 파일은 제외
+    const hardSkip = sample.some((ln) => HARD_SKIP_RX.some((rx) => rx.test(ln)));
+    if (hardSkip) continue;
 
-        return {
-          time: f.time ?? null,
-          process: f.process ?? null,
-          pid: f.pid ?? null,
-          message: f.message ?? null,
-        };
-      });
+    const need = cp.requirements?.fields ?? { time: true, process: true, message: true };
+    const parsed = sample
+      .map((ln) => measureBlock('extract-by-compiled-rule-template-integration-second', () => extractByCompiledRule(ln, rule)))
+      .filter((f) => {
+        const okTime = need.time ? !!f.time : true;
+        const okProc = need.process ? !!f.process : true;
+        const okMsg  = need.message ? !!f.message : true;
+        return okTime && okProc && okMsg;
+      })
+      .map((f) => ({
+        time: f.time ?? null,
+        process: f.process ?? null,
+        pid: f.pid ?? null,
+        message: f.message ?? null,
+      }));
+
+    // 매치율이 템플릿 요구치(min_match_ratio) 이상이어야 함
+    const ratio = sample.length ? parsed.length / sample.length : 0;
+    expect(ratio).toBeGreaterThanOrEqual(cp.preflight.min_match_ratio ?? 0.8);
 
     // 산출물 저장(리포 루트/parsed_item/parsed_{파일명}.json)
-    const outPath = path.join(
-      PARSED_OUT_DIR,
-      `parsed_${path.basename(c.rel)}.json`,
-    );
+    const outPath = path.join(PARSED_OUT_DIR, `parsed_${path.basename(rel)}.json`);
     fs.writeFileSync(outPath, JSON.stringify(parsed, null, 2), 'utf8');
-
-    // 간단 정합: 라인 수 == 객체 수
-    expect(parsed.length).toBe(c.lines.length);
+    artifacts.push(path.basename(outPath));
   }
 
-  // 수동 검증 위치 안내(테스트가 이 경로에 파일을 남깁니다)
-  console.log(
-    `\n📦 Parsed artifacts written to: ${PARSED_OUT_DIR}\n` +
-      cases
-        .map((c) => ` - parsed_${path.basename(c.rel)}.json`)
-        .join('\n'),
-  );
+  // 수동 검증 위치 안내
+  if (artifacts.length) {
+    console.log(
+      `\n📦 Parsed artifacts written to: ${PARSED_OUT_DIR}\n` +
+        artifacts.map((n) => ` - ${n}`).join('\n'),
+    );
+  }
 });

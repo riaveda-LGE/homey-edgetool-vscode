@@ -1,562 +1,375 @@
-[Oct 20 23:42:03.433] homey-matter[2934]:  [info - Matter] Constructing service
-[Oct 20 23:44:58.091] homey-matter[2568]:  [info - Matter] Initializing service
-[Oct 20 23:45:55.690] homey-matter[2883]:  [info - Matter] Constructing service
-[Oct 20 23:46:31.715] homey-matter[2002]:  [1760971591.429483][2002:2002] CHIP:TOO: Set up stack
-[Oct 20 23:46:46.543] homey-matter[2533]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 20 23:50:09.197] homey-matter[2781]:  [info - Matter] Constructing service
-[Oct 20 23:51:39.051] homey-matter[1867]:  [1760971899.268832][1867:1867] CHIP:TOO: Set up stack
-[Oct 20 23:56:09.254] homey-matter[2654]:  [info - Matter] Constructing service
-[Oct 20 23:59:12.139] homey-matter[1783]:  [1760972352.952453][1783:1783] CHIP:TOO: Set up stack
-[Oct 20 23:59:21.342] homey-matter[2299]:  [1760972361.853245][2299:2299] CHIP:-: initSealStorage Result = 0
-[Oct 21 00:02:52.441] homey-matter[2814]:  [info - Matter] Initializing service
-[Oct 21 00:02:55.585] homey-matter[1504]:  [info - Matter] Constructing service
-[Oct 21 00:07:09.071] homey-matter[2991]:  [1760972829.554219][2991:2991] CHIP:TOO: Set up stack
-[Oct 21 00:10:14.574] homey-matter[1545]:  [1760973014.172985][1545:1545] CHIP:-: initSealStorage Result = 0
-[Oct 21 00:18:54.979] homey-matter[2042]:  [info - Matter] Initializing service
-[Oct 21 00:23:48.745] homey-matter[1673]:  [info - Matter] Initializing service
-[Oct 21 00:24:38.968] homey-matter[2017]:  [info - Matter] Constructing service
-[Oct 21 00:25:53.566] homey-matter[1750]:  [1760973953.614137][1750:1750] CHIP:TOO: Set up stack
-[Oct 21 00:26:40.038] homey-matter[2205]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 00:30:34.822] homey-matter[2212]:  [info - Matter] Initializing service
-[Oct 21 00:32:58.709] homey-matter[1721]:  [1760974378.811656][1721:1721] CHIP:-: initSealStorage Result = 0
-[Oct 21 00:36:02.399] homey-matter[2043]:  [1760974562.492335][2043:2043] CHIP:TOO: Set up stack
-[Oct 21 00:46:48.624] homey-matter[2696]:  [1760975208.504085][2696:2696] CHIP:-: initSealStorage Result = 0
-[Oct 21 00:48:26.322] homey-matter[2102]:  [info - Matter] Initializing service
-[Oct 21 00:50:02.627] homey-matter[1561]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 00:54:42.572] homey-matter[2830]:  [info - Matter] Constructing service
-[Oct 21 00:54:44.281] homey-matter[2727]:  [info - Matter] Constructing service
-[Oct 21 00:54:57.333] homey-matter[2793]:  [1760975697.208058][2793:2793] CHIP:TOO: Set up stack
-[Oct 21 00:59:24.999] homey-matter[1821]:  [1760975964.360965][1821:1821] CHIP:-: initSealStorage Result = 0
-[Oct 21 01:11:48.493] homey-matter[1746]:  [1760976708.783817][1746:1746] CHIP:TOO: Set up stack
-[Oct 21 01:16:11.486] homey-matter[2668]:  [1760976971.522455][2668:2668] CHIP:TOO: Set up stack
-[Oct 21 01:18:21.429] homey-matter[2444]:  [info - Matter] Constructing service
-[Oct 21 01:21:19.567] homey-matter[2545]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 01:23:50.288] homey-matter[2801]:  [1760977430.890109][2801:2801] CHIP:TOO: Set up stack
-[Oct 21 01:24:21.213] homey-matter[2253]:  [info - Matter] Constructing service
-[Oct 21 01:30:41.004] homey-matter[2405]:  [info - Matter] Initializing service
-[Oct 21 01:32:38.919] homey-matter[1690]:  [info - Matter] Constructing service
-[Oct 21 01:33:20.622] homey-matter[1511]:  [1760978000.355530][1511:1511] CHIP:TOO: Set up stack
-[Oct 21 01:33:40.789] homey-matter[2481]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 01:33:59.158] homey-matter[1538]:  [1760978039.799804][1538:1538] CHIP:-: initSealStorage Result = 0
-[Oct 21 01:35:36.193] homey-matter[2684]:  [info - Matter] Constructing service
-[Oct 21 01:37:54.558] homey-matter[1847]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 01:42:13.819] homey-matter[1598]:  [info - Matter] Initializing service
-[Oct 21 01:42:32.733] homey-matter[2329]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 01:45:08.392] homey-matter[2800]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 01:45:22.924] homey-matter[1761]:  [info - Matter] Constructing service
-[Oct 21 01:46:51.756] homey-matter[1556]:  [1760978811.384333][1556:1556] CHIP:TOO: Set up stack
-[Oct 21 01:47:31.135] homey-matter[2398]:  [info - Matter] Initializing service
-[Oct 21 01:47:34.546] homey-matter[2026]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 01:49:54.043] homey-matter[2169]:  [1760978994.275997][2169:2169] CHIP:TOO: Set up stack
-[Oct 21 01:54:10.876] homey-matter[1695]:  [1760979250.887222][1695:1695] CHIP:-: initSealStorage Result = 0
-[Oct 21 01:54:34.873] homey-matter[2518]:  [info - Matter] Constructing service
-[Oct 21 01:56:24.451] homey-matter[2231]:  [1760979384.460168][2231:2231] CHIP:TOO: Set up stack
-[Oct 21 02:01:32.548] homey-matter[2369]:  [info - Matter] Constructing service
-[Oct 21 02:02:05.862] homey-matter[2652]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 02:04:49.997] homey-matter[1892]:  [1760979889.276513][1892:1892] CHIP:-: initSealStorage Result = 0
-[Oct 21 02:13:26.275] homey-matter[2149]:  [1760980406.393804][2149:2149] CHIP:-: initSealStorage Result = 0
-[Oct 21 02:15:15.153] homey-matter[2517]:  [1760980515.708778][2517:2517] CHIP:TOO: Set up stack
-[Oct 21 02:19:14.658] homey-matter[1926]:  [1760980754.746775][1926:1926] CHIP:TOO: Set up stack
-[Oct 21 02:28:26.849] homey-matter[2293]:  [1760981306.226694][2293:2293] CHIP:TOO: Set up stack
-[Oct 21 02:28:45.921] homey-matter[2583]:  [1760981325.242326][2583:2583] CHIP:-: initSealStorage Result = 0
-[Oct 21 02:29:25.951] homey-matter[2837]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 02:31:44.698] homey-matter[2371]:  [1760981504.493408][2371:2371] CHIP:-: initSealStorage Result = 0
-[Oct 21 02:34:31.990] homey-matter[2014]:  [info - Matter] Constructing service
-[Oct 21 02:35:18.689] homey-matter[2742]:  [1760981718.423732][2742:2742] CHIP:-: initSealStorage Result = 0
-[Oct 21 02:49:20.890] homey-matter[2761]:  [1760982560.704332][2761:2761] CHIP:TOO: Set up stack
-[Oct 21 02:49:58.324] homey-matter[2128]:  [1760982598.880322][2128:2128] CHIP:-: initSealStorage Result = 0
-[Oct 21 02:58:28.288] homey-matter[2013]:  [info - Matter] Initializing service
-[Oct 21 03:06:05.597] homey-matter[2027]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:11:07.824] homey-matter[2116]:  [1760983867.207825][2116:2116] CHIP:-: initSealStorage Result = 0
-[Oct 21 03:14:30.189] homey-matter[2775]:  [1760984070.834500][2775:2775] CHIP:TOO: Set up stack
-[Oct 21 03:16:40.627] homey-matter[2585]:  [info - Matter] Constructing service
-[Oct 21 03:18:09.865] homey-matter[1719]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:18:55.071] homey-matter[2804]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:23:20.546] homey-matter[2083]:  [1760984600.323823][2083:2083] CHIP:TOO: Set up stack
-[Oct 21 03:24:45.388] homey-matter[2237]:  [1760984685.591594][2237:2237] CHIP:-: initSealStorage Result = 0
-[Oct 21 03:27:23.271] homey-matter[1915]:  [1760984843.354623][1915:1915] CHIP:-: initSealStorage Result = 0
-[Oct 21 03:28:23.700] homey-matter[1548]:  [1760984903.430559][1548:1548] CHIP:-: initSealStorage Result = 0
-[Oct 21 03:28:25.048] homey-matter[2639]:  [1760984905.502915][2639:2639] CHIP:-: initSealStorage Result = 0
-[Oct 21 03:28:54.099] homey-matter[2950]:  [info - Matter] Initializing service
-[Oct 21 03:30:26.905] homey-matter[1917]:  [1760985026.229276][1917:1917] CHIP:TOO: Set up stack
-[Oct 21 03:33:00.950] homey-matter[2091]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:33:55.324] homey-matter[2879]:  [info - Matter] Initializing service
-[Oct 21 03:34:45.174] homey-matter[1626]:  [1760985285.406670][1626:1626] CHIP:TOO: Set up stack
-[Oct 21 03:34:58.990] homey-matter[2748]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:34:59.983] homey-matter[1591]:  [info - Matter] Initializing service
-[Oct 21 03:42:04.832] homey-matter[2809]:  [info - Matter] Initializing service
-[Oct 21 03:43:04.825] homey-matter[2553]:  [info - Matter] Constructing service
-[Oct 21 03:44:25.392] homey-matter[2095]:  [info - Matter] Constructing service
-[Oct 21 03:45:50.563] homey-matter[2862]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:47:38.125] homey-matter[2740]:  [info - Matter] Initializing service
-[Oct 21 03:55:42.396] homey-matter[2982]:  [1760986542.290719][2982:2982] CHIP:-: initSealStorage Result = 0
-[Oct 21 03:57:14.990] homey-matter[1570]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 03:58:03.201] homey-matter[1923]:  [1760986683.976933][1923:1923] CHIP:TOO: Set up stack
-[Oct 21 04:02:55.306] homey-matter[2569]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 04:03:59.896] homey-matter[1725]:  [1760987039.994760][1725:1725] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:04:24.491] homey-matter[1585]:  [1760987064.294951][1585:1585] CHIP:TOO: Set up stack
-[Oct 21 04:05:45.583] homey-matter[2544]:  [info - Matter] Constructing service
-[Oct 21 04:06:19.808] homey-matter[2058]:  [info - Matter] Initializing service
-[Oct 21 04:07:53.423] homey-matter[2346]:  [info - Matter] Constructing service
-[Oct 21 04:08:18.797] homey-matter[2216]:  [1760987298.435469][2216:2216] CHIP:TOO: Set up stack
-[Oct 21 04:12:12.599] homey-matter[2682]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 04:12:39.221] homey-matter[2753]:  [info - Matter] Initializing service
-[Oct 21 04:18:13.471] homey-matter[2417]:  [1760987893.796721][2417:2417] CHIP:TOO: Set up stack
-[Oct 21 04:19:42.912] homey-matter[2001]:  [info - Matter] Initializing service
-[Oct 21 04:21:40.493] homey-matter[2012]:  [1760988100.824062][2012:2012] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:26:01.944] homey-matter[1582]:  [info - Matter] Constructing service
-[Oct 21 04:27:09.143] homey-matter[1517]:  [1760988429.735581][1517:1517] CHIP:TOO: Set up stack
-[Oct 21 04:29:18.020] homey-matter[2421]:  [1760988558.738424][2421:2421] CHIP:TOO: Set up stack
-[Oct 21 04:33:31.383] homey-matter[1588]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 04:37:46.209] homey-matter[1536]:  [info - Matter] Constructing service
-[Oct 21 04:38:32.072] homey-matter[2696]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 04:39:44.523] homey-matter[1860]:  [1760989184.145040][1860:1860] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:40:13.108] homey-matter[2994]:  [info - Matter] Constructing service
-[Oct 21 04:43:58.044] homey-matter[1617]:  [info - Matter] Constructing service
-[Oct 21 04:47:26.268] homey-matter[2224]:  [1760989646.370354][2224:2224] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:47:30.535] homey-matter[1986]:  [1760989650.786324][1986:1986] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:48:15.654] homey-matter[2583]:  [info - Matter] Initializing service
-[Oct 21 04:52:46.659] homey-matter[1723]:  [1760989966.895017][1723:1723] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:55:25.834] homey-matter[2218]:  [1760990125.383841][2218:2218] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:55:35.316] homey-matter[1503]:  [info - Matter] Initializing service
-[Oct 21 04:56:18.525] homey-matter[2878]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 04:56:21.862] homey-matter[2180]:  [1760990181.844909][2180:2180] CHIP:-: initSealStorage Result = 0
-[Oct 21 04:56:46.346] homey-matter[2933]:  [info - Matter] Initializing service
-[Oct 21 04:58:39.808] homey-matter[2882]:  [1760990319.481538][2882:2882] CHIP:TOO: Set up stack
-[Oct 21 05:00:06.431] homey-matter[2151]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 05:00:40.437] homey-matter[2866]:  [info - Matter] Initializing service
-[Oct 21 05:03:10.407] homey-matter[1990]:  [info - Matter] Initializing service
-[Oct 21 05:07:49.038] homey-matter[1913]:  [info - Matter] Initializing service
-[Oct 21 05:09:15.920] homey-matter[1639]:  [1760990955.406289][1639:1639] CHIP:TOO: Set up stack
-[Oct 21 05:09:36.496] homey-matter[2441]:  [1760990976.309330][2441:2441] CHIP:-: initSealStorage Result = 0
-[Oct 21 05:15:02.051] homey-matter[2179]:  [info - Matter] Initializing service
-[Oct 21 05:24:25.533] homey-matter[2243]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 05:24:31.167] homey-matter[2805]:  [info - Matter] Initializing service
-[Oct 21 05:28:40.991] homey-matter[2239]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 05:29:47.470] homey-matter[1699]:  [info - Matter] Constructing service
-[Oct 21 05:33:45.311] homey-matter[1842]:  [info - Matter] Initializing service
-[Oct 21 05:43:18.824] homey-matter[1758]:  [1760992998.554658][1758:1758] CHIP:-: initSealStorage Result = 0
-[Oct 21 05:43:32.272] homey-matter[1523]:  [1760993012.503221][1523:1523] CHIP:-: initSealStorage Result = 0
-[Oct 21 05:44:33.272] homey-matter[2691]:  [info - Matter] Initializing service
-[Oct 21 05:50:16.195] homey-matter[2321]:  [info - Matter] Initializing service
-[Oct 21 05:52:19.476] homey-matter[2000]:  [info - Matter] Initializing service
-[Oct 21 05:53:10.442] homey-matter[2660]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 05:53:59.250] homey-matter[2502]:  [info - Matter] Initializing service
-[Oct 21 05:57:11.273] homey-matter[1755]:  [1760993831.395923][1755:1755] CHIP:TOO: Set up stack
-[Oct 21 05:58:56.131] homey-matter[2554]:  [1760993936.438466][2554:2554] CHIP:-: initSealStorage Result = 0
-[Oct 21 05:59:57.659] homey-matter[2140]:  [info - Matter] Constructing service
-[Oct 21 06:00:03.061] homey-matter[2425]:  [info - Matter] Constructing service
-[Oct 21 06:05:54.044] homey-matter[1998]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 06:11:15.517] homey-matter[2541]:  [info - Matter] Constructing service
-[Oct 21 06:12:44.461] homey-matter[2565]:  [1760994764.241907][2565:2565] CHIP:TOO: Set up stack
-[Oct 21 06:14:26.476] homey-matter[1766]:  [1760994866.861552][1766:1766] CHIP:TOO: Set up stack
-[Oct 21 06:17:56.028] homey-matter[2823]:  [info - Matter] Initializing service
-[Oct 21 06:18:56.527] homey-matter[1590]:  [1760995136.852769][1590:1590] CHIP:TOO: Set up stack
-[Oct 21 06:22:12.941] homey-matter[2656]:  [info - Matter] Constructing service
-[Oct 21 06:25:09.590] homey-matter[2973]:  [1760995509.482619][2973:2973] CHIP:TOO: Set up stack
-[Oct 21 06:26:11.792] homey-matter[2961]:  [1760995571.536689][2961:2961] CHIP:-: initSealStorage Result = 0
-[Oct 21 06:28:11.355] homey-matter[1942]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 06:32:08.008] homey-matter[1779]:  [info - Matter] Constructing service
-[Oct 21 06:35:25.112] homey-matter[2281]:  [1760996125.353419][2281:2281] CHIP:-: initSealStorage Result = 0
-[Oct 21 06:36:22.100] homey-matter[1811]:  [info - Matter] Initializing service
-[Oct 21 06:37:53.133] homey-matter[1557]:  [1760996273.315311][1557:1557] CHIP:-: initSealStorage Result = 0
-[Oct 21 06:40:01.440] homey-matter[2110]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 06:40:10.096] homey-matter[2231]:  [info - Matter] Constructing service
-[Oct 21 06:41:13.088] homey-matter[1851]:  [info - Matter] Constructing service
-[Oct 21 06:43:23.812] homey-matter[2520]:  [1760996603.285467][2520:2520] CHIP:TOO: Set up stack
-[Oct 21 06:46:35.445] homey-matter[2862]:  [info - Matter] Initializing service
-[Oct 21 06:50:18.850] homey-matter[2092]:  [1760997018.312816][2092:2092] CHIP:-: initSealStorage Result = 0
-[Oct 21 06:51:19.515] homey-matter[2507]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 06:52:37.260] homey-matter[2415]:  [info - Matter] Constructing service
-[Oct 21 06:54:24.924] homey-matter[2146]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 06:56:32.107] homey-matter[2773]:  [1760997392.329115][2773:2773] CHIP:-: initSealStorage Result = 0
-[Oct 21 06:57:05.025] homey-matter[1687]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 07:00:17.084] homey-matter[1856]:  [1760997617.806623][1856:1856] CHIP:-: initSealStorage Result = 0
-[Oct 21 07:01:39.854] homey-matter[1785]:  [1760997699.905562][1785:1785] CHIP:TOO: Set up stack
-[Oct 21 07:06:41.635] homey-matter[2101]:  [info - Matter] Initializing service
-[Oct 21 07:07:57.665] homey-matter[2620]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 07:08:45.884] homey-matter[1538]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 07:09:03.594] homey-matter[2047]:  [1760998143.241177][2047:2047] CHIP:-: initSealStorage Result = 0
-[Oct 21 07:16:27.048] homey-matter[2335]:  [info - Matter] Constructing service
-[Oct 21 07:19:09.759] homey-matter[1792]:  [info - Matter] Constructing service
-[Oct 21 07:19:10.140] homey-matter[1695]:  [1760998750.549951][1695:1695] CHIP:-: initSealStorage Result = 0
-[Oct 21 07:19:22.663] homey-matter[2047]:  [info - Matter] Constructing service
-[Oct 21 07:20:20.023] homey-matter[2072]:  [info - Matter] Initializing service
-[Oct 21 07:20:39.655] homey-matter[2174]:  [1760998839.289410][2174:2174] CHIP:TOO: Set up stack
-[Oct 21 07:21:40.134] homey-matter[2515]:  [1760998900.389141][2515:2515] CHIP:TOO: Set up stack
-[Oct 21 07:23:16.374] homey-matter[1561]:  [1760998996.373737][1561:1561] CHIP:TOO: Set up stack
-[Oct 21 07:26:49.386] homey-matter[1943]:  [1760999209.312107][1943:1943] CHIP:TOO: Set up stack
-[Oct 21 07:29:52.753] homey-matter[2955]:  [info - Matter] Initializing service
-[Oct 21 07:30:25.835] homey-matter[2870]:  [info - Matter] Constructing service
-[Oct 21 07:35:33.166] homey-matter[1509]:  [1760999733.131867][1509:1509] CHIP:-: initSealStorage Result = 0
-[Oct 21 07:35:38.942] homey-matter[2558]:  [info - Matter] Constructing service
-[Oct 21 07:37:36.336] homey-matter[2476]:  [info - Matter] Constructing service
-[Oct 21 07:38:32.374] homey-matter[1976]:  [info - Matter] Initializing service
-[Oct 21 07:41:01.092] homey-matter[2472]:  [1761000061.715007][2472:2472] CHIP:TOO: Set up stack
-[Oct 21 07:45:48.091] homey-matter[2387]:  [info - Matter] Initializing service
-[Oct 21 07:46:48.492] homey-matter[2481]:  [info - Matter] Initializing service
-[Oct 21 07:47:20.370] homey-matter[1563]:  [1761000440.305591][1563:1563] CHIP:TOO: Set up stack
-[Oct 21 07:55:23.966] homey-matter[2027]:  [info - Matter] Initializing service
-[Oct 21 07:56:09.158] homey-matter[2224]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 07:56:15.372] homey-matter[2672]:  [info - Matter] Initializing service
-[Oct 21 08:02:51.754] homey-matter[2836]:  [1761001371.265380][2836:2836] CHIP:-: initSealStorage Result = 0
-[Oct 21 08:14:43.809] homey-matter[2224]:  [1761002083.783955][2224:2224] CHIP:TOO: Set up stack
-[Oct 21 08:23:15.297] homey-matter[2028]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:25:41.945] homey-matter[1771]:  [1761002741.390610][1771:1771] CHIP:TOO: Set up stack
-[Oct 21 08:27:17.184] homey-matter[2758]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:29:09.507] homey-matter[1904]:  [1761002949.219388][1904:1904] CHIP:-: initSealStorage Result = 0
-[Oct 21 08:30:20.235] homey-matter[2036]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:32:20.669] homey-matter[2436]:  [1761003140.621167][2436:2436] CHIP:-: initSealStorage Result = 0
-[Oct 21 08:32:27.895] homey-matter[1828]:  [1761003147.378374][1828:1828] CHIP:TOO: Set up stack
-[Oct 21 08:32:48.521] homey-matter[2820]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:33:26.177] homey-matter[2070]:  [info - Matter] Constructing service
-[Oct 21 08:37:49.068] homey-matter[2734]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:40:32.210] homey-matter[1798]:  [1761003632.354589][1798:1798] CHIP:-: initSealStorage Result = 0
-[Oct 21 08:41:21.614] homey-matter[1747]:  [info - Matter] Constructing service
-[Oct 21 08:42:26.453] homey-matter[2423]:  [1761003746.160625][2423:2423] CHIP:-: initSealStorage Result = 0
-[Oct 21 08:43:17.731] homey-matter[1844]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:44:29.216] homey-matter[2984]:  [info - Matter] Constructing service
-[Oct 21 08:47:46.982] homey-matter[1875]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:53:00.738] homey-matter[2776]:  [info - Matter] Constructing service
-[Oct 21 08:53:51.162] homey-matter[1792]:  [info - Matter] Constructing service
-[Oct 21 08:56:20.130] homey-matter[1800]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 08:59:35.234] homey-matter[2522]:  [info - Matter] Constructing service
-[Oct 21 09:02:05.880] homey-matter[2250]:  [info - Matter] Initializing service
-[Oct 21 09:02:41.009] homey-matter[1555]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 09:03:46.128] homey-matter[2114]:  [1761005026.806435][2114:2114] CHIP:TOO: Set up stack
-[Oct 21 09:09:18.909] homey-matter[2258]:  [1761005358.113465][2258:2258] CHIP:-: initSealStorage Result = 0
-[Oct 21 09:13:26.767] homey-matter[1722]:  [1761005606.883031][1722:1722] CHIP:-: initSealStorage Result = 0
-[Oct 21 09:14:04.988] homey-matter[2444]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 09:16:32.263] homey-matter[2155]:  [1761005792.944386][2155:2155] CHIP:-: initSealStorage Result = 0
-[Oct 21 09:18:20.509] homey-matter[2601]:  [info - Matter] Initializing service
-[Oct 21 09:20:07.475] homey-matter[1935]:  [info - Matter] Initializing service
-[Oct 21 09:23:26.449] homey-matter[2793]:  [1761006206.915573][2793:2793] CHIP:-: initSealStorage Result = 0
-[Oct 21 09:24:48.154] homey-matter[2110]:  [1761006288.775872][2110:2110] CHIP:-: initSealStorage Result = 0
-[Oct 21 09:31:35.313] homey-matter[2815]:  [info - Matter] Constructing service
-[Oct 21 09:33:24.565] homey-matter[1742]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 09:41:31.950] homey-matter[2326]:  [info - Matter] Initializing service
-[Oct 21 09:43:54.585] homey-matter[2047]:  [1761007434.928402][2047:2047] CHIP:TOO: Set up stack
-[Oct 21 09:45:28.235] homey-matter[1821]:  [1761007528.230735][1821:1821] CHIP:TOO: Set up stack
-[Oct 21 09:48:04.625] homey-matter[2440]:  [1761007684.877276][2440:2440] CHIP:TOO: Set up stack
-[Oct 21 09:51:01.666] homey-matter[2607]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 09:51:35.749] homey-matter[2735]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 09:52:39.333] homey-matter[2408]:  [1761007959.627343][2408:2408] CHIP:TOO: Set up stack
-[Oct 21 09:53:48.912] homey-matter[2605]:  [info - Matter] Constructing service
-[Oct 21 09:55:01.617] homey-matter[1637]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 09:56:06.292] homey-matter[1945]:  [1761008166.639450][1945:1945] CHIP:TOO: Set up stack
-[Oct 21 09:56:48.363] homey-matter[1807]:  [info - Matter] Constructing service
-[Oct 21 09:59:46.624] homey-matter[2197]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:03:10.115] homey-matter[1960]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:05:48.345] homey-matter[2077]:  [info - Matter] Initializing service
-[Oct 21 10:08:59.159] homey-matter[1702]:  [info - Matter] Constructing service
-[Oct 21 10:10:12.329] homey-matter[2370]:  [info - Matter] Initializing service
-[Oct 21 10:10:47.518] homey-matter[2955]:  [info - Matter] Constructing service
-[Oct 21 10:12:02.644] homey-matter[2900]:  [info - Matter] Initializing service
-[Oct 21 10:16:44.706] homey-matter[2357]:  [info - Matter] Constructing service
-[Oct 21 10:18:10.782] homey-matter[2627]:  [info - Matter] Constructing service
-[Oct 21 10:18:31.439] homey-matter[1805]:  [1761009511.282926][1805:1805] CHIP:-: initSealStorage Result = 0
-[Oct 21 10:20:47.356] homey-matter[2721]:  [info - Matter] Constructing service
-[Oct 21 10:24:29.594] homey-matter[2784]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:27:41.516] homey-matter[2616]:  [1761010061.638205][2616:2616] CHIP:TOO: Set up stack
-[Oct 21 10:27:42.017] homey-matter[2587]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:32:46.032] homey-matter[1812]:  [1761010366.556441][1812:1812] CHIP:TOO: Set up stack
-[Oct 21 10:33:38.660] homey-matter[1525]:  [info - Matter] Constructing service
-[Oct 21 10:35:02.011] homey-matter[2697]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:36:14.752] homey-matter[1905]:  [1761010574.865760][1905:1905] CHIP:-: initSealStorage Result = 0
-[Oct 21 10:36:56.164] homey-matter[2404]:  [info - Matter] Initializing service
-[Oct 21 10:41:18.810] homey-matter[1890]:  [1761010878.770938][1890:1890] CHIP:-: initSealStorage Result = 0
-[Oct 21 10:41:32.323] homey-matter[2526]:  [1761010892.413278][2526:2526] CHIP:-: initSealStorage Result = 0
-[Oct 21 10:41:51.916] homey-matter[1828]:  [info - Matter] Constructing service
-[Oct 21 10:45:08.241] homey-matter[1708]:  [1761011108.865035][1708:1708] CHIP:TOO: Set up stack
-[Oct 21 10:47:42.194] homey-matter[1832]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:49:28.047] homey-matter[2525]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 10:50:30.082] homey-matter[2336]:  [1761011430.261100][2336:2336] CHIP:-: initSealStorage Result = 0
-[Oct 21 10:59:44.431] homey-matter[2464]:  [1761011984.814832][2464:2464] CHIP:-: initSealStorage Result = 0
-[Oct 21 11:00:17.488] homey-matter[2217]:  [info - Matter] Constructing service
-[Oct 21 11:03:14.161] homey-matter[2302]:  [info - Matter] Constructing service
-[Oct 21 11:08:00.124] homey-matter[1804]:  [info - Matter] Initializing service
-[Oct 21 11:09:14.905] homey-matter[1850]:  [1761012554.585755][1850:1850] CHIP:TOO: Set up stack
-[Oct 21 11:14:33.175] homey-matter[2036]:  [info - Matter] Initializing service
-[Oct 21 11:17:33.029] homey-matter[1685]:  [info - Matter] Constructing service
-[Oct 21 11:29:02.356] homey-matter[1904]:  [1761013742.813794][1904:1904] CHIP:TOO: Set up stack
-[Oct 21 11:32:51.558] homey-matter[1516]:  [info - Matter] Constructing service
-[Oct 21 11:33:16.904] homey-matter[1674]:  [1761013996.511696][1674:1674] CHIP:-: initSealStorage Result = 0
-[Oct 21 11:35:49.634] homey-matter[2935]:  [1761014149.853719][2935:2935] CHIP:TOO: Set up stack
-[Oct 21 11:36:12.637] homey-matter[2762]:  [1761014172.855156][2762:2762] CHIP:TOO: Set up stack
-[Oct 21 11:36:14.616] homey-matter[2873]:  [1761014174.974580][2873:2873] CHIP:-: initSealStorage Result = 0
-[Oct 21 11:41:16.349] homey-matter[1961]:  [1761014476.500987][1961:1961] CHIP:-: initSealStorage Result = 0
-[Oct 21 11:44:26.524] homey-matter[2292]:  [1761014666.656688][2292:2292] CHIP:TOO: Set up stack
-[Oct 21 11:48:46.813] homey-matter[2154]:  [info - Matter] Constructing service
-[Oct 21 11:51:17.346] homey-matter[2751]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 11:57:11.558] homey-matter[1963]:  [1761015431.233450][1963:1963] CHIP:TOO: Set up stack
-[Oct 21 11:59:36.885] homey-matter[2199]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 12:09:59.369] homey-matter[1795]:  [1761016199.868726][1795:1795] CHIP:TOO: Set up stack
-[Oct 21 12:10:11.964] homey-matter[2685]:  [1761016211.269217][2685:2685] CHIP:TOO: Set up stack
-[Oct 21 12:23:06.913] homey-matter[2346]:  [info - Matter] Initializing service
-[Oct 21 12:25:33.995] homey-matter[1634]:  [1761017133.340119][1634:1634] CHIP:-: initSealStorage Result = 0
-[Oct 21 12:29:41.220] homey-matter[1786]:  [info - Matter] Constructing service
-[Oct 21 12:30:12.611] homey-matter[1928]:  [info - Matter] Initializing service
-[Oct 21 12:35:21.568] homey-matter[1891]:  [1761017721.985712][1891:1891] CHIP:-: initSealStorage Result = 0
-[Oct 21 12:49:17.852] homey-matter[2226]:  [info - Matter] Constructing service
-[Oct 21 12:51:16.232] homey-matter[2304]:  [info - Matter] Initializing service
-[Oct 21 12:52:41.790] homey-matter[2707]:  [info - Matter] Initializing service
-[Oct 21 12:54:24.495] homey-matter[2819]:  [info - Matter] Constructing service
-[Oct 21 12:55:59.356] homey-matter[2426]:  [1761018959.323175][2426:2426] CHIP:TOO: Set up stack
-[Oct 21 13:03:18.827] homey-matter[2017]:  [info - Matter] Initializing service
-[Oct 21 13:05:43.029] homey-matter[1998]:  [info - Matter] Constructing service
-[Oct 21 13:09:09.419] homey-matter[2909]:  [1761019749.828111][2909:2909] CHIP:-: initSealStorage Result = 0
-[Oct 21 13:10:41.349] homey-matter[2470]:  [1761019841.192601][2470:2470] CHIP:TOO: Set up stack
-[Oct 21 13:15:12.038] homey-matter[1782]:  [1761020112.489826][1782:1782] CHIP:-: initSealStorage Result = 0
-[Oct 21 13:19:42.311] homey-matter[2392]:  [info - Matter] Initializing service
-[Oct 21 13:20:36.890] homey-matter[2012]:  [1761020436.935409][2012:2012] CHIP:TOO: Set up stack
-[Oct 21 13:25:31.878] homey-matter[1777]:  [1761020731.235573][1777:1777] CHIP:TOO: Set up stack
-[Oct 21 13:32:20.326] homey-matter[2282]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 13:32:24.822] homey-matter[1905]:  [1761021144.264563][1905:1905] CHIP:TOO: Set up stack
-[Oct 21 13:35:34.877] homey-matter[1601]:  [info - Matter] Initializing service
-[Oct 21 13:35:56.623] homey-matter[2130]:  [1761021356.275832][2130:2130] CHIP:TOO: Set up stack
-[Oct 21 13:39:51.806] homey-matter[1963]:  [1761021591.314946][1963:1963] CHIP:TOO: Set up stack
-[Oct 21 13:40:53.218] homey-matter[2778]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 13:45:46.375] homey-matter[2863]:  [info - Matter] Constructing service
-[Oct 21 13:47:52.378] homey-matter[2244]:  [info - Matter] Constructing service
-[Oct 21 13:48:42.595] homey-matter[1595]:  [1761022122.231757][1595:1595] CHIP:TOO: Set up stack
-[Oct 21 13:53:09.797] homey-matter[2815]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 13:56:21.171] homey-matter[1724]:  [1761022581.576317][1724:1724] CHIP:TOO: Set up stack
-[Oct 21 13:58:45.349] homey-matter[2531]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 13:59:53.129] homey-matter[1553]:  [info - Matter] Initializing service
-[Oct 21 14:01:07.467] homey-matter[1721]:  [1761022867.859916][1721:1721] CHIP:-: initSealStorage Result = 0
-[Oct 21 14:02:09.557] homey-matter[2766]:  [1761022929.666913][2766:2766] CHIP:TOO: Set up stack
-[Oct 21 14:03:29.505] homey-matter[2824]:  [info - Matter] Initializing service
-[Oct 21 14:04:04.602] homey-matter[2770]:  [1761023044.194995][2770:2770] CHIP:-: initSealStorage Result = 0
-[Oct 21 14:04:07.472] homey-matter[2074]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 14:04:56.992] homey-matter[2933]:  [1761023096.213437][2933:2933] CHIP:TOO: Set up stack
-[Oct 21 14:05:19.426] homey-matter[2552]:  [1761023119.732210][2552:2552] CHIP:-: initSealStorage Result = 0
-[Oct 21 14:05:28.954] homey-matter[2599]:  [info - Matter] Initializing service
-[Oct 21 14:15:12.629] homey-matter[1760]:  [info - Matter] Initializing service
-[Oct 21 14:21:13.009] homey-matter[2692]:  [1761024073.367707][2692:2692] CHIP:-: initSealStorage Result = 0
-[Oct 21 14:21:18.954] homey-matter[2154]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 14:21:45.738] homey-matter[2103]:  [1761024105.665219][2103:2103] CHIP:-: initSealStorage Result = 0
-[Oct 21 14:26:29.143] homey-matter[2991]:  [1761024389.534702][2991:2991] CHIP:TOO: Set up stack
-[Oct 21 14:31:22.943] homey-matter[1817]:  [1761024682.889782][1817:1817] CHIP:TOO: Set up stack
-[Oct 21 14:32:39.964] homey-matter[2496]:  [1761024759.609804][2496:2496] CHIP:TOO: Set up stack
-[Oct 21 14:39:38.089] homey-matter[2341]:  [info - Matter] Initializing service
-[Oct 21 14:40:52.371] homey-matter[2495]:  [info - Matter] Constructing service
-[Oct 21 14:41:49.783] homey-matter[2384]:  [info - Matter] Initializing service
-[Oct 21 14:46:20.372] homey-matter[1905]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 14:48:02.246] homey-matter[2818]:  [info - Matter] Initializing service
-[Oct 21 15:01:10.383] homey-matter[1877]:  [1761026470.434081][1877:1877] CHIP:TOO: Set up stack
-[Oct 21 15:01:22.387] homey-matter[1573]:  [info - Matter] Constructing service
-[Oct 21 15:02:03.579] homey-matter[2894]:  [info - Matter] Constructing service
-[Oct 21 15:02:43.741] homey-matter[2066]:  [1761026563.194201][2066:2066] CHIP:TOO: Set up stack
-[Oct 21 15:04:05.118] homey-matter[1849]:  [info - Matter] Constructing service
-[Oct 21 15:05:32.649] homey-matter[2192]:  [1761026732.560931][2192:2192] CHIP:-: initSealStorage Result = 0
-[Oct 21 15:09:11.073] homey-matter[1605]:  [info - Matter] Constructing service
-[Oct 21 15:09:16.493] homey-matter[2365]:  [1761026956.473188][2365:2365] CHIP:TOO: Set up stack
-[Oct 21 15:21:06.416] homey-matter[2943]:  [1761027666.499071][2943:2943] CHIP:TOO: Set up stack
-[Oct 21 15:23:47.325] homey-matter[1811]:  [info - Matter] Constructing service
-[Oct 21 15:25:06.249] homey-matter[2661]:  [1761027906.272416][2661:2661] CHIP:-: initSealStorage Result = 0
-[Oct 21 15:29:11.523] homey-matter[1743]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 15:34:52.693] homey-matter[1697]:  [1761028492.962955][1697:1697] CHIP:TOO: Set up stack
-[Oct 21 15:47:35.115] homey-matter[2336]:  [1761029255.813640][2336:2336] CHIP:TOO: Set up stack
-[Oct 21 15:59:11.058] homey-matter[1578]:  [1761029951.426351][1578:1578] CHIP:TOO: Set up stack
-[Oct 21 16:00:18.736] homey-matter[1587]:  [1761030018.240514][1587:1587] CHIP:TOO: Set up stack
-[Oct 21 16:04:45.993] homey-matter[2755]:  [info - Matter] Initializing service
-[Oct 21 16:05:29.569] homey-matter[2080]:  [info - Matter] Initializing service
-[Oct 21 16:07:29.271] homey-matter[2166]:  [info - Matter] Constructing service
-[Oct 21 16:10:55.113] homey-matter[2747]:  [info - Matter] Constructing service
-[Oct 21 16:11:44.798] homey-matter[1969]:  [info - Matter] Initializing service
-[Oct 21 16:11:53.114] homey-matter[1870]:  [1761030713.144741][1870:1870] CHIP:-: initSealStorage Result = 0
-[Oct 21 16:12:00.676] homey-matter[1691]:  [info - Matter] Constructing service
-[Oct 21 16:12:59.592] homey-matter[1879]:  [1761030779.160582][1879:1879] CHIP:TOO: Set up stack
-[Oct 21 16:13:37.898] homey-matter[2097]:  [info - Matter] Initializing service
-[Oct 21 16:14:13.121] homey-matter[2571]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 16:18:02.571] homey-matter[1839]:  [1761031082.344348][1839:1839] CHIP:TOO: Set up stack
-[Oct 21 16:18:46.700] homey-matter[2379]:  [info - Matter] Initializing service
-[Oct 21 16:19:43.639] homey-matter[2959]:  [1761031183.748824][2959:2959] CHIP:TOO: Set up stack
-[Oct 21 16:21:04.189] homey-matter[1577]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 16:21:49.085] homey-matter[1806]:  [info - Matter] Constructing service
-[Oct 21 16:21:58.141] homey-matter[2970]:  [info - Matter] Initializing service
-[Oct 21 16:23:26.122] homey-matter[1557]:  [info - Matter] Constructing service
-[Oct 21 16:26:32.622] homey-matter[1625]:  [1761031592.654194][1625:1625] CHIP:-: initSealStorage Result = 0
-[Oct 21 16:30:47.590] homey-matter[2924]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 16:30:52.466] homey-matter[1965]:  [info - Matter] Initializing service
-[Oct 21 16:32:43.569] homey-matter[2845]:  [1761031963.949718][2845:2845] CHIP:-: initSealStorage Result = 0
-[Oct 21 16:33:52.057] homey-matter[2902]:  [info - Matter] Initializing service
-[Oct 21 16:35:31.179] homey-matter[1783]:  [info - Matter] Initializing service
-[Oct 21 16:37:04.515] homey-matter[2893]:  [1761032224.506767][2893:2893] CHIP:TOO: Set up stack
-[Oct 21 16:37:06.417] homey-matter[2887]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 16:39:25.477] homey-matter[2209]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 16:41:37.534] homey-matter[2553]:  [info - Matter] Constructing service
-[Oct 21 16:47:45.817] homey-matter[1962]:  [1761032865.253316][1962:1962] CHIP:TOO: Set up stack
-[Oct 21 16:48:02.864] homey-matter[2823]:  [1761032882.434342][2823:2823] CHIP:-: initSealStorage Result = 0
-[Oct 21 16:49:15.873] homey-matter[2378]:  [1761032955.188315][2378:2378] CHIP:TOO: Set up stack
-[Oct 21 16:55:03.876] homey-matter[2792]:  [info - Matter] Constructing service
-[Oct 21 16:55:32.623] homey-matter[2682]:  [info - Matter] Constructing service
-[Oct 21 16:56:35.721] homey-matter[2106]:  [1761033395.727335][2106:2106] CHIP:TOO: Set up stack
-[Oct 21 16:56:41.535] homey-matter[2405]:  [1761033401.513786][2405:2405] CHIP:TOO: Set up stack
-[Oct 21 16:59:41.644] homey-matter[2875]:  [info - Matter] Constructing service
-[Oct 21 17:01:31.150] homey-matter[2390]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 17:01:37.330] homey-matter[2328]:  [info - Matter] Initializing service
-[Oct 21 17:02:40.060] homey-matter[2033]:  [info - Matter] Constructing service
-[Oct 21 17:03:14.468] homey-matter[2611]:  [info - Matter] Initializing service
-[Oct 21 17:04:38.129] homey-matter[1626]:  [info - Matter] Initializing service
-[Oct 21 17:09:55.619] homey-matter[2214]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 17:19:47.914] homey-matter[2513]:  [info - Matter] Initializing service
-[Oct 21 17:20:35.535] homey-matter[2777]:  [1761034835.994357][2777:2777] CHIP:TOO: Set up stack
-[Oct 21 17:22:14.512] homey-matter[1897]:  [info - Matter] Constructing service
-[Oct 21 17:24:21.189] homey-matter[2799]:  [info - Matter] Constructing service
-[Oct 21 17:28:23.510] homey-matter[2015]:  [1761035303.314164][2015:2015] CHIP:TOO: Set up stack
-[Oct 21 17:29:56.789] homey-matter[2193]:  [info - Matter] Initializing service
-[Oct 21 17:35:15.213] homey-matter[2269]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 17:45:40.256] homey-matter[2456]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 17:48:15.788] homey-matter[2902]:  [1761036495.884142][2902:2902] CHIP:TOO: Set up stack
-[Oct 21 17:48:32.498] homey-matter[2565]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 17:51:09.129] homey-matter[2771]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 17:51:50.683] homey-matter[2197]:  [1761036710.844010][2197:2197] CHIP:TOO: Set up stack
-[Oct 21 18:00:00.945] homey-matter[2113]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 18:03:24.974] homey-matter[1935]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 18:03:31.253] homey-matter[2490]:  [info - Matter] Constructing service
-[Oct 21 18:04:37.243] homey-matter[2144]:  [info - Matter] Constructing service
-[Oct 21 18:10:41.334] homey-matter[2977]:  [1761037841.216065][2977:2977] CHIP:TOO: Set up stack
-[Oct 21 18:15:00.284] homey-matter[2394]:  [info - Matter] Constructing service
-[Oct 21 18:15:29.545] homey-matter[2629]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 18:16:40.129] homey-matter[2432]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 18:16:45.516] homey-matter[2901]:  [1761038205.962292][2901:2901] CHIP:TOO: Set up stack
-[Oct 21 18:16:57.208] homey-matter[2428]:  [info - Matter] Constructing service
-[Oct 21 18:18:07.474] homey-matter[2514]:  [1761038287.574256][2514:2514] CHIP:-: initSealStorage Result = 0
-[Oct 21 18:18:36.245] homey-matter[2489]:  [info - Matter] Initializing service
-[Oct 21 18:18:44.652] homey-matter[2120]:  [info - Matter] Initializing service
-[Oct 21 18:20:18.474] homey-matter[1570]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 18:21:15.496] homey-matter[2342]:  [info - Matter] Constructing service
-[Oct 21 18:31:24.315] homey-matter[2114]:  [1761039084.248801][2114:2114] CHIP:TOO: Set up stack
-[Oct 21 18:32:58.497] homey-matter[2947]:  [1761039178.293313][2947:2947] CHIP:TOO: Set up stack
-[Oct 21 18:35:23.624] homey-matter[1580]:  [info - Matter] Initializing service
-[Oct 21 18:40:42.826] homey-matter[1534]:  [info - Matter] Initializing service
-[Oct 21 18:47:18.625] homey-matter[2536]:  [info - Matter] Initializing service
-[Oct 21 18:48:19.680] homey-matter[2388]:  [info - Matter] Initializing service
-[Oct 21 18:51:08.346] homey-matter[2378]:  [info - Matter] Initializing service
-[Oct 21 18:53:25.319] homey-matter[1899]:  [1761040405.296293][1899:1899] CHIP:-: initSealStorage Result = 0
-[Oct 21 18:54:24.721] homey-matter[1880]:  [1761040464.836479][1880:1880] CHIP:-: initSealStorage Result = 0
-[Oct 21 18:56:18.945] homey-matter[1528]:  [info - Matter] Initializing service
-[Oct 21 19:03:46.354] homey-matter[1893]:  [1761041026.135679][1893:1893] CHIP:TOO: Set up stack
-[Oct 21 19:06:04.083] homey-matter[2412]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 19:08:19.759] homey-matter[2953]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 19:10:32.585] homey-matter[2273]:  [1761041432.556195][2273:2273] CHIP:-: initSealStorage Result = 0
-[Oct 21 19:11:51.852] homey-matter[2018]:  [info - Matter] Initializing service
-[Oct 21 19:12:35.392] homey-matter[1647]:  [1761041555.332570][1647:1647] CHIP:TOO: Set up stack
-[Oct 21 19:19:39.079] homey-matter[2143]:  [1761041979.378001][2143:2143] CHIP:-: initSealStorage Result = 0
-[Oct 21 19:21:50.212] homey-matter[1618]:  [1761042110.133878][1618:1618] CHIP:-: initSealStorage Result = 0
-[Oct 21 19:26:14.436] homey-matter[2601]:  [info - Matter] Constructing service
-[Oct 21 19:30:53.794] homey-matter[2013]:  [info - Matter] Initializing service
-[Oct 21 19:30:57.089] homey-matter[2076]:  [info - Matter] Constructing service
-[Oct 21 19:34:05.052] homey-matter[2692]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 19:36:41.169] homey-matter[2806]:  [1761043001.119688][2806:2806] CHIP:TOO: Set up stack
-[Oct 21 19:38:07.424] homey-matter[1589]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 19:38:29.277] homey-matter[1861]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 19:39:11.479] homey-matter[1677]:  [1761043151.159708][1677:1677] CHIP:-: initSealStorage Result = 0
-[Oct 21 19:42:38.851] homey-matter[2679]:  [info - Matter] Initializing service
-[Oct 21 19:43:28.571] homey-matter[2241]:  [info - Matter] Constructing service
-[Oct 21 19:48:40.382] homey-matter[2609]:  [info - Matter] Constructing service
-[Oct 21 19:48:57.035] homey-matter[1955]:  [1761043737.923440][1955:1955] CHIP:-: initSealStorage Result = 0
-[Oct 21 19:49:42.785] homey-matter[2522]:  [1761043782.294314][2522:2522] CHIP:-: initSealStorage Result = 0
-[Oct 21 19:53:34.435] homey-matter[2904]:  [1761044014.285447][2904:2904] CHIP:TOO: Set up stack
-[Oct 21 19:54:18.772] homey-matter[2514]:  [info - Matter] Constructing service
-[Oct 21 19:58:12.943] homey-matter[2206]:  [1761044292.791909][2206:2206] CHIP:TOO: Set up stack
-[Oct 21 20:01:34.773] homey-matter[2309]:  [1761044494.784786][2309:2309] CHIP:-: initSealStorage Result = 0
-[Oct 21 20:03:48.584] homey-matter[1594]:  [info - Matter] Initializing service
-[Oct 21 20:09:29.738] homey-matter[2322]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 20:10:12.464] homey-matter[2935]:  [1761045012.813357][2935:2935] CHIP:-: initSealStorage Result = 0
-[Oct 21 20:11:13.090] homey-matter[2625]:  [info - Matter] Initializing service
-[Oct 21 20:11:48.932] homey-matter[1696]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 20:13:12.700] homey-matter[2009]:  [info - Matter] Initializing service
-[Oct 21 20:20:47.308] homey-matter[1794]:  [info - Matter] Constructing service
-[Oct 21 20:25:00.822] homey-matter[1720]:  [info - Matter] Constructing service
-[Oct 21 20:26:05.380] homey-matter[2937]:  [info - Matter] Initializing service
-[Oct 21 20:29:30.006] homey-matter[2502]:  [info - Matter] Constructing service
-[Oct 21 20:29:33.293] homey-matter[2477]:  [1761046173.690492][2477:2477] CHIP:-: initSealStorage Result = 0
-[Oct 21 20:31:33.928] homey-matter[1853]:  [info - Matter] Constructing service
-[Oct 21 20:32:05.906] homey-matter[1890]:  [1761046325.710170][1890:1890] CHIP:-: initSealStorage Result = 0
-[Oct 21 20:32:34.452] homey-matter[2078]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 20:34:43.536] homey-matter[2357]:  [info - Matter] Constructing service
-[Oct 21 20:39:06.158] homey-matter[2685]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 20:47:10.843] homey-matter[1984]:  [info - Matter] Initializing service
-[Oct 21 20:49:29.839] homey-matter[2427]:  [1761047369.188249][2427:2427] CHIP:-: initSealStorage Result = 0
-[Oct 21 20:50:06.053] homey-matter[2066]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 20:51:27.126] homey-matter[2761]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 20:56:38.073] homey-matter[2842]:  [1761047798.582358][2842:2842] CHIP:TOO: Set up stack
-[Oct 21 20:57:12.832] homey-matter[1612]:  [info - Matter] Constructing service
-[Oct 21 20:58:36.334] homey-matter[2770]:  [info - Matter] Initializing service
-[Oct 21 21:01:05.346] homey-matter[2523]:  [info - Matter] Initializing service
-[Oct 21 21:03:32.257] homey-matter[2746]:  [1761048212.184468][2746:2746] CHIP:TOO: Set up stack
-[Oct 21 21:04:49.230] homey-matter[1686]:  [info - Matter] Constructing service
-[Oct 21 21:06:37.549] homey-matter[1710]:  [info - Matter] Constructing service
-[Oct 21 21:10:15.928] homey-matter[1549]:  [info - Matter] Constructing service
-[Oct 21 21:11:09.894] homey-matter[2465]:  [info - Matter] Constructing service
-[Oct 21 21:18:15.126] homey-matter[1711]:  [1761049095.746710][1711:1711] CHIP:-: initSealStorage Result = 0
-[Oct 21 21:19:18.827] homey-matter[1609]:  [1761049158.126684][1609:1609] CHIP:TOO: Set up stack
-[Oct 21 21:19:21.842] homey-matter[1722]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 21:19:24.160] homey-matter[1722]:  [info - Matter] Initializing service
-[Oct 21 21:20:28.598] homey-matter[1518]:  [1761049228.453666][1518:1518] CHIP:-: initSealStorage Result = 0
-[Oct 21 21:20:40.740] homey-matter[2224]:  [info - Matter] Initializing service
-[Oct 21 21:21:36.327] homey-matter[1561]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 21:22:09.332] homey-matter[2913]:  [1761049329.947892][2913:2913] CHIP:-: initSealStorage Result = 0
-[Oct 21 21:22:13.863] homey-matter[1912]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 21:24:17.928] homey-matter[2228]:  [info - Matter] Constructing service
-[Oct 21 21:26:58.890] homey-matter[1655]:  [1761049618.886626][1655:1655] CHIP:TOO: Set up stack
-[Oct 21 21:30:46.558] homey-matter[2677]:  [1761049846.688468][2677:2677] CHIP:TOO: Set up stack
-[Oct 21 21:33:07.625] homey-matter[2630]:  [info - Matter] Constructing service
-[Oct 21 21:33:11.510] homey-matter[1824]:  [info - Matter] Constructing service
-[Oct 21 21:33:49.605] homey-matter[1933]:  [1761050029.485241][1933:1933] CHIP:TOO: Set up stack
-[Oct 21 21:38:47.158] homey-matter[2669]:  [info - Matter] Initializing service
-[Oct 21 21:43:23.988] homey-matter[2575]:  [1761050603.789532][2575:2575] CHIP:-: initSealStorage Result = 0
-[Oct 21 21:44:27.907] homey-matter[2830]:  [info - Matter] Initializing service
-[Oct 21 21:48:41.650] homey-matter[1921]:  [1761050921.477746][1921:1921] CHIP:-: initSealStorage Result = 0
-[Oct 21 21:49:35.068] homey-matter[2759]:  [1761050975.242179][2759:2759] CHIP:TOO: Set up stack
-[Oct 21 21:50:26.702] homey-matter[1741]:  [1761051026.847158][1741:1741] CHIP:-: initSealStorage Result = 0
-[Oct 21 21:50:40.779] homey-matter[1952]:  [info - Matter] Constructing service
-[Oct 21 22:00:31.354] homey-matter[1869]:  [info - Matter] Initializing service
-[Oct 21 22:00:36.106] homey-matter[2690]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:02:56.037] homey-matter[1824]:  [1761051776.951969][1824:1824] CHIP:-: initSealStorage Result = 0
-[Oct 21 22:04:53.278] homey-matter[1565]:  [info - Matter] Initializing service
-[Oct 21 22:08:00.052] homey-matter[1689]:  [1761052080.364991][1689:1689] CHIP:-: initSealStorage Result = 0
-[Oct 21 22:08:28.696] homey-matter[2742]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:11:16.295] homey-matter[2114]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:21:26.675] homey-matter[2966]:  [1761052886.418496][2966:2966] CHIP:TOO: Set up stack
-[Oct 21 22:21:33.824] homey-matter[2524]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:22:34.572] homey-matter[1728]:  [1761052954.564877][1728:1728] CHIP:-: initSealStorage Result = 0
-[Oct 21 22:30:11.734] homey-matter[2332]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:33:57.700] homey-matter[2503]:  [info - Matter] Constructing service
-[Oct 21 22:39:36.719] homey-matter[2206]:  [1761053976.706421][2206:2206] CHIP:-: initSealStorage Result = 0
-[Oct 21 22:43:38.201] homey-matter[1568]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:47:04.831] homey-matter[2116]:  [1761054424.282324][2116:2116] CHIP:TOO: Set up stack
-[Oct 21 22:47:56.992] homey-matter[1778]:  [info - Matter] Initializing service
-[Oct 21 22:49:05.695] homey-matter[2882]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 22:50:55.437] homey-matter[2177]:  [info - Matter] Initializing service
-[Oct 21 22:57:20.580] homey-matter[2865]:  [info - Matter] Constructing service
-[Oct 21 23:04:40.260] homey-matter[2778]:  [1761055480.721128][2778:2778] CHIP:-: initSealStorage Result = 0
-[Oct 21 23:05:12.252] homey-matter[2463]:  [1761055512.879649][2463:2463] CHIP:-: initSealStorage Result = 0
-[Oct 21 23:05:41.442] homey-matter[1758]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:06:20.453] homey-matter[1874]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:06:54.752] homey-matter[2098]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:08:20.263] homey-matter[1769]:  [info - Matter] Constructing service
-[Oct 21 23:09:50.134] homey-matter[2257]:  [info - Matter] Initializing service
-[Oct 21 23:13:29.862] homey-matter[1715]:  [info - Matter] Constructing service
-[Oct 21 23:13:45.291] homey-matter[2362]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:15:21.924] homey-matter[2536]:  [1761056121.388148][2536:2536] CHIP:TOO: Set up stack
-[Oct 21 23:16:39.727] homey-matter[2158]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:17:12.904] homey-matter[2385]:  [info - Matter] Initializing service
-[Oct 21 23:17:57.993] homey-matter[2015]:  [info - Matter] Initializing service
-[Oct 21 23:18:41.717] homey-matter[2208]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:19:11.054] homey-matter[2493]:  [1761056351.199229][2493:2493] CHIP:TOO: Set up stack
-[Oct 21 23:20:48.243] homey-matter[1683]:  [info - Matter] Constructing service
-[Oct 21 23:21:54.364] homey-matter[2507]:  [info - Matter] Initializing service
-[Oct 21 23:23:41.858] homey-matter[2761]:  [1761056621.787605][2761:2761] CHIP:-: initSealStorage Result = 0
-[Oct 21 23:24:54.676] homey-matter[2044]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:29:50.350] homey-matter[2412]:  [info - Matter] Constructing service
-[Oct 21 23:34:40.490] homey-matter[2690]:  [info - Matter] Initializing service
-[Oct 21 23:41:53.357] homey-matter[2911]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
-[Oct 21 23:42:10.707] homey-matter[1822]:  [1761057730.995601][1822:1822] CHIP:TOO: Set up stack
-[Oct 21 23:46:57.032] homey-matter[2125]:  [1761058017.362432][2125:2125] CHIP:-: initSealStorage Result = 0
-[Oct 21 23:49:46.788] homey-matter[2073]:  [info - Matter] Constructing service
-[Oct 21 23:52:16.373] homey-matter[1521]:  [info - Matter] Initializing service
-[Oct 21 23:52:51.670] homey-matter[2455]:  [1761058371.783467][2455:2455] CHIP:-: initSealStorage Result = 0
-[Oct 21 23:57:59.490] homey-matter[2416]:  [info - Matter] Initializing service
+﻿[Sep 20 15:14:00.900] homey-matter[2846]:  [63893978040.454198][2846:2846] CHIP:TOO: Set up stack
+[Sep 20 15:13:23.341] homey-matter[1677]:  [63893978003.857834][1677:1677] CHIP:TOO: Set up stack
+[Sep 20 15:10:36.320] homey-matter[1599]:  [info - Matter] Initializing service
+[Sep 20 15:07:11.654] homey-matter[2688]:  [info - Matter] Initializing service
+[Sep 20 15:05:59.553] homey-matter[2106]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 15:00:05.322] homey-matter[2369]:  [63893977205.672394][2369:2369] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:58:38.209] homey-matter[2235]:  [63893977118.916504][2235:2235] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:57:20.227] homey-matter[2123]:  [info - Matter] Initializing service
+[Sep 20 14:57:11.239] homey-matter[2054]:  [63893977031.552252][2054:2054] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:45:59.277] homey-matter[1851]:  [info - Matter] Initializing service
+[Sep 20 14:43:22.761] homey-matter[2742]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 14:41:17.978] homey-matter[1542]:  [info - Matter] Constructing service
+[Sep 20 14:40:49.260] homey-matter[1971]:  [info - Matter] Initializing service
+[Sep 20 14:40:25.360] homey-matter[1748]:  [63893976025.526711][1748:1748] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:37:29.003] homey-matter[1901]:  [63893975849.132648][1901:1901] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:35:03.886] homey-matter[2835]:  [63893975703.828741][2835:2835] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:28:39.722] homey-matter[2477]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 14:24:49.229] homey-matter[2072]:  [63893975089.716116][2072:2072] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:24:01.509] homey-matter[2375]:  [63893975041.306159][2375:2375] CHIP:TOO: Set up stack
+[Sep 20 14:22:39.213] homey-matter[2902]:  [63893974959.727036][2902:2902] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:21:05.540] homey-matter[2353]:  [info - Matter] Constructing service
+[Sep 20 14:18:19.891] homey-matter[2945]:  [63893974699.193077][2945:2945] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:17:35.238] homey-matter[1556]:  [63893974655.142977][1556:1556] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:16:00.677] homey-matter[2697]:  [info - Matter] Initializing service
+[Sep 20 14:13:51.411] homey-matter[2575]:  [info - Matter] Initializing service
+[Sep 20 14:13:10.024] homey-matter[2470]:  [63893974390.659366][2470:2470] CHIP:TOO: Set up stack
+[Sep 20 14:12:49.883] homey-matter[1673]:  [63893974369.740462][1673:1673] CHIP:TOO: Set up stack
+[Sep 20 14:10:04.567] homey-matter[2524]:  [63893974204.516530][2524:2524] CHIP:TOO: Set up stack
+[Sep 20 14:09:27.715] homey-matter[2778]:  [63893974167.613190][2778:2778] CHIP:-: initSealStorage Result = 0
+[Sep 20 14:08:18.399] homey-matter[2722]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 14:01:14.172] homey-matter[1858]:  [63893973674.647152][1858:1858] CHIP:TOO: Set up stack
+[Sep 20 13:58:01.125] homey-matter[2054]:  [info - Matter] Initializing service
+[Sep 20 13:57:16.026] homey-matter[1726]:  [63893973436.760397][1726:1726] CHIP:TOO: Set up stack
+[Sep 20 13:57:01.189] homey-matter[1990]:  [info - Matter] Initializing service
+[Sep 20 13:55:48.462] homey-matter[1659]:  [info - Matter] Initializing service
+[Sep 20 13:49:40.569] homey-matter[1831]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 13:46:18.870] homey-matter[2164]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 13:46:10.713] homey-matter[1687]:  [63893972770.218665][1687:1687] CHIP:TOO: Set up stack
+[Sep 20 13:45:12.115] homey-matter[2129]:  [info - Matter] Constructing service
+[Sep 20 13:43:10.717] homey-matter[2791]:  [63893972590.150555][2791:2791] CHIP:TOO: Set up stack
+[Sep 20 13:39:18.135] homey-matter[1572]:  [info - Matter] Constructing service
+[Sep 20 13:34:48.865] homey-matter[2181]:  [63893972088.839842][2181:2181] CHIP:-: initSealStorage Result = 0
+[Sep 20 13:34:35.183] homey-matter[1651]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 13:32:51.953] homey-matter[2959]:  [info - Matter] Initializing service
+[Sep 20 13:29:17.965] homey-matter[1662]:  [63893971757.448488][1662:1662] CHIP:-: initSealStorage Result = 0
+[Sep 20 13:28:18.202] homey-matter[2384]:  [63893971698.117988][2384:2384] CHIP:-: initSealStorage Result = 0
+[Sep 20 13:28:05.367] homey-matter[2096]:  [info - Matter] Initializing service
+[Sep 20 13:25:54.964] homey-matter[1845]:  [63893971554.198156][1845:1845] CHIP:TOO: Set up stack
+[Sep 20 13:23:23.339] homey-matter[1613]:  [63893971403.130907][1613:1613] CHIP:TOO: Set up stack
+[Sep 20 13:23:02.385] homey-matter[2565]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 13:22:37.721] homey-matter[2941]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 13:22:20.926] homey-matter[2281]:  [info - Matter] Initializing service
+[Sep 20 13:21:48.410] homey-matter[2207]:  [63893971308.767513][2207:2207] CHIP:TOO: Set up stack
+[Sep 20 13:21:04.762] homey-matter[2703]:  [63893971264.350490][2703:2703] CHIP:TOO: Set up stack
+[Sep 20 13:18:24.941] homey-matter[2317]:  [info - Matter] Constructing service
+[Sep 20 13:14:26.949] homey-matter[2840]:  [info - Matter] Constructing service
+[Sep 20 13:14:17.064] homey-matter[2399]:  [info - Matter] Initializing service
+[Sep 20 13:12:41.510] homey-matter[2441]:  [63893970761.223223][2441:2441] CHIP:TOO: Set up stack
+[Sep 20 13:11:36.541] homey-matter[2023]:  [63893970696.442766][2023:2023] CHIP:-: initSealStorage Result = 0
+[Sep 20 13:07:27.093] homey-matter[2884]:  [info - Matter] Constructing service
+[Sep 20 13:05:55.915] homey-matter[2076]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 13:04:37.671] homey-matter[2877]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 12:57:47.383] homey-matter[2987]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 12:56:59.671] homey-matter[2478]:  [info - Matter] Initializing service
+[Sep 20 12:56:58.900] homey-matter[2146]:  [63893969818.980100][2146:2146] CHIP:-: initSealStorage Result = 0
+[Sep 20 12:56:05.470] homey-matter[2843]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 12:55:17.300] homey-matter[2030]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 12:46:53.400] homey-matter[2604]:  [63893969213.669076][2604:2604] CHIP:-: initSealStorage Result = 0
+[Sep 20 12:46:00.293] homey-matter[2723]:  [info - Matter] Initializing service
+[Sep 20 12:36:55.224] homey-matter[1780]:  [63893968615.701139][1780:1780] CHIP:TOO: Set up stack
+[Sep 20 12:36:42.182] homey-matter[2507]:  [63893968602.131140][2507:2507] CHIP:-: initSealStorage Result = 0
+[Sep 20 12:36:33.271] homey-matter[2321]:  [info - Matter] Constructing service
+[Sep 20 12:36:06.216] homey-matter[1518]:  [63893968566.400503][1518:1518] CHIP:-: initSealStorage Result = 0
+[Sep 20 12:32:49.098] homey-matter[2076]:  [63893968369.685852][2076:2076] CHIP:TOO: Set up stack
+[Sep 20 12:31:52.029] homey-matter[2110]:  [info - Matter] Initializing service
+[Sep 20 12:30:19.590] homey-matter[2334]:  [info - Matter] Initializing service
+[Sep 20 12:27:37.601] homey-matter[2534]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 12:24:45.848] homey-matter[1640]:  [63893967885.918096][1640:1640] CHIP:TOO: Set up stack
+[Sep 20 12:23:36.148] homey-matter[1572]:  [63893967816.814830][1572:1572] CHIP:TOO: Set up stack
+[Sep 20 12:19:53.887] homey-matter[1661]:  [63893967593.793809][1661:1661] CHIP:TOO: Set up stack
+[Sep 20 12:18:46.447] homey-matter[2986]:  [63893967526.523822][2986:2986] CHIP:-: initSealStorage Result = 0
+[Sep 20 12:18:27.367] homey-matter[2709]:  [info - Matter] Constructing service
+[Sep 20 12:16:38.991] homey-matter[1790]:  [63893967398.360339][1790:1790] CHIP:TOO: Set up stack
+[Sep 20 12:14:09.412] homey-matter[2510]:  [info - Matter] Constructing service
+[Sep 20 12:12:34.315] homey-matter[2990]:  [63893967154.146098][2990:2990] CHIP:-: initSealStorage Result = 0
+[Sep 20 12:05:58.834] homey-matter[1819]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 12:03:56.704] homey-matter[2313]:  [63893966636.336780][2313:2313] CHIP:TOO: Set up stack
+[Sep 20 12:02:11.176] homey-matter[2138]:  [63893966531.882479][2138:2138] CHIP:TOO: Set up stack
+[Sep 20 12:01:32.119] homey-matter[2982]:  [info - Matter] Constructing service
+[Sep 20 12:00:47.180] homey-matter[1553]:  [info - Matter] Constructing service
+[Sep 20 12:00:42.581] homey-matter[2268]:  [63893966442.938010][2268:2268] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:55:04.163] homey-matter[2813]:  [info - Matter] Constructing service
+[Sep 20 11:54:00.593] homey-matter[1794]:  [63893966040.455897][1794:1794] CHIP:TOO: Set up stack
+[Sep 20 11:51:58.708] homey-matter[1924]:  [info - Matter] Initializing service
+[Sep 20 11:51:01.537] homey-matter[2586]:  [info - Matter] Constructing service
+[Sep 20 11:47:04.723] homey-matter[1535]:  [63893965624.232597][1535:1535] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:45:51.604] homey-matter[2697]:  [63893965551.793560][2697:2697] CHIP:TOO: Set up stack
+[Sep 20 11:45:03.944] homey-matter[2269]:  [info - Matter] Constructing service
+[Sep 20 11:44:56.809] homey-matter[2878]:  [63893965496.858666][2878:2878] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:44:20.770] homey-matter[2398]:  [63893965460.153307][2398:2398] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:39:44.885] homey-matter[2929]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 11:33:24.739] homey-matter[2983]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 11:30:30.120] homey-matter[2846]:  [63893964630.585701][2846:2846] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:27:51.402] homey-matter[2487]:  [63893964471.758319][2487:2487] CHIP:TOO: Set up stack
+[Sep 20 11:27:20.883] homey-matter[2336]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 11:26:58.972] homey-matter[2996]:  [info - Matter] Initializing service
+[Sep 20 11:26:19.853] homey-matter[2638]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 11:21:03.309] homey-matter[2352]:  [info - Matter] Initializing service
+[Sep 20 11:19:07.781] homey-matter[1715]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 11:17:47.113] homey-matter[2591]:  [63893963867.461055][2591:2591] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:17:01.657] homey-matter[2064]:  [info - Matter] Constructing service
+[Sep 20 11:12:24.057] homey-matter[1660]:  [63893963544.540692][1660:1660] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:06:06.875] homey-matter[2184]:  [63893963166.773848][2184:2184] CHIP:TOO: Set up stack
+[Sep 20 11:05:09.500] homey-matter[2190]:  [63893963109.454058][2190:2190] CHIP:-: initSealStorage Result = 0
+[Sep 20 11:00:16.020] homey-matter[1853]:  [63893962816.831916][1853:1853] CHIP:TOO: Set up stack
+[Sep 20 10:58:07.918] homey-matter[1904]:  [info - Matter] Constructing service
+[Sep 20 10:57:07.427] homey-matter[2145]:  [63893962627.146064][2145:2145] CHIP:TOO: Set up stack
+[Sep 20 10:56:15.887] homey-matter[1532]:  [63893962575.426737][1532:1532] CHIP:TOO: Set up stack
+[Sep 20 10:52:32.330] homey-matter[1795]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:48:37.188] homey-matter[1804]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:48:16.633] homey-matter[2610]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:47:41.923] homey-matter[2930]:  [info - Matter] Initializing service
+[Sep 20 10:47:34.455] homey-matter[1795]:  [63893962054.670930][1795:1795] CHIP:-: initSealStorage Result = 0
+[Sep 20 10:44:40.967] homey-matter[2272]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:43:32.572] homey-matter[1692]:  [info - Matter] Constructing service
+[Sep 20 10:41:10.386] homey-matter[2767]:  [63893961670.948067][2767:2767] CHIP:TOO: Set up stack
+[Sep 20 10:40:57.032] homey-matter[2489]:  [info - Matter] Constructing service
+[Sep 20 10:35:07.007] homey-matter[1850]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:33:20.718] homey-matter[1881]:  [63893961200.258619][1881:1881] CHIP:-: initSealStorage Result = 0
+[Sep 20 10:29:43.344] homey-matter[1580]:  [63893960983.303914][1580:1580] CHIP:TOO: Set up stack
+[Sep 20 10:29:05.016] homey-matter[2369]:  [info - Matter] Constructing service
+[Sep 20 10:28:15.824] homey-matter[2285]:  [info - Matter] Constructing service
+[Sep 20 10:25:48.920] homey-matter[2601]:  [info - Matter] Initializing service
+[Sep 20 10:23:41.594] homey-matter[2128]:  [info - Matter] Initializing service
+[Sep 20 10:22:38.156] homey-matter[2942]:  [63893960558.601620][2942:2942] CHIP:TOO: Set up stack
+[Sep 20 10:21:40.662] homey-matter[1795]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:18:45.774] homey-matter[2575]:  [63893960325.379044][2575:2575] CHIP:TOO: Set up stack
+[Sep 20 10:17:59.494] homey-matter[2734]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:17:21.550] homey-matter[1735]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:13:41.326] homey-matter[2910]:  [info - Matter] Initializing service
+[Sep 20 10:13:25.576] homey-matter[1572]:  [63893960005.431049][1572:1572] CHIP:TOO: Set up stack
+[Sep 20 10:09:51.586] homey-matter[1783]:  [63893959791.128700][1783:1783] CHIP:TOO: Set up stack
+[Sep 20 10:07:18.626] homey-matter[2450]:  [63893959638.412228][2450:2450] CHIP:TOO: Set up stack
+[Sep 20 10:06:31.410] homey-matter[2003]:  [info - Matter] Constructing service
+[Sep 20 10:03:10.847] homey-matter[1852]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 10:01:19.692] homey-matter[2019]:  [info - Matter] Initializing service
+[Sep 20 10:00:31.847] homey-matter[1581]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 09:49:56.201] homey-matter[2507]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 09:44:11.786] homey-matter[1656]:  [info - Matter] Initializing service
+[Sep 20 09:40:35.967] homey-matter[2817]:  [info - Matter] Constructing service
+[Sep 20 09:39:39.156] homey-matter[1740]:  [info - Matter] Constructing service
+[Sep 20 09:39:37.425] homey-matter[2685]:  [63893957977.242094][2685:2685] CHIP:-: initSealStorage Result = 0
+[Sep 20 09:34:44.454] homey-matter[2611]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 09:29:55.671] homey-matter[1966]:  [63893957395.547830][1966:1966] CHIP:-: initSealStorage Result = 0
+[Sep 20 09:29:50.447] homey-matter[1523]:  [info - Matter] Initializing service
+[Sep 20 09:29:09.868] homey-matter[2024]:  [info - Matter] Initializing service
+[Sep 20 09:23:13.851] homey-matter[2170]:  [63893956993.453664][2170:2170] CHIP:TOO: Set up stack
+[Sep 20 09:23:08.925] homey-matter[2845]:  [info - Matter] Initializing service
+[Sep 20 09:18:32.013] homey-matter[2418]:  [info - Matter] Initializing service
+[Sep 20 09:10:00.972] homey-matter[2945]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 09:06:13.104] homey-matter[1752]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 09:05:11.723] homey-matter[2545]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 09:02:06.268] homey-matter[2010]:  [info - Matter] Initializing service
+[Sep 20 09:01:09.118] homey-matter[2282]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 08:55:40.866] homey-matter[2196]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 08:53:41.856] homey-matter[2402]:  [info - Matter] Initializing service
+[Sep 20 08:49:17.811] homey-matter[1835]:  [63893954957.861116][1835:1835] CHIP:TOO: Set up stack
+[Sep 20 08:46:24.460] homey-matter[1981]:  [info - Matter] Initializing service
+[Sep 20 08:45:57.436] homey-matter[2302]:  [63893954757.783298][2302:2302] CHIP:-: initSealStorage Result = 0
+[Sep 20 08:44:18.996] homey-matter[2392]:  [info - Matter] Constructing service
+[Sep 20 08:39:58.749] homey-matter[2272]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 08:39:08.953] homey-matter[2568]:  [63893954348.276794][2568:2568] CHIP:-: initSealStorage Result = 0
+[Sep 20 08:38:38.067] homey-matter[2044]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 08:34:42.200] homey-matter[1583]:  [info - Matter] Initializing service
+[Sep 20 08:32:08.997] homey-matter[2382]:  [info - Matter] Constructing service
+[Sep 20 08:31:08.510] homey-matter[1882]:  [63893953868.419211][1882:1882] CHIP:-: initSealStorage Result = 0
+[Sep 20 08:27:42.173] homey-matter[2680]:  [info - Matter] Constructing service
+[Sep 20 08:25:52.306] homey-matter[1532]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 08:24:08.212] homey-matter[1993]:  [63893953448.608247][1993:1993] CHIP:-: initSealStorage Result = 0
+[Sep 20 08:09:23.849] homey-matter[2551]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 08:08:07.927] homey-matter[1662]:  [63893952487.302390][1662:1662] CHIP:TOO: Set up stack
+[Sep 20 08:06:28.252] homey-matter[2828]:  [63893952388.429715][2828:2828] CHIP:-: initSealStorage Result = 0
+[Sep 20 07:58:38.833] homey-matter[1928]:  [63893951918.576617][1928:1928] CHIP:TOO: Set up stack
+[Sep 20 07:56:31.357] homey-matter[1518]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 07:55:29.184] homey-matter[2036]:  [info - Matter] Initializing service
+[Sep 20 07:52:48.436] homey-matter[1841]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 07:52:07.781] homey-matter[1743]:  [63893951527.795440][1743:1743] CHIP:TOO: Set up stack
+[Sep 20 07:48:50.540] homey-matter[2216]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 07:48:32.933] homey-matter[2808]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 07:46:39.816] homey-matter[2281]:  [info - Matter] Constructing service
+[Sep 20 07:44:42.733] homey-matter[1611]:  [63893951082.289705][1611:1611] CHIP:TOO: Set up stack
+[Sep 20 07:43:32.530] homey-matter[2886]:  [info - Matter] Initializing service
+[Sep 20 07:42:44.230] homey-matter[2504]:  [63893950964.557304][2504:2504] CHIP:TOO: Set up stack
+[Sep 20 07:41:30.524] homey-matter[1769]:  [info - Matter] Initializing service
+[Sep 20 07:41:20.326] homey-matter[1782]:  [63893950880.812606][1782:1782] CHIP:-: initSealStorage Result = 0
+[Sep 20 07:18:52.171] homey-matter[2739]:  [63893949532.358643][2739:2739] CHIP:TOO: Set up stack
+[Sep 20 07:14:58.104] homey-matter[1855]:  [63893949298.968375][1855:1855] CHIP:TOO: Set up stack
+[Sep 20 07:14:19.193] homey-matter[1930]:  [info - Matter] Constructing service
+[Sep 20 07:11:06.695] homey-matter[2066]:  [63893949066.160518][2066:2066] CHIP:TOO: Set up stack
+[Sep 20 07:10:53.252] homey-matter[2887]:  [info - Matter] Initializing service
+[Sep 20 07:09:44.484] homey-matter[1945]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 07:08:48.883] homey-matter[2643]:  [63893948928.175261][2643:2643] CHIP:TOO: Set up stack
+[Sep 20 07:04:35.951] homey-matter[2488]:  [63893948675.850737][2488:2488] CHIP:TOO: Set up stack
+[Sep 20 07:02:41.139] homey-matter[2755]:  [63893948561.807317][2755:2755] CHIP:TOO: Set up stack
+[Sep 20 07:01:06.717] homey-matter[2703]:  [info - Matter] Initializing service
+[Sep 20 07:00:53.700] homey-matter[2012]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 07:00:20.469] homey-matter[2582]:  [info - Matter] Constructing service
+[Sep 20 06:57:22.262] homey-matter[2623]:  [63893948242.510087][2623:2623] CHIP:-: initSealStorage Result = 0
+[Sep 20 06:56:32.024] homey-matter[2068]:  [info - Matter] Constructing service
+[Sep 20 06:54:55.049] homey-matter[1665]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 06:54:08.844] homey-matter[1862]:  [63893948048.632091][1862:1862] CHIP:TOO: Set up stack
+[Sep 20 06:52:53.889] homey-matter[2334]:  [info - Matter] Constructing service
+[Sep 20 06:49:04.996] homey-matter[2060]:  [info - Matter] Constructing service
+[Sep 20 06:44:26.903] homey-matter[2138]:  [63893947466.580698][2138:2138] CHIP:-: initSealStorage Result = 0
+[Sep 20 06:43:36.933] homey-matter[1925]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 06:43:13.518] homey-matter[2972]:  [info - Matter] Constructing service
+[Sep 20 06:41:48.529] homey-matter[1872]:  [info - Matter] Constructing service
+[Sep 20 06:41:32.554] homey-matter[1670]:  [63893947292.656131][1670:1670] CHIP:TOO: Set up stack
+[Sep 20 06:37:16.210] homey-matter[1638]:  [63893947036.566347][1638:1638] CHIP:-: initSealStorage Result = 0
+[Sep 20 06:35:16.572] homey-matter[2301]:  [info - Matter] Constructing service
+[Sep 20 06:29:19.632] homey-matter[2301]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 06:27:33.363] homey-matter[1752]:  [63893946453.190201][1752:1752] CHIP:-: initSealStorage Result = 0
+[Sep 20 06:25:35.532] homey-matter[2779]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 06:25:21.750] homey-matter[2194]:  [info - Matter] Constructing service
+[Sep 20 06:17:43.141] homey-matter[2689]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 06:16:32.581] homey-matter[2638]:  [info - Matter] Constructing service
+[Sep 20 06:14:44.813] homey-matter[2237]:  [info - Matter] Constructing service
+[Sep 20 06:11:11.383] homey-matter[2692]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 06:09:32.310] homey-matter[1941]:  [63893945372.486211][1941:1941] CHIP:TOO: Set up stack
+[Sep 20 06:03:34.026] homey-matter[2695]:  [info - Matter] Initializing service
+[Sep 20 06:03:00.141] homey-matter[1995]:  [63893944980.264010][1995:1995] CHIP:TOO: Set up stack
+[Sep 20 06:01:56.201] homey-matter[1597]:  [info - Matter] Constructing service
+[Sep 20 06:01:20.577] homey-matter[2738]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 05:58:08.448] homey-matter[2022]:  [info - Matter] Initializing service
+[Sep 20 05:57:50.373] homey-matter[1685]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 05:55:52.851] homey-matter[2364]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 05:54:02.846] homey-matter[2661]:  [63893944442.498376][2661:2661] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:49:48.615] homey-matter[2605]:  [info - Matter] Initializing service
+[Sep 20 05:49:39.566] homey-matter[2625]:  [63893944179.283924][2625:2625] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:47:13.704] homey-matter[2186]:  [63893944033.617374][2186:2186] CHIP:TOO: Set up stack
+[Sep 20 05:46:41.324] homey-matter[2185]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 05:46:20.693] homey-matter[1970]:  [63893943980.939628][1970:1970] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:41:28.695] homey-matter[2013]:  [63893943688.902790][2013:2013] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:41:13.075] homey-matter[2939]:  [63893943673.354558][2939:2939] CHIP:TOO: Set up stack
+[Sep 20 05:39:23.587] homey-matter[2465]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 05:39:07.390] homey-matter[2490]:  [info - Matter] Constructing service
+[Sep 20 05:32:41.490] homey-matter[2009]:  [info - Matter] Initializing service
+[Sep 20 05:31:50.783] homey-matter[2400]:  [info - Matter] Constructing service
+[Sep 20 05:27:11.160] homey-matter[2878]:  [info - Matter] Constructing service
+[Sep 20 05:25:05.188] homey-matter[2786]:  [info - Matter] Initializing service
+[Sep 20 05:23:19.600] homey-matter[2548]:  [63893942599.647630][2548:2548] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:15:57.805] homey-matter[2583]:  [info - Matter] Initializing service
+[Sep 20 05:15:50.750] homey-matter[2225]:  [63893942150.162859][2225:2225] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:14:30.530] homey-matter[2137]:  [63893942070.213594][2137:2137] CHIP:TOO: Set up stack
+[Sep 20 05:14:15.545] homey-matter[1661]:  [info - Matter] Constructing service
+[Sep 20 05:13:46.330] homey-matter[2047]:  [info - Matter] Initializing service
+[Sep 20 05:12:00.615] homey-matter[2454]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 05:11:25.347] homey-matter[2148]:  [63893941885.357961][2148:2148] CHIP:TOO: Set up stack
+[Sep 20 05:08:35.294] homey-matter[1515]:  [63893941715.899177][1515:1515] CHIP:TOO: Set up stack
+[Sep 20 05:03:29.708] homey-matter[1591]:  [63893941409.544308][1591:1591] CHIP:TOO: Set up stack
+[Sep 20 05:03:07.056] homey-matter[2147]:  [63893941387.859954][2147:2147] CHIP:-: initSealStorage Result = 0
+[Sep 20 05:01:15.625] homey-matter[2641]:  [63893941275.513017][2641:2641] CHIP:TOO: Set up stack
+[Sep 20 04:56:33.246] homey-matter[1820]:  [63893940993.127163][1820:1820] CHIP:TOO: Set up stack
+[Sep 20 04:53:28.492] homey-matter[1889]:  [63893940808.357143][1889:1889] CHIP:-: initSealStorage Result = 0
+[Sep 20 04:53:09.542] homey-matter[2738]:  [63893940789.369076][2738:2738] CHIP:-: initSealStorage Result = 0
+[Sep 20 04:51:45.804] homey-matter[1915]:  [63893940705.315972][1915:1915] CHIP:TOO: Set up stack
+[Sep 20 04:50:24.327] homey-matter[1710]:  [info - Matter] Constructing service
+[Sep 20 04:49:17.635] homey-matter[2297]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 04:44:35.710] homey-matter[1994]:  [63893940275.793767][1994:1994] CHIP:-: initSealStorage Result = 0
+[Sep 20 04:43:49.039] homey-matter[2430]:  [info - Matter] Constructing service
+[Sep 20 04:41:35.821] homey-matter[1677]:  [info - Matter] Initializing service
+[Sep 20 04:38:20.330] homey-matter[2202]:  [63893939900.903611][2202:2202] CHIP:TOO: Set up stack
+[Sep 20 04:33:21.596] homey-matter[2374]:  [info - Matter] Initializing service
+[Sep 20 04:26:37.474] homey-matter[2114]:  [info - Matter] Constructing service
+[Sep 20 04:17:39.153] homey-matter[2191]:  [info - Matter] Constructing service
+[Sep 20 04:14:19.512] homey-matter[1510]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 04:07:44.876] homey-matter[1911]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 04:03:31.281] homey-matter[1532]:  [info - Matter] Constructing service
+[Sep 20 04:01:55.292] homey-matter[2251]:  [63893937715.722729][2251:2251] CHIP:TOO: Set up stack
+[Sep 20 04:00:25.193] homey-matter[1951]:  [63893937625.138095][1951:1951] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:59:11.828] homey-matter[1558]:  [63893937551.655603][1558:1558] CHIP:TOO: Set up stack
+[Sep 20 03:58:03.533] homey-matter[2632]:  [63893937483.411832][2632:2632] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:57:40.589] homey-matter[2780]:  [info - Matter] Constructing service
+[Sep 20 03:57:16.218] homey-matter[2991]:  [info - Matter] Constructing service
+[Sep 20 03:57:06.309] homey-matter[2420]:  [63893937426.414825][2420:2420] CHIP:TOO: Set up stack
+[Sep 20 03:55:03.461] homey-matter[2361]:  [info - Matter] Initializing service
+[Sep 20 03:53:21.820] homey-matter[2443]:  [63893937201.986832][2443:2443] CHIP:TOO: Set up stack
+[Sep 20 03:51:39.387] homey-matter[2830]:  [info - Matter] Initializing service
+[Sep 20 03:51:05.172] homey-matter[1996]:  [info - Matter] Constructing service
+[Sep 20 03:48:36.438] homey-matter[2414]:  [info - Matter] Initializing service
+[Sep 20 03:40:17.194] homey-matter[1722]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 03:39:19.209] homey-matter[1561]:  [info - Matter] Constructing service
+[Sep 20 03:33:41.570] homey-matter[2402]:  [63893936021.705103][2402:2402] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:32:55.700] homey-matter[1587]:  [info - Matter] Initializing service
+[Sep 20 03:32:01.853] homey-matter[2495]:  [info - Matter] Constructing service
+[Sep 20 03:30:35.277] homey-matter[2295]:  [63893935835.791051][2295:2295] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:30:26.467] homey-matter[2182]:  [info - Matter] Initializing service
+[Sep 20 03:25:49.265] homey-matter[1692]:  [63893935549.314789][1692:1692] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:22:53.591] homey-matter[1971]:  [63893935373.347734][1971:1971] CHIP:TOO: Set up stack
+[Sep 20 03:21:30.417] homey-matter[1931]:  [63893935290.898287][1931:1931] CHIP:TOO: Set up stack
+[Sep 20 03:20:50.967] homey-matter[2693]:  [info - Matter] Initializing service
+[Sep 20 03:19:01.260] homey-matter[2979]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 03:18:02.355] homey-matter[2537]:  [63893935082.617274][2537:2537] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:14:21.067] homey-matter[1903]:  [63893934861.119599][1903:1903] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:08:41.637] homey-matter[2904]:  [63893934521.716066][2904:2904] CHIP:-: initSealStorage Result = 0
+[Sep 20 03:01:43.293] homey-matter[2696]:  [info - Matter] Constructing service
+[Sep 20 02:58:58.732] homey-matter[2954]:  [63893933938.752351][2954:2954] CHIP:TOO: Set up stack
+[Sep 20 02:57:13.112] homey-matter[1664]:  [info - Matter] Initializing service
+[Sep 20 02:55:19.159] homey-matter[2508]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 02:53:22.569] homey-matter[1967]:  [63893933602.183731][1967:1967] CHIP:-: initSealStorage Result = 0
+[Sep 20 02:52:07.338] homey-matter[2955]:  [63893933527.449793][2955:2955] CHIP:TOO: Set up stack
+[Sep 20 02:52:03.136] homey-matter[1521]:  [info - Matter] Initializing service
+[Sep 20 02:48:10.756] homey-matter[1845]:  [info - Matter] Constructing service
+[Sep 20 02:46:44.429] homey-matter[2532]:  [63893933204.766092][2532:2532] CHIP:-: initSealStorage Result = 0
+[Sep 20 02:45:06.164] homey-matter[1881]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 02:40:30.613] homey-matter[2910]:  [info - Matter] Constructing service
+[Sep 20 02:37:57.845] homey-matter[2175]:  [info - Matter] Initializing service
+[Sep 20 02:36:32.410] homey-matter[2006]:  [info - Matter] Initializing service
+[Sep 20 02:35:54.410] homey-matter[1556]:  [63893932554.498402][1556:1556] CHIP:TOO: Set up stack
+[Sep 20 02:31:58.591] homey-matter[1593]:  [info - Matter] Constructing service
+[Sep 20 02:30:26.390] homey-matter[2749]:  [63893932226.788262][2749:2749] CHIP:-: initSealStorage Result = 0
+[Sep 20 02:26:44.591] homey-matter[1711]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 02:24:12.292] homey-matter[2734]:  [info - Matter] Initializing service
+[Sep 20 02:22:01.895] homey-matter[2809]:  [info - Matter] Constructing service
+[Sep 20 02:13:33.299] homey-matter[2968]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 02:09:02.405] homey-matter[2685]:  [info - Matter] Constructing service
+[Sep 20 02:02:53.858] homey-matter[1677]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 02:02:13.053] homey-matter[2918]:  [info - Matter] Initializing service
+[Sep 20 02:00:14.179] homey-matter[1986]:  [info - Matter] Initializing service
+[Sep 20 01:59:32.328] homey-matter[1934]:  [63893930372.843791][1934:1934] CHIP:TOO: Set up stack
+[Sep 20 01:58:22.338] homey-matter[2608]:  [63893930302.509013][2608:2608] CHIP:TOO: Set up stack
+[Sep 20 01:56:59.268] homey-matter[1541]:  [63893930219.375235][1541:1541] CHIP:-: initSealStorage Result = 0
+[Sep 20 01:55:57.946] homey-matter[1601]:  [63893930157.719777][1601:1601] CHIP:TOO: Set up stack
+[Sep 20 01:52:10.190] homey-matter[2423]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 01:51:00.726] homey-matter[1643]:  [63893929860.648228][1643:1643] CHIP:TOO: Set up stack
+[Sep 20 01:49:38.000] homey-matter[2004]:  [info - Matter] Constructing service
+[Sep 20 01:44:22.632] homey-matter[2207]:  [63893929462.487522][2207:2207] CHIP:-: initSealStorage Result = 0
+[Sep 20 01:43:46.609] homey-matter[2893]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 01:39:12.356] homey-matter[2424]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 01:38:12.937] homey-matter[2611]:  [info - Matter] Initializing service
+[Sep 20 01:37:06.550] homey-matter[2129]:  [info - Matter] Initializing service
+[Sep 20 01:36:35.391] homey-matter[2130]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 01:33:21.199] homey-matter[2656]:  [info - Matter] Initializing service
+[Sep 20 01:32:47.158] homey-matter[2694]:  [63893928767.387924][2694:2694] CHIP:-: initSealStorage Result = 0
+[Sep 20 01:32:09.246] homey-matter[2764]:  [info - Matter] Initializing service
+[Sep 20 01:26:08.878] homey-matter[2290]:  [info - Matter] Initializing service
+[Sep 20 01:25:58.285] homey-matter[2079]:  [info - Matter] Constructing service
+[Sep 20 01:18:24.577] homey-matter[1796]:  [63893927904.614460][1796:1796] CHIP:TOO: Set up stack
+[Sep 20 01:16:35.740] homey-matter[2534]:  [63893927795.918009][2534:2534] CHIP:-: initSealStorage Result = 0
+[Sep 20 01:12:15.420] homey-matter[2239]:  [63893927535.708027][2239:2239] CHIP:-: initSealStorage Result = 0
+[Sep 20 01:06:53.510] homey-matter[2739]:  [63893927213.182939][2739:2739] CHIP:TOO: Set up stack
+[Sep 20 01:05:52.101] homey-matter[2917]:  [63893927152.554210][2917:2917] CHIP:TOO: Set up stack
+[Sep 20 01:01:40.239] homey-matter[2746]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 00:59:19.857] homey-matter[2872]:  [info - Matter] Constructing service
+[Sep 20 00:55:27.384] homey-matter[2805]:  [63893926527.945217][2805:2805] CHIP:TOO: Set up stack
+[Sep 20 00:55:11.613] homey-matter[2857]:  [info - Matter] Initializing service
+[Sep 20 00:50:27.325] homey-matter[1699]:  [info - Matter] Initializing service
+[Sep 20 00:50:24.114] homey-matter[2029]:  [63893926224.233214][2029:2029] CHIP:-: initSealStorage Result = 0
+[Sep 20 00:49:54.217] homey-matter[2970]:  [info - Matter] Constructing service
+[Sep 20 00:47:26.051] homey-matter[2259]:  [63893926046.839216][2259:2259] CHIP:TOO: Set up stack
+[Sep 20 00:47:23.318] homey-matter[2360]:  [info - Matter] Initializing service
+[Sep 20 00:45:45.786] homey-matter[1631]:  [63893925945.748288][1631:1631] CHIP:TOO: Set up stack
+[Sep 20 00:41:24.763] homey-matter[2794]:  [info - Matter] Constructing service
+[Sep 20 00:39:41.609] homey-matter[1709]:  [info - Matter] Initializing service
+[Sep 20 00:38:48.528] homey-matter[2390]:  [63893925528.128538][2390:2390] CHIP:TOO: Set up stack
+[Sep 20 00:29:48.388] homey-matter[2455]:  [info - Matter] Constructing service
+[Sep 20 00:24:00.323] homey-matter[2491]:  [info - Matter] Initializing service
+[Sep 20 00:22:17.215] homey-matter[1908]:  [info - Matter] Constructing service
+[Sep 20 00:21:31.163] homey-matter[1677]:  [info - MatterDaemon] Using socket: /var/run/homey-shared-sockets/homey-matter.sock
+[Sep 20 00:16:40.195] homey-matter[2269]:  [info - Matter] Constructing service
+[Sep 20 00:15:54.747] homey-matter[2075]:  [info - Matter] Constructing service
+[Sep 20 00:12:38.273] homey-matter[2394]:  [info - Matter] Initializing service
+[Sep 20 00:11:04.381] homey-matter[2337]:  [63893923864.638417][2337:2337] CHIP:-: initSealStorage Result = 0
+[Sep 20 00:08:21.860] homey-matter[2875]:  [63893923701.308110][2875:2875] CHIP:-: initSealStorage Result = 0
+[Sep 20 00:00:37.071] homey-matter[2221]:  [63893923237.680631][2221:2221] CHIP:TOO: Set up stack

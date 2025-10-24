@@ -1,76 +1,131 @@
 // === src/core/logs/time/TimeParser.ts ===
+import { measureBlock } from '../../logging/perf.js';
 
-/** 라인에서 타임스탬프(epoch ms)를 추출; 실패 시 undefined */
+/**
+ * 헤더 전용 시간 파서
+ * - 입력이 **전체 라인**이면 선두 헤더만 시간 후보로 사용(본문 스캔 금지)
+ * - 입력이 **이미 추출된 time 토큰**이면 그 전체 문자열을 그대로 해석
+ * - "[...]"로 시작하면 대괄호 내부를 사용
+ * - 해석 규칙:
+ *   · ABS: 정확히 `YYYY-MM-DDTHH:MM:SS(.sss)?(Z|±HH:MM)` → Date.parse 그대로
+ *   · NAIVE(연/타임존 빠짐 또는 타임존만 빠짐):
+ *       - "Mon DD HH:MM:SS(.sss)" / "MM-DD HH:MM:SS(.sss)" 등 → **연도 없음**이면 호스트 올해 주입
+ *       - "YYYY-MM-DD[ T]HH:MM:SS(.sss)"(오프셋 없음) → 연도는 있음, **UTC 해석**
+ *     모두 **UTC 해석**으로 epoch(ms) 계산(호스트 타임존 의존 금지)
+ * - 실패 시 undefined
+ */
 export function parseTs(line: string): number | undefined {
-  // ISO-like 먼저
-  const iso = line.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?/);
-  if (iso) {
-    const t = Date.parse(iso[0]);
-    if (!Number.isNaN(t)) {
-      return t;
-    }
-  }
+  return measureBlock('TimeParser.parseTs', () => {
+    const token = extractHeaderTimeToken(line);
+    if (!token) return undefined;
 
-  // "[Mon DD HH:MM:SS.mmmm]" 포맷 (테스트 데이터용)
-  const syslog = line.match(/\[([A-Za-z]{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?\]/);
-  if (syslog) {
-    const now = new Date();
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const month = monthNames.indexOf(syslog[1]);
-    if (month >= 0) {
-      const d = new Date(
-        now.getFullYear(),
-        month,
-        parseInt(syslog[2], 10),
-        parseInt(syslog[3], 10),
-        parseInt(syslog[4], 10),
-        parseInt(syslog[5], 10),
-        syslog[6] ? parseInt(syslog[6].slice(0, 3).padEnd(3, '0'), 10) : 0,
+    // 1) ABS (ISO8601 + 오프셋/Z) — 토큰 전체가 정확히 매치되어야 함
+    const ABS_RX =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+    if (ABS_RX.test(token)) {
+      const t = Date.parse(token);
+      return Number.isNaN(t) ? undefined : t;
+    }
+
+    // 2) NAIVE with YEAR but no offset: "YYYY-MM-DD[ T]HH:MM:SS(.sss)"
+    const YMD_RX =
+      /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+    const ymd = token.match(YMD_RX);
+    if (ymd) {
+      const [, y, mo, d, hh, mm, ss, sss] = ymd;
+      const ms = toMs3(sss);
+      // UTC 해석
+      return Date.UTC(
+        toInt(y),
+        toInt(mo) - 1,
+        toInt(d),
+        toInt(hh),
+        toInt(mm),
+        toInt(ss),
+        ms,
       );
-      return d.getTime();
     }
-  }
 
-  // "MM-DD HH:MM:SS.mmm" (연도는 올해 가정)
-  const md = line.match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?/);
-  if (md) {
-    const now = new Date();
-    const d = new Date(
-      now.getFullYear(),
-      parseInt(md[1], 10) - 1,
-      parseInt(md[2], 10),
-      parseInt(md[3], 10),
-      parseInt(md[4], 10),
-      parseInt(md[5], 10),
-      md[6] ? parseInt(md[6].slice(0, 3).padEnd(3, '0'), 10) : 0,
-    );
-    return d.getTime();
+    // 3) NAIVE without year: "Mon DD HH:MM:SS(.sss)"
+    const MON_RX =
+      /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/i;
+    const mon = token.match(MON_RX);
+    if (mon) {
+      const [, monName, dd, hh, mm, ss, sss] = mon;
+      const month = monthNameToIndex(monName);
+      if (month >= 0) {
+        const year = new Date().getFullYear(); // ✅ 연도만 호스트에서 주입
+        const ms = toMs3(sss);
+        // UTC 해석
+        return Date.UTC(year, month, toInt(dd), toInt(hh), toInt(mm), toInt(ss), ms);
+      }
+    }
+
+    // 4) NAIVE without year: "MM-DD HH:MM:SS(.sss)"
+    const MD_RX =
+      /^(\d{1,2})-(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+    const md = token.match(MD_RX);
+    if (md) {
+      const [, mo, dd, hh, mm, ss, sss] = md;
+      const year = new Date().getFullYear(); // ✅ 연도만 호스트에서 주입
+      const ms = toMs3(sss);
+      // UTC 해석
+      return Date.UTC(
+        year,
+        toInt(mo) - 1,
+        toInt(dd),
+        toInt(hh),
+        toInt(mm),
+        toInt(ss),
+        ms,
+      );
+    }
+
+    return undefined;
+  });
+}
+
+// ── 보조 유틸 ────────────────────────────────────────────────────────────
+function extractHeaderTimeToken(line: string): string | null {
+  const s = String(line ?? '').trim();
+  if (!s) return null;
+  if (s[0] === '[') {
+    // 선두가 '['면 닫는 ']'까지를 헤더로 보고 내부만 추출
+    const r = s.indexOf(']');
+    if (r > 0) return s.slice(1, r).trim();
+    return null; // 비정상 대괄호는 시간 아님
   }
-  return undefined;
+  // 이미 추출된 time 토큰으로 들어온 경우(공백 포함 형태)도 그대로 해석할 수 있게 먼저 패턴 체크
+  if (
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(s) || // ABS
+    /^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/i.test(s) || // Mon DD ...
+    /^\d{1,2}-\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(s) // MM-DD ...
+  ) {
+    return s;
+  }
+  // 그 외(전체 라인에서 헤더만 떼야 하는 경우)에는 첫 공백 전까지를 헤더 토큰으로 간주
+  const sp = s.indexOf(' ');
+  return (sp >= 0 ? s.slice(0, sp) : s).trim();
+}
+function monthNameToIndex(m: string): number {
+  const names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const i = names.indexOf(String(m || '').slice(0,3).toLowerCase());
+  return i;
+}
+function toInt(s: string | undefined): number {
+  return Math.max(0, parseInt(String(s ?? '0'), 10) || 0);
+}
+function toMs3(frac: string | undefined): number {
+  if (!frac) return 0;
+  const ms3 = String(frac).slice(0, 3).padEnd(3, '0');
+  return parseInt(ms3, 10) || 0;
 }
 
 export function guessLevel(line: string): 'D' | 'I' | 'W' | 'E' {
-  if (/\b(error|err|fail|fatal)\b/i.test(line)) {
-    return 'E';
-  }
-  if (/\bwarn(ing)?\b/i.test(line)) {
-    return 'W';
-  }
-  if (/\bdebug|trace\b/i.test(line)) {
-    return 'D';
-  }
-  return 'I';
+  return measureBlock('TimeParser.guessLevel', () => {
+    if (/\b(error|err|fail|fatal)\b/i.test(line)) return 'E';
+    if (/\bwarn(ing)?\b/i.test(line)) return 'W';
+    if (/\b(debug|trace)\b/i.test(line)) return 'D';
+    return 'I';
+  });
 }

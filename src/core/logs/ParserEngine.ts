@@ -2,13 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type {
   ParserConfig,
-  ParserFieldRegex,
   ParserPreflight,
   ParserRequirements,
 } from '../config/schema.js';
 import { parseTs } from './time/TimeParser.js';
 import { guessLevel } from './time/TimeParser.js'; // same module에서 export 중이면 병합, 아니면 적절히 import
 import type { ParsedPayload } from '@ipc/messages';
+import { getLogger } from '../logging/extension-logger.js';
 
 export type { ParserConfig };
 
@@ -18,6 +18,12 @@ export type ParsedFields = {
   pid?: string;
   message?: string;
 };
+
+// 파일 첫 문자 위치의 BOM 제거
+const BOM_RE = /^\uFEFF/;
+function stripBomStart(s: string): string {
+  return s.replace(BOM_RE, '');
+}
 
 // ANSI escape 제거(표준 범위)
 function stripAnsi(s: string | undefined): string | undefined {
@@ -49,13 +55,14 @@ function applyCompiledOne(rx: RegExp | undefined, line: string): string | undefi
 function extractFieldsByCompiledRule(line: string, regex: {
   time?: RegExp; process?: RegExp; pid?: RegExp; message?: RegExp;
 }): ParsedFields {
+  // 테스트/직접호출 경로에서도 안전하도록 라인 선제 정규화
+  const sanitized = stripBomStart(line);
   const raw = {
-    time:    applyCompiledOne(regex.time, line),
-    process: applyCompiledOne(regex.process, line),
-    pid:     applyCompiledOne(regex.pid, line),
-    message: applyCompiledOne(regex.message, line),
+    time:    applyCompiledOne(regex.time, sanitized),
+    process: applyCompiledOne(regex.process, sanitized),
+    pid:     applyCompiledOne(regex.pid, sanitized),
+    message: applyCompiledOne(regex.message, sanitized),
   };
-  // 정규화: time 대괄호 제거(방어적), message ANSI 스트립
   return {
     time: normalizeTimeToken(raw.time),
     process: raw.process ?? undefined,
@@ -158,12 +165,16 @@ export function compileParserConfig(cfg?: ParserConfig): CompiledParser | undefi
     rules.push(cr);
   }
   if (!rules.length) return undefined;
-  return {
+  const compiled = {
     version: cfg.version ?? 1,
     requirements: requirements || reqDefault,
     preflight: { ...preflight, hardSkip },
     rules,
   };
+  // 요약 로그 추가
+  const log = getLogger('ParserEngine');
+  log.debug?.(`compileParserConfig: compiled ${rules.length} rules, version=${compiled.version}`);
+  return compiled;
 }
 
 export function matchRuleForPath(relOrAbsPath: string, cp: CompiledParser): CompiledRule | undefined {
@@ -193,24 +204,42 @@ async function readSampleLines(filePath: string, maxLines: number): Promise<stri
   return new Promise<string[]>((resolve, reject) => {
     const out: string[] = [];
     let residual = '';
+    let finished = false;
+    let bomStripped = false;
     const rs = fs.createReadStream(filePath, { encoding: 'utf8' });
+
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      try { rs.close(); } catch {}
+      // 표본은 '완전한 라인'만 사용 (잔여는 버림)
+      resolve(out.slice(0, maxLines));
+    };
+
     rs.on('data', (chunk: string | Buffer) => {
+      if (finished) return;
       const txt = residual + (Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk);
       const parts = txt.split(/\r?\n/);
       residual = parts.pop() ?? '';
-      for (const p of parts) {
+      for (let p of parts) {
+        if (!bomStripped) { p = stripBomStart(p); bomStripped = true; }
         if (p) out.push(p);
         if (out.length >= maxLines) {
-          rs.close();
-          break;
+          return done(); // ★ 조기 종료 시 바로 resolve
         }
       }
     });
     rs.on('end', () => {
-      if (residual && out.length < maxLines) out.push(residual);
-      resolve(out);
+      if (finished) return;
+      if (residual && out.length < maxLines) {
+        const ln = bomStripped ? residual : stripBomStart(residual);
+        bomStripped = true;
+        out.push(ln);
+      }
+      done();
     });
-    rs.on('error', (e) => reject(e));
+    rs.on('close', () => done());     // ★ close에서도 안전하게 resolve
+    rs.on('error', (e) => { if (!finished) reject(e); });
   });
 }
 
@@ -219,16 +248,28 @@ export async function shouldUseParserForFile(
   relPath: string,
   cp: CompiledParser,
 ): Promise<boolean> {
+  const log = getLogger('ParserEngine');
   const rule = matchRuleForPath(relPath || filePath, cp);
-  if (!rule) return false;
+  if (!rule) {
+    log.debug?.(`shouldUseParserForFile: no rule matched for ${relPath || filePath}`);
+    return false;
+  }
+  log.debug?.(`shouldUseParserForFile: rule matched for ${relPath || filePath}`);
   const pf = cp.preflight;
   // 샘플 라인 로드
   const sample = await readSampleLines(filePath, Math.max(1, pf.sample_lines));
-  if (!sample.length) return false;
+  if (!sample.length) {
+    log.debug?.(`shouldUseParserForFile: no sample lines for ${relPath || filePath}`);
+    return false;
+  }
+  log.debug?.(`shouldUseParserForFile: loaded ${sample.length} sample lines`);
   // 하드스킵: 하나라도 걸리면 false
   if (pf.hardSkip.length) {
     for (const line of sample) {
-      if (pf.hardSkip.some((rx) => rx.test(line))) return false;
+      if (pf.hardSkip.some((rx) => rx.test(line))) {
+        log.debug?.(`shouldUseParserForFile: hard skip matched for ${relPath || filePath}`);
+        return false;
+      }
     }
   }
   // 매칭 비율 계산
@@ -237,6 +278,7 @@ export async function shouldUseParserForFile(
     if (isLineMatchByRequirements(line, rule, cp.requirements)) matched++;
   }
   const ratio = matched / sample.length;
+  log.debug?.(`shouldUseParserForFile: match ratio ${ratio.toFixed(2)} (${matched}/${sample.length}) for ${relPath || filePath}`);
   return ratio >= pf.min_match_ratio;
 }
 
@@ -250,6 +292,7 @@ export function lineToEntryWithParser(
   cp?: CompiledParser,
   opts?: { fallbackTs?: number; fileRank?: number; revIdx?: number },
 ): import('@ipc/messages').LogEntry {
+  const log = getLogger('ParserEngine');
   const bn = path.basename(filePath);
   // ⬇️ 파싱 실패 시 '고정' fallback: prevTs(or 0)
   let ts = parseTs(line) ?? (opts?.fallbackTs ?? 0);
@@ -266,8 +309,8 @@ export function lineToEntryWithParser(
     const rule = matchRuleForPath(bn, cp);
     if (rule) {
       const fields = extractByCompiledRule(line, rule);
-      // time
-      if (fields.time) ts = parseTs(fields.time) ?? ts;
+      // 시간은 **헤더 토큰만** 사용. 파서가 뽑은 time은 대괄호 없이 오므로 확실히 헤더로 인식되게 감싸서 전달.
+      if (fields.time) ts = parseTs(`[${fields.time}]`) ?? ts;
       // message
       if (fields.message) text = fields.message;
       // 레벨은 메시지/라인에서 휴리스틱
@@ -279,6 +322,8 @@ export function lineToEntryWithParser(
         pid: fields.pid ?? null,
         message: fields.message ?? null,
       };
+    } else {
+      log.debug?.(`lineToEntryWithParser: no parser rule for ${bn}`);
     }
   }
 

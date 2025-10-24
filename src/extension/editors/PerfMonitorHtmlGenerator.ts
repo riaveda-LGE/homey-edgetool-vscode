@@ -91,16 +91,13 @@ export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
       ? `
   <h2>I/O Operations</h2>
   <table>
-    <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Errors</th></tr>
+    <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Total Bytes</th><th>Errors</th></tr>
     ${
-      a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0
-        ? `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>`
-        : ''
-    }
-    ${
-      a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0
-        ? `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>`
-        : ''
+      Object.entries(a.ioAnalysis?.perOp || {})
+        .map(([op, s]: [string, any]) =>
+          `<tr><td>${op}</td><td>${s.count}</td><td>${(s.avgDuration||0).toFixed(2)}</td><td>${(s.maxDuration||0).toFixed(2)}</td><td>${(s.totalTime||0).toFixed(2)}</td><td>${s.totalBytes ?? 0}</td><td>${s.errors ?? 0}</td></tr>`
+        )
+        .join('')
     }
   </table>
   `

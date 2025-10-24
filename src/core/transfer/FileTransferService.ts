@@ -3,7 +3,7 @@ import { ErrorCategory, XError } from '../../shared/errors.js';
 import type { HostConfig } from '../connection/ConnectionManager.js';
 import { runCommandLine } from '../connection/ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { measureIO } from '../logging/perf.js';
+import { measure } from '../logging/perf.js';
 
 export type TransferOptions = {
   timeoutMs?: number;
@@ -19,7 +19,7 @@ export class FileTransferService implements IFileTransferService {
   private log = getLogger('FileTransfer');
   constructor(private target: HostConfig) {}
 
-  @measureIO('upload', (instance) => instance.target.id)
+  @measure()
   async uploadViaTarBase64(
     localDir: string,
     remoteDir: string,
@@ -53,7 +53,7 @@ export class FileTransferService implements IFileTransferService {
     }
   }
 
-  @measureIO('download', (instance) => instance.target.id)
+  @measure()
   async downloadViaTarBase64(
     remoteDir: string,
     localDir: string,

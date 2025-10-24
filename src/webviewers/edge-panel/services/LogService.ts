@@ -3,11 +3,12 @@ export class LogService {
   private body: HTMLElement | null = null;
   private actions: { clearBtn: HTMLButtonElement; copyBtn: HTMLButtonElement } | null = null;
   private loadingOlder = false;
+  private m: <T>(name: string, fn: () => T) => T;
 
   // ── 세그먼트 토글 상태 (10초 간격) ──────────────────────────────
   private lastTs: number | undefined;
   private seg: 0 | 1 = 0;
-  private readonly GAP_MS = 10_000; // 30초
+  private readonly GAP_MS = 10_000; // 10초
   // ───────────────────────────────────────────────────────────────
 
   constructor(
@@ -15,17 +16,21 @@ export class LogService {
     private onLoadOlder?: () => void,
     private onClear?: () => void,
     private onCopy?: () => void,
-  ) {}
+    measureUi?: <T>(name: string, fn: () => T) => T,
+  ) {
+    this.m = measureUi ?? ((_, fn) => fn());
+  }
 
   private ensureContainer() {
     if (!this.container) {
-      // 외곽 컨테이너
-      this.container = document.createElement('div');
-      this.container.id = 'logContainer';
-      this.container.className = 'log-container';
+      this.m('LogService.ensureContainer', () => {
+        // 외곽 컨테이너
+        this.container = document.createElement('div');
+        this.container.id = 'logContainer';
+        this.container.className = 'log-container';
 
-      // 내부 뷰(헤더 + 본문)
-      this.container.innerHTML = `
+        // 내부 뷰(헤더 + 본문)
+        this.container.innerHTML = `
         <div id="logBar">
           <div id="logTitle">Debugging Log</div>
           <div id="logActions" aria-label="log actions">
@@ -36,20 +41,21 @@ export class LogService {
         <div id="logBody" class="log-body" role="log" aria-live="polite"></div>
       `;
 
-      this.root.appendChild(this.container);
-      this.body = this.container.querySelector('#logBody') as HTMLElement;
-      const clearBtn = this.container.querySelector('#logClear') as HTMLButtonElement;
-      const copyBtn = this.container.querySelector('#logCopy') as HTMLButtonElement;
-      this.actions = { clearBtn, copyBtn };
-      clearBtn.addEventListener('click', () => this.onClear?.());
-      copyBtn.addEventListener('click', () => this.onCopy?.());
+        this.root.appendChild(this.container);
+        this.body = this.container.querySelector('#logBody') as HTMLElement;
+        const clearBtn = this.container.querySelector('#logClear') as HTMLButtonElement;
+        const copyBtn = this.container.querySelector('#logCopy') as HTMLButtonElement;
+        this.actions = { clearBtn, copyBtn };
+        clearBtn.addEventListener('click', () => this.onClear?.());
+        copyBtn.addEventListener('click', () => this.onCopy?.());
 
-      // 상단 스크롤 도달 시 이전 로그 요청
-      this.container.addEventListener('scroll', () => {
-        if (!this.loadingOlder && this.container && this.container.scrollTop <= 0) {
-          this.loadingOlder = true;
-          this.onLoadOlder?.();
-        }
+        // 상단 스크롤 도달 시 이전 로그 요청
+        this.container.addEventListener('scroll', () => {
+          if (!this.loadingOlder && this.container && this.container.scrollTop <= 0) {
+            this.loadingOlder = true;
+            this.onLoadOlder?.();
+          }
+        });
       });
     } else if (!this.body) {
       this.body = this.container.querySelector('#logBody') as HTMLElement;
@@ -88,7 +94,8 @@ export class LogService {
   }
 
   reset(lines?: string[]) {
-    this.ensureContainer();
+    this.m('LogService.reset', () => {
+      this.ensureContainer();
     // 세그먼트 상태 초기화
     this.lastTs = undefined;
     this.seg = 0;
@@ -97,10 +104,12 @@ export class LogService {
     if (Array.isArray(lines)) lines.forEach((l) => this.append(l));
     // 초기화 후 스크롤 하단 고정
     if (this.container) this.container.scrollTop = this.container.scrollHeight;
+    });
   }
 
   append(line: string) {
-    this.ensureContainer();
+    this.m('LogService.append', () => {
+      this.ensureContainer();
 
     // 세그먼트 토글 계산
     const seg = this.pickSegment(line);
@@ -118,11 +127,13 @@ export class LogService {
 
     // 스크롤 맨 아래로
     this.container!.scrollTop = this.container!.scrollHeight;
+    });
   }
 
   /** 오래된 라인들을 상단에 프리펜드(스크롤 점프 보정) */
   prepend(lines: string[]) {
-    this.ensureContainer();
+    this.m('LogService.prepend', () => {
+      this.ensureContainer();
     if (!this.body || !lines.length) {
       this.loadingOlder = false;
       return;
@@ -146,6 +157,7 @@ export class LogService {
     const delta = after - before;
     this.container!.scrollTop = this.container!.scrollTop + delta;
     this.loadingOlder = false;
+    });
   }
 
   get element() {

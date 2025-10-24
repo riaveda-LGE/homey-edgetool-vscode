@@ -10,10 +10,12 @@ import {
 import type { HostConfig } from '../../core/connection/ConnectionManager.js';
 import { DEFAULT_SSH_PORT, MAX_SSH_PORT, MIN_SSH_PORT } from '../../shared/const.js';
 import { promptNumber, promptText } from '../../shared/ui-input.js';
+import { measure } from '../../core/logging/perf.js';
 
 export class LogConnectionPicker {
   constructor(private _context: vscode.ExtensionContext) {}
 
+  @measure()
   async pickConnection(): Promise<HostConfig | undefined> {
     const list = await readDeviceList(this._context);
 
@@ -66,6 +68,7 @@ export class LogConnectionPicker {
     return;
   }
 
+  @measure()
   private async addSshConnection(list: DeviceEntry[]): Promise<HostConfig | undefined> {
     const host = await promptText({
       prompt: 'SSH Host (예: 192.168.0.10)',
@@ -103,6 +106,7 @@ export class LogConnectionPicker {
     return { id, type: 'ssh', host, port, user } as HostConfig;
   }
 
+  @measure()
   private async addAdbConnection(list: DeviceEntry[]): Promise<HostConfig | undefined> {
     const serial = await promptText({
       prompt: 'ADB Serial (adb devices 로 확인 가능)',

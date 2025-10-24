@@ -61,13 +61,14 @@ export class PerfMonitorWebviewManager {
   updatePanel(): void {
     if (this._webviewPanel && this._dataManager.isPerfMode()) {
       const data = this._dataManager.getPerfData();
-      data.forEach((item) => {
+      if (data.length > 0) {
+        // 웹뷰 스크립트는 data 배열을 기대하므로 한 번에 배치 전송
         this._webviewPanel!.webview.postMessage({
           v: 1,
           type: 'perf.updateData',
-          payload: { data: item },
+          payload: { data },
         });
-      });
+      }
     }
   }
 
@@ -82,12 +83,10 @@ export class PerfMonitorWebviewManager {
   private sendInitialData(): void {
     const data = this._dataManager.getPerfData();
     if (data.length > 0) {
-      data.forEach((item) => {
-        this._webviewPanel?.webview.postMessage({
-          v: 1,
-          type: 'perf.updateData',
-          payload: { data: item },
-        });
+      this._webviewPanel?.webview.postMessage({
+        v: 1,
+        type: 'perf.updateData',
+        payload: { data },
       });
     }
   }
@@ -107,6 +106,15 @@ export class PerfMonitorWebviewManager {
     // ✅ 외부 CSS 링크 추가
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css'),
+    );
+    const chartUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'dist',
+        'webviewers',
+        'perf-monitor',
+        'chart.umd.js',
+      ),
     );
 
     const cspSource = webview.cspSource;
@@ -177,6 +185,7 @@ export class PerfMonitorWebviewManager {
         <script nonce="${nonce}">
           const vscode = acquireVsCodeApi();
         </script>
+        <script nonce="${nonce}" src="${chartUri}"></script>
         <script nonce="${nonce}" src="${jsUri}"></script>
       </body>
       </html>

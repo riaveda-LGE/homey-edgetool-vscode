@@ -17,6 +17,7 @@ export class CommandHandlersParser {
   constructor(private context?: vscode.ExtensionContext) {}
 
   /** 확장 패키지 내부 리소스를 읽어 문자열 반환 */
+  @measure()
   private async readEmbedded(rel: string): Promise<string> {
     if (!this.context) throw new Error('no extension context');
     const uri = vscode.Uri.joinPath(this.context.extensionUri, ...rel.split('/'));

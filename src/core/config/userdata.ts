@@ -6,6 +6,7 @@ import { ErrorCategory, XError } from '../../shared/errors.js';
 import { readJsonFile } from '../../shared/utils.js';
 import type { ParserConfig } from './schema.js';
 import { PARSER_CONFIG_REL } from '../../shared/const.js';
+import { measureBlock } from '../logging/perf.js';
 
 export type Json = any;
 
@@ -71,14 +72,18 @@ export function getUserdataPaths(ctx: vscode.ExtensionContext): UserdataPaths {
 
 /** 디렉터리 보장 */
 export async function ensureDir(uri: vscode.Uri) {
-  await vscode.workspace.fs.createDirectory(uri);
+  return measureBlock('userdata.ensureDir', async function () {
+    await vscode.workspace.fs.createDirectory(uri);
+  });
 }
 
 /** JSON 쓰기 (pretty) */
 export async function writeJson(uri: vscode.Uri, obj: any) {
-  const txt = JSON.stringify(obj ?? {}, null, 2);
-  const buf = new TextEncoder().encode(txt);
-  await vscode.workspace.fs.writeFile(uri, buf);
+  return measureBlock('userdata.writeJson', async function () {
+    const txt = JSON.stringify(obj ?? {}, null, 2);
+    const buf = new TextEncoder().encode(txt);
+    await vscode.workspace.fs.writeFile(uri, buf);
+  });
 }
 
 /** 워크스페이스 정보 */
@@ -99,36 +104,38 @@ export type WorkspaceInfo = {
  * 실제 사용하는 폴더(<base>/workspace 또는 <storageDir>/workspace>)를 보장해 반환한다.
  */
 export async function resolveWorkspaceInfo(ctx: vscode.ExtensionContext): Promise<WorkspaceInfo> {
-  const paths = getUserdataPaths(ctx);
-  await ensureDir(paths.storageDir);
+  return measureBlock('userdata.resolveWorkspaceInfo', async function () {
+    const paths = getUserdataPaths(ctx);
+    await ensureDir(paths.storageDir);
 
-  const cfg = (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
-  const base = cfg.workspace_dir?.trim();
+    const cfg = (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
+    const base = cfg.workspace_dir?.trim();
 
-  if (base && path.isAbsolute(base)) {
-    const baseDirUri = vscode.Uri.file(base);
-    const wsDirUri = vscode.Uri.file(path.join(base, DIR_WORKSPACE));
-    await ensureDir(baseDirUri);
-    await ensureDir(wsDirUri);
+    if (base && path.isAbsolute(base)) {
+      const baseDirUri = vscode.Uri.file(base);
+      const wsDirUri = vscode.Uri.file(path.join(base, DIR_WORKSPACE));
+      await ensureDir(baseDirUri);
+      await ensureDir(wsDirUri);
+      return {
+        baseDirFsPath: baseDirUri.fsPath,
+        wsDirFsPath: wsDirUri.fsPath,
+        source: 'user',
+        baseDirUri,
+        wsDirUri,
+      };
+    }
+
+    // default: 확장전용폴더를 베이스로 보고, 그 아래 <storageDir>/workspace 사용
+    await ensureDir(paths.storageDir);
+    await ensureDir(paths.defaultWorkspaceDir);
     return {
-      baseDirFsPath: baseDirUri.fsPath,
-      wsDirFsPath: wsDirUri.fsPath,
-      source: 'user',
-      baseDirUri,
-      wsDirUri,
+      baseDirFsPath: paths.storageDir.fsPath,
+      wsDirFsPath: paths.defaultWorkspaceDir.fsPath,
+      source: 'default',
+      baseDirUri: paths.storageDir,
+      wsDirUri: paths.defaultWorkspaceDir,
     };
-  }
-
-  // default: 확장전용폴더를 베이스로 보고, 그 아래 <storageDir>/workspace 사용
-  await ensureDir(paths.storageDir);
-  await ensureDir(paths.defaultWorkspaceDir);
-  return {
-    baseDirFsPath: paths.storageDir.fsPath,
-    wsDirFsPath: paths.defaultWorkspaceDir.fsPath,
-    source: 'default',
-    baseDirUri: paths.storageDir,
-    wsDirUri: paths.defaultWorkspaceDir,
-  };
+  });
 }
 
 /** 이전 API 유지: 실제 workspace 디렉터리 URI만 필요할 때 */
@@ -144,17 +151,19 @@ export async function changeWorkspaceBaseDir(
   ctx: vscode.ExtensionContext,
   absoluteBaseDir: string,
 ): Promise<WorkspaceInfo> {
-  if (!absoluteBaseDir || !path.isAbsolute(absoluteBaseDir)) {
-    throw new XError(ErrorCategory.Path, '절대 경로를 입력해야 합니다.');
-  }
-  const paths = getUserdataPaths(ctx);
-  await ensureDir(paths.storageDir);
+  return measureBlock('userdata.changeWorkspaceBaseDir', async function () {
+    if (!absoluteBaseDir || !path.isAbsolute(absoluteBaseDir)) {
+      throw new XError(ErrorCategory.Path, '절대 경로를 입력해야 합니다.');
+    }
+    const paths = getUserdataPaths(ctx);
+    await ensureDir(paths.storageDir);
 
-  const cfg = (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
-  cfg.workspace_dir = absoluteBaseDir;
-  await writeJson(paths.configJson, cfg);
+    const cfg = (await readJsonFile<AppConfigFile>(paths.configJson)) ?? {};
+    cfg.workspace_dir = absoluteBaseDir;
+    await writeJson(paths.configJson, cfg);
 
-  return await resolveWorkspaceInfo(ctx);
+    return await resolveWorkspaceInfo(ctx);
+  });
 }
 
 /** (편의) 현재 워크스페이스 경로 문자열 */
@@ -167,9 +176,11 @@ export async function getCurrentWorkspacePathFs(ctx: vscode.ExtensionContext): P
 
 /** 장치 목록 읽기 (없으면 빈 배열) */
 export async function readDeviceList(ctx: vscode.ExtensionContext): Promise<DeviceListFile> {
-  const { storageDir, deviceListJson } = getUserdataPaths(ctx);
-  await ensureDir(storageDir);
-  return (await readJsonFile<DeviceListFile>(deviceListJson)) ?? [];
+  return measureBlock('userdata.readDeviceList', async function () {
+    const { storageDir, deviceListJson } = getUserdataPaths(ctx);
+    await ensureDir(storageDir);
+    return (await readJsonFile<DeviceListFile>(deviceListJson)) ?? [];
+  });
 }
 
 /** 장치 목록 통째로 덮어쓰기 */
@@ -177,23 +188,29 @@ export async function writeDeviceList(
   ctx: vscode.ExtensionContext,
   list: DeviceListFile,
 ): Promise<void> {
-  const { storageDir, deviceListJson } = getUserdataPaths(ctx);
-  await ensureDir(storageDir);
-  await writeJson(deviceListJson, Array.isArray(list) ? list : []);
+  return measureBlock('userdata.writeDeviceList', async function () {
+    const { storageDir, deviceListJson } = getUserdataPaths(ctx);
+    await ensureDir(storageDir);
+    await writeJson(deviceListJson, Array.isArray(list) ? list : []);
+  });
 }
 
 /** 장치 추가(append) */
 export async function addDevice(ctx: vscode.ExtensionContext, entry: DeviceEntry): Promise<void> {
-  const list = await readDeviceList(ctx);
-  list.push(entry);
-  await writeDeviceList(ctx, list);
+  return measureBlock('userdata.addDevice', async function () {
+    const list = await readDeviceList(ctx);
+    list.push(entry);
+    await writeDeviceList(ctx, list);
+  });
 }
 
 /** id 일치 항목 제거 */
 export async function removeDeviceById(ctx: vscode.ExtensionContext, id: string): Promise<void> {
-  const list = await readDeviceList(ctx);
-  const filtered = list.filter((d) => (d.id ?? '') !== id);
-  await writeDeviceList(ctx, filtered);
+  return measureBlock('userdata.removeDeviceById', async function () {
+    const list = await readDeviceList(ctx);
+    const filtered = list.filter((d) => (d.id ?? '') !== id);
+    await writeDeviceList(ctx, filtered);
+  });
 }
 
 /** id 일치 항목 업데이트(없으면 무시) */
@@ -202,12 +219,14 @@ export async function updateDeviceById(
   id: string,
   patch: Partial<DeviceEntry>,
 ): Promise<void> {
-  const list = await readDeviceList(ctx);
-  const idx = list.findIndex((d) => (d.id ?? '') === id);
-  if (idx >= 0) {
-    list[idx] = { ...list[idx], ...patch };
-    await writeDeviceList(ctx, list);
-  }
+  return measureBlock('userdata.updateDeviceById', async function () {
+    const list = await readDeviceList(ctx);
+    const idx = list.findIndex((d) => (d.id ?? '') === id);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...patch };
+      await writeDeviceList(ctx, list);
+    }
+  });
 }
 
 /* -------------------- Edge Panel State Helpers -------------------- */
@@ -237,13 +256,15 @@ async function writeAppConfig(ctx: vscode.ExtensionContext, config: AppConfigFil
 export async function readEdgePanelState(
   ctx: vscode.ExtensionContext,
 ): Promise<NonNullable<AppConfigFile['panelState']>> {
-  const config = await readAppConfig(ctx);
-  return {
-    showExplorer: config.panelState?.showExplorer ?? true,
-    showLogs: config.panelState?.showLogs ?? false,
-    controlHeight: config.panelState?.controlHeight,
-    splitterPosition: config.panelState?.splitterPosition,
-  };
+  return measureBlock('userdata.readEdgePanelState', async function () {
+    const config = await readAppConfig(ctx);
+    return {
+      showExplorer: config.panelState?.showExplorer ?? true,
+      showLogs: config.panelState?.showLogs ?? false,
+      controlHeight: config.panelState?.controlHeight,
+      splitterPosition: config.panelState?.splitterPosition,
+    };
+  });
 }
 
 /**
@@ -253,9 +274,11 @@ export async function writeEdgePanelState(
   ctx: vscode.ExtensionContext,
   state: NonNullable<AppConfigFile['panelState']>,
 ): Promise<void> {
-  const config = await readAppConfig(ctx);
-  config.panelState = { ...config.panelState, ...state };
-  await writeAppConfig(ctx, config);
+  return measureBlock('userdata.writeEdgePanelState', async function () {
+    const config = await readAppConfig(ctx);
+    config.panelState = { ...config.panelState, ...state };
+    await writeAppConfig(ctx, config);
+  });
 }
 
 /* -------------------- Log Viewer Prefs Helpers -------------------- */
@@ -277,8 +300,10 @@ const DEFAULT_LOGVIEWER_PREFS: NonNullable<AppConfigFile['logViewer']> = {
 export async function readLogViewerPrefs(
   ctx: vscode.ExtensionContext,
 ): Promise<NonNullable<AppConfigFile['logViewer']>> {
-  const config = await readAppConfig(ctx);
-  return { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}) };
+  return measureBlock('userdata.readLogViewerPrefs', async function () {
+    const config = await readAppConfig(ctx);
+    return { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}) };
+  });
 }
 
 /** Log Viewer 설정 저장(부분 갱신 merge) */
@@ -286,9 +311,11 @@ export async function writeLogViewerPrefs(
   ctx: vscode.ExtensionContext,
   patch: Partial<NonNullable<AppConfigFile['logViewer']>>,
 ): Promise<void> {
-  const config = await readAppConfig(ctx);
-  config.logViewer = { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}), ...(patch ?? {}) };
-  await writeAppConfig(ctx, config);
+  return measureBlock('userdata.writeLogViewerPrefs', async function () {
+    const config = await readAppConfig(ctx);
+    config.logViewer = { ...DEFAULT_LOGVIEWER_PREFS, ...(config.logViewer ?? {}), ...(patch ?? {}) };
+    await writeAppConfig(ctx, config);
+  });
 }
 
 /* -------------------- Parser Config Helpers -------------------- */
@@ -297,28 +324,32 @@ export async function writeLogViewerPrefs(
 export async function readParserConfigJson(
   ctx: vscode.ExtensionContext,
 ): Promise<ParserConfig | undefined> {
-  try {
-    const info = await resolveWorkspaceInfo(ctx);
-    const cfgUri = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_CONFIG_REL.split('/'));
-    const buf = await vscode.workspace.fs.readFile(cfgUri);
-    const txt = new TextDecoder('utf-8').decode(buf);
-    const json = JSON.parse(txt);
-    if (json && Array.isArray(json.parser)) return json as ParserConfig;
-    return undefined;
-  } catch {
-    return undefined;
-  }
+  return measureBlock('userdata.readParserConfigJson', async function () {
+    try {
+      const info = await resolveWorkspaceInfo(ctx);
+      const cfgUri = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_CONFIG_REL.split('/'));
+      const buf = await vscode.workspace.fs.readFile(cfgUri);
+      const txt = new TextDecoder('utf-8').decode(buf);
+      const json = JSON.parse(txt);
+      if (json && Array.isArray(json.parser)) return json as ParserConfig;
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  });
 }
 
 /** parser[].files 전부 모아 고유화한 화이트리스트(globs) 반환 */
 export async function readParserWhitelistGlobs(
   ctx: vscode.ExtensionContext,
 ): Promise<string[]> {
-  const cfg = await readParserConfigJson(ctx);
-  if (!cfg?.parser?.length) return [];
-  const set = new Set<string>();
-  for (const rule of cfg.parser) {
-    for (const g of rule.files ?? []) if (typeof g === 'string' && g.trim()) set.add(g.trim());
-  }
-  return [...set];
+  return measureBlock('userdata.readParserWhitelistGlobs', async function () {
+    const cfg = await readParserConfigJson(ctx);
+    if (!cfg?.parser?.length) return [];
+    const set = new Set<string>();
+    for (const rule of cfg.parser) {
+      for (const g of rule.files ?? []) if (typeof g === 'string' && g.trim()) set.add(g.trim());
+    }
+    return [...set];
+  });
 }

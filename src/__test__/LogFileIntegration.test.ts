@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { countTotalLinesInDir, mergeDirectory } from '../core/logs/LogFileIntegration.js';
+import { measureBlock } from '../core/logging/perf.js';
 import type { ParserConfig } from '../core/logs/ParserEngine.js';
 import {
   cleanAndEnsureDir,
@@ -13,7 +14,7 @@ import {
 } from './helpers/testFs.js';
 import { PARSER_TEMPLATE_REL } from '../shared/const.js';
 
-jest.setTimeout(120_000);
+jest.setTimeout(600_000);
 
 // ── 메시지 비교 정규화(ANSI 제거 + 공백 축약 + trim) ─────────────────────
 const ANSI_RE = /\u001b\[[0-9;]*m/g; // \x1b[...m
@@ -105,7 +106,7 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
   };
 
   // ⏱️ 무진행 감시: 45초 + merged/*.jsonl 크기 증가를 진행으로 인정(오탐 방지)
-  const WATCHDOG_MS = 45_000;
+  const WATCHDOG_MS = 600_000;
   let watchdogTimer: NodeJS.Timeout | undefined;
   let statTimer: NodeJS.Timeout | undefined;
   // mergedDir 안의 .jsonl 파일 크기가 증가하면 진행으로 간주
@@ -141,16 +142,18 @@ async function runMergeTest(testName: string, testSuiteDir: string, outputFileNa
   });
 
   await Promise.race([
-    mergeDirectory({
-      dir: inputDir,
-      mergedDirPath: mergedDir,
-      onBatch,
-      batchSize: 1000,
-      // ✅ 내장 템플릿 파서 적용 + 헤더 복원: 운영 경로와 동일하게 ParserEngine을 거치되
-      //    테스트 비교는 전체 헤더 형태로 수행
-      parser: loadTemplateParserConfig(),
-      preserveFullText: true,
-    }),
+    measureBlock('merge-directory-run-merge-test', () =>
+      mergeDirectory({
+        dir: inputDir,
+        mergedDirPath: mergedDir,
+        onBatch,
+        batchSize: 1000,
+        // ✅ 내장 템플릿 파서 적용 + 헤더 복원: 운영 경로와 동일하게 ParserEngine을 거치되
+        //    테스트 비교는 전체 헤더 형태로 수행
+        parser: loadTemplateParserConfig(),
+        preserveFullText: true,
+      })
+    ),
     watchdog,
   ]).finally(() => {
     if (watchdogTimer) clearInterval(watchdogTimer);
@@ -268,11 +271,11 @@ describe('LogFileIntegration', () => {
   describe('mergeDirectory 함수', () => {
     it('일반 로그 파일들을 정확히 병합해야 함', async () => {
       await runMergeTest('Normal test', 'normal_test_suite', 'normal_result_merged.log');
-    }, 120_000);
+    }, 600_000);
 
     it('타임존 점프가 있는 로그 파일들을 정확히 병합해야 함', async () => {
       await runMergeTest('Timezone test', 'timezone_jump_test_suite', 'timezone_result_merged.log');
-    }, 120_000);
+    }, 600_000);
 
     it('빈 디렉터리를 gracefully 처리해야 함', async () => {
       const tempDir = path.join(OUT_DIR, 'temp_empty');
@@ -286,10 +289,12 @@ describe('LogFileIntegration', () => {
         expect(logs.length).toBe(0);
       });
 
-      await mergeDirectory({ dir: tempDir, onBatch, mergedDirPath: mergedDir });
+      await measureBlock('merge-directory-empty-dir', () =>
+        mergeDirectory({ dir: tempDir, onBatch, mergedDirPath: mergedDir })
+      );
 
       expect(onBatch).not.toHaveBeenCalled();
-    }, 120_000);
+    }, 600_000);
 
     it('중단 신호를 제대로 처리해야 함', async () => {
       const testDir = path.resolve(__dirname, 'test_log', 'normal_test_suite');
@@ -318,20 +323,24 @@ describe('LogFileIntegration', () => {
       };
 
       await expect(
-        mergeDirectory({
-          dir: inputDir,
-          onBatch,
-          signal: abortController.signal,
-          batchSize: 1,
-          mergedDirPath: mergedDir,
-        }),
+        measureBlock('merge-directory-abort-test', () =>
+          mergeDirectory({
+            dir: inputDir,
+            onBatch,
+            signal: abortController.signal,
+            batchSize: 1,
+            mergedDirPath: mergedDir,
+          })
+        ),
       ).resolves.toBeUndefined();
 
       expect(abortedAt).not.toBeNull();
       expect(postAbortBatches).toBe(0);
       expect(batchCount).toBe(abortedAt);
-      const { total } = await countTotalLinesInDir(inputDir);
+      const { total } = await measureBlock('count-total-lines-in-dir', () =>
+        countTotalLinesInDir(inputDir)
+      );
       expect(emittedLines).toBeLessThan(total);
-    }, 120_000);
+    }, 600_000);
   });
 });

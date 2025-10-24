@@ -56,13 +56,13 @@ JSON 스키마 (v1)
   "version": 1,
   "requirements": {
     "fields": {
-      // 프리플라이트 매칭 비율 계산 시 "필수로 있어야 한다"고 간주할 필드
       "time": true,
       "process": true,
-      "pid": false,     // 기본 템플릿은 pid가 필수는 아님
+      "pid": false,
       "message": true
     }
   },
+  // 프리플라이트 매칭 비율 계산 시 "필수로 있어야 한다"고 간주할 필드
   "preflight": {
     // 각 파일에서 읽어볼 샘플 라인 수
     "sample_lines": 200,
@@ -75,37 +75,47 @@ JSON 스키마 (v1)
     ]
   },
   "parser": [
-    {
+    { 
       // 이 규칙이 적용될 파일 글로브(화이트리스트)
       "files": [
-        "**/kernel.log*",
-        "**/system.log*",
-        "**/clip.log*",
-        "**/cpcd.log*",
-        "**/homey-pro.log*",
-        "**/matter.log*",
-        "**/otbr-agent.log*",
-        "**/z3gateway.log*"
+        "^system\\.log(?:\\.\\d+)?$",
+        "^clip\\.log(?:\\.\\d+)?$",
+        "^cpcd\\.log(?:\\.\\d+)?$",
+        "^homey-pro\\.log(?:\\.\\d+)?$",
+        "^matter\\.log(?:\\.\\d+)?$",
+        "^otbr-agent\\.log(?:\\.\\d+)?$",
+        "^z3gateway\\.log(?:\\.\\d+)?$"
       ],
       // 각 필드를 개별 정규식으로 캡처(반드시 named capture 사용: (?<time>...), (?<process>...) 등)
+      // 아래는 실제 템플릿의 정규식 예시 (media/resources/custom_log_parser.template.v1.json 참고)
       "regex": {
-        "time": "^(?<time>\\[(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?\\])",
-        "process": "\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",
-        "pid": "(?:\\[(?<pid>\\d+)\\])?:",
-        "message": ":\\s+(?<message>.+)$"
+        "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
+        "process": "^\\[[^\\]]+\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",
+        "pid": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[(?<pid>\\d+)\\])?:",
+        "message": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[\\d+\\])?:\\s+(?<message>.+)$"
       }
     },
     {
-      "files": ["**/bt_player.log*"],
+      "files": ["^kernel\\.log(?:\\.\\d+)?$"],
       "regex": {
-        "time": "^(?<time>\\[(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?\\])",
-        "process": "\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",
-        "pid": "(?:\\[(?<pid>\\d+)\\])?:",
-        "message": ":\\s+(?<message>.+)$"
+        "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
+        "process": "^\\[[^\\]]+\\]\\s+(?<process>kernel)(?=:)",
+        "pid": "^\\[[^\\]]+\\]\\s+kernel(?::)",
+        "message": "^\\[[^\\]]+\\]\\s+kernel:\\s+(?<message>.+)$"
+      }
+    },
+    {
+      "files": ["^bt_player\\.log(?:\\.\\d+)?$"],
+      "regex": {
+        "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
+        "process": "^\\[[^\\]]+\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",
+        "pid": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[(?<pid>\\d+)\\])?:",
+        "message": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[\\d+\\])?:\\s+(?<message>.+)$"
       }
     }
   ]
 }
+
 ```
 
 키 설명
@@ -132,7 +142,11 @@ hard_skip_if_any_line_matches: 하나라도 매칭되면 해당 파일은 커스
 min_match_ratio: 필수 필드 충족 라인 비율이 미만이면 커스텀 파서 미적용
 
 
-커스텀 파서 미적용 시에는 기존 휴리스틱(타임스탬프/레벨 추정) 로직으로 병합됩니다.
+커스텀 파서 미적용 시에는 기존 휴리스틱 로직으로 병합됩니다:
+- **타임스탬프 추정**: `TimeParser.ts`의 `parseTs()` 함수로 라인 전체에서 시간 패턴 탐색
+- **레벨 추정**: `guessLevel()` 함수로 ERROR/WARN/INFO/DEBUG 레벨 자동 판별  
+- **타입 분류**: system/homey/application/other 중 하나로 자동 분류
+- **메시지 추출**: 전체 라인을 메시지로 사용 (별도 파싱 없음)
 
 
 4. parser[]

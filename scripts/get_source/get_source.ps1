@@ -34,6 +34,13 @@ $lines = $rawLines | ForEach-Object {
     }
 }
 
+# 중복 제거
+$uniqueLines = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($line in $lines) {
+    [void]$uniqueLines.Add($line)
+}
+$lines = $uniqueLines
+
 $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 $maxLinesPerFile = 5000
 
@@ -103,6 +110,9 @@ function SaveCurrentBuffer {
 }
 
 foreach ($relPath in $lines) {
+    # 경로 구분자 표준화: / → \ (Windows 호환성)
+    $relPath = $relPath -replace '/', '\'
+
     # ✅ 상대경로는 '프로젝트 루트' 기준
     $filePath = if ([IO.Path]::IsPathRooted($relPath)) { $relPath }
                 else { Join-Path $ProjectRoot $relPath }

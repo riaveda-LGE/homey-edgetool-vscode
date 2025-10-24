@@ -4,17 +4,7 @@ export function ensureExplorerContainer(root: HTMLElement) {
     el = document.createElement('section');
     el.id = 'explorer';
     el.setAttribute('aria-label', 'explorer');
-    el.innerHTML = `
-      <div id="explorerBar">
-        <div id="explorerTitle">Explorer</div>
-        <div id="explorerPath"></div>
-        <div id="explorerActions" aria-label="explorer actions">
-          <button id="explorerRefresh" title="Refresh (F5)" aria-label="Refresh"></button>
-          <span id="explorerBusy" aria-hidden="true"></span>
-        </div>
-      </div>
-      <div id="explorerTree" role="tree" tabindex="0"></div>
-    `;
+    // 내부 마크업은 ExplorerView 가 책임지고 렌더한다.
     root.appendChild(el);
   }
   return el;

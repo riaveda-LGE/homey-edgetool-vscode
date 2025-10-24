@@ -4,6 +4,7 @@ import * as path from 'path';
 
 import type { LogChunkMeta, LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
+import { measure } from '../logging/perf.js';
 
 export class ManifestWriter {
   private manifest: LogManifest;
@@ -24,6 +25,7 @@ export class ManifestWriter {
     } as LogManifest;
   }
 
+  @measure()
   static async loadOrCreate(outDir: string): Promise<ManifestWriter> {
     const mf = path.join(outDir, 'manifest.json');
     try {
@@ -61,6 +63,7 @@ export class ManifestWriter {
     if (typeof total === 'number') this.manifest.totalLines = total;
   }
 
+  @measure()
   addChunk(file: string, lines: number, start: number) {
     const meta: LogChunkMeta = { file, lines, start };
     this.manifest.chunks.push(meta);
@@ -71,6 +74,7 @@ export class ManifestWriter {
     this.manifest.mergedLines = last.start + last.lines;
   }
 
+  @measure()
   async save() {
     await fs.promises.mkdir(this.outDir, { recursive: true });
     const txt = JSON.stringify(this.manifest, null, 2);

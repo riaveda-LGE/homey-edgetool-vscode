@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 // 사용자 구성 저장소
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { measure } from '../../core/logging/perf.js';
 import type { EdgePanelProvider } from '../panels/extensionPanel.js';
 import { CommandHandlersConnect } from './CommandHandlersConnect.js';
 import { CommandHandlersGit } from './CommandHandlersGit.js';
@@ -47,6 +48,7 @@ class CommandHandlers {
     this.parserHandler = new CommandHandlersParser(this.context);
   }
 
+  @measure()
   async route(raw: string) {
     const cmd = String(raw || '').trim();
 
@@ -98,6 +100,7 @@ class CommandHandlers {
     }
   }
 
+  @measure()
   async help() {
     log.info(`Commands:
   openHomeyLogging

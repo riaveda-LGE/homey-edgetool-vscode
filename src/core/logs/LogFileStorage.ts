@@ -3,8 +3,7 @@ import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 
 import { safeParseJson } from '../../shared/utils.js';
-import { globalProfiler, measureIO } from '../logging/perf.js';
-
+import { measure } from '../logging/perf.js';
 export interface ILogFileStorage {
   append(entry: LogEntry, options?: AppendOptions): Promise<void>;
   range(fromTs: number, toTs: number, options?: RangeOptions): Promise<LogEntry[]>;
@@ -23,10 +22,9 @@ export class LogFileStorage implements ILogFileStorage {
   constructor(private filePath: string) {}
 
   // JSONL 기반 저장/조회
-  @measureIO('writeFile', (instance) => instance.filePath)
+  @measure()
   async append(e: LogEntry, options?: AppendOptions) {
     const data = JSON.stringify(e) + '\n';
-    console.log('Appending data:', data); // 디버깅 로그 추가
     if (options?.flush) {
       // Node의 appendFile에는 flush 옵션이 없음 → 파일핸들 열고 sync로 보장
       const fh = await fs.promises.open(this.filePath, 'a');
@@ -41,7 +39,7 @@ export class LogFileStorage implements ILogFileStorage {
     }
   }
 
-  @measureIO('readFile', (instance) => instance.filePath)
+  @measure()
   async range(fromTs: number, toTs: number, options?: RangeOptions): Promise<LogEntry[]> {
     // 대용량에서도 안전하게 동작하도록 스트리밍으로 변경
     const limit = options?.limit ?? Infinity;

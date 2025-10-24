@@ -3,6 +3,7 @@ import { FIRST_BATCH_SIZE } from '../shared/const.js';
 import type { LogEntry } from '../shared/ipc/messages.js';
 import { LogSessionManager } from '../core/sessions/LogSessionManager.js';
 import { cleanDir, prepareUniqueOutDir, setupTempInput } from './helpers/testFs.js';
+import { measureBlock } from '../core/logging/perf.js';
 
 jest.setTimeout(600_000);
 
@@ -40,19 +41,21 @@ async function runOnce(
   let initialMs = 0;
   let finalTotal: number | undefined;
 
-  await mgr.startFileMergeSession({
-    dir: INPUT_DIR,
-    onBatch: (logs: LogEntry[], _total?: number, seq?: number) => {
-      if (seq === 1) {
-        firstLen = logs.length;
-        initialMs = Date.now() - t0;
-      }
-    },
-    onSaved: (info: { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }) => {
-      finalTotal = info.total ?? info.merged;
-    },
-    onProgress: () => {},
-  } as any);
+  await measureBlock(`start-file-merge-session-${useWarmup ? 'warmup' : 'full'}`, () =>
+    mgr.startFileMergeSession({
+      dir: INPUT_DIR,
+      onBatch: (logs: LogEntry[], _total?: number, seq?: number) => {
+        if (seq === 1) {
+          firstLen = logs.length;
+          initialMs = Date.now() - t0;
+        }
+      },
+      onSaved: (info: { outDir: string; manifestPath: string; chunkCount: number; total?: number; merged: number }) => {
+        finalTotal = info.total ?? info.merged;
+      },
+      onProgress: () => {},
+    } as any)
+  );
 
   return { initialMs, firstLen, total: finalTotal };
 }

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 
+import { createUiMeasure } from '../../../shared/utils';
 import { createUiLog } from '../../../shared/utils';
 import { useLogStore } from '../../react/store';
 import { vscode } from '../ipc';
@@ -8,6 +9,7 @@ export function GridHeader() {
   const show = useLogStore((s) => s.showCols);
   const colW = useLogStore((s) => s.colW);
   const resize = useLogStore((s) => s.resizeColumn);
+  const measureUi = useLogStore((s) => s.measureUi);
   // grid header 전용 ui logger
   const ui = createUiLog(vscode, 'log-viewer.grid-header');
 
@@ -111,17 +113,17 @@ export function GridHeader() {
     >
       {/* 북마크 헤더(비어있는 고정 폭 컬럼, 오른쪽 구분선 유지) */}
       <div className="tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)]" aria-hidden />
-      {col('time', '시간', true, (dx) => resize('time', dx), !show.time, lastVisible === 'time')}
+      {col('time', '시간', true, (dx) => measureUi('GridHeader.resize.time', () => resize('time', dx)), !show.time, lastVisible === 'time')}
       {col(
         'proc',
         '프로세스',
         true,
-        (dx) => resize('proc', dx),
+        (dx) => measureUi('GridHeader.resize.proc', () => resize('proc', dx)),
         !show.proc,
         lastVisible === 'proc',
       )}
-      {col('pid', 'PID', true, (dx) => resize('pid', dx), !show.pid, lastVisible === 'pid')}
-      {col('src', '파일', true, (dx) => resize('src', dx), !show.src, lastVisible === 'src')}
+      {col('pid', 'PID', true, (dx) => measureUi('GridHeader.resize.pid', () => resize('pid', dx)), !show.pid, lastVisible === 'pid')}
+      {col('src', '파일', true, (dx) => measureUi('GridHeader.resize.src', () => resize('src', dx)), !show.src, lastVisible === 'src')}
       {col('msg', '메시지', false, () => {}, !show.msg, lastVisible === 'msg')}
     </div>
   );

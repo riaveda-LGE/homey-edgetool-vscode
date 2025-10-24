@@ -8,6 +8,7 @@ import { safeParseJson } from '../../shared/utils.js';
 import type { LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { measure } from '../logging/perf.js';
 
 const log = getLogger('PagedReader');
 
@@ -22,6 +23,7 @@ export class PagedReader {
     private manifest: LogManifest,
   ) {}
 
+  @measure()
   static async open(manifestDir: string): Promise<PagedReader> {
     log.debug('[debug] PagedReader open: start');
     const mf = path.join(manifestDir, 'manifest.json');
@@ -60,7 +62,7 @@ export class PagedReader {
     return result;
   }
 
-  /** 전역 라인 기준 page를 읽는다 (0-based pageIndex) */
+  @measure()
   async readPage(
     pageIndex: number,
     pageSize: number,
@@ -75,7 +77,7 @@ export class PagedReader {
     return result;
   }
 
-  /** 전역 라인 인덱스 기준 [start, end) 범위를 읽기 */
+  @measure()
   async readLineRange(
     start: number,
     endExcl: number,
@@ -109,13 +111,14 @@ export class PagedReader {
     return out.length > need ? out.slice(0, need) : out;
   }
 
+  @measure()
   private async _readChunkSlice(
     filePath: string,
     startLine: number, // 청크 내부 기준 0-based 포함
     endLineExcl: number, // 청크 내부 기준 0-based 미포함
     opts: PageReadOptions,
   ): Promise<LogEntry[]> {
-    log.debug('[debug] PagedReader _readChunkSlice: start');
+    log.debug?.(`_readChunkSlice: reading ${path.basename(filePath)} lines ${startLine}-${endLineExcl-1}`);
     const out: LogEntry[] = [];
     let idx = 0;
 
@@ -148,9 +151,14 @@ export class PagedReader {
       }
     } finally {
       opts.signal?.removeEventListener('abort', onAbort);
+      try {
+        // 정상/에러/abort 어떤 경로든 스트림을 명시적으로 닫아 핸들 누수 방지
+        (rs as any).destroy?.();
+        (rs as any).close?.();
+      } catch {}
     }
 
-    log.debug('[debug] PagedReader _readChunkSlice: end');
+    log.debug?.(`_readChunkSlice: got ${out.length} entries from ${path.basename(filePath)}`);
     return out;
   }
 }

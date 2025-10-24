@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { __testOnly } from '../core/logs/LogFileIntegration.js';
 import { prepareUniqueOutDir, cleanDir, cleanAndEnsureDir } from './helpers/testFs.js';
+import { measureBlock } from '../core/logging/perf.js';
 
 jest.setTimeout(120_000);
 
@@ -36,14 +37,24 @@ it('JSONL 레거시 레코드(file 누락)도 path/source로 file을 보강한�
     'utf8',
   );
 
-  const files = await __testOnly.listMergedJsonlFiles(mergedDir);
+  const files = await measureBlock('list-merged-jsonl-files', () =>
+    __testOnly.listMergedJsonlFiles(mergedDir)
+  );
   expect(files.sort()).toEqual(['kernel.jsonl', 'misc.jsonl']);
 
-  const curA = await __testOnly.MergedCursor.create(a, 'kernel');
-  const curB = await __testOnly.MergedCursor.create(b, 'misc');
+  const curA = await measureBlock('merged-cursor-create-a', () =>
+    __testOnly.MergedCursor.create(a, 'kernel')
+  );
+  const curB = await measureBlock('merged-cursor-create-b', () =>
+    __testOnly.MergedCursor.create(b, 'misc')
+  );
 
-  const batchA = await curA.nextBatch(10);
-  const batchB = await curB.nextBatch(10);
+  const batchA = await measureBlock('merged-cursor-next-batch-a', () =>
+    curA.nextBatch(10)
+  );
+  const batchB = await measureBlock('merged-cursor-next-batch-b', () =>
+    curB.nextBatch(10)
+  );
 
   expect(batchA.length).toBe(1);
   expect(batchB.length).toBe(1);

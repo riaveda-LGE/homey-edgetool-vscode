@@ -1,6 +1,7 @@
-// === src/adapters/ssh/sshClient.ts ===
-import { runCommandLine } from '../../core/connection/ExecRunner.js';
-import { getLogger } from '../../core/logging/extension-logger.js';
+// === src/core/connection/sshClient.ts ===
+import { runCommandLine } from './ExecRunner.js';
+import { getLogger } from '../logging/extension-logger.js';
+import { measureBlock } from '../logging/perf.js';
 
 export type SshOptions = {
   host: string;
@@ -26,33 +27,37 @@ function buildSshPrefix(opts: SshOptions): string {
 }
 
 export async function sshRun(cmd: string, opts: SshOptions): Promise<number | null> {
-  log.debug('[debug] sshRun: start');
-  const full = `${buildSshPrefix(opts)} "${cmd.replace(/"/g, '\\"')}"`;
-  log.debug('sshRun', full);
-  const { code } = await runCommandLine(full, {
-    timeoutMs: opts.timeoutMs,
-    signal: opts.signal,
-    onStdout: (b) => process.stdout.write(b),
-    onStderr: (b) => process.stderr.write(b),
+  return measureBlock('ssh.sshRun', async () => {
+    log.debug('[debug] sshRun: start');
+    const full = `${buildSshPrefix(opts)} "${cmd.replace(/"/g, '\\"')}"`;
+    log.debug('sshRun', full);
+    const { code } = await runCommandLine(full, {
+      timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      onStdout: (b) => process.stdout.write(b),
+      onStderr: (b) => process.stderr.write(b),
+    });
+    log.debug('[debug] sshRun: end');
+    return code;
   });
-  log.debug('[debug] sshRun: end');
-  return code;
 }
 
 export async function sshStream(cmd: string, opts: SshOptions, onLine: (line: string) => void) {
-  log.debug('[debug] sshStream: start');
-  const full = `${buildSshPrefix(opts)} "${cmd.replace(/"/g, '\\"')}"`;
-  let residual = '';
-  await runCommandLine(full, {
-    timeoutMs: opts.timeoutMs,
-    signal: opts.signal,
-    onStdout: (b) => {
-      const all = residual + b.toString('utf8');
-      const parts = all.split(/\r?\n/);
-      residual = parts.pop() ?? '';
-      for (const p of parts) onLine(p);
-    },
-    onStderr: (b) => process.stderr.write(b),
+  return measureBlock('ssh.sshStream', async () => {
+    log.debug('[debug] sshStream: start');
+    const full = `${buildSshPrefix(opts)} "${cmd.replace(/"/g, '\\"')}"`;
+    let residual = '';
+    await runCommandLine(full, {
+      timeoutMs: opts.timeoutMs,
+      signal: opts.signal,
+      onStdout: (b) => {
+        const all = residual + b.toString('utf8');
+        const parts = all.split(/\r?\n/);
+        residual = parts.pop() ?? '';
+        for (const p of parts) onLine(p);
+      },
+      onStderr: (b) => process.stderr.write(b),
+    });
+    log.debug('[debug] sshStream: end');
   });
-  log.debug('[debug] sshStream: end');
 }

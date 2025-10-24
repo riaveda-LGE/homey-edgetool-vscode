@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createUiLog } from '../../../shared/utils';
+import { createUiMeasure } from '../../../shared/utils';
 import { vscode } from '../ipc';
 import { useLogStore } from '../store';
 import type { Filter } from '../types';
@@ -9,16 +10,17 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
   const storeFilter = useLogStore((s) => s.filter);
   const applyFilter = useLogStore((s) => s.applyFilter);
   const resetFilters = useLogStore((s) => s.resetFilters);
+  const measureUi = useLogStore((s) => s.measureUi);
   const ui = useMemo(() => createUiLog(vscode, 'log-viewer.filter'), []);
 
   const [local, setLocal] = useState(storeFilter);
   useEffect(() => {
     console.debug?.('[debug] FilterDialog: useEffect open/filter change');
     if (open) {
-      ui.info('filterDialog.open');
+      measureUi('FilterDialog.open', () => ui.info('filterDialog.open'));
       setLocal(storeFilter);
     } else {
-      ui.info('filterDialog.close');
+      measureUi('FilterDialog.close', () => ui.info('filterDialog.close'));
     }
   }, [open, storeFilter.pid, storeFilter.src, storeFilter.proc, storeFilter.msg]);
 
@@ -27,27 +29,27 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (!open) return;
     // 살짝 지연 후 측정(Transition 적용 직후 레이아웃 안정화)
     const t = setTimeout(() => {
-      const overlay = document.querySelector(
+      const overlay = measureUi('FilterDialog.dom.measure', () => document.querySelector(
         '[data-testid="filter-overlay"]',
-      ) as HTMLElement | null;
+      ) as HTMLElement | null);
       const panel = document.querySelector('[data-testid="filter-panel"]') as HTMLElement | null;
       if (overlay) {
         const zi = getComputedStyle(overlay).zIndex;
         const r = overlay.getBoundingClientRect();
-        ui.info(
+        measureUi('FilterDialog.dom.overlay', () => ui.info(
           `filterDialog.dom.overlay z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
-        );
+        ));
       } else {
-        ui.warn('filterDialog.dom.overlay not found');
+        measureUi('FilterDialog.dom.overlay.notFound', () => ui.warn('filterDialog.dom.overlay not found'));
       }
       if (panel) {
         const zi = getComputedStyle(panel).zIndex;
         const r = panel.getBoundingClientRect();
-        ui.info(
+        measureUi('FilterDialog.dom.panel', () => ui.info(
           `filterDialog.dom.panel z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
-        );
+        ));
       } else {
-        ui.warn('filterDialog.dom.panel not found');
+        measureUi('FilterDialog.dom.panel.notFound', () => ui.warn('filterDialog.dom.panel not found'));
       }
     }, 30);
     return () => clearTimeout(t);
@@ -64,23 +66,23 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
   }, [open, onClose]);
 
   const onApply = () => {
-    ui.debug?.('[debug] FilterDialog: onApply');
+    measureUi('FilterDialog.onApply', () => ui.debug?.('[debug] FilterDialog: onApply'));
     // 전체 필드를 정규화(빈 칩/중복 제거)한 뒤 적용
     const cleaned = normalizeAll(local);
-    ui.info(`filterDialog.apply ${JSON.stringify(cleaned)}`);
+    measureUi('FilterDialog.apply', () => ui.info(`filterDialog.apply ${JSON.stringify(cleaned)}`));
     setLocal(cleaned);
     applyFilter(normalizeAll(cleaned));
     onClose();
   };
   const onCancel = () => {
     ui.debug?.('[debug] FilterDialog: onCancel');
-    ui.info('filterDialog.cancel');
+    measureUi('FilterDialog.onCancel', () => ui.info('filterDialog.cancel'));
     onClose();
   };
 
   // ── OR 그룹 UI: "wlan host, deauth" → [["wlan","host"],["deauth"]] ─────────────
   const parseGroups = (s?: string): string[][] => {
-    ui.debug?.('[debug] FilterDialog: parseGroups');
+    measureUi('FilterDialog.parseGroups', () => ui.debug?.('[debug] FilterDialog: parseGroups'));
     const src = String(s ?? '');
     if (!src.trim()) return [];
     return src
@@ -95,7 +97,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
       );
   };
   const serializeGroups = (groups: string[][]) => {
-    ui.debug?.('[debug] FilterDialog: serializeGroups');
+    measureUi('FilterDialog.serializeGroups', () => ui.debug?.('[debug] FilterDialog: serializeGroups'));
     return groups
       .map((g) => {
         const uniq: string[] = [];
@@ -180,7 +182,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
               // 현재 입력값을 포함해 전 필드 정규화 후 즉시 적용
               const cur = { ...local, [k]: (e.currentTarget as HTMLInputElement).value };
               const cleaned = normalizeAll(cur);
-              ui.info(`filterDialog.apply.enter ${JSON.stringify(cleaned)}`);
+              measureUi('FilterDialog.apply.enter', () => ui.info(`filterDialog.apply.enter ${JSON.stringify(cleaned)}`));
               setLocal(cleaned);
               applyFilter(normalizeAll(cleaned));
               onClose();
@@ -397,7 +399,7 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
                 cursor: 'pointer',
               }}
               onClick={() => {
-                ui.info('filterDialog.reset');
+                measureUi('FilterDialog.reset', () => ui.info('filterDialog.reset'));
                 resetFilters();
                 onClose();
               }}

@@ -7,11 +7,15 @@ import * as path from 'path';
 import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { guessLevel, parseTs } from './time/TimeParser.js';
+import { parseTs } from './time/TimeParser.js';
 import { TimezoneCorrector } from './time/TimezoneHeuristics.js';
 import { compileParserConfig, shouldUseParserForFile, lineToEntryWithParser } from './ParserEngine.js';
+import { measureBlock } from '../logging/perf.js';
 
 const log = getLogger('LogFileIntegration');
+// 파일 첫 문자 위치의 BOM 제거
+const BOM_RE = /^\uFEFF/;
+function stripBomStart(s: string): string { return s.replace(BOM_RE, ''); }
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 공개 API
@@ -20,7 +24,7 @@ const log = getLogger('LogFileIntegration');
 // Manager 선행 웜업 호출을 위해 필요한 필드만 분리(+ whitelist 지원)
 export type WarmupOptions = Pick<
   MergeOptions,
-  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget' | 'whitelistGlobs'
+  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget' | 'whitelistGlobs' | 'parser'
 >;
 
 export type MergeOptions = {
@@ -58,7 +62,7 @@ export type MergeOptions = {
  *             merged(JSONL, 최신순) 저장 → JSONL을 순방향으로 100줄씩 읽어 k-way 병합
  */
 export async function mergeDirectory(opts: MergeOptions) {
-  try {
+  return measureBlock('logs.mergeDirectory', async function () {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
     // 파서 컴파일
     const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
@@ -219,12 +223,12 @@ export async function mergeDirectory(opts: MergeOptions) {
         let revIdx = 0;
         while ((line = await rr.nextLine()) !== null) {
           // fullPath를 넘겨 path/file 일관성 유지
-          const entry = lineToEntryWithParser(fullPath, line, useParserForThisFile ? compiledParser : undefined, {
+          const entry = await lineToEntryWithParser(fullPath, line, useParserForThisFile ? compiledParser : undefined, {
             fileRank: fileIdx,
             revIdx: revIdx++,
           });
           // 테스트/골든 일관성: 파서가 message-only로 바꿨다면 헤더 복원(+ ts 재계산)
-          restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
+          await restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
           logs.push(entry); // 전체 logs가 최신→오래된 순
         }
         await rr.close();
@@ -240,18 +244,21 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
 
       // 타임존 보정 (국소 소급 보정 지원)
+      // 물리 배열(최신→오래된)을 "뒤→앞"으로 돌리며 asc 인덱스를 0.. 증가시킨다.
       const tzc = new TimezoneCorrector(typeKey);
       let tzRetroSegmentsApplied = 0;
-      for (let i = 0; i < logs.length; i++) {
-        const corrected = tzc.adjust(logs[i].ts, i);
-        logs[i].ts = corrected;
+      for (let k = logs.length - 1, asc = 0; k >= 0; k--, asc++) {
+        const corrected = tzc.adjust(logs[k].ts, asc);
+        logs[k].ts = corrected;
 
-        // 복귀가 확정되면 방금까지의 suspected 구간만 Δoffset 적용
+        // 복귀 확정 시 asc 구간을 물리 인덱스로 역투영해서 Δoffset 적용
         const segs = tzc.drainRetroSegments();
         if (segs.length) {
           tzRetroSegmentsApplied += segs.length;
           for (const seg of segs) {
-            for (let j = seg.start; j <= Math.min(seg.end, logs.length - 1); j++) {
+            const startK = (logs.length - 1) - seg.end;
+            const endK   = (logs.length - 1) - seg.start;
+            for (let j = startK; j <= Math.min(endK, logs.length - 1); j++) {
               logs[j].ts += seg.deltaMs;
             }
           }
@@ -349,15 +356,7 @@ export async function mergeDirectory(opts: MergeOptions) {
       for (const [, cursor] of cursors) await cursor.close();
     }
     log.info(`T1: done emitted=${emitted}`);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    log.error(`mergeDirectory: error dir=${opts.dir} ${msg}`);
-    throw new XError(
-      ErrorCategory.Path,
-      `Failed to merge log directory ${opts.dir}: ${e instanceof Error ? e.message : String(e)}`,
-      e,
-    );
-  }
+  });
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -371,7 +370,9 @@ export async function listInputLogFiles(
 ): Promise<string[]> {
   try {
     const out: string[] = [];
+    log.debug?.(`listInputLogFiles: scanning dir=${dir} with ${allowPathRegexes?.length || 0} whitelist patterns`);
     await walk(dir, '', out, allowPathRegexes);
+    log.debug?.(`listInputLogFiles: found ${out.length} files`);
     if (allowPathRegexes?.length && out.length === 0) {
       log.warn('listInputLogFiles: whitelist present but no files matched');
     }
@@ -393,30 +394,47 @@ async function walk(
   allowPathRegexes?: RegExp[],
 ) {
   const base = rel ? path.join(root, rel) : root;
+  log.debug?.(`walk: scanning dir=${base}`);
   let names: string[];
   try {
     names = await fs.promises.readdir(base);
-  } catch {
+  } catch (e) {
+    log.debug?.(`walk: failed to read dir=${base}: ${e}`);
     return;
   }
+  log.debug?.(`walk: found ${names.length} items in ${base}`);
   for (const name of names) {
     const relPath = rel ? path.join(rel, name) : name;
     const full = path.join(root, relPath);
     let st;
     try {
       st = await fs.promises.lstat(full);
-    } catch {
+    } catch (e) {
+      log.debug?.(`walk: failed to stat ${full}: ${e}`);
       continue;
     }
     // ⬇︎ 비재귀: 디렉터리는 탐색하지 않음
-    if (st.isDirectory()) continue;
-    if (!st.isFile()) continue;
+    if (st.isDirectory()) {
+      log.debug?.(`walk: skipped dir ${relPath}`);
+      continue;
+    }
+    if (!st.isFile()) {
+      log.debug?.(`walk: skipped non-file ${relPath}`);
+      continue;
+    }
     // 기본 허용: *.log / *.log.N / *.txt
     const bn = path.basename(relPath);
     const isLogLike = /\.log(\.\d+)?$/i.test(bn) || /\.txt$/i.test(bn);
-    if (!allowPathRegexes?.length && !isLogLike) continue;
+    if (!allowPathRegexes?.length && !isLogLike) {
+      log.debug?.(`walk: skipped ${relPath} (not log-like)`);
+      continue;
+    }
     // 화이트리스트가 있으면 "상대경로"로 매칭
-    if (allowPathRegexes?.length && !pathMatchesWhitelist(relPath, allowPathRegexes)) continue;
+    if (allowPathRegexes?.length && !pathMatchesWhitelist(relPath, allowPathRegexes)) {
+      log.debug?.(`walk: skipped ${relPath} (whitelist mismatch)`);
+      continue;
+    }
+    log.debug?.(`walk: accepted ${relPath}`);
     out.push(relPath);
   }
 }
@@ -426,18 +444,20 @@ export async function countTotalLinesInDir(
   dir: string,
   allowPathRegexes?: RegExp[],
 ): Promise<{ total: number; files: { name: string; lines: number }[] }> {
-  const files = await listInputLogFiles(dir, allowPathRegexes);
-  const ordered = files.sort(compareLogOrderDesc); // 최신부터
-  const details: { name: string; lines: number }[] = [];
-  let total = 0;
+  return measureBlock('logs.countTotalLinesInDir', async function () {
+    const files = await listInputLogFiles(dir, allowPathRegexes);
+    const ordered = files.sort(compareLogOrderDesc); // 최신부터
+    const details: { name: string; lines: number }[] = [];
+    let total = 0;
 
-  for (const name of ordered) {
-    const full = path.join(dir, name);
-    const lines = await countLinesInFile(full);
-    details.push({ name, lines });
-    total += lines;
-  }
-  return { total, files: details };
+    for (const name of ordered) {
+      const full = path.join(dir, name);
+      const lines = await countLinesInFile(full);
+      details.push({ name, lines });
+      total += lines;
+    }
+    return { total, files: details };
+  });
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -556,67 +576,30 @@ async function streamFileForward(
   compiledParser?: import('./ParserEngine.js').CompiledParser,
   fileRank?: number,
 ) {
-  const rs = fs.createReadStream(filePath, { encoding: 'utf8' });
-  // 파일당 1회 프리플라이트
+  const fr = new ForwardLineReader(filePath);
+  // 파일당 1회 parser gate
   let useParserForThisFile = false;
   if (compiledParser) {
     try {
       const bn = path.basename(filePath).replace(/\\/g, '/');
-      // shouldUseParserForFile는 rel(파일명) 우선 — 절대경로를 넘기지 않음
       useParserForThisFile = await shouldUseParserForFile(filePath, bn, compiledParser);
     } catch {}
   }
-  let residual = '';
   const batch: LogEntry[] = [];
   let revIdx = 0;
-
-  const onAbort = () => {
-    try {
-      rs.close();
-    } catch {}
-  };
-  signal?.addEventListener('abort', onAbort);
-
-  await new Promise<void>((resolve, reject) => {
-    rs.on('data', (chunk: string | Buffer) => {
-      if (signal?.aborted) return;
-      const text = residual + (Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk);
-      const parts = text.split(/\r?\n/);
-      residual = parts.pop() ?? '';
-      for (const line of parts) {
-        if (!line) continue;
-        const e = lineToEntryWithParser(
-          filePath,
-          line,
-          useParserForThisFile ? compiledParser : undefined,
-          { fileRank, revIdx: revIdx++ },
-        );
-        restoreFullTextIfNeeded(e, /*preserve*/ true); // forward 경로에서도 동일 복원
-        batch.push(e);
-        if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
-      }
-    });
-    rs.on('end', () => {
-      if (residual) {
-        const e = lineToEntryWithParser(
-          filePath,
-          residual,
-          useParserForThisFile ? compiledParser : undefined,
-          { fileRank, revIdx: revIdx++ },
-        );
-        restoreFullTextIfNeeded(e, /*preserve*/ true);
-        batch.push(e);
-      }
-      // Abort 되었다면 끝부분 잔여 배치도 내보내지 않음
-      if (!signal?.aborted && batch.length) emit(batch.splice(0, batch.length));
-      signal?.removeEventListener('abort', onAbort);
-      resolve();
-    });
-    rs.on('error', (e) => {
-      signal?.removeEventListener('abort', onAbort);
-      reject(new XError(ErrorCategory.Path, `Failed to stream log file ${filePath}: ${String(e)}`));
-    });
-  });
+  while (!signal?.aborted) {
+    const lines = await fr.nextLines(batchSize);
+    if (!lines.length) break;
+    for (const line of lines) {
+      if (!line) continue;
+      const e = await lineToEntryWithParser(filePath, line, useParserForThisFile ? compiledParser : undefined, { fileRank, revIdx: revIdx++ });
+      await restoreFullTextIfNeeded(e, /*preserve*/ true);
+      batch.push(e);
+      if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
+    }
+  }
+  if (!signal?.aborted && batch.length) emit(batch.splice(0, batch.length));
+  await fr.close();
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -629,6 +612,7 @@ class ReverseLineReader {
   private pos = 0;
   private buffer = '';
   private readonly chunkSize = 64 * 1024;
+  private bomStripped = false;
 
   constructor(public readonly filePath: string) {}
 
@@ -661,7 +645,14 @@ class ReverseLineReader {
       const start = this.pos - readSize;
       const buf = Buffer.alloc(readSize);
       await this.fh.read(buf, 0, readSize, start);
-      this.buffer = buf.toString('utf8') + this.buffer;
+      let chunk = buf.toString('utf8');
+      // 역방향 리더는 파일 끝부터 읽기 시작하므로,
+      // 파일 시작을 포함하는 청크(start === 0)에서만 BOM을 제거한다.
+      if (!this.bomStripped && start === 0) {
+        chunk = stripBomStart(chunk);
+        this.bomStripped = true;
+      }
+      this.buffer = chunk + this.buffer;
       this.pos = start;
     }
   }
@@ -714,11 +705,17 @@ class ForwardLineReader {
   private ended = false;
   private errored: Error | null = null;
   private waiters: Array<() => void> = [];
+  private bomStripped = false;
 
   constructor(public readonly filePath: string) {
     this.rs = fs.createReadStream(filePath, { encoding: 'utf8' });
     this.rs.on('data', (chunk) => {
-      this.buffer += chunk;
+      let data = typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+      if (!this.bomStripped) {
+        data = stripBomStart(data);
+        this.bomStripped = true;
+      }
+      this.buffer += data;
       const parts = this.buffer.split(/\r?\n/);
       this.buffer = parts.pop() ?? '';
       if (parts.length) {
@@ -808,13 +805,13 @@ class FileForwardCursor {
       return null;
     }
     const line = lines[0];
-    const e = lineToEntryWithParser(
+    const e = await lineToEntryWithParser(
       this.filePath,
       line,
       this.useParser ? this.compiledParser : undefined,
       { fileRank: this.fileRank, revIdx: this.seq++ },
     );
-    restoreFullTextIfNeeded(e, /*preserve*/ true);
+    await restoreFullTextIfNeeded(e, /*preserve*/ true);
     return { ts: e.ts, entry: e };
   }
 
@@ -929,21 +926,6 @@ class MaxHeap<T> {
   }
 }
 
-function lineToEntry(filePath: string, line: string): LogEntry {
-  const bn = path.basename(filePath);
-  return {
-    id: Date.now(), // 간단 id
-    ts: parseTs(line) ?? Date.now(),
-    level: guessLevel(line),
-    type: 'system',
-    // 과거 호환 위해 source는 유지(대개 파일명). 실제 표시/검색은 file/path 우선.
-    source: bn,
-    file: bn,
-    path: filePath,
-    text: line,
-  };
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Parser 적용 시 헤더 복원 유틸
 //  - parser가 message-only로 만든 경우에도 테스트/골든 비교를 위해 원 포맷을 재구성
@@ -967,6 +949,10 @@ function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
   const tHeader = parseTs(`[${time}]`);
   const tFull = parseTs(full);
   const t = typeof tHeader === 'number' ? tHeader : tFull;
+  // 로깅: tHeader가 사용되었는지 tFull이 사용되었는지 기록
+  if (typeof tHeader !== 'number') {
+    log.debug?.(`restoreFullTextIfNeeded: used tFull=${tFull} for full="${full}"`);
+  }
   if (typeof t === 'number') e.ts = t;
   e.text = full;
 }
@@ -979,9 +965,11 @@ function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
 // - 최종 k-way 병합으로 정확히 target개만 반환
 // ⬇️ Manager에서 직접 호출할 수 있도록 export + LogEntry[] 반환
 export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]> {
+  return measureBlock('logs.warmupTailPrepass', async function () {
   const { dir, signal } = opts;
-  const logger = getLogger('LogFileIntegration');
-  logger.debug?.(`warmupTailPrepass: start dir=${dir}`);
+  log.debug?.(`warmupTailPrepass: start dir=${dir}`);
+  const compiledParser =
+    opts.parser ? compileParserConfig(opts.parser) : undefined;
   const target = Math.max(1, Number(opts.warmupTarget ?? 500));
   const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
     ? Math.max(1, Number(opts.warmupPerTypeLimit))
@@ -1009,10 +997,10 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     if (rem > 0) rem--;
     alloc.set(k, Math.min(want, perTypeCap));
   }
-  logger.debug?.(
+  log.debug?.(
     `warmupTailPrepass: plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`,
   );
-  logger.debug?.(
+  log.debug?.(
     `warmup(T0): per-type allocation → ` + typeKeys.map((k) => `${k}:${alloc.get(k)}`).join(', '),
   );
 
@@ -1021,6 +1009,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     private idx = 0;
     private rr: ReverseLineReader | null = null;
     private exhausted = false;
+    private useParserForCurrentFile = false;
     constructor(
       private baseDir: string,
       private files: string[],
@@ -1034,7 +1023,18 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
         const fp = path.join(this.baseDir, this.files[this.idx]);
         try {
           this.rr = await ReverseLineReader.open(fp);
-          logger.debug?.(
+          // file-scoped parser gate (once per file)
+          if (compiledParser) {
+            try {
+              const bn = path.basename(fp).replace(/\\/g, '/');
+              this.useParserForCurrentFile = await shouldUseParserForFile(fp, bn, compiledParser);
+            } catch {
+              this.useParserForCurrentFile = false;
+            }
+          } else {
+            this.useParserForCurrentFile = false;
+          }
+          log.debug?.(
             `warmup(T0): [${this.typeKey}] open file=${path.basename(fp)} (idx=${this.idx}/${this.files.length - 1})`,
           );
         } catch {
@@ -1044,10 +1044,10 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       }
       if (!this.rr && this.idx >= this.files.length) this.exhausted = true;
     }
-    async next(n: number): Promise<{ line: string; file: string }[]> {
+    async next(n: number): Promise<{ line: string; file: string; useParser: boolean }[]> {
       if (this.exhausted) return [];
       await this.ensureReader();
-      const out: { line: string; file: string }[] = [];
+      const out: { line: string; file: string; useParser: boolean }[] = [];
       while (out.length < n && !this.exhausted) {
         if (!this.rr) {
           this.exhausted = true;
@@ -1061,13 +1061,17 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
           } catch {}
           this.rr = null;
           this.idx++;
-          logger.debug?.(
+          log.debug?.(
             `warmup(T0): [${this.typeKey}] file exhausted, move next (idx=${this.idx}/${this.files.length})`,
           );
           await this.ensureReader();
           continue;
         }
-        out.push({ line, file: this.files[this.idx] });
+        out.push({
+          line,
+          file: this.files[this.idx],
+          useParser: this.useParserForCurrentFile,
+        });
       }
       return out;
     }
@@ -1081,12 +1085,15 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     walkers.set(k, new TypeTailWalker(dir, files, k));
     buffers.set(k, []);
   }
-  logger.debug?.(`warmupTailPrepass: walkers ready for ${typeKeys.length} types`);
+  log.debug?.(`warmupTailPrepass: walkers ready for ${typeKeys.length} types`);
 
   // 헬퍼: 라인 -> LogEntry (파일명을 source로)
-  const toEntry = (fileName: string, line: string): LogEntry => {
+  const toEntry = async (fileName: string, line: string, useParser: boolean): Promise<LogEntry> => {
     const full = path.join(dir, fileName);
-    return lineToEntryWithParser(full, line, undefined, {});
+    const e = await lineToEntryWithParser(full, line, useParser ? compiledParser : undefined, {});
+    // 테스트/골든/정렬 일관성: 헤더 복원 + 헤더 기반 ts 재계산
+    await restoreFullTextIfNeeded(e, /*preserve*/ true);
+    return e;
   };
 
   // 4) 1차 수집: 균등 할당만큼 per-type 로딩
@@ -1101,7 +1108,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       const part = await w.next(n);
       if (!part.length) break;
       const buf = buffers.get(typeKey)!;
-      for (const { line, file } of part) buf.push(toEntry(file, line));
+      for (const { line, file, useParser } of part) buf.push(await toEntry(file, line, useParser));
       got += part.length;
     }
     return got;
@@ -1112,13 +1119,13 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     const want = alloc.get(k)!;
     const gotK = await batchRead(k, want);
     total += gotK;
-    logger.debug?.(
+    log.debug?.(
       `[debug] warmupTailPrepass: primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`,
     );
   }
 
   // 5) 재분배: target까지 부족하면 남은 타입에서 추가 로딩
-  logger.debug?.(`warmup(T0): primary load total=${total}, target=${target}`);
+  log.debug?.(`warmup(T0): primary load total=${total}, target=${target}`);
   let deficit = Math.max(0, target - total);
   if (deficit > 0) {
     // 현재 각 타입이 cap에 도달했는지 계산
@@ -1154,7 +1161,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
         const after = buffers.get(k)!.length;
         deficit -= got;
         total += got;
-        logger.debug?.(
+        log.debug?.(
           `warmup(T0): rebalance type=${k} +${got} (buf ${before}->${after}), remain deficit=${deficit}`,
         );
       }
@@ -1162,7 +1169,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       if (total === lastProgressTotal) {
         const anyActive = typeKeys.some((tk) => !walkers.get(tk)!.isExhausted);
         if (!anyActive) {
-          logger.warn(
+          log.warn(
             `warmup(T0): rebalancing stalled — all types exhausted; total=${total}, target=${target}`,
           );
           break;
@@ -1173,33 +1180,36 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       i++;
       slots = room();
     }
-    logger.debug?.(`warmupTailPrepass: after rebalance total=${total}, unmet=${Math.max(0, target - total)}`);
+    log.debug?.(`warmupTailPrepass: after rebalance total=${total}, unmet=${Math.max(0, target - total)}`);
   }
 
   if (total === 0) return [];
 
-  logger.debug?.(`warmupTailPrepass: collected total=${total} (before TZ correction)`);
+  log.debug?.(`warmupTailPrepass: collected total=${total} (before TZ correction)`);
   // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
   for (const k of typeKeys) {
     const arr = buffers.get(k)!;
     if (!arr.length) continue;
     const tzc = new TimezoneCorrector(k);
     let tzRetroSegmentsApplied = 0;
-    for (let i = 0; i < arr.length; i++) {
-      const corrected = tzc.adjust(arr[i].ts, i);
-      arr[i].ts = corrected;
+    // warm 버퍼도 물리 배열은 최신→오래된. 뒤→앞 순회하며 asc 인덱스를 0.. 증가
+    for (let kIdx = arr.length - 1, asc = 0; kIdx >= 0; kIdx--, asc++) {
+      const corrected = tzc.adjust(arr[kIdx].ts, asc);
+      arr[kIdx].ts = corrected;
       const segs = tzc.drainRetroSegments();
       if (segs.length) {
         tzRetroSegmentsApplied += segs.length;
         for (const seg of segs) {
-          for (let j = seg.start; j <= Math.min(seg.end, arr.length - 1); j++) {
+          const startK = (arr.length - 1) - seg.end;
+          const endK   = (arr.length - 1) - seg.start;
+          for (let j = startK; j <= Math.min(endK, arr.length - 1); j++) {
             arr[j].ts += seg.deltaMs;
           }
         }
       }
     }
     tzc.finalizeSuspected();
-    logger.debug?.(
+    log.debug?.(
       `warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
     );
     arr.sort((a, b) => b.ts - a.ts); // 최신순
@@ -1214,7 +1224,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   }
 
   // 7) k-way 병합으로 정확히 target개만 추출
-  logger.debug?.(`warmupTailPrepass: k-way merge to emit=${target}`);
+  log.debug?.(`warmupTailPrepass: k-way merge to emit=${target}`);
   type WarmItem = { ts: number; entry: LogEntry; typeKey: string; idx: number };
   const heap = new MaxHeap<WarmItem>((a, b) => {
     if (a.ts !== b.ts) return a.ts - b.ts; // 큰 ts 우선
@@ -1235,12 +1245,13 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
     }
   }
-  logger.debug?.(`warmupTailPrepass: prepared lines=${out.length}`);
+  log.debug?.(`warmupTailPrepass: prepared lines=${out.length}`);
   if (out.length < target) {
-    logger.debug?.(
+    log.debug?.(
       `[debug] warmupTailPrepass: dataset smaller than target (out=${out.length} < target=${target}); ` +
         `will short-circuit T1 if total is known and ≤ out`,
     );
   }
   return out;
+  });
 }

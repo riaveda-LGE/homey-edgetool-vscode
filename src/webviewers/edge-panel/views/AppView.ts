@@ -31,6 +31,7 @@ export class AppView {
     private root: HTMLElement,
     controlsEl: HTMLElement,
     sectionsEl: HTMLElement,
+    private measureUi: <T>(name: string, fn: () => T) => T,
     private onControlsClick: (id: string) => void,
     private onRequestButtons: () => void,
     private onList: (path: string) => void,
@@ -52,7 +53,7 @@ export class AppView {
 
     // 로그 컨테이너/뷰는 항상 생성(컨테이너는 reset/append 시에 DOM에 붙음)
     this.logsView = new LogsView(
-      new LogService(this.content, this.onLogLoadOlder, this.onLogClear, this.onLogCopy),
+      new LogService(this.content, this.onLogLoadOlder, this.onLogClear, this.onLogCopy, this.measureUi),
     );
 
     // Explorer·내부 스플리터도 고정 DOM으로 미리 생성
@@ -71,7 +72,7 @@ export class AppView {
       // Controls↔Content 높이 변경 시, Logs 유지 재배치(캐시 기반)
       this.reflowAfterCtrlMove(commit);
       if (commit) this.savePanelState();
-    });
+    }, this.measureUi);
 
     // 창 리사이즈 시 컨트롤 박스 자동 맞춤 + Logs 고정 재배치
     window.addEventListener('resize', () => {
@@ -91,6 +92,7 @@ export class AppView {
   }
 
   renderControls(sections: SectionDTO[], toggles: { showLogs: boolean; showExplorer: boolean }) {
+    return this.measureUi('AppView.renderControls', () => {
     const sectionsEl = document.getElementById('sections')!;
     sectionsEl.innerHTML = '';
     sections.forEach((sec) => {
@@ -114,9 +116,11 @@ export class AppView {
       card.appendChild(body);
       sectionsEl.appendChild(card);
     });
+    });
   }
 
   applyLayout(state: AppState) {
+    this.measureUi('AppView.applyLayout(inner)', () => {
     this.root.classList.toggle('show-logs', state.showLogs);
     this.root.classList.toggle('show-explorer', state.showExplorer);
     this.root.classList.toggle('show-both', state.showLogs && state.showExplorer);
@@ -130,6 +134,7 @@ export class AppView {
     if (!this.explorerView) {
       this.explorerView = new ExplorerView(
         this.explorerEl!,
+        this.measureUi,
         this.getNodeByPath,
         this.registerNode,
         (p) => this.onList(p),
@@ -200,7 +205,7 @@ export class AppView {
         };
       };
 
-      bindContentSplitter(this.contentSplitter, getSizes, setRows);
+      bindContentSplitter(this.contentSplitter, getSizes, setRows, this.measureUi);
       this.contentSplitterBound = true;
 
       // 저장된 비율이 있으면 초기 반영, 없으면 현재 치수 또는 50/50로 보정
@@ -234,11 +239,13 @@ export class AppView {
 
     // 초기 보정(Logs 유지)
     this.reflowAfterCtrlMove(false);
+    });
   }
 
   /** 상단 분리바 이동/리사이즈 등으로 Content 높이가 달렸을 때
    *  Logs 높이는 유지(가능하면), Explorer만 증감 */
   private reflowAfterCtrlMove(commit: boolean) {
+    this.measureUi('AppView.reflowAfterCtrlMove', () => {
     if (!this.contentSplitter || !this.explorerEl || !this.logsView.element) return;
     const bothVisible =
       this.root.classList.contains('show-explorer') && this.root.classList.contains('show-logs');
@@ -267,14 +274,17 @@ export class AppView {
     bottomPx = Math.max(0, Math.floor(bottomPx));
 
     this.setContentRows(topPx, bottomPx, commit);
+    });
   }
 
   /** grid-template-rows를 px로 고정 적용(+ 캐시 갱신) */
   private setContentRows(topPx: number, bottomPx: number, commit: boolean) {
-    this.content.style.gridTemplateRows = `${Math.max(0, Math.floor(topPx))}px var(--splitter-h) ${Math.max(0, Math.floor(bottomPx))}px`;
-    // 마지막 bottom px 캐시
-    this.lastBottomPx = Math.max(0, Math.floor(bottomPx));
-    if (commit) this.savePanelState();
+    this.measureUi('AppView.setContentRows', () => {
+      this.content.style.gridTemplateRows = `${Math.max(0, Math.floor(topPx))}px var(--splitter-h) ${Math.max(0, Math.floor(bottomPx))}px`;
+      // 마지막 bottom px 캐시
+      this.lastBottomPx = Math.max(0, Math.floor(bottomPx));
+      if (commit) this.savePanelState();
+    });
   }
 
   private cssPx(varName: string): number {
@@ -284,33 +294,55 @@ export class AppView {
   }
 
   ensureCtrlContentFit() {
-    if (this.userAdjustedCtrl) return;
-    const sectionsEl = document.getElementById('sections')!;
-    const contentHeight = sectionsEl.scrollHeight + 32;
-    const maxPx = Math.floor(window.innerHeight * 0.5);
-    const next = Math.min(contentHeight, maxPx);
-    document.documentElement.style.setProperty('--ctrl-h', `${next}px`);
+    // 가벼운 연산이지만 초기 레이아웃 시 빈번 → 짧게라도 측정
+    this.measureUi('AppView.ensureCtrlContentFit', () => {
+      if (this.userAdjustedCtrl) return;
+      const sectionsEl = document.getElementById('sections')!;
+      const contentHeight = sectionsEl.scrollHeight + 32;
+      const maxPx = Math.floor(window.innerHeight * 0.5);
+      const next = Math.min(contentHeight, maxPx);
+      document.documentElement.style.setProperty('--ctrl-h', `${next}px`);
+    });
   }
 
   renderBreadcrumb(path: string, nodesByPath: Map<string, TreeNode>) {
-    this.explorerView?.renderBreadcrumb(path, nodesByPath);
+    this.measureUi('AppView.renderBreadcrumb', () =>
+      this.explorerView?.renderBreadcrumb(path, nodesByPath),
+    );
   }
 
   renderChildren(node: TreeNode, items: { name: string; kind: 'file' | 'folder' }[]) {
-    this.explorerView?.renderChildren(node, items);
+    this.measureUi('AppView.renderChildren', () =>
+      this.explorerView?.renderChildren(node, items),
+    );
   }
 
   logsReset(lines?: string[]) {
-    this.logsView.reset(lines);
+    this.measureUi('AppView.logsReset', () => this.logsView.reset(lines));
   }
   logsAppend(line: string) {
-    this.logsView.append(line);
+    this.measureUi('AppView.logsAppend', () => this.logsView.append(line));
   }
   logsPrepend(lines: string[]) {
-    this.logsView.prepend(lines);
+    this.measureUi('AppView.logsPrepend', () => this.logsView.prepend(lines));
   }
 
   savePanelState() {
+    this.measureUi('AppView.savePanelState', () => {
+      const splitterPosition = this.getSplitterPosition();
+      (window as any).__edgePanelState = { splitterPosition };
+
+      const controlHeight = this.cssPx('--ctrl-h');
+      this.onSavePanel({
+        showExplorer: this.root.classList.contains('show-explorer'),
+        showLogs: this.root.classList.contains('show-logs'),
+        controlHeight,
+        splitterPosition,
+      });
+    });
+  }
+
+  private getSplitterPosition(): number | undefined {
     const explorerEl = document.getElementById('explorer') as HTMLElement | null;
     const logContainer = document.getElementById('logContainer') as HTMLElement | null;
     let splitterPosition: number | undefined;
@@ -320,33 +352,28 @@ export class AppView {
       const l = logContainer.getBoundingClientRect().height;
       const total = e + l;
       if (total > 0) splitterPosition = e / total;
-      (window as any).__edgePanelState = { splitterPosition };
     }
 
-    const controlHeight = this.cssPx('--ctrl-h');
-    this.onSavePanel({
-      showExplorer: this.root.classList.contains('show-explorer'),
-      showLogs: this.root.classList.contains('show-logs'),
-      controlHeight,
-      splitterPosition,
+    return splitterPosition;
+  }
+
+  clearExplorerSelection() {
+    this.measureUi('AppView.clearExplorerSelection', () => {
+      const selectedEls = Array.from(
+        document.querySelectorAll('#explorer .tree-node.selected'),
+      ) as HTMLElement[];
+      selectedEls.forEach((el) => {
+        el.classList.remove('selected');
+        el.removeAttribute('aria-selected');
+      });
     });
   }
 
-  /** 외부(웹뷰 밖 클릭/ESC 등)에서 선택 해제를 요청할 때 DOM만 정리 */
-  public clearExplorerSelection() {
-    const selectedEls = Array.from(
-      document.querySelectorAll('#explorer .tree-node.selected'),
-    ) as HTMLElement[];
-    selectedEls.forEach((el) => {
-      el.classList.remove('selected');
-      el.removeAttribute('aria-selected');
+  resetExplorerTree() {
+    this.measureUi('AppView.resetExplorerTree', () => {
+      const tree = document.getElementById('explorerTree') as HTMLElement | null;
+      if (tree) tree.innerHTML = '';
+      this.clearExplorerSelection();
     });
-  }
-
-  /** 트리 루트 DOM을 전부 비움(중복 root 방지) */
-  public resetExplorerTree() {
-    const tree = document.getElementById('explorerTree') as HTMLElement | null;
-    if (tree) tree.innerHTML = '';
-    this.clearExplorerSelection();
   }
 }

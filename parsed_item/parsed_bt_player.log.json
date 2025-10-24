@@ -1,14 +1,1202 @@
 [
   {
-    "time": "[Dec 25 23:59:59.999]",
-    "process": "btplay",
-    "pid": null,
-    "message": "merry xmas"
+    "time": "Sep 20 15:20:11.656",
+    "process": "bt_player",
+    "pid": "681",
+    "message": "23:01:13, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893978411] play[KIT_IDLE] vol[60]"
   },
   {
-    "time": "[Dec 26 00:00:00.000]",
-    "process": "btplay",
-    "pid": null,
-    "message": "new year!"
+    "time": "Sep 20 15:17:34.071",
+    "process": "bt_player",
+    "pid": "253",
+    "message": "00:22:16, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893978254] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 15:17:10.920",
+    "process": "bt_player",
+    "pid": "813",
+    "message": "17:18:28, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893978230] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 15:12:59.693",
+    "process": "bt_player",
+    "pid": "371",
+    "message": "16:09:24, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893977979] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 15:11:37.742",
+    "process": "bt_player",
+    "pid": "355",
+    "message": "05:46:05, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893977897] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 15:10:52.905",
+    "process": "bt_player",
+    "pid": "691",
+    "message": "12:52:15, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893977852] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 15:10:23.793",
+    "process": "bt_player",
+    "pid": "855",
+    "message": "01:58:28, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893977823] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 15:08:51.440",
+    "process": "bt_player",
+    "pid": "640",
+    "message": "15:40:17, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893977731] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 15:07:28.151",
+    "process": "bt_player",
+    "pid": "832",
+    "message": "10:30:44, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893977648] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:53:48.993",
+    "process": "bt_player",
+    "pid": "389",
+    "message": "11:01:45, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893976828] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:53:07.158",
+    "process": "bt_player",
+    "pid": "658",
+    "message": "09:19:02, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893976787] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:52:18.833",
+    "process": "bt_player",
+    "pid": "540",
+    "message": "09:41:57, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893976738] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:52:17.007",
+    "process": "bt_player",
+    "pid": "826",
+    "message": "14:46:26, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893976737] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:50:30.036",
+    "process": "bt_player",
+    "pid": "200",
+    "message": "07:00:06, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893976630] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 14:49:24.415",
+    "process": "bt_player",
+    "pid": "577",
+    "message": "01:27:05, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893976564] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:47:24.088",
+    "process": "bt_player",
+    "pid": "614",
+    "message": "04:25:09, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893976444] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:47:22.732",
+    "process": "bt_player",
+    "pid": "734",
+    "message": "04:49:37, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893976442] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 14:44:46.492",
+    "process": "bt_player",
+    "pid": "507",
+    "message": "02:15:30, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893976286] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:44:45.284",
+    "process": "bt_player",
+    "pid": "405",
+    "message": "23:13:58, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893976285] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 14:42:21.561",
+    "process": "bt_player",
+    "pid": "892",
+    "message": "03:17:32, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893976141] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:40:57.884",
+    "process": "bt_player",
+    "pid": "705",
+    "message": "11:37:10, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893976057] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:39:10.370",
+    "process": "bt_player",
+    "pid": "788",
+    "message": "05:01:33, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893975950] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:34:40.252",
+    "process": "bt_player",
+    "pid": "395",
+    "message": "08:24:22, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893975680] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:33:49.004",
+    "process": "bt_player",
+    "pid": "886",
+    "message": "19:17:13, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893975629] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:33:02.137",
+    "process": "bt_player",
+    "pid": "457",
+    "message": "03:22:40, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893975582] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 14:31:42.557",
+    "process": "bt_player",
+    "pid": "991",
+    "message": "14:33:17, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893975502] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:27:08.217",
+    "process": "bt_player",
+    "pid": "171",
+    "message": "05:46:02, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893975228] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:25:24.298",
+    "process": "bt_player",
+    "pid": "962",
+    "message": "17:47:20, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893975124] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:25:06.131",
+    "process": "bt_player",
+    "pid": "875",
+    "message": "03:12:50, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893975106] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:24:45.299",
+    "process": "bt_player",
+    "pid": "195",
+    "message": "08:21:13, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893975085] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:24:23.055",
+    "process": "bt_player",
+    "pid": "937",
+    "message": "09:20:00, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893975063] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:21:14.423",
+    "process": "bt_player",
+    "pid": "713",
+    "message": "21:10:36, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893974874] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:19:58.471",
+    "process": "bt_player",
+    "pid": "248",
+    "message": "18:35:28, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893974798] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:14:15.761",
+    "process": "bt_player",
+    "pid": "625",
+    "message": "14:46:32, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893974455] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:11:40.597",
+    "process": "bt_player",
+    "pid": "175",
+    "message": "03:08:14, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893974300] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:08:48.214",
+    "process": "bt_player",
+    "pid": "210",
+    "message": "14:55:40, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893974128] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:07:59.184",
+    "process": "bt_player",
+    "pid": "173",
+    "message": "03:24:04, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893974079] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:05:41.052",
+    "process": "bt_player",
+    "pid": "135",
+    "message": "23:48:24, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893973941] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 14:03:39.333",
+    "process": "bt_player",
+    "pid": "716",
+    "message": "13:46:09, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893973819] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 14:02:27.051",
+    "process": "bt_player",
+    "pid": "141",
+    "message": "06:43:53, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893973747] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 14:01:27.498",
+    "process": "bt_player",
+    "pid": "922",
+    "message": "22:27:24, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893973687] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:59:45.221",
+    "process": "bt_player",
+    "pid": "323",
+    "message": "00:49:33, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893973585] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:58:41.085",
+    "process": "bt_player",
+    "pid": "718",
+    "message": "18:19:30, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893973521] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:53:36.328",
+    "process": "bt_player",
+    "pid": "582",
+    "message": "13:38:20, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893973216] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:53:33.356",
+    "process": "bt_player",
+    "pid": "197",
+    "message": "00:36:10, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893973213] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:48:05.290",
+    "process": "bt_player",
+    "pid": "492",
+    "message": "00:23:11, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893972885] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:46:18.520",
+    "process": "bt_player",
+    "pid": "534",
+    "message": "06:27:12, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893972778] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:44:25.433",
+    "process": "bt_player",
+    "pid": "361",
+    "message": "01:09:41, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893972665] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:43:46.055",
+    "process": "bt_player",
+    "pid": "665",
+    "message": "13:14:23, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893972626] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:39:22.060",
+    "process": "bt_player",
+    "pid": "155",
+    "message": "09:48:25, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893972362] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:29:01.813",
+    "process": "bt_player",
+    "pid": "708",
+    "message": "19:33:45, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893971741] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:27:14.873",
+    "process": "bt_player",
+    "pid": "828",
+    "message": "16:25:58, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893971634] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:24:29.764",
+    "process": "bt_player",
+    "pid": "871",
+    "message": "08:30:55, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893971469] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:24:12.449",
+    "process": "bt_player",
+    "pid": "420",
+    "message": "16:16:30, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893971452] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:23:52.406",
+    "process": "bt_player",
+    "pid": "826",
+    "message": "15:01:08, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893971432] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:21:08.902",
+    "process": "bt_player",
+    "pid": "752",
+    "message": "21:29:21, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893971268] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:20:44.512",
+    "process": "bt_player",
+    "pid": "681",
+    "message": "19:05:25, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893971244] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:19:05.093",
+    "process": "bt_player",
+    "pid": "460",
+    "message": "22:38:47, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893971145] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:17:24.048",
+    "process": "bt_player",
+    "pid": "825",
+    "message": "10:42:27, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893971044] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 13:15:45.995",
+    "process": "bt_player",
+    "pid": "701",
+    "message": "23:40:35, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893970945] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 13:14:07.684",
+    "process": "bt_player",
+    "pid": "179",
+    "message": "04:54:00, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893970847] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:07:26.328",
+    "process": "bt_player",
+    "pid": "783",
+    "message": "10:20:28, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893970446] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 13:02:05.042",
+    "process": "bt_player",
+    "pid": "940",
+    "message": "04:57:40, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893970125] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:58:07.172",
+    "process": "bt_player",
+    "pid": "927",
+    "message": "16:39:41, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893969887] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:58:02.506",
+    "process": "bt_player",
+    "pid": "159",
+    "message": "11:10:24, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893969882] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:56:51.460",
+    "process": "bt_player",
+    "pid": "539",
+    "message": "20:00:41, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893969811] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:47:00.166",
+    "process": "bt_player",
+    "pid": "182",
+    "message": "23:00:40, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893969220] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:45:12.069",
+    "process": "bt_player",
+    "pid": "776",
+    "message": "23:33:07, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893969112] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:43:49.142",
+    "process": "bt_player",
+    "pid": "554",
+    "message": "10:22:12, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893969029] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:43:32.104",
+    "process": "bt_player",
+    "pid": "746",
+    "message": "21:11:17, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893969012] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:37:53.209",
+    "process": "bt_player",
+    "pid": "791",
+    "message": "01:34:49, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893968673] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:36:54.201",
+    "process": "bt_player",
+    "pid": "116",
+    "message": "02:18:58, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893968614] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:36:48.024",
+    "process": "bt_player",
+    "pid": "857",
+    "message": "06:36:40, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893968608] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:34:58.676",
+    "process": "bt_player",
+    "pid": "814",
+    "message": "03:39:01, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893968498] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:32:57.989",
+    "process": "bt_player",
+    "pid": "695",
+    "message": "12:12:59, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893968377] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:26:41.404",
+    "process": "bt_player",
+    "pid": "669",
+    "message": "21:00:07, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893968001] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:24:39.469",
+    "process": "bt_player",
+    "pid": "444",
+    "message": "10:13:29, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893967879] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:24:05.815",
+    "process": "bt_player",
+    "pid": "622",
+    "message": "09:20:55, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893967845] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:23:43.549",
+    "process": "bt_player",
+    "pid": "397",
+    "message": "00:17:31, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893967823] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:22:40.415",
+    "process": "bt_player",
+    "pid": "570",
+    "message": "05:09:48, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893967760] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:19:26.247",
+    "process": "bt_player",
+    "pid": "328",
+    "message": "08:22:09, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893967566] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:16:29.835",
+    "process": "bt_player",
+    "pid": "629",
+    "message": "05:08:20, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893967389] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:15:59.095",
+    "process": "bt_player",
+    "pid": "695",
+    "message": "07:52:34, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893967359] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:11:36.719",
+    "process": "bt_player",
+    "pid": "175",
+    "message": "12:19:10, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893967096] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 12:11:19.356",
+    "process": "bt_player",
+    "pid": "841",
+    "message": "00:13:25, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893967079] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:11:10.977",
+    "process": "bt_player",
+    "pid": "298",
+    "message": "21:24:38, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893967070] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:07:53.888",
+    "process": "bt_player",
+    "pid": "610",
+    "message": "11:14:22, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893966873] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:06:36.542",
+    "process": "bt_player",
+    "pid": "913",
+    "message": "00:17:20, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893966796] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:05:16.544",
+    "process": "bt_player",
+    "pid": "336",
+    "message": "19:44:48, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893966716] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 12:03:09.195",
+    "process": "bt_player",
+    "pid": "621",
+    "message": "20:47:25, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893966589] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 12:00:14.537",
+    "process": "bt_player",
+    "pid": "895",
+    "message": "00:46:47, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893966414] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:59:44.524",
+    "process": "bt_player",
+    "pid": "167",
+    "message": "07:54:37, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893966384] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:58:15.494",
+    "process": "bt_player",
+    "pid": "670",
+    "message": "14:07:09, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893966295] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:57:54.647",
+    "process": "bt_player",
+    "pid": "449",
+    "message": "03:45:25, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893966274] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 11:52:12.443",
+    "process": "bt_player",
+    "pid": "236",
+    "message": "21:23:53, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893965932] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:51:15.873",
+    "process": "bt_player",
+    "pid": "794",
+    "message": "03:59:42, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893965875] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 11:50:33.688",
+    "process": "bt_player",
+    "pid": "652",
+    "message": "09:09:37, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893965833] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:48:48.309",
+    "process": "bt_player",
+    "pid": "498",
+    "message": "23:22:37, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893965728] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:46:47.957",
+    "process": "bt_player",
+    "pid": "354",
+    "message": "17:25:07, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893965607] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:42:54.880",
+    "process": "bt_player",
+    "pid": "521",
+    "message": "18:45:27, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893965374] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 11:42:19.118",
+    "process": "bt_player",
+    "pid": "504",
+    "message": "23:08:05, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893965339] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:33:28.600",
+    "process": "bt_player",
+    "pid": "791",
+    "message": "03:30:26, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893964808] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:32:05.375",
+    "process": "bt_player",
+    "pid": "184",
+    "message": "08:46:10, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893964725] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:32:04.648",
+    "process": "bt_player",
+    "pid": "414",
+    "message": "15:43:47, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893964724] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 11:30:38.894",
+    "process": "bt_player",
+    "pid": "204",
+    "message": "12:37:36, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893964638] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:27:49.345",
+    "process": "bt_player",
+    "pid": "125",
+    "message": "11:36:14, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893964469] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 11:26:21.062",
+    "process": "bt_player",
+    "pid": "982",
+    "message": "06:20:21, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893964381] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:17:47.217",
+    "process": "bt_player",
+    "pid": "758",
+    "message": "02:23:32, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893963867] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:11:50.467",
+    "process": "bt_player",
+    "pid": "593",
+    "message": "08:53:39, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893963510] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:11:20.171",
+    "process": "bt_player",
+    "pid": "412",
+    "message": "14:37:33, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893963480] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 11:00:27.615",
+    "process": "bt_player",
+    "pid": "957",
+    "message": "02:24:22, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893962827] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 11:00:18.495",
+    "process": "bt_player",
+    "pid": "974",
+    "message": "00:47:25, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893962818] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:58:58.286",
+    "process": "bt_player",
+    "pid": "948",
+    "message": "02:55:27, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893962738] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:55:34.352",
+    "process": "bt_player",
+    "pid": "876",
+    "message": "15:42:58, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893962534] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:54:19.411",
+    "process": "bt_player",
+    "pid": "452",
+    "message": "11:08:14, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893962459] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:53:56.521",
+    "process": "bt_player",
+    "pid": "802",
+    "message": "18:06:07, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893962436] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:49:48.409",
+    "process": "bt_player",
+    "pid": "328",
+    "message": "22:33:58, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893962188] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 10:48:15.468",
+    "process": "bt_player",
+    "pid": "162",
+    "message": "02:25:29, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893962095] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 10:47:53.436",
+    "process": "bt_player",
+    "pid": "538",
+    "message": "21:34:50, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893962073] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:45:30.054",
+    "process": "bt_player",
+    "pid": "384",
+    "message": "05:33:51, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893961930] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 10:43:53.685",
+    "process": "bt_player",
+    "pid": "136",
+    "message": "00:19:03, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893961833] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:40:21.875",
+    "process": "bt_player",
+    "pid": "502",
+    "message": "01:53:31, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893961621] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:38:24.919",
+    "process": "bt_player",
+    "pid": "882",
+    "message": "17:30:02, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893961504] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 10:37:39.274",
+    "process": "bt_player",
+    "pid": "124",
+    "message": "04:01:40, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893961459] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:36:13.953",
+    "process": "bt_player",
+    "pid": "422",
+    "message": "23:23:30, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893961373] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:34:13.868",
+    "process": "bt_player",
+    "pid": "588",
+    "message": "18:33:08, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893961253] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:33:30.032",
+    "process": "bt_player",
+    "pid": "654",
+    "message": "08:21:40, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893961210] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:23:29.303",
+    "process": "bt_player",
+    "pid": "335",
+    "message": "11:53:56, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893960609] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:22:43.824",
+    "process": "bt_player",
+    "pid": "541",
+    "message": "06:56:09, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893960563] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 10:17:38.102",
+    "process": "bt_player",
+    "pid": "542",
+    "message": "06:20:09, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893960258] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:14:39.783",
+    "process": "bt_player",
+    "pid": "571",
+    "message": "02:55:20, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893960079] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:11:23.593",
+    "process": "bt_player",
+    "pid": "848",
+    "message": "03:28:51, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893959883] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 10:05:35.066",
+    "process": "bt_player",
+    "pid": "229",
+    "message": "15:45:08, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893959535] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:05:11.842",
+    "process": "bt_player",
+    "pid": "382",
+    "message": "13:12:10, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893959511] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 10:04:16.185",
+    "process": "bt_player",
+    "pid": "263",
+    "message": "01:46:48, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893959456] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 10:03:35.462",
+    "process": "bt_player",
+    "pid": "429",
+    "message": "05:40:55, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893959415] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:56:57.099",
+    "process": "bt_player",
+    "pid": "326",
+    "message": "13:12:52, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893959017] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:53:18.485",
+    "process": "bt_player",
+    "pid": "376",
+    "message": "06:01:44, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893958798] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:50:36.438",
+    "process": "bt_player",
+    "pid": "839",
+    "message": "16:04:43, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893958636] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:49:12.364",
+    "process": "bt_player",
+    "pid": "729",
+    "message": "16:29:17, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893958552] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:47:52.173",
+    "process": "bt_player",
+    "pid": "889",
+    "message": "07:28:13, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893958472] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 09:45:44.493",
+    "process": "bt_player",
+    "pid": "755",
+    "message": "07:44:29, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893958344] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:44:22.188",
+    "process": "bt_player",
+    "pid": "874",
+    "message": "08:46:15, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893958262] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:43:52.660",
+    "process": "bt_player",
+    "pid": "687",
+    "message": "01:38:08, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893958232] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:40:57.806",
+    "process": "bt_player",
+    "pid": "124",
+    "message": "08:16:51, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893958057] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:34:15.375",
+    "process": "bt_player",
+    "pid": "972",
+    "message": "08:01:59, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893957655] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 09:30:25.620",
+    "process": "bt_player",
+    "pid": "870",
+    "message": "17:36:42, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893957425] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:29:37.672",
+    "process": "bt_player",
+    "pid": "407",
+    "message": "00:04:45, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893957377] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:27:45.689",
+    "process": "bt_player",
+    "pid": "458",
+    "message": "12:21:14, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893957265] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:19:33.562",
+    "process": "bt_player",
+    "pid": "974",
+    "message": "10:43:29, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893956773] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:18:20.178",
+    "process": "bt_player",
+    "pid": "383",
+    "message": "19:32:42, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893956700] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:15:36.157",
+    "process": "bt_player",
+    "pid": "322",
+    "message": "06:13:37, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893956536] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 09:14:44.231",
+    "process": "bt_player",
+    "pid": "897",
+    "message": "10:44:36, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893956484] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:14:29.843",
+    "process": "bt_player",
+    "pid": "592",
+    "message": "00:28:13, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893956469] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:11:22.039",
+    "process": "bt_player",
+    "pid": "872",
+    "message": "10:15:27, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893956282] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:10:21.848",
+    "process": "bt_player",
+    "pid": "843",
+    "message": "21:32:42, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893956221] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 09:04:24.759",
+    "process": "bt_player",
+    "pid": "331",
+    "message": "04:49:57, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893955864] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:01:06.700",
+    "process": "bt_player",
+    "pid": "252",
+    "message": "09:24:00, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893955666] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 09:00:49.315",
+    "process": "bt_player",
+    "pid": "718",
+    "message": "19:08:55, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893955649] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:54:54.304",
+    "process": "bt_player",
+    "pid": "253",
+    "message": "21:03:22, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893955294] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:54:20.417",
+    "process": "bt_player",
+    "pid": "281",
+    "message": "09:19:04, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893955260] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:53:53.618",
+    "process": "bt_player",
+    "pid": "855",
+    "message": "02:57:14, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893955233] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:49:21.666",
+    "process": "bt_player",
+    "pid": "467",
+    "message": "12:04:29, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893954961] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:46:33.054",
+    "process": "bt_player",
+    "pid": "405",
+    "message": "19:41:01, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893954793] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:45:22.139",
+    "process": "bt_player",
+    "pid": "616",
+    "message": "13:36:37, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893954722] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:42:53.309",
+    "process": "bt_player",
+    "pid": "265",
+    "message": "22:36:50, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893954573] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:42:29.259",
+    "process": "bt_player",
+    "pid": "349",
+    "message": "21:57:24, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893954549] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:40:01.984",
+    "process": "bt_player",
+    "pid": "981",
+    "message": "17:02:04, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893954401] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:37:16.278",
+    "process": "bt_player",
+    "pid": "400",
+    "message": "04:32:31, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893954236] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 08:36:26.576",
+    "process": "bt_player",
+    "pid": "247",
+    "message": "17:19:03, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893954186] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 08:33:34.453",
+    "process": "bt_player",
+    "pid": "388",
+    "message": "07:48:57, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893954014] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 08:32:10.888",
+    "process": "bt_player",
+    "pid": "250",
+    "message": "00:25:57, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893953930] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:29:55.066",
+    "process": "bt_player",
+    "pid": "867",
+    "message": "23:29:32, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893953795] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 08:27:18.323",
+    "process": "bt_player",
+    "pid": "270",
+    "message": "17:25:39, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893953638] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:18:17.008",
+    "process": "bt_player",
+    "pid": "967",
+    "message": "02:26:37, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893953097] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 08:15:23.884",
+    "process": "bt_player",
+    "pid": "342",
+    "message": "04:58:25, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893952923] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:12:25.898",
+    "process": "bt_player",
+    "pid": "335",
+    "message": "23:00:50, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893952745] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:10:54.030",
+    "process": "bt_player",
+    "pid": "944",
+    "message": "17:51:23, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893952654] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:10:22.657",
+    "process": "bt_player",
+    "pid": "253",
+    "message": "21:28:20, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893952622] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:10:14.126",
+    "process": "bt_player",
+    "pid": "951",
+    "message": "17:18:20, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893952614] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:09:14.989",
+    "process": "bt_player",
+    "pid": "557",
+    "message": "22:59:56, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893952554] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 08:08:34.348",
+    "process": "bt_player",
+    "pid": "560",
+    "message": "22:15:16, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893952514] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:08:23.110",
+    "process": "bt_player",
+    "pid": "903",
+    "message": "10:50:56, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893952503] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:05:17.975",
+    "process": "bt_player",
+    "pid": "510",
+    "message": "01:55:19, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893952317] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 08:01:43.385",
+    "process": "bt_player",
+    "pid": "991",
+    "message": "04:38:21, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893952103] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 07:59:54.339",
+    "process": "bt_player",
+    "pid": "957",
+    "message": "21:09:33, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893951994] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 07:57:29.353",
+    "process": "bt_player",
+    "pid": "428",
+    "message": "16:04:35, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893951849] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 07:51:01.284",
+    "process": "bt_player",
+    "pid": "428",
+    "message": "02:11:43, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893951461] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 07:49:01.695",
+    "process": "bt_player",
+    "pid": "385",
+    "message": "07:41:23, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893951341] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 07:46:17.539",
+    "process": "bt_player",
+    "pid": "988",
+    "message": "00:06:45, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893951177] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 07:45:59.612",
+    "process": "bt_player",
+    "pid": "687",
+    "message": "09:27:52, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893951159] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 07:40:31.251",
+    "process": "bt_player",
+    "pid": "529",
+    "message": "12:50:25, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893950831] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 07:39:57.634",
+    "process": "bt_player",
+    "pid": "423",
+    "message": "07:15:19, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893950797] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 07:38:10.312",
+    "process": "bt_player",
+    "pid": "443",
+    "message": "22:56:14, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893950690] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 07:33:58.072",
+    "process": "bt_player",
+    "pid": "929",
+    "message": "13:43:01, e[32mINFO e[0m e[90mprint_monitor:223:e[0m  TTS   <X:X> [63893950438] play[KIT_IDLE] vol[60]"
+  },
+  {
+    "time": "Sep 20 07:31:04.764",
+    "process": "bt_player",
+    "pid": "560",
+    "message": "01:41:26, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893950264] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 07:28:34.606",
+    "process": "bt_player",
+    "pid": "627",
+    "message": "04:42:13, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893950114] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 07:25:40.848",
+    "process": "bt_player",
+    "pid": "718",
+    "message": "04:46:09, e[32mINFO e[0m e[90mprint_monitor:205:e[0m  MEDIA <X:X> [63893949940] play[KIT_STOPPED:000/000000] LED[0] HS[0] hplay[2] H_ID(000:-01) MT[1] vol[50]"
+  },
+  {
+    "time": "Sep 20 07:19:19.913",
+    "process": "bt_player",
+    "pid": "903",
+    "message": "14:11:59, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893949559] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
+  },
+  {
+    "time": "Sep 20 07:19:15.939",
+    "process": "bt_player",
+    "pid": "513",
+    "message": "16:58:45, e[32mINFO e[0m e[90mprint_monitor:191:e[0m  BT    <X:X> [63893949555] power[1] discov[0] conn[0[] play[0] trans[BT_TRANSPORT_DISCONNECT:BT_TRANSPORT_IDLE] vol[64])"
   }
 ]

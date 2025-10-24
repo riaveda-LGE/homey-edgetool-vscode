@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { parentDir, relFromBase, toPosix } from '../../shared/utils.js';
+import { measure } from '../../core/logging/perf.js';
 
 const log = getLogger('explorerBridge');
 
@@ -51,6 +52,7 @@ class RefreshCoalescer {
       }, this.DEBOUNCE_MS),
     );
   }
+  @measure()
   private async execute(scope: string) {
     if (this.inflight.has(scope)) {
       this.pending.add(scope);
@@ -103,6 +105,7 @@ class WatcherManager {
   }
 
   /** 워크스페이스 정보 초기화 */
+  @measure()
   async ensureInfo() {
     if (!this.info) {
       this.info = await resolveWorkspaceInfo(this.context);
@@ -143,6 +146,7 @@ class WatcherManager {
   }
 
   /** 워처 초기화 및 재등록 */
+  @measure()
   async ensureWatchers() {
     if (this.disposed || !this.info) return;
     const baseUri = this.info.wsDirUri;
@@ -158,6 +162,7 @@ class WatcherManager {
   }
 
   /** 주기적 정리 */
+  @measure()
   async cleanup() {
     if (this.disposed || !this.info) return;
     this.log.info('[WatcherManager] starting periodic watcher cleanup');
@@ -172,6 +177,7 @@ class WatcherManager {
   }
 
   /** dispose */
+  @measure()
   dispose() {
     this.disposed = true;
     if (this.state.cleanupTimer) {
@@ -216,6 +222,7 @@ class ExplorerUI {
   }
 
   /** 파일 시스템 이벤트 처리 */
+  @measure()
   async handleFsEvent(relPath: string, uri: vscode.Uri, eventType: 'create' | 'change' | 'delete') {
     // change 이벤트는 루트 워처 단계에서 무시되지만 혹시 모를 케이스 방어
     if (eventType === 'change') return;
@@ -247,6 +254,7 @@ class ExplorerUI {
   // (삭제/폴더 추가에 대한 별도 워처 추가/제거 로직은 제거됨: 루트 워처 + list()만으로 반영)
 
   /** 메시지 처리 */
+  @measure()
   async handleMessage(msg: any): Promise<boolean> {
     switch (msg.type) {
       case 'explorer.list':
@@ -258,21 +266,17 @@ class ExplorerUI {
         this.log.info('[ExplorerUI] <- refresh', msg.payload?.path);
         await this.list(String(msg.payload?.path || ''));
         return true;
-        return true;
       case 'explorer.open':
         this.log.info('[ExplorerUI] <- open', msg.payload?.path);
         await this.open(String(msg.payload?.path || ''));
-        return true;
         return true;
       case 'explorer.createFile':
         this.log.info('[ExplorerUI] <- createFile', msg.payload?.path);
         await this.createFile(String(msg.payload?.path || ''));
         return true;
-        return true;
       case 'explorer.createFolder':
         this.log.info('[ExplorerUI] <- createFolder', msg.payload?.path);
         await this.createFolder(String(msg.payload?.path || ''));
-        return true;
         return true;
       case 'explorer.delete':
         this.log.info('[ExplorerUI] <- delete', msg.payload?.path, {
@@ -289,6 +293,7 @@ class ExplorerUI {
     return false;
   }
 
+  @measure()
   private async list(rel: string) {
     log.debug('[debug] ExplorerUI list: start');
     try {
@@ -328,6 +333,7 @@ class ExplorerUI {
     }
   }
 
+  @measure()
   private async open(rel: string) {
     log.debug('[debug] ExplorerUI open: start');
     try {
@@ -352,6 +358,7 @@ class ExplorerUI {
     }
   }
 
+  @measure()
   private async createFile(rel: string) {
     log.debug('[debug] ExplorerUI createFile: start');
     try {
@@ -375,6 +382,7 @@ class ExplorerUI {
     }
   }
 
+  @measure()
   private async createFolder(rel: string) {
     log.debug('[debug] ExplorerUI createFolder: start');
     try {
@@ -398,6 +406,7 @@ class ExplorerUI {
     }
   }
 
+  @measure()
   private async remove(rel: string, recursive: boolean, useTrash: boolean) {
     log.debug('[debug] ExplorerUI remove: start');
     try {
@@ -423,6 +432,7 @@ class ExplorerUI {
   }
 
   /** 워크스페이스 루트 변경 */
+  @measure()
   async refreshWorkspaceRoot() {
     log.debug('[debug] ExplorerUI refreshWorkspaceRoot: start');
     this.watcherManager.info = undefined;

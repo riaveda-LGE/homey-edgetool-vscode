@@ -47,15 +47,16 @@ npm test
 
 ```bash
 # 일반 로그 파일 병합 테스트
-npm test -- --testNamePattern="일반 로그 파일들을 정확히 병합해야 함"
+npm run test -- -t="일반 로그 파일들을 정확히 병합해야 함"
 
 # 타임존 점프 로그 병합 테스트
-npm test -- --testNamePattern="타임존 점프가 있는 로그 파일들을 정확히 병합해야 함"
+npm run test -- -t="타임존 점프가 있는 로그 파일들을 정확히 병합해야 함"
 ```
 
 파일 테스트 실행:
 ```bash
-npm test -- --testPathPattern="LogFileIntegration"
+npm run test -- --f="LogFileIntegration"
+npm run test -- --f="LogWebviewAscendingOrder"
 ```
 
 ## 검증

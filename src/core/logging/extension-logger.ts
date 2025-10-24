@@ -8,6 +8,10 @@ import {
   LOG_MAX_BUFFER,
 } from '../../shared/const.js';
 
+// test 모드(npm run test)에서는 VS Code 로그 채널 대신 콘솔로 보냄
+import { isTestMode } from './test-mode.js';
+import { getConsoleLogger } from './console-logger.js';
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Sink = (line: string) => void;
 
@@ -211,6 +215,10 @@ export function getWebviewReady() {
   return core.getWebviewReady();
 }
 export function getLogger(scope: string) {
+  // ✅ 테스트 실행 시엔 뷰(panel) 대신 콘솔로 직행
+  if (isTestMode()) {
+    return getConsoleLogger(scope) as any;
+  }
   return core.getLogger(scope);
 }
 export function addLogSink(sink: Sink) {

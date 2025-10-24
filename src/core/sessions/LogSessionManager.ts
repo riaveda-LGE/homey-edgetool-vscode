@@ -269,6 +269,7 @@ export class LogSessionManager {
           warmupPerTypeLimit: FF.warmupPerTypeLimit,
           warmupTarget: FF.warmupTarget,
           whitelistGlobs: opts.whitelistGlobs,
+          parser: opts.parserConfig, // ✅ T0에도 parser 적용
         });
         if (warmLogs.length) {
           // 메모리/웹뷰 준비
@@ -314,14 +315,17 @@ export class LogSessionManager {
 
     // manifest / chunk writer 준비
     const manifest = await ManifestWriter.loadOrCreate(outDir);
-    manifest.setTotal(total);
+    // ⬇️ 빈 데이터셋이어도 manifest.json이 존재하도록 선 저장
+    //    - 이후 paginationService.setManifestDir(outDir)에서 ENOENT 방지
+    manifest.setTotal(typeof total === 'number' ? total : 0);
+    await manifest.save();
     const chunkWriter = new ChunkWriter(outDir, MERGED_CHUNK_MAX_LINES, manifest.data.chunkCount);
     this.log.debug?.(
       `T1: manifest loaded chunks=${manifest.data.chunkCount} mergedLines=${manifest.data.mergedLines ?? 0}`,
     );
 
     // (주의) 전역 인덱스는 페이지 서비스에서 오름차순으로 부여한다.
-    let mergedSoFar = manifest.data.mergedLines;
+    let mergedSoFar = manifest.data.mergedLines ?? 0;
     let sentInitial = false; // ✅ 최초 LOG_WINDOW_SIZE만 보낼 가드
     const initialBuffer: LogEntry[] = [];
     let paginationOpened = false; // ✅ T0 시점에만 1회 open
@@ -414,11 +418,12 @@ export class LogSessionManager {
       // (최종 done/total 신호로 바를 고정)
     }
 
-    // ✅ T1: 최종 완료 시점에 최신 manifest로 리더 리로드 (빈 입력 케이스 대비 가드)
+    // ✅ T1: 최종 완료 시점에 최신 manifest로 리더 리로드
     try {
       if (!paginationOpened) {
-        // (예외: 앞에서 열지 못한 경우 보정)
+        // (앞서 part 생성이 없어 아직 열지 못했다면 여기서 1회 오픈)
         await paginationService.setManifestDir(outDir);
+        paginationOpened = true;
       } else {
         await paginationService.reload();
       }
@@ -480,6 +485,7 @@ export class LogSessionManager {
     this.cm?.dispose();
   }
 
+  @measure()
   dispose() {
     this.stopAll();
     this.cm?.dispose();
@@ -489,6 +495,7 @@ export class LogSessionManager {
   // -------------------- helpers --------------------
 
   /** 총 라인 수 추정 (에러 시 undefined) */
+  @measure()
   private async estimateTotalLinesSafe(
     dir: string,
     whitelistGlobs?: string[],
@@ -502,6 +509,7 @@ export class LogSessionManager {
   }
 
   /** 실제 병합과 동일한 규칙(EOF 개행 없음 보정 포함)으로 총 라인수를 계산 */
+  @measure()
   private async estimateTotalLines(
     dir: string,
     whitelistGlobs?: string[],
@@ -513,6 +521,7 @@ export class LogSessionManager {
   }
 
   /** outDir이 이미 존재하며 manifest가 있으면 새 폴더로 회피하여 덮어쓰기 안전 보장 */
+  @measure()
   private async prepareCleanOutputDir(baseOutDir: string): Promise<string> {
     try {
       await fs.promises.mkdir(baseOutDir, { recursive: true });

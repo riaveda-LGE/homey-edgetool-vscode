@@ -9,6 +9,7 @@ import {
   setupTempInput,
   cleanOutputs,
 } from './helpers/testFs.js';
+import { measureBlock } from '../core/logging/perf.js';
 
 jest.setTimeout(600_000);
 
@@ -27,16 +28,18 @@ it('파일 병합 세션 E2E: manifest/chunk/콜백 일관성 검증', async () 
   const batches: Array<{ n: number; seq?: number; total?: number }> = [];
   let saved: MergeSavedInfo | null = null;
 
-  await mgr.startFileMergeSession({
-    dir: DIR,
-    onBatch: (logs: LogEntry[], total?: number, seq?: number) => {
-      batches.push({ n: logs.length, total, seq });
-    },
-    onSaved: (info: MergeSavedInfo) => {
-      saved = info;
-    },
-    onProgress: () => {},
-  } as any);
+  await measureBlock('file-merge-e2e-session', () =>
+    mgr.startFileMergeSession({
+      dir: DIR,
+      onBatch: (logs: LogEntry[], total?: number, seq?: number) => {
+        batches.push({ n: logs.length, total, seq });
+      },
+      onSaved: (info: MergeSavedInfo) => {
+        saved = info;
+      },
+      onProgress: () => {},
+    } as any)
+  );
 
   expect(saved).toBeTruthy();
   expect(saved!.outDir).toBeTruthy();

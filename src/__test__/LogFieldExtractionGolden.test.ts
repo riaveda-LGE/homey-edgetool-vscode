@@ -1,5 +1,5 @@
-// === src/__test__/LogFieldExtractionGolden.test.ts ===
-// npm test -- --testPathPattern="LogFieldExtractionGolden"
+// npm test -- --testPathPattern="LogRoundtripReconstruction"
+
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -9,6 +9,7 @@ import {
   matchRuleForPath,
   extractByCompiledRule,
 } from '../core/logs/ParserEngine.js';
+import { measureBlock } from '../core/logging/perf.js';
 
 jest.setTimeout(120_000);
 
@@ -19,167 +20,218 @@ type ParsedLine = {
   message: string | null;
 };
 
-const REPO_ROOT = path.resolve(__dirname, '..', '..');
+type SrcLine = { n: number; text: string }; // 실제 원본 줄 번호 포함
 
-// 템플릿 경로(리포지토리 내 내장 템플릿)
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const TEMPLATE_PATH = path.resolve(
   REPO_ROOT,
   'media',
   'resources',
   'custom_log_parser.template.v1.json',
 );
-
-// normal_test_suite 경로
 const SUITE_DIR = path.join(REPO_ROOT, 'src', '__test__', 'test_log', 'normal_test_suite');
 const BEFORE_DIR = path.join(SUITE_DIR, 'before_merge');
-// 주의: 리포의 폴더명이 'after_parced' 로 표기되어 있어 그대로 사용합니다(오타 아님).
-const AFTER_DIR = path.join(SUITE_DIR, 'after_parced');
 
-function readLines(filePath: string): string[] {
-  const raw = fs.readFileSync(filePath, 'utf8');
-  return raw
-    .split(/\r?\n/)
-    .filter((ln) => ln.trim().length > 0);
-}
-
-function toGoldenJsonPath(beforePath: string): string {
-  const base = path.basename(beforePath).replace(/\.[^.]+$/, '');
-  return path.join(AFTER_DIR, `${base}.json`);
-}
-
-// ── 비교 유틸: 시간/메시지 정규화 후 비교 ──────────────────────────────
+// ── 유틸 ─────────────────────────────────────────────────────────────
 const ANSI_RE = /\u001b\[[0-9;]*m/g; // \x1b[...m
-function normalizeTime(v?: string | null): string {
-  if (!v) return '';
-  // 시간은 [ ... ] 대괄호를 제거하고 앞뒤만 trim
-  return v.replace(/^\[|\]$/g, '').trim();
-}
-function normalizeMsg(v?: string | null): string {
-  if (!v) return '';
-  // ANSI 컬러코드 제거 → 탭/스페이스 연속을 1칸으로 → 앞뒤 trim
-  return v.replace(ANSI_RE, '').replace(/[ \t]+/g, ' ').trim();
-}
-function equalLoosely(pa: ParsedLine, pb: ParsedLine): boolean {
-  // time: 대괄호 제거 비교, process/pid: 엄격 비교, message: 정규화 비교
-  if (normalizeTime(pa.time) !== normalizeTime(pb.time)) return false;
-  if ((pa.process ?? '') !== (pb.process ?? '')) return false;
-  if ((pa.pid ?? '') !== (pb.pid ?? '')) return false;
-  if (normalizeMsg(pa.message) !== normalizeMsg(pb.message)) return false;
-  return true;
+function stripAnsi(s: string): string {
+  return s.replace(ANSI_RE, '');
 }
 
-function friendlyDiff(a: ParsedLine[], b: ParsedLine[]) {
+/** 파일에서 빈 줄 포함 전체를 읽고, 테스트에는 "비어있지 않은 줄"만 투입하면서 원본 줄 번호(n)를 보존 */
+function readLinesWithNumbers(filePath: string): SrcLine[] {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const parts = raw.split(/\r?\n/);
+  const out: SrcLine[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const text = parts[i] ?? '';
+    if (text.trim().length > 0) out.push({ n: i + 1, text });
+  }
+  return out;
+}
+
+/** 시각화: 눈에 안 보이는 문자들을 토큰으로 치환 */
+function visualize(s: string): string {
+  return s
+    .replace(/\uFEFF/g, '<BOM>')  // BOM 보이기
+    .replace(/\t/g, '<TAB>')
+    .replace(/\r/g, '<CR>')
+    .replace(/\n/g, '<LF>');
+}
+
+/** 바이트 헥스 문자열 (최대 max 바이트) */
+function toHex(buf: Buffer, max = 64): string {
+  const view = buf.subarray(0, Math.min(buf.length, max));
+  return Array.from(view).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+}
+
+/** 코드포인트 헥스 (문자 단위) */
+function toCodepointsHex(s: string, max = 64): string {
+  const arr = Array.from(s);
+  const sliced = arr.slice(0, max);
+  return sliced.map((ch) => ch.codePointAt(0)!.toString(16).padStart(4, '0')).join(' ');
+}
+
+/** 파일 헤더 헥스 + BOM 여부 */
+function fileHeaderInfo(filePath: string): string {
+  const raw = fs.readFileSync(filePath);
+  const head = toHex(raw, 16);
+  const hasUtf8Bom = raw.length >= 3 && raw[0] === 0xef && raw[1] === 0xbb && raw[2] === 0xbf;
+  return `file-header-hex(16): ${head}${hasUtf8Bom ? '  [UTF-8 BOM detected]' : ''}`;
+}
+
+/** message 앞쪽의 리딩 공백을 1개까지만 제거해, 우리가 넣는 ': ' 과 중복되지 않게 함 */
+function removeOneLeadingSpace(s: string): string {
+  if (!s) return s;
+  return s.replace(/^\s/, '');
+}
+
+/** 파싱 결과로 원본 라인을 복원 */
+function reconstructLine(p: ParsedLine): string {
+  const t = (p.time ?? '').toString();
+  const proc = (p.process ?? '').toString();
+  const pidRaw = (p.pid ?? '').toString().trim();
+  const pidBlock = pidRaw ? `[${pidRaw}]` : '';
+  const msg0 = (p.message ?? '').toString();
+  const msg = removeOneLeadingSpace(msg0); // ': ' 과 중복 방지
+  // 원 포맷: [time] process[pid]: message
+  return `[${t}] ${proc}${pidBlock}: ${msg}`;
+}
+
+/** 비교용 정규화: ANSI 제거 + 탭/스페이스 연속을 1칸으로 + 앞뒤 trim */
+function normalizeForCompare(fullLine: string): string {
+  return stripAnsi(fullLine)
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
+/** 차이 지점 상세(시각화 + 헥스) */
+function prettyFirstDiff(a: string[], b: string[]) {
   if (a.length !== b.length) {
-    return `Length mismatch: parsed=${a.length}, golden=${b.length}`;
+    return `Length mismatch: reconstructed=${a.length}, original=${b.length}`;
   }
   for (let i = 0; i < a.length; i++) {
-    const pa = a[i];
-    const pb = b[i];
-    if (!equalLoosely(pa, pb)) {
-      // 어떤 필드가 깨졌는지 친절히 표기
-      if (normalizeTime(pa.time) !== normalizeTime(pb.time)) {
-        return (
-          `First difference at index ${i}, field 'time' (normalized compare):\n` +
-          `  parsed(norm) = ${JSON.stringify(normalizeTime(pa.time))}\n` +
-          `  golden(norm) = ${JSON.stringify(normalizeTime(pb.time))}\n` +
-          `  parsed line obj = ${JSON.stringify(pa)}\n` +
-          `  golden line obj = ${JSON.stringify(pb)}`
-        );
-      }
-      if ((pa.process ?? '') !== (pb.process ?? '')) {
-        return (
-          `First difference at index ${i}, field 'process':\n` +
-          `  parsed = ${JSON.stringify(pa.process)}\n` +
-          `  golden = ${JSON.stringify(pb.process)}\n` +
-          `  parsed line obj = ${JSON.stringify(pa)}\n` +
-          `  golden line obj = ${JSON.stringify(pb)}`
-        );
-      }
-      if ((pa.pid ?? '') !== (pb.pid ?? '')) {
-        return (
-          `First difference at index ${i}, field 'pid':\n` +
-          `  parsed = ${JSON.stringify(pa.pid)}\n` +
-          `  golden = ${JSON.stringify(pb.pid)}\n` +
-          `  parsed line obj = ${JSON.stringify(pa)}\n` +
-          `  golden line obj = ${JSON.stringify(pb)}`
-        );
-      }
-      if (normalizeMsg(pa.message) !== normalizeMsg(pb.message)) {
-        return (
-          `First difference at index ${i}, field 'message' (normalized compare):\n` +
-          `  parsed(norm) = ${JSON.stringify(normalizeMsg(pa.message))}\n` +
-          `  golden(norm) = ${JSON.stringify(normalizeMsg(pb.message))}\n` +
-          `  parsed line obj = ${JSON.stringify(pa)}\n` +
-          `  golden line obj = ${JSON.stringify(pb)}`
-        );
-      }
+    if (a[i] !== b[i]) {
+      const visA = visualize(a[i]);
+      const visB = visualize(b[i]);
+      const hexA = toHex(Buffer.from(a[i], 'utf8'));
+      const hexB = toHex(Buffer.from(b[i], 'utf8'));
+      const cpA = toCodepointsHex(a[i]);
+      const cpB = toCodepointsHex(b[i]);
+      return (
+        `First difference at index ${i}:\n` +
+        `  reconstructed(vis) = ${JSON.stringify(visA)}\n` +
+        `  original     (vis) = ${JSON.stringify(visB)}\n` +
+        `  reconstructed(hex) = ${hexA}\n` +
+        `  original     (hex) = ${hexB}\n` +
+        `  reconstructed(cps) = ${cpA}\n` +
+        `  original     (cps) = ${cpB}`
+      );
     }
   }
   return 'No differences';
 }
 
-describe('normal_test_suite golden diff', () => {
-  it('before_merge/*.log 을 파싱한 결과가 after_parced/*.json 과 정확히 일치한다', async () => {
-    // 파서 컴파일
+// ── 테스트 본문 ───────────────────────────────────────────────────────
+describe('Log roundtrip reconstruction (ANSI/whitespace-insensitive)', () => {
+  it('before_merge/*.log → (parse) → (reconstruct) → 원본과 동일', async () => {
     const tpl = JSON.parse(fs.readFileSync(TEMPLATE_PATH, 'utf8'));
-    const cp = compileParserConfig(tpl)!;
+    const cp = measureBlock('compile-parser-config-roundtrip', () => compileParserConfig(tpl))!;
     expect(cp).toBeTruthy();
     expect(cp.version).toBe(1);
 
-    // 입력 로그 후보 수집
     const beforeFiles = fs
       .readdirSync(BEFORE_DIR)
       .filter((f) => fs.statSync(path.join(BEFORE_DIR, f)).isFile())
-      // 일반적으로 *.log 만 비교(필요시 확장 가능)
-      .filter((f) => /\.log(\.\d+)?$/.test(f));
+      .filter((f) => /\.log(\.\d+)?$/i.test(f))
+      .sort();
 
     if (beforeFiles.length === 0) {
       throw new Error(`No log files found in ${BEFORE_DIR}`);
     }
 
-    // 파일별 파싱 및 golden 비교
     for (const fname of beforeFiles) {
-      const beforeFull = path.join(BEFORE_DIR, fname);
-      const relForRule = fname.replace(/\\/g, '/'); // 글롭 매칭은 상대경로 기반
-      const rule = matchRuleForPath(relForRule, cp);
+      const full = path.join(BEFORE_DIR, fname);
+      const rel = fname.replace(/\\/g, '/');
+
+      const rule = measureBlock('match-rule-for-path-roundtrip', () => matchRuleForPath(rel, cp));
       expect(rule).toBeTruthy();
 
-      const shouldUse = await shouldUseParserForFile(beforeFull, relForRule, cp);
+      const shouldUse = await measureBlock('should-use-parser-for-file-roundtrip', () =>
+        shouldUseParserForFile(full, rel, cp),
+      );
       if (!shouldUse) {
-          throw new Error(`Preflight failed (shouldUse=false) for file: ${fname}`);
+        throw new Error(
+          `Preflight failed (shouldUse=false) for file: ${fname}\n` +
+            `${fileHeaderInfo(full)}\n` +
+            `rule.regex = ${JSON.stringify({
+              time: String(rule!.regex.time || ''),
+              process: String(rule!.regex.process || ''),
+              pid: String(rule!.regex.pid || ''),
+              message: String(rule!.regex.message || ''),
+            })}`,
+        );
       }
-      expect(shouldUse).toBe(true);
 
-      const lines = readLines(beforeFull);
-      const parsed: ParsedLine[] = lines.map((line, idx) => {
-        const f = extractByCompiledRule(line, rule!);
-        // 요구 필드(time, process, message)는 반드시 존재해야 함
-        if (!f || !f.time || !f.process || !f.message) {
-          throw new Error(
-            `Required fields missing at ${fname}:${idx + 1}\n` +
-              `line=${JSON.stringify(line)}\n` +
-              `extracted=${JSON.stringify(f)}`,
+      // 파일 헤더(헥스) → BOM 즉시 눈으로 확인
+      // (Jest는 console.log도 실패 시 출력되므로 즉시 찍어 둔다)
+      console.log(`[debug] ${fname}: ${fileHeaderInfo(full)}`);
+
+      const src = readLinesWithNumbers(full);
+
+      const parsed: ParsedLine[] = [];
+      for (let i = 0; i < src.length; i++) {
+        const { n, text } = src[i];
+        try {
+          const f = measureBlock('extract-by-compiled-rule-roundtrip', () =>
+            extractByCompiledRule(text, rule!),
           );
+          if (!f || !f.time || !f.process || !f.message) {
+            const vis = visualize(text);
+            const hex = toHex(Buffer.from(text, 'utf8'));
+            const cps = toCodepointsHex(text);
+            const hasLeadingBom = text.charCodeAt(0) === 0xfeff;
+            throw new Error(
+              `Required fields missing at ${fname}:${n} (index=${i})\n` +
+                `rule.regex = ${JSON.stringify({
+                  time: String(rule!.regex.time || ''),
+                  process: String(rule!.regex.process || ''),
+                  pid: String(rule!.regex.pid || ''),
+                  message: String(rule!.regex.message || ''),
+                })}\n` +
+                `line(vis) = ${JSON.stringify(vis)}\n` +
+                `line(hex) = ${hex}\n` +
+                `line(cps) = ${cps}\n` +
+                `hasLeadingBOM = ${hasLeadingBom}\n` +
+                `extracted = ${JSON.stringify(f)}`,
+            );
+          }
+          parsed.push({
+            time: f.time ?? null,
+            process: f.process ?? null,
+            pid: f.pid ?? null,
+            message: f.message ?? null,
+          });
+        } catch (e: any) {
+          // 캐치해서 파일 헤더도 함께 보여주고 재던짐
+          const enriched =
+            `\n[debug] file=${fname} at originalLine=${n} index=${i}\n` +
+            `${fileHeaderInfo(full)}\n` +
+            (e?.message || e);
+          throw new Error(enriched);
         }
-        return {
-          time: f.time ?? null,
-          process: f.process ?? null,
-          pid: f.pid ?? null,
-          message: f.message ?? null,
-        };
-      });
+      }
 
-      const goldenPath = toGoldenJsonPath(beforeFull);
-      expect(fs.existsSync(goldenPath)).toBe(true);
+      // (parse) → (reconstruct)
+      const reconstructed = parsed.map(reconstructLine).map(normalizeForCompare);
+      // 원본(ANSI 제거 + 공백 정규화)
+      const original = src.map((l) => normalizeForCompare(l.text));
 
-      const golden: ParsedLine[] = JSON.parse(fs.readFileSync(goldenPath, 'utf8'));
-
-      // 느슨한 규칙(시간 대괄호 무시, 메시지 공백/ANSI 정규화)으로 비교
-      const detail = friendlyDiff(parsed, golden);
+      const detail = prettyFirstDiff(reconstructed, original);
       if (detail !== 'No differences') {
         throw new Error(
-          `Parsed output does not match golden for "${fname}".\n` +
-            `Golden: ${path.relative(REPO_ROOT, goldenPath)}\n` +
+          `Roundtrip mismatch for "${fname}".\n` +
+            `Before: ${path.relative(REPO_ROOT, full)}\n` +
             detail,
         );
       }

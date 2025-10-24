@@ -3,6 +3,7 @@ import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getLogger } from '../logging/extension-logger.js';
+import { measure } from '../logging/perf.js';
 
 const log = getLogger('ChunkWriter');
 
@@ -27,6 +28,7 @@ export class ChunkWriter {
   }
 
   /** 들어온 엔트리들을 청크 경계에 맞춰 파일로 기록하고, 생성/완성된 part 목록을 반환 */
+  @measure()
   async appendBatch(entries: LogEntry[]): Promise<ChunkWriteResult[]> {
     const results: ChunkWriteResult[] = [];
     for (const e of entries) {
@@ -41,12 +43,14 @@ export class ChunkWriter {
   }
 
   /** 강제 플러시(미완 청크까지 파일로 떨어뜨림) */
+  @measure()
   async flushRemainder(): Promise<ChunkWriteResult | undefined> {
     if (!this.currentBuffer.length) return;
     const result = await this.flushChunk();
     return result;
   }
 
+  @measure()
   private async flushChunk(): Promise<ChunkWriteResult> {
     const partName = `part-${String(this.currentIndex + 1).padStart(6, '0')}.ndjson`;
     const filePath = path.join(this.outDir, partName);

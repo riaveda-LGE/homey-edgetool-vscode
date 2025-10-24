@@ -30,6 +30,8 @@ body {
   padding: 10px;
   /* 내부 캔버스가 블록으로 꽉 차도록 */
   display: block;
+  /* 고빈도 리사이즈·리렌더 최적화 힌트 */
+  will-change: contents, transform;
 }
 
 /* 캔버스가 컨테이너 폭/높이에 맞게 반응 */
@@ -37,6 +39,8 @@ body {
   display: block;
   width: 100% !important;
   height: 100% !important;
+  /* 고해상도 디스플레이에서도 흐릿함 방지 */
+  image-rendering: -webkit-optimize-contrast;
 }
 
 button {

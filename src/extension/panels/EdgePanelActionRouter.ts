@@ -13,6 +13,7 @@ import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import type { ExplorerBridge } from './explorerBridge.js';
 import type { EdgePanelProvider } from './extensionPanel.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { measure } from '../../core/logging/perf.js';
 
 const log = getLogger('EdgePanelActionRouter');
 
@@ -43,6 +44,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     );
   }
 
+  @measure()
   sendButtonSections() {
     const ctx = buildButtonContext({
       updateAvailable: this._updateState.updateAvailable,
@@ -52,6 +54,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     this._view.webview.postMessage({ v: 1, type: 'buttons.set', payload: { sections: dto } });
   }
 
+  @measure()
   async dispatchButton(id: string) {
     const def = findButtonById(this._buttonSections, id);
     if (!def) {
@@ -61,6 +64,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     await this._runOp(def);
   }
 
+  @measure()
   private async _runOp(def: ButtonDef) {
     const op = def.op;
     try {
@@ -87,6 +91,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     }
   }
 
+  @measure()
   dispose() {
     log.debug('[debug] EdgePanelActionRouter dispose: start');
     this._handlers = undefined;

@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { createUiMeasure } from '../../../shared/utils';
 import { createUiLog } from '../../../shared/utils';
 import { useLogStore } from '../../react/store';
 import { vscode } from '../ipc';
@@ -13,6 +14,7 @@ export function Grid() {
   const parentRef = useRef(null as HTMLDivElement | null);
   // 헤더가 같은 스크롤 컨테이너 안에 있으므로 실제 리스트 시작점 보정용
   const listRef = useRef(null as HTMLDivElement | null);
+  const measureUi = useLogStore((s) => s.measureUi);
   const m = useLogStore();
   const [preview, setPreview] = useState({ open: false, logRow: null as LogRow | null });
   // grid 전용 ui logger
@@ -38,7 +40,7 @@ export function Grid() {
   // 더블클릭 → Dialog 오픈 시 잔여 click 이벤트가 먼저 발생하지 않도록 약간 지연
   const DIALOG_OPEN_DELAY_MS = 40;
   const openPreview = (row: LogRow) => {
-    ui.debug?.('[debug] Grid: openPreview start');
+    measureUi('Grid.openPreview', () => ui.debug?.('[debug] Grid: openPreview start'));
     ui.info(`Grid.openPreview.schedule id=${row.id} delay=${DIALOG_OPEN_DELAY_MS}ms`);
     setTimeout(() => {
       ui.info(`Grid.openPreview.commit id=${row.id}`);
@@ -66,7 +68,7 @@ export function Grid() {
 
   // mount/unmount 로그 + 기본 측정값
   useEffect(() => {
-    ui.info(`Grid.mount totalRows=${m.totalRows} windowStart=${m.windowStart}`);
+    measureUi('Grid.mount', () => ui.info(`Grid.mount totalRows=${m.totalRows} windowStart=${m.windowStart}`));
     // 컨테이너 측정(높이, DPR) — 스로틀
     const logMeasure = () => {
       const h = parentRef.current?.clientHeight ?? 0;
@@ -85,7 +87,7 @@ export function Grid() {
       }
     }
     return () => {
-      ui.info('Grid.unmount');
+      measureUi('Grid.unmount', () => ui.info('Grid.unmount'));
       ro?.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,13 +132,13 @@ export function Grid() {
       if (shouldLog('page.request', 200, payload)) {
         ui.debug?.(`Grid.scroll → page.request ${payload}`);
       }
-      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
+      measureUi('Grid.page.request', () => vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } }));
 
       // ✅ FOLLOW 자동 해제: 사용자가 바닥 근처를 벗어나면 PAUSE로 전환
       const nearBottom =
         cur.scrollTop + cur.clientHeight >= cur.scrollHeight - m.rowH * (AUTO_PAUSE_TOLERANCE_ROWS + 0.5);
       if (m.follow && !nearBottom) {
-        useLogStore.getState().setFollow(false);
+        measureUi('Grid.setFollow', () => useLogStore.getState().setFollow(false));
         ui.info('Grid.scroll: auto-pause follow (scrolled away from bottom)');
       }
     };
@@ -147,12 +149,12 @@ export function Grid() {
 
   // 프리뷰 상태 변경 로그
   useEffect(() => {
-    ui.info(`Grid.preview state open=${preview.open} rowId=${preview.logRow?.id ?? 'none'}`);
+    measureUi('Grid.preview.state', () => ui.info(`Grid.preview state open=${preview.open} rowId=${preview.logRow?.id ?? 'none'}`));
   }, [preview.open, preview.logRow?.id]);
 
   // 마지막 보이는 컬럼이 항상 1fr이 되도록 그리드 트랙을 구성
   const gridCols = useMemo(() => {
-    ui.debug?.('[debug] Grid: buildGridTemplate start');
+    measureUi('Grid.buildGridTemplate', () => ui.debug?.('[debug] Grid: buildGridTemplate start'));
     // 본문 컬럼(time~msg)만 계산(토글 영향 받음)
     const tracks: string[] = [];
     const order: Array<keyof typeof m.showCols> = ['time', 'proc', 'pid', 'src', 'msg'];
@@ -176,7 +178,7 @@ export function Grid() {
       }
     }
     if (!tracks.some((t) => t !== '0px')) tracks[0] = '1fr';
-    ui.debug?.('[debug] Grid: buildGridTemplate end');
+    measureUi('Grid.buildGridTemplate.end', () => ui.debug?.('[debug] Grid: buildGridTemplate end'));
     return `var(--col-bm-w) ${tracks.join(' ')}`;
   }, [m.showCols.time, m.showCols.proc, m.showCols.pid, m.showCols.src, m.showCols.msg, m.colW.time, m.colW.proc, m.colW.pid, m.colW.src]);
   const anyHidden = !(
@@ -210,7 +212,7 @@ export function Grid() {
     const half = Math.floor(m.windowSize / 2);
     const startIdx = Math.max(1, Math.min(Math.max(1, m.totalRows - m.windowSize + 1), idx - half));
     const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
-    ui.info(`Grid.jumpToIdx idx=${idx} → request ${startIdx}-${endIdx}`);
+    measureUi('Grid.jumpToIdx', () => ui.info(`Grid.jumpToIdx idx=${idx} → request ${startIdx}-${endIdx}`));
     // 점프 시에만 프로그램적 스크롤 적용(+ onScroll 무시)
     ignoreScrollRef.current = true;
     lastWindowStartChangeTimeRef.current = Date.now();
@@ -220,7 +222,7 @@ export function Grid() {
     requestAnimationFrame(() => {
       ignoreScrollRef.current = false;
     });
-    vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
+    measureUi('Grid.page.request.jump', () => vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } }));
   }, [m.pendingJumpIdx, m.windowSize, m.totalRows, m.rowH]);
 
   // pendingJumpIdx가 뷰포트로 로드되면 해당 행을 선택 상태로 확정
@@ -229,7 +231,7 @@ export function Grid() {
     if (!target) return;
     const found = m.rows.find((r) => r.idx === target);
     if (found) {
-      ui.info(`Grid.jump.resolve idx=${target} → rowId=${found.id}`);
+      measureUi('Grid.jump.resolve', () => ui.info(`Grid.jump.resolve idx=${target} → rowId=${found.id}`));
       useLogStore.setState({ selectedRowId: found.id, pendingJumpIdx: undefined });
     }
   }, [m.pendingJumpIdx, m.rows]);
@@ -242,7 +244,7 @@ export function Grid() {
     const end = m.windowStart + Math.max(0, visibleRows.length) - 1;
     const cov = start <= end ? `${start}-${end}` : 'empty';
     if (cov !== lastCoverageRef.current && shouldLog('coverage', 400, cov)) {
-      ui.info(`Grid.coverage loaded=${cov} len=${visibleRows.length}/${m.windowSize}`);
+      measureUi('Grid.coverage', () => ui.info(`Grid.coverage loaded=${cov} len=${visibleRows.length}/${m.windowSize}`));
       lastCoverageRef.current = cov;
     }
   }, [m.windowStart, visibleRows.length, m.windowSize, m.totalRows]);
@@ -261,7 +263,7 @@ export function Grid() {
     requestAnimationFrame(() => {
       ignoreScrollRef.current = false;
     });
-    ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`);
+    measureUi('Grid.anchor', () => ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`));
   };
 
   // (1) FOLLOW=true로 전환될 때:
@@ -275,11 +277,11 @@ export function Grid() {
       const size = m.windowSize || 500;
       const tailEnd = Math.max(1, m.totalRows);
       const tailStart = Math.max(1, tailEnd - size + 1);
-      ui.info(`Grid.follow: jump-to-tail request ${tailStart}-${tailEnd} (endIdx=${endIdx}, total=${m.totalRows})`);
+      measureUi('Grid.follow.jump', () => ui.info(`Grid.follow: jump-to-tail request ${tailStart}-${tailEnd} (endIdx=${endIdx}, total=${m.totalRows})`));
       // 프로그램적 이동 동안 스크롤 핸들러 무시(자동 PAUSE 방지)
       ignoreScrollRef.current = true;
       lastWindowStartChangeTimeRef.current = Date.now();
-      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: tailStart, endIdx: tailEnd } });
+      measureUi('Grid.page.request.follow', () => vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: tailStart, endIdx: tailEnd } }));
       requestAnimationFrame(() => { ignoreScrollRef.current = false; });
     }
     scrollToBottom();
@@ -310,7 +312,7 @@ export function Grid() {
 
     const payload = `visible=${s}-${e} items=${virtualItems.length}`;
     if ((movedALot && shouldLog('visible.range', 400)) || hit80 || hit90 || hitEnd) {
-      ui.info(`Grid.visible range: ${s}-${e} (total virtualItems=${virtualItems.length})`);
+      measureUi('Grid.visible.range', () => ui.info(`Grid.visible range: ${s}-${e} (total virtualItems=${virtualItems.length})`));
       lastVisRef.current = { s, e };
       if (hit80) flags.p80 = true;
       if (hit90) flags.p90 = true;
@@ -342,7 +344,7 @@ export function Grid() {
 
     const payload = `visible=${visStart}-${visEnd} coverage=${bufStart <= bufEnd ? `${bufStart}-${bufEnd}` : 'empty'} rendered=${rendered}/${virtualItems.length} placeholders=${phRatio}% needRange=${needRange}`;
     if (shouldLog('commit', 400, payload)) {
-      ui.info(`Grid.commit ${payload}`);
+      measureUi('Grid.commit', () => ui.info(`Grid.commit ${payload}`));
     }
   }, [virtualItems, m.windowStart, visibleRows.length, m.totalRows]);
 
@@ -422,9 +424,9 @@ export function Grid() {
                 onDoubleClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  ui.info(
+                  measureUi('Grid.row.dblclick', () => ui.info(
                     `Grid.row.dblclick id=${r.id} time="${r.time}" len=${r.raw?.length ?? r.msg.length} curOpen=${preview.open}`,
-                  );
+                  ));
                   openPreview(r);
                 }}
               >
@@ -437,7 +439,7 @@ export function Grid() {
                     title={r.bookmarked ? '북마크 해제' : '북마크'}
                     onClick={(e) => {
                       e.stopPropagation();
-                      useLogStore.getState().toggleBookmark(r.id);
+                      measureUi('Grid.toggleBookmark', () => useLogStore.getState().toggleBookmark(r.id));
                     }}
                   />
                 </div>

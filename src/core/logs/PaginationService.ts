@@ -443,6 +443,7 @@ export const paginationService = new PaginationService();
 
 // ────────────────────────────────────────────────────────────────────
 // 중앙 매핑 유틸: 논리 오름차순 [s..e] → 물리 내림차순 [physStart, physEndExcl)
+// (저장은 항상 ts 내림차순, 표시는 오름차순)
 function mapAscToDescRange(total: number, s: number, e: number) {
   const physStart = Math.max(0, total - e);
   const physEndExcl = Math.min(total, total - s + 1);

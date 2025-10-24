@@ -1,6 +1,7 @@
 // === src/core/logs/time/TimezoneHeuristics.ts ===
 import { getLogger } from '../../logging/extension-logger.js';
 // 로그 스팸 완화: per-line 출력 최소화, 집계로 대체
+import { measure } from '../../logging/perf.js';
 
 /**
  * 파일 타입별(Time series 단위) 타임존 점프 보정기.
@@ -25,6 +26,9 @@ export class TimezoneCorrector {
 
   // (선택) per-line 샘플 로그를 원하면 >0으로 조정
   private readonly LOG_SAMPLE_N = 0;
+
+  // 과도한 보정을 방지하기 위한 안전 캡(필요 시 조정/제거 가능)
+  private readonly MAX_TZ_OFFSET_HOURS = 14;
 
   // 점프 의심 상태(최대 1건)
   private suspected:
@@ -51,6 +55,7 @@ export class TimezoneCorrector {
    * index는 현재 처리 중인 로그의 인덱스(0부터).
    * 반환: 보정된 ts(국소 보정이 필요한 경우 retroSegments에 구간 enqueue)
    */
+  @measure()
   adjust(rawTs: number, index: number): number {
     // 1) suspected가 있으면 "복귀"를 **먼저** 판정 (분기 순서가 핵심!)
     if (this.suspected) {
@@ -68,23 +73,24 @@ export class TimezoneCorrector {
 
       if (returned) {
         // 복귀 확정 → suspected 구간(start..index-1)에만 Δoffset 적용하는 retro segment 생성
-        // Δoffset은 "가능한 시간대 오프셋(±1h/±9h/±10h/±12h)" 중
-        // 감지된 jump 크기(hourDiff)에 가장 가까운 정수 시간으로 스냅한다.
-        // 이렇게 하면 기준선(preJumpRawTs)과 '완전히 같은 ts'가 되는 것을 방지.
-        const CANDIDATES = [1, 9, 10, 12]; // 허용 시간대 후보(시간)
-        const nearest = CANDIDATES.reduce(
-          (best, h) => (Math.abs(s.hourDiff - h) < Math.abs(s.hourDiff - best) ? h : best),
-          CANDIDATES[0],
+        // Δoffset은 "실측 jump 크기(hourDiff)"를 정수 시간으로 반올림하여 적용한다(분 단위 무시).
+        // 안전을 위해 1h~MAX_TZ_OFFSET_HOURS 범위로 클램프.
+        const sign = s.direction === 'positive' ? -1 : +1; // 시계가 +로 튀었으면 과거 방향(-)으로 보정
+        const roundedHours = Math.min(
+          this.MAX_TZ_OFFSET_HOURS,
+          Math.max(1, Math.round(s.hourDiff)),
         );
-        const sign = s.direction === 'positive' ? -1 : +1;
-        const deltaMs = sign * nearest * hour;
+        const deltaMs = sign * roundedHours * hour;
+        this.log.debug?.(
+          `TZ measured: jump=${s.hourDiff.toFixed(2)}h -> apply=${roundedHours}h, Δ=${deltaMs / 3600000}h`,
+        );
 
         // index-1 까지가 점프 구간 (현재 rawTs는 복귀 이후의 라인)
         const end = Math.max(s.startIndex, index - 1);
         if (end >= s.startIndex) {
           this.retroSegments.push({ start: s.startIndex, end, deltaMs });
           this.log.info(
-            `타임존 점프 판명 [${this.label}]: retro(${s.startIndex}..${end}) Δ=${deltaMs / 3600000}h (nearest)`,
+            `타임존 점프 판명 [${this.label}]: retro(${s.startIndex}..${end}) Δ=${deltaMs / 3600000}h (measured)`,
           );
           this.fixedCount++;
         }
@@ -155,6 +161,7 @@ export class TimezoneCorrector {
    * 테스트/마무리 시 호출: suspected가 남아있으면 폐기(복귀 증거 없으면 적용 금지)
    * 반환: 의심 상태가 있었고 폐기되었는지 여부
    */
+  @measure()
   finalizeSuspected(): boolean {
     const had = !!this.suspected;
     if (had) {
@@ -168,6 +175,7 @@ export class TimezoneCorrector {
   }
 
   // 집계 요약을 출력하고 카운터 초기화
+  @measure()
   private flushSummary() {
     if (this.suspectedCount || this.fixedCount || this.clampCount) {
       const worst =
@@ -189,6 +197,7 @@ export class TimezoneCorrector {
    * 국소 소급 보정 구간을 한 번에 가져오고 비운다.
    * 각 구간: [start, end] inclusive 에 deltaMs 더하기.
    */
+  @measure()
   drainRetroSegments(): { start: number; end: number; deltaMs: number }[] {
     const out = this.retroSegments;
     this.retroSegments = [];

@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { measure, measureBlock } from '../../core/logging/perf.js';
 import {
   PARSER_CONFIG_REL,
   PARSER_TEMPLATE_REL,
@@ -17,6 +18,7 @@ export async function ensureParserConfigExists(
   context: vscode.ExtensionContext,
   extensionUri: vscode.Uri,
 ) {
+  await measureBlock('parser.ensureConfigExists', async () => {
   const info = await resolveWorkspaceInfo(context);
   const cfgUri = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_CONFIG_REL.split('/'));
   const readmeUri = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_README_REL.split('/'));
@@ -48,6 +50,7 @@ export async function ensureParserConfigExists(
   } else {
     log.debug('parser readme already exists; skip seeding');
   }
+  }); // measureBlock
 }
 
 /** 워크스페이스 이동 시 새 ws에 .config 없으면 이전 ws의 .config 폴더를 복사. 없으면 템플릿으로 시드 */
@@ -56,6 +59,7 @@ export async function migrateParserConfigIfNeeded(
   newWsUri: vscode.Uri,
   extensionUri: vscode.Uri,
 ) {
+  await measureBlock('parser.migrateIfNeeded', async () => {
   const oldDir = vscode.Uri.joinPath(oldWsUri, '.config');
   const newDir = vscode.Uri.joinPath(newWsUri, '.config');
   log.debug?.(
@@ -106,9 +110,11 @@ export async function migrateParserConfigIfNeeded(
       log.warn(`failed to remove previous .config (${oldDir.fsPath}): ${e?.message ?? e}`);
     }
   }
+  }); // measureBlock
 }
 
 async function copyDir(src: vscode.Uri, dest: vscode.Uri) {
+  await measureBlock('parser.copyDir', async () => {
   const entries = await vscode.workspace.fs.readDirectory(src);
   for (const [name, type] of entries) {
     const s = vscode.Uri.joinPath(src, name);
@@ -121,4 +127,5 @@ async function copyDir(src: vscode.Uri, dest: vscode.Uri) {
       await vscode.workspace.fs.writeFile(d, buf);
     }
   }
+  });
 }

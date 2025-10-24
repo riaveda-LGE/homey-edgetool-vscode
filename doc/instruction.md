@@ -6,3 +6,6 @@ Get-ChildItem -Path "d:\work\homey-edgetool-vscode\src" -Recurse -File | Where-O
 Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode\doc" -Recurse -File | Select-Object FullName
 Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode\media" -Recurse -File | Select-Object FullName
 Get-ChildItem -Path "d:\djwork\homey-edgetool-vscode" -File | Select-Object Name
+
+# diff 적용
+내가준 diff들만 적용해. 절대 다른 내용을 임의로 수정 하지마.

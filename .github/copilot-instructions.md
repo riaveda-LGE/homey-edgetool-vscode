@@ -4,7 +4,10 @@
 - **언어**: 언제나 한글로 대답해라
 - **호칭**: 언제나 나를 형님으로 대해라
 - **이름**: 앞으로 너의 이름은 춘식
-- **코드 변경 및 수정 승인**: 코드 수정 또는 새로운 코드 생성 전에 반드시 다음 과정을 따라야 한다:
+- **코드 변경 및 수정 승인**: 코드 수정 또는 새로운 코드 생성 전에 │  ├─ main.ts                          # 확장 메인 진입점 # 확장_초기화 # custom_log_parser_설정
+│  ├─ readme.md                        # 확장 모듈 설명 및 구조 문서
+│  ├─ setup/
+│  │  └─ parserConfigSeeder.ts         # 파서 설정 초기화 및 시딩 로직 # custom_log_parser_설정시 다음 과정을 따라야 한다:
   1. 변경할 내용의 구체적인 설명 (무엇을 왜 변경하는지)
   2. **어떠한 사소한 수정사항이라 하더라도 반드시 승인 요청을 해야 한다.**
 
@@ -19,6 +22,41 @@
 ## 📌 중요 요구사항
 
 ### 1. 기능 요구사항
+- 성능측정이 필요한 주요 함수/메서드에 하기 방식을 이용하여 성능측정 코드를 삽입해라
+- 자세한 내용은 src\core\logging\perf.ts , src\webviewers\shared\utils.ts 를 참고해라
+#### A. 클래스 메서드: `@measure(name?)`
+```ts
+class Parser {
+  @measure()
+  run(input: string) { /* ... */ }
+
+  @measure("Parser.parseLine")
+  parseLine(line: string) { /* ... */ }
+}
+```
+#### B. 전역 , 화살표, 콜백:  measured / measuredAsync
+```ts
+export const normalize = measured("normalize", function normalize(s: string){ /*...*/ });
+export const loadConfig = measuredAsync("loadConfig", async function loadConfig(p: string){ /*...*/ });
+arr.map(measured("arr.map:normalize", (s) => normalize(s)));
+```
+- 언제: 모듈 최상위 함수, 콜백, 화살표 함수, 이벤트 핸들러.
+
+#### C. 특정 구간만:  measureBlock(name, ()=> work)
+```ts
+const result = await measureBlock("merge.step#1", () => doMergeStep());
+```
+
+#### D. 한 번에 전체 메서드:  measureAllMethods(obj, prefix?)
+```ts
+const svc = measureAllMethods(new MergeService(), "MergeService");
+```
+
+#### E. :  웹뷰(UI) : createUiMeasure (vscode)
+```ts
+const measureUi = createUiMeasure(vscode);
+btn.onclick = () => measureUi("ui.exportJson", () => vscode.postMessage({ v:1, type:"perf.exportJson" }));
+```
 
 ## 📌 중요 로직
 ### 3. FileTransferService (tar/base64 over SSH)
@@ -66,19 +104,17 @@ VS Code 확장(Extension Host ↔ Webview) 간의 `postMessage` 통신은
 - **핵심 요소**
   - `PerformanceProfiler`: 싱글톤 클래스, `isEnabled` 플래그 관리
   - `measureFunction()`: 함수 실행 시간 측정 (데코레이터용)
-  - `measureIO()`: I/O 작업 성능 측정 (데코레이터용)
 - **On/Off 동작**
   - **Off 모드**: `isEnabled = false` → 모든 측정 로직 스킵 (최대 성능)
   - **On 모드**: `isEnabled = true` → 측정 및 기록 수행
 - **데코레이터**
   - `@measure`: 함수 실행 시간 측정
-  - `@measureIO`: 파일 I/O 성능 측정
 - **명령어**
   - `togglePerformanceMonitoring`: On/Off 모드 전환 (Quick Pick)
   - On 선택: `globalProfiler.enable()` + 패널 열기
   - Off 선택: `globalProfiler.disable()` + 패널 닫기
 - **주의사항**
-  - Off 모드에서는 모든 `@measure`/`@measureIO` 데코레이터가 그냥 함수 실행 (오버헤드 없음)
+  - Off 모드에서는 모든 `@measure` 데코레이터가 그냥 함수 실행 (오버헤드 없음)
   - 직접 `measureFunction()` 호출도 `isEnabled` 체크 적용
   - 실제 캡처는 panel의 "Start Capture" 버튼에서 수동 제어
 
@@ -120,6 +156,8 @@ export async function doWork() {
 > 사용자가 로그 뷰어에서 스크롤을 내릴 때 추가 로그를 자동으로 로드하고 뷰를 업데이트하는 기능
 ### function: custom_log_parser_설정
 > custom_log_parser파일 내용을 읽고 그 안에 정의된 내용인 requirements, preflight, parser 동작에 실질적인 로직을 제공 합니다.
+### function: 타임존_점프_감지_및_보정
+> 로그의 타임스탬프를 분석하여 타임존 점프를 감지하고, 이를 보정하는 기능을 제공합니다.
 
 # Homey EdgeTool — Project Structure
 ```
@@ -131,7 +169,8 @@ homey-edgetool/
 │     └─ ci.yml                           # 지속적 통합 워크플로우
 ├─ doc/                                   # 프로젝트 문서
 │  ├─ instruction.md                      # 프로젝트 지침 및 사용법
-│  └─ logging-0-parser.md                 # 로그 파서 설계 및 구현 문서
+│  ├─ logging-0-parser.md                 # 로그 파서 설계 및 구현 문서
+│  └─ logging_parse_integration_logic.md  # 로그 파싱 통합 로직 문서
 ├─ media/                                 # 아이콘 및 정적 자원
 │  └─ resources/
 │     ├─ custom_log_parser.template.v1.json # 커스텀 로그 파서 템플릿 JSON # custom_log_parser_설정
@@ -154,12 +193,19 @@ homey-edgetool/
 ├─ src/
 │  ├─ __test__/                           # 중앙화된 테스트 파일들
 │  │  ├─ DefaultBatchSizeIntent.test.ts   # 기본 배치 크기 의도 테스트 # 로그병합
-│  │  ├─ helpers/                         # 테스트 헬퍼 유틸리티
-│  │  │  └─ testFs.ts                     # 테스트 파일 시스템 유틸리티
-│  │  ├─ LogFileIntegration.test.ts       # 로그 파일 통합 테스트 # 로그병합
+│  │  ├─ FileMergeE2E.test.ts             # 파일 병합 E2E 테스트 # 로그병합
+│  │  ├─ LegacyJsonlCompat.test.ts        # 레거시 JSONL 호환성 테스트 # 로그병합
+│  │  ├─ LogFieldExtractionGolden.test.ts # 로그 필드 추출 골든 테스트 # 로그파싱
+│  │  ├─ LogFileIntegration.test.ts       # 로그 파일 통합 테스트 # 로그병합 # 타임존_점프_감지_및_보정
+│  │  ├─ LogFieldExtractionGolden.test.ts # 로그 필드 추출 골든 테스트 # 로그파싱
 │  │  ├─ MergeMode.test.ts                # 병합 모드 테스트 # 로그병합
+│  │  ├─ NoTrailingNewline.test.ts        # 후행 줄바꿈 없음 테스트 # 로그병합
 │  │  ├─ ParserTemplateIntegration.test.ts # 파서 템플릿 통합 테스트 # custom_log_parser_설정 # 로그파싱
-│  │  └─ WarmupVsFull.test.ts             # 워밍업 vs 전체 모드 테스트 # 로그병합
+│  │  ├─ ReverseStreaming.test.ts         # 역방향 스트리밍 테스트 # 로그병합
+│  │  ├─ WarmupVsFull.test.ts             # 워밍업 vs 전체 모드 테스트 # 로그병합
+│  │  ├─ WhitelistGlob.test.ts            # 화이트리스트 글로브 테스트 # 로그병합
+│  │  └─ helpers/                         # 테스트 헬퍼 유틸리티
+│  │     └─ testFs.ts                     # 테스트 파일 시스템 유틸리티
 │  │
 │  ├─ extension/                          # VS Code 확장 진입점 및 확장 전용 코드
 │  │  ├─ main.ts                          # 확장 메인 진입점 # 확장_초기화 # custom_log_parser_설정
@@ -221,7 +267,7 @@ homey-edgetool/
 │  │  │  ├─ ChunkWriter.ts                # 로그 청크 쓰기 유틸리티 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼 관리 (4-버퍼 시스템) # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ IndexedLogStore.ts            # 인덱스 기반 로그 저장소 # 로그병합
-│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합 및 병합 컨트롤러 # 로그파싱 # custom_log_parser_설정 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
+│  │  │  ├─ LogFileIntegration.ts         # 로그 파일 통합 및 병합 컨트롤러 # 로그파싱 # custom_log_parser_설정 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신 # 타임존_점프_감지_및_보정
 │  │  │  ├─ LogFileStorage.ts             # 로그 파일 저장/읽기 구현 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ LogSearch.ts                  # 로그 검색 기능 구현
 │  │  │  ├─ ManifestTypes.ts              # 로그 매니페스트 타입 정의 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
@@ -230,8 +276,8 @@ homey-edgetool/
 │  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스 # 스크롤에_따른_로그_뷰_로드_갱신 #로그병합
 │  │  │  ├─ ParserEngine.ts               # 로그 파싱 엔진 구현 # 로그파싱 # custom_log_parser_설정
 │  │  │  ├─ time/                         # 시간 관련 유틸리티
-│  │  │  │  ├─ TimeParser.ts              # 로그 시간 파서 # 로그파싱
-│  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱 로직 # 로그파싱
+│  │  │  │  ├─ TimeParser.ts              # 로그 시간 파서 # 로그파싱 # 로그병합 # 타임존_점프_감지_및_보정
+│  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱 로직 # 로그파싱 # 로그병합 # 타임존_점프_감지_및_보정
 │  │  ├─ sessions/
 │  │  │  └─ LogSessionManager.ts          # 로그 세션 관리 구현 # custom_log_parser_설정
 │  │  ├─ transfer/

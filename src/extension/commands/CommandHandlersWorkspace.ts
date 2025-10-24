@@ -106,6 +106,7 @@ export class CommandHandlersWorkspace {
     }
   }
 
+  @measure()
   // (옵션) 현재 상태 확인용
   async showWorkspace() {
     log.debug('[debug] CommandHandlersWorkspace showWorkspace: start');
@@ -120,6 +121,7 @@ export class CommandHandlersWorkspace {
   }
 
   // 캐시된 workspace 정보 조회
+  @measure()
   private async getCachedWorkspaceInfo() {
     const now = Date.now();
     if (!this.workspaceInfoCache || now > this.cacheExpiry) {
@@ -130,6 +132,7 @@ export class CommandHandlersWorkspace {
     return this.workspaceInfoCache;
   }
 
+  @measure()
   // 비동기 git init (백그라운드 실행)
   private async ensureGitInitAsync(baseDir: string): Promise<void> {
     try {

@@ -1,5 +1,6 @@
 // === src/extension/commands/edgepanel.buttons.ts ===
 // Control 패널 버튼 "정의서(SSOT)" + DTO 변환 + 헬퍼
+import { measureBlock } from '../../core/logging/perf.js';
 
 export type ButtonContext = {
   updateAvailable?: boolean;
@@ -34,22 +35,26 @@ export function buildButtonContext(opts: {
 }
 
 export function toSectionDTO(sections: SectionDef[], ctx: ButtonContext): SectionDTO[] {
-  return sections
-    .map((sec) => ({
-      title: sec.title,
-      items: sec.items
-        .filter((b) => !b.when || b.when(ctx))
-        .map((b) => ({ id: b.id, label: b.label, desc: b.desc })),
-    }))
-    .filter((sec) => sec.items.length > 0);
+  return measureBlock('edgepanel.toSectionDTO', () => {
+    return sections
+      .map((sec) => ({
+        title: sec.title,
+        items: sec.items
+          .filter((b) => !b.when || b.when(ctx))
+          .map((b) => ({ id: b.id, label: b.label, desc: b.desc })),
+      }))
+      .filter((sec) => sec.items.length > 0);
+  });
 }
 
 export function findButtonById(sections: SectionDef[], id: string): ButtonDef | undefined {
-  for (const s of sections) {
-    const f = s.items.find((b) => b.id === id);
-    if (f) return f;
-  }
-  return undefined;
+  return measureBlock('edgepanel.findButtonById', () => {
+    for (const s of sections) {
+      const f = s.items.find((b) => b.id === id);
+      if (f) return f;
+    }
+    return undefined;
+  });
 }
 
 // === 버튼/섹션 정의서(SSOT) ===
@@ -150,3 +155,4 @@ export function getSections(): SectionDef[] {
     },
   ];
 }
+

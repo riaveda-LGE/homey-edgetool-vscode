@@ -81,6 +81,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._disposables.clear();
   }
 
+  @measure()
   async resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
@@ -330,11 +331,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this.log.debug('[debug] EdgePanelProvider handleHomeyLoggingCommand: end');
   }
 
+  @measure()
   public async startRealtime(filter?: string) {
     this.log.debug('[debug] EdgePanelProvider startRealtime: start');
     await this._logViewer?.startRealtime(filter);
     this.log.debug('[debug] EdgePanelProvider startRealtime: end');
   }
+  @measure()
   public async startFileMerge(dir: string) {
     this.log.debug('[debug] EdgePanelProvider startFileMerge: start');
     await this._logViewer?.startFileMerge(dir);
@@ -346,6 +349,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this.log.debug('[debug] EdgePanelProvider stopLogging: end');
   }
 
+  @measure()
   private _randomNonce(len = RANDOM_STRING_LENGTH || 32) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let out = '';
@@ -360,6 +364,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
    *  - src/href의 로컬 상대경로 → webview.asWebviewUri(...)로 재작성
    *  - 모든 <script> 태그에 nonce 속성 자동 주입(기존에 없을 때만)
    */
+  @measure()
   private async _getHtmlFromFiles(webview: vscode.Webview, root: vscode.Uri) {
     try {
       const indexHtml = vscode.Uri.joinPath(root, 'index.html');

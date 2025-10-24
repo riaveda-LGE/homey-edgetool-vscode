@@ -1,6 +1,6 @@
 import type { H2W } from '@ipc/messages';
 
-import { createUiLog } from '../../shared/utils.js';
+import { createUiLog, createUiMeasure, wrapAllUiMethods } from '../../shared/utils.js';
 import { ExplorerService } from '../services/ExplorerService.js';
 import { HostBridge } from '../services/HostBridge.js';
 import { PersistService } from '../services/PersistService.js';
@@ -13,6 +13,9 @@ import { createStore } from './store.js';
   const vscode = acquireVsCodeApi();
   const host = new HostBridge(vscode);
   const uiLog = createUiLog(vscode, 'ui.edgePanel');
+  // 저비용 샘플링: 1ms 미만은 무시, 필요시 sampleEvery로 더 억제 가능
+  const measureUi = createUiMeasure(vscode, { minMs: 1, sampleEvery: 1, source: 'edgePanel' });
+  const m = <T>(name: string, fn: () => T): T => measureUi(name, fn);
 
   const rootEl = document.getElementById('root') as HTMLElement | null;
   const controlsEl = document.getElementById('controls') as HTMLElement | null;
@@ -25,8 +28,14 @@ import { createStore } from './store.js';
   }
 
   const store = createStore(createInitialState(), reducer);
-  const explorer = new ExplorerService(host);
-  const persist = new PersistService(host);
+  // 계측: store.dispatch
+  const _dispatch = store.dispatch;
+  (store as any).dispatch = ((a: any) => m('Store.dispatch', () => _dispatch(a))) as typeof store.dispatch;
+
+  // 계측: services/bridge
+  const explorer = wrapAllUiMethods(new ExplorerService(host), measureUi, 'ExplorerService');
+  const persist = wrapAllUiMethods(new PersistService(host), measureUi, 'PersistService');
+  const hostProxy = wrapAllUiMethods(host, measureUi, 'HostBridge');
 
   // Node registry helpers
   const nodesByPath = () => store.getState().nodesByPath;
@@ -37,12 +46,19 @@ import { createStore } from './store.js';
     rootEl,
     controlsEl,
     sectionsEl,
-    (id) => host.post({ v: 1, type: 'button.click', payload: { id } }),
-    () => host.post({ v: 1, type: 'ui.requestButtons', payload: {} }),
-    (path) => explorer.list(path),
+    // ▶ 웹뷰 내부 전역 계측자 전달 (올바른 파라미터 순서로 이동)
+    measureUi,
+    // controls click
+    (id) => m('UI.button.click', () => hostProxy.post({ v: 1, type: 'button.click', payload: { id } })),
+    // request buttons
+    () => m('UI.requestButtons', () => hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} })),
+    // list
+    (path) => m('Explorer.list', () => explorer.list(path)),
+    // get/register
     (p) => getNodeByPath(p)!,
     (n) => registerNode(n),
-    (n) => explorer.open(n.path),
+    // open
+    (n) => m('Explorer.open', () => explorer.open(n.path)),
 
     // ▼ 폴더 토글 처리: 루트는 토글 금지, 확장시 로딩만 요청 (DOM은 TreeView가 updateExpanded로 처리)
     (n) => {
@@ -50,37 +66,43 @@ import { createStore } from './store.js';
       if (n.path === '') {
         // 루트는 항상 펼침 고정
         n.expanded = true;
-        if (!n.loaded) explorer.list(''); // 초기 한 번은 목록 로드
+        if (!n.loaded) m('Explorer.list(root-once)', () => explorer.list('')); // 초기 한 번은 목록 로드
         return;
       }
       // 이 시점에서 TreeView가 n.expanded 값을 토글해 둠
       if (n.expanded && !n.loaded) {
-        explorer.list(n.path);
+        m('Explorer.list(expand)', () => explorer.list(n.path));
       }
     },
 
-    (n, multi) => store.dispatch({ type: 'EXPLORER_SELECT', node: n, multi } as any),
-    (full, isFile) => (isFile ? explorer.createFile(full) : explorer.createFolder(full)),
-    (nodes) => nodes.forEach((node) => explorer.delete(node.path, node.kind === 'folder', true)),
-    (p) => persist.save(p),
+    (n, multi) => m('Explorer.select', () => store.dispatch({ type: 'EXPLORER_SELECT', node: n, multi } as any)),
+    (full, isFile) => m(isFile ? 'Explorer.createFile' : 'Explorer.createFolder', () =>
+      (isFile ? explorer.createFile(full) : explorer.createFolder(full))),
+    (nodes) => m('Explorer.delete(batch)', () =>
+      nodes.forEach((node) => explorer.delete(node.path, node.kind === 'folder', true))),
+    (p) => m('PanelState.save', () => persist.save(p)),
     // Debug Log Panel 콜백
-    () => host.post({ v: 1, type: 'debuglog.loadOlder', payload: {} }),
-    () => host.post({ v: 1, type: 'debuglog.clear', payload: {} }),
-    () => host.post({ v: 1, type: 'debuglog.copy', payload: {} }),
+    () => m('DebugLog.loadOlder', () => hostProxy.post({ v: 1, type: 'debuglog.loadOlder', payload: {} })),
+    () => m('DebugLog.clear', () => hostProxy.post({ v: 1, type: 'debuglog.clear', payload: {} })),
+    () => m('DebugLog.copy', () => hostProxy.post({ v: 1, type: 'debuglog.copy', payload: {} })),
   );
 
   // =========================
   // 포커스 이탈 시 선택 해제 (웹뷰 쪽 즉시 처리)
   // =========================
   window.addEventListener('blur', () => {
-    appView.clearExplorerSelection();
-    store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+    m('UI.blur.clearSelection', () => {
+      appView.clearExplorerSelection();
+      store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+    });
   });
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      appView.clearExplorerSelection();
-      store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+      m('UI.visibilitychange.clearSelection', () => {
+        appView.clearExplorerSelection();
+        store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+      });
     }
   });
 
@@ -88,65 +110,77 @@ import { createStore } from './store.js';
   document.addEventListener('mousedown', (e) => {
     const t = e.target as HTMLElement | null;
     if (t && t.closest('#explorer')) return; // Explorer 내부는 무시
-    appView.clearExplorerSelection();
-    store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+    m('Explorer.clearSelection(mousedown-outside)', () => {
+      appView.clearExplorerSelection();
+      store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+    });
   });
   document.addEventListener('keydown', (e) => {
     if ((e as KeyboardEvent).key === 'Escape') {
-      appView.clearExplorerSelection();
-      store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+      m('Explorer.clearSelection(Escape)', () => {
+        appView.clearExplorerSelection();
+        store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+      });
     }
   });
 
   // UI subscriptions
   store.subscribe((s) => {
-    appView.applyLayout(s);
+    m('AppView.applyLayout', () => appView.applyLayout(s));
   });
 
   // Host messages
   host.listen((msg: H2W) => {
     // 확장에서 오는 안전망 메시지: 선택 해제
     if ((msg as any)?.type === 'ui.clearSelection') {
-      appView.clearExplorerSelection();
-      store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+      m('Host.ui.clearSelection', () => {
+        appView.clearExplorerSelection();
+        store.dispatch({ type: 'EXPLORER_CLEAR_SELECTION' } as any);
+      });
       return;
     }
 
     switch (msg.type) {
       case 'initState': {
-        const logs = msg.payload.state?.logs || [];
-        // (선택) 중복 루트 방지: 트리 DOM 초기화 API가 있다면 호출
-        (appView as any).resetExplorerTree?.();
+        m('Host.initState', () => {
+          const logs = msg.payload.state?.logs || [];
+          // (선택) 중복 루트 방지: 트리 DOM 초기화 API가 있다면 호출
+          (appView as any).resetExplorerTree?.();
 
-        store.dispatch({ type: 'INIT', logs, panelState: (msg as any).payload.panelState });
-        appView.logsReset(logs);
-        host.post({ v: 1, type: 'ui.requestButtons', payload: {} });
+          store.dispatch({ type: 'INIT', logs, panelState: (msg as any).payload.panelState });
+          appView.logsReset(logs);
+          hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} });
 
-        // root 구성 및 최초 목록 요청
-        store.dispatch({ type: 'EXPLORER_SET_ROOT' });
-        const root = store.getState().root!;
-        const treeEl = document.getElementById('explorerTree');
-        if (treeEl && root && !root.el) {
-          explorer.list('');
-        }
+          // root 구성 및 최초 목록 요청
+          store.dispatch({ type: 'EXPLORER_SET_ROOT' });
+          const root = store.getState().root!;
+          const treeEl = document.getElementById('explorerTree');
+          if (treeEl && root && !root.el) {
+            explorer.list('');
+          }
+        });
         break;
       }
       case 'appendLog': {
-        appView.logsAppend(msg.payload.text);
+        m('Logs.append', () => appView.logsAppend(msg.payload.text));
         break;
       }
       case 'debuglog.page.response': {
-        const lines: string[] = msg.payload.lines || [];
-        if (lines.length) {
-          // 상태 반영은 최소화(렌더는 DOM 주도)
-          store.dispatch({ type: 'LOG_PREPEND', lines } as any);
-          appView.logsPrepend(lines);
-        }
+        m('Logs.prepend(page.response)', () => {
+          const lines: string[] = msg.payload.lines || [];
+          if (lines.length) {
+            // 상태 반영은 최소화(렌더는 DOM 주도)
+            store.dispatch({ type: 'LOG_PREPEND', lines } as any);
+            appView.logsPrepend(lines);
+          }
+        });
         break;
       }
       case 'debuglog.cleared': {
-        store.dispatch({ type: 'LOG_RESET', lines: [] } as any);
-        appView.logsReset([]);
+        m('Logs.reset(cleared)', () => {
+          store.dispatch({ type: 'LOG_RESET', lines: [] } as any);
+          appView.logsReset([]);
+        });
         break;
       }
       case 'debuglog.copy.done': {
@@ -154,61 +188,75 @@ import { createStore } from './store.js';
         break;
       }
       case 'buttons.set': {
-        appView.renderControls(msg.payload.sections as any, {
-          showLogs: store.getState().showLogs,
-          showExplorer: store.getState().showExplorer,
-        });
+        m('Controls.render', () =>
+          appView.renderControls(msg.payload.sections as any, {
+            showLogs: store.getState().showLogs,
+            showExplorer: store.getState().showExplorer,
+          }),
+        );
         break;
       }
       case 'ui.toggleLogs': {
-        store.dispatch({ type: 'TOGGLE_LOGS' });
-        host.post({ v: 1, type: 'ui.requestButtons', payload: {} });
+        m('Toggle.logs', () => {
+          store.dispatch({ type: 'TOGGLE_LOGS' });
+          hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} });
+        });
         break;
       }
       case 'ui.toggleExplorer': {
-        store.dispatch({ type: 'TOGGLE_EXPLORER' });
-        if (store.getState().showExplorer) {
-          host.post({ v: 1, type: 'workspace.ensure', payload: {} });
-          if (!store.getState().root) {
-            (appView as any).resetExplorerTree?.();
-            store.dispatch({ type: 'EXPLORER_SET_ROOT' });
+        m('Toggle.explorer', () => {
+          store.dispatch({ type: 'TOGGLE_EXPLORER' });
+          if (store.getState().showExplorer) {
+            hostProxy.post({ v: 1, type: 'workspace.ensure', payload: {} });
+            if (!store.getState().root) {
+              (appView as any).resetExplorerTree?.();
+              store.dispatch({ type: 'EXPLORER_SET_ROOT' });
+            }
+            explorer.list('');
           }
-          explorer.list('');
-        }
-        host.post({ v: 1, type: 'ui.requestButtons', payload: {} });
+          hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} });
+        });
         break;
       }
       case 'explorer.list.result': {
-        const rel = String(msg.payload.path || '');
-        const node = rel ? getNodeByPath(rel) : store.getState().root!;
-        if (!node) return;
-        appView.renderChildren(node, msg.payload.items);
-        if (node === store.getState().root && store.getState().selected.length === 0) {
-          store.dispatch({ type: 'EXPLORER_SELECT', node, multi: false } as any);
-          appView.renderBreadcrumb(store.getState().explorerPath, nodesByPath());
-        }
+        m('Explorer.renderChildren(list.result)', () => {
+          const rel = String(msg.payload.path || '');
+          const node = rel ? getNodeByPath(rel) : store.getState().root!;
+          if (!node) return;
+          appView.renderChildren(node, msg.payload.items);
+          if (node === store.getState().root && store.getState().selected.length === 0) {
+            store.dispatch({ type: 'EXPLORER_SELECT', node, multi: false } as any);
+            appView.renderBreadcrumb(store.getState().explorerPath, nodesByPath());
+          }
+        });
         break;
       }
       case 'explorer.ok': {
-        const path = String(msg.payload.path || '');
-        const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
-        explorer.list(parent);
+        m('Explorer.ok.refreshParent', () => {
+          const path = String(msg.payload.path || '');
+          const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+          explorer.list(parent);
+        });
         break;
       }
       case 'explorer.fs.changed': {
-        const changedRel = String(msg.payload.path || '');
-        const parent = changedRel.includes('/')
-          ? changedRel.slice(0, changedRel.lastIndexOf('/'))
-          : '';
-        explorer.list(parent);
+        m('Explorer.fs.changed.refreshParent', () => {
+          const changedRel = String(msg.payload.path || '');
+          const parent = changedRel.includes('/')
+            ? changedRel.slice(0, changedRel.lastIndexOf('/'))
+            : '';
+          explorer.list(parent);
+        });
         break;
       }
       case 'explorer.root.changed': {
-        (appView as any).resetExplorerTree?.();
-        store.getState().nodesByPath.clear();
-        store.dispatch({ type: 'EXPLORER_SET_ROOT' });
-        appView.renderBreadcrumb('', nodesByPath());
-        explorer.list('');
+        m('Explorer.root.changed.reset', () => {
+          (appView as any).resetExplorerTree?.();
+          store.getState().nodesByPath.clear();
+          store.dispatch({ type: 'EXPLORER_SET_ROOT' });
+          appView.renderBreadcrumb('', nodesByPath());
+          explorer.list('');
+        });
         break;
       }
       case 'explorer.error': {
@@ -221,14 +269,14 @@ import { createStore } from './store.js';
   // bootstrap
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () =>
-      host.post({ v: 1, type: 'ui.ready', payload: {} }),
+      m('UI.ready(DOMContentLoaded)', () => hostProxy.post({ v: 1, type: 'ui.ready', payload: {} })),
     );
   } else {
-    host.post({ v: 1, type: 'ui.ready', payload: {} });
+    m('UI.ready(immediate)', () => hostProxy.post({ v: 1, type: 'ui.ready', payload: {} }));
   }
   setTimeout(() => {
-    appView.applyLayout(store.getState());
-    (appView as any).ensureCtrlContentFit?.();
-    host.post({ v: 1, type: 'ui.requestButtons', payload: {} });
+    m('Bootstrap.applyLayout', () => appView.applyLayout(store.getState()));
+    m('Bootstrap.ensureCtrlContentFit', () => (appView as any).ensureCtrlContentFit?.());
+    m('Bootstrap.requestButtons', () => hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} }));
   }, 0);
 })();

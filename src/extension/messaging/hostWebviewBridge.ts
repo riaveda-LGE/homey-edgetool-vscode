@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { LOG_WINDOW_SIZE } from '../../shared/const.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
+import { measure, measureBlock, globalProfiler, perfNow } from '../../core/logging/perf.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
@@ -24,7 +25,8 @@ export type BridgeOptions = {
 
 export class HostWebviewBridge {
   private log = getLogger('bridge');
-  private handlers = new Map<string, Handler>();
+  // 여러 리스너를 타입별로 보유 (동시 request의 ack/error 핸들러 지원)
+  private handlers = new Map<string, Set<Handler>>();
   private pendings = new Map<string, AbortController>(); // abortKey -> controller
   private seq = 0;
   private kickedOnce = false; // 초기 리프레시 신호를 중복 발사하지 않도록 가드
@@ -48,10 +50,12 @@ export class HostWebviewBridge {
     private readonly options: BridgeOptions = {},
   ) {}
 
+  @measure()
   start() {
     this.host.webview.onDidReceiveMessage(async (raw: any) => {
-      const msg = this.validateIncoming(raw);
-      if (!msg) return;
+      await measureBlock('host.bridge.onMessage', async () => {
+        const msg = this.validateIncoming(raw);
+        if (!msg) return;
 
       // ── 웹뷰가 준비 신호를 보낼 수 있는 경우(선행 핸드셰이크) ──
       if (msg.type === 'viewer.ready') {
@@ -346,13 +350,14 @@ export class HostWebviewBridge {
         return;
       }
 
-      const h = this.handlers.get(msg.type);
-      if (!h) return this.warnUnknown(msg.type);
+      const handlers = this.handlers.get(msg.type);
+      if (!handlers || handlers.size === 0) return this.warnUnknown(msg.type);
       try {
-        await h(msg, this.api());
+        await Promise.all(Array.from(handlers).map(h => h(msg, this.api())));
       } catch (e) {
         this.sendError(e, msg.id);
       }
+      }); // measureBlock
     });
 
     // 패널이 막 열렸을 때도 한 번 킥 — 최신 뷰어는 자체적으로 요청을 시작하지 않으므로
@@ -361,28 +366,63 @@ export class HostWebviewBridge {
   }
 
   on(type: W2H['type'], handler: Handler) {
-    this.handlers.set(type, handler);
-    return { dispose: () => this.handlers.delete(type) };
+    const set = this.handlers.get(type) ?? new Set<Handler>();
+    set.add(handler);
+    this.handlers.set(type, set);
+    return {
+      dispose: () => {
+        const s = this.handlers.get(type);
+        if (!s) return;
+        s.delete(handler);
+        if (s.size === 0) this.handlers.delete(type);
+      },
+    };
   }
 
+  @measure()
   send<T extends H2W>(msg: T) {
     // 내부 전송 시작/끝 로그는 노이즈가 많아 제거
-    this.host.webview.postMessage(msg);
+    if (!globalProfiler.isOn()) {
+      this.host.webview.postMessage(msg);
+      return;
+    }
+    const t0 = perfNow();
+    try {
+      this.host.webview.postMessage(msg);
+    } finally {
+      globalProfiler.recordFunctionCall('bridge.send', t0, perfNow() - t0);
+    }
   }
 
+  @measure()
   request<T extends H2W>(msg: Omit<T, 'id'>): Promise<unknown> {
-    const id = `req_${Date.now()}_${++this.seq}`;
-    return new Promise((resolve) => {
-      const disp = this.on('ack' as any, (ack: any) => {
-        if (ack?.payload?.inReplyTo === id) {
-          disp.dispose();
-          resolve(ack.payload);
-        }
+    const impl = () =>
+      new Promise((resolve, reject) => {
+        const id = `req_${Date.now()}_${++this.seq}`;
+        const cleanup = (...ds: Array<{ dispose: () => void }>) => {
+          ds.forEach(d => { try { d.dispose(); } catch {} });
+        };
+        const dAck = this.on('ack' as any, (ack: any) => {
+          if (ack?.payload?.inReplyTo === id) {
+            cleanup(dAck, dErr);
+            resolve(ack.payload);
+          }
+        });
+        const dErr = this.on('error' as any, (err: any) => {
+          if (err?.payload?.inReplyTo === id) {
+            cleanup(dAck, dErr);
+            // 에러 페이로드를 그대로 전달(reject)
+            reject(err.payload);
+          }
+        });
+        this.host.webview.postMessage({ ...msg, id });
       });
-      this.host.webview.postMessage({ ...msg, id });
-    });
+    return globalProfiler.isOn()
+      ? globalProfiler.measureFunction('host.bridge.request', impl)
+      : impl();
   }
 
+  @measure()
   registerAbort(abortKey: string, controller: AbortController) {
     this.log.debug('[debug] HostWebviewBridge registerAbort: start');
     this.abort(abortKey); // 기존 있으면 정리
@@ -390,6 +430,7 @@ export class HostWebviewBridge {
     this.log.debug('[debug] HostWebviewBridge registerAbort: end');
   }
 
+  @measure()
   abort(abortKey: string) {
     this.log.debug('[debug] HostWebviewBridge abort: start');
     const c = this.pendings.get(abortKey);
@@ -412,7 +453,8 @@ export class HostWebviewBridge {
   private validateIncoming(raw: any): W2H | null {
     if (!raw || typeof raw !== 'object') return null;
     if (raw.v !== 1 || typeof raw.type !== 'string') return null;
-    if (typeof raw.payload !== 'object') return null;
+    // payload는 없을 수도 있음(viewer.ready 등)
+    if (raw.payload !== undefined && typeof raw.payload !== 'object') return null;
     return raw as W2H;
   }
 
@@ -433,6 +475,7 @@ export class HostWebviewBridge {
    * - logs.state: 웹뷰가 UI 배너/프로그레스 등에 활용
    * - logs.refresh: 페이지 요청을 즉시 시작하도록 트리거
    */
+  @measure()
   private kickIfReady(origin: 'bridge.start' | 'viewer.ready') {
     try {
       const warm = paginationService.isWarmupActive();
@@ -468,6 +511,7 @@ export class HostWebviewBridge {
   }
 
   /** 리스너/대기중 컨트롤러 정리용 */
+  @measure()
   dispose() {
     try {
       this.pendings.forEach((c) => c.abort());

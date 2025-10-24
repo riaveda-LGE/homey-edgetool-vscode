@@ -14,6 +14,7 @@ export class ExplorerView {
 
   constructor(
     private container: HTMLElement,
+    private measureUi: <T>(name: string, fn: () => T) => T,
     private getNodeByPath: (p: string) => TreeNode | undefined,
     private registerNode: (n: TreeNode) => void,
     private onList: (path: string) => void,
@@ -42,6 +43,7 @@ export class ExplorerView {
     // ✅ TreeView에 onDelete 전달 (Delete 키 처리)
     this.tree = new TreeView(
       this.treeEl,
+      this.measureUi,
       this.getNodeByPath,
       this.onToggle,
       this.onOpen,
@@ -50,6 +52,7 @@ export class ExplorerView {
     );
     this.ctx = new ContextMenu(
       this.container,
+      this.measureUi,
       (n) => this.onOpen(n),
       (_dir, isFile, full) => this.onCreate(full, isFile),
       (nodes) => this.onDelete(nodes),
@@ -58,8 +61,10 @@ export class ExplorerView {
     // 새로고침 버튼: 현재 경로 재요청
     this.refreshBtn.addEventListener('click', () => {
       if (this.refreshBtn.disabled) return;
-      this.setRefreshing(true);
-      this.onList(this.currentPath);
+      this.measureUi('ExplorerView.refresh', () => {
+        this.setRefreshing(true);
+        this.onList(this.currentPath);
+      });
     });
     // F5 단축키(웹뷰 포커스 시)
     window.addEventListener('keydown', (e) => {
@@ -87,48 +92,54 @@ export class ExplorerView {
   }
 
   renderBreadcrumb(path: string, nodesByPath: Map<string, TreeNode>) {
-    this.currentPath = path;
-    this.pathEl.innerHTML = '';
-    const segs = path ? path.split('/').filter(Boolean) : [];
-    const rootCrumb = document.createElement('span');
-    rootCrumb.className = 'crumb';
-    rootCrumb.textContent = 'workspace';
-    rootCrumb.addEventListener('click', () => this.onList(''));
-    this.pathEl.appendChild(rootCrumb);
+    this.measureUi('ExplorerView.renderBreadcrumb', () => {
+      this.currentPath = path;
+      this.pathEl.innerHTML = '';
+      const segs = path ? path.split('/').filter(Boolean) : [];
+      const rootCrumb = document.createElement('span');
+      rootCrumb.className = 'crumb';
+      rootCrumb.textContent = 'workspace';
+      rootCrumb.addEventListener('click', () => this.onList(''));
+      this.pathEl.appendChild(rootCrumb);
 
-    let acc = '';
-    segs.forEach((seg) => {
-      const sep = document.createElement('span');
-      sep.className = 'sep';
-      sep.textContent = '/';
-      this.pathEl.appendChild(sep);
-      acc = [acc, seg].filter(Boolean).join('/').replace(/\/+/g, '/');
-      const c = document.createElement('span');
-      c.className = 'crumb';
-      c.textContent = seg;
-      c.addEventListener('click', () => this.onList(acc));
-      this.pathEl.appendChild(c);
+      let acc = '';
+      segs.forEach((seg) => {
+        const sep = document.createElement('span');
+        sep.className = 'sep';
+        sep.textContent = '/';
+        this.pathEl.appendChild(sep);
+        acc = [acc, seg].filter(Boolean).join('/').replace(/\/+/g, '/');
+        const c = document.createElement('span');
+        c.className = 'crumb';
+        c.textContent = seg;
+        c.addEventListener('click', () => this.onList(acc));
+        this.pathEl.appendChild(c);
+      });
     });
   }
 
   renderChildren(node: TreeNode, items: { name: string; kind: Kind }[]) {
-    this.tree.renderChildren(node, items, this.registerNode);
-    // list 결과가 들어오면 스피너 해제
-    this.setRefreshing(false);
+    this.measureUi('ExplorerView.renderChildren', () => {
+      this.tree.renderChildren(node, items, this.registerNode);
+      // list 결과가 들어오면 스피너 해제
+      this.setRefreshing(false);
+    });
   }
 
   updateExpanded(node: TreeNode) {
-    this.tree.updateExpanded(node);
+    this.measureUi('ExplorerView.updateExpanded', () => this.tree.updateExpanded(node));
   }
 
   /** 상단 바 스피너/비활성 표시 */
   setRefreshing(busy: boolean) {
-    if (busy) {
-      this.refreshBtn.disabled = true;
-      this.busyEl.classList.add('spinning');
-    } else {
-      this.refreshBtn.disabled = false;
-      this.busyEl.classList.remove('spinning');
-    }
+    this.measureUi('ExplorerView.setRefreshing', () => {
+      if (busy) {
+        this.refreshBtn.disabled = true;
+        this.busyEl.classList.add('spinning');
+      } else {
+        this.refreshBtn.disabled = false;
+        this.busyEl.classList.remove('spinning');
+      }
+    });
   }
 }

@@ -1,6 +1,6 @@
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { measure, measureIO } from '../logging/perf.js';
+import { measure } from '../logging/perf.js';
 import { adbShell, adbStream } from './adbClient.js';
 import { sshRun, sshStream } from './sshClient.js';
 
@@ -45,7 +45,7 @@ export class ConnectionManager implements IConnectionManager {
     return this.connected;
   }
 
-  @measureIO('run', (instance) => instance.cfg.id)
+  @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
     this.log.debug(`[debug] ConnectionManager.run: start cmd=${cmd}`);
     try {
@@ -77,7 +77,7 @@ export class ConnectionManager implements IConnectionManager {
     }
   }
 
-  @measureIO('stream', (instance) => instance.cfg.id)
+  @measure()
   async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
     this.log.debug(`[debug] ConnectionManager.stream: start cmd=${cmd}`);
     try {

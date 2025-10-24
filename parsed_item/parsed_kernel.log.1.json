@@ -1,0 +1,1202 @@
+[
+  {
+    "time": "Sep 21 07:19:51.138",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1843.241435] wlan: Send EAPOL pkt to D7:57:1B:D2:DE:FA"
+  },
+  {
+    "time": "Sep 21 07:17:25.817",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 07:17:00.049",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 07:13:37.784",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 07:13:34.374",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 07:13:33.126",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 07:13:22.843",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 4F:CA:F0:D4:4D:77"
+  },
+  {
+    "time": "Sep 21 07:08:44.494",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 07:04:19.836",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 07:04:16.483",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to A6:A3:22:DF:D1:DC"
+  },
+  {
+    "time": "Sep 21 06:59:11.634",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8698.625283] wlan: Send EAPOL pkt to E6:77:02:93:D3:68"
+  },
+  {
+    "time": "Sep 21 06:58:47.272",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:56:20.621",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 25:EE:27:06:CD:F2"
+  },
+  {
+    "time": "Sep 21 06:51:05.223",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:45:54.476",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:45:11.538",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 06:45:02.383",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:44:00.253",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:43:52.321",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:38:56.607",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8503.989719] wlan: Send EAPOL pkt to 25:16:B9:29:6D:2C"
+  },
+  {
+    "time": "Sep 21 06:37:15.095",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5545.559765] wlan: Send EAPOL pkt to AE:94:0D:A9:32:17"
+  },
+  {
+    "time": "Sep 21 06:34:39.551",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:31:07.046",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to F2:C7:C9:25:F5:89"
+  },
+  {
+    "time": "Sep 21 06:26:38.690",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:25:31.636",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:24:47.413",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  6120.489747] wlan: Send EAPOL pkt to 23:6F:A5:64:50:D6"
+  },
+  {
+    "time": "Sep 21 06:19:15.539",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 40:8E:18:32:78:D2"
+  },
+  {
+    "time": "Sep 21 06:11:02.389",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5670.743546] wlan: Send EAPOL pkt to 37:6E:D8:6C:EA:63"
+  },
+  {
+    "time": "Sep 21 06:10:54.880",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to C1:44:96:A3:67:A5"
+  },
+  {
+    "time": "Sep 21 06:08:30.544",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 06:05:55.627",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 06:02:40.184",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:59:46.522",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8232.228910] wlan: Send EAPOL pkt to 81:0B:49:A3:1E:92"
+  },
+  {
+    "time": "Sep 21 05:56:56.252",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:55:15.938",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:55:15.047",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3983.255469] wlan: Send EAPOL pkt to E5:03:A6:E8:6D:16"
+  },
+  {
+    "time": "Sep 21 05:54:23.534",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  2770.814839] wlan: Send EAPOL pkt to 1D:FB:36:87:5A:67"
+  },
+  {
+    "time": "Sep 21 05:51:02.159",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:50:46.468",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:45:26.295",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:45:07.130",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:43:13.814",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:42:58.261",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:40:03.655",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:38:19.528",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:37:10.508",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 20:AB:A5:4E:04:49"
+  },
+  {
+    "time": "Sep 21 05:30:11.869",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:27:25.736",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:25:33.459",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:22:26.347",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 05:18:50.023",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3589.519925] wlan: Send EAPOL pkt to 90:3F:FA:43:DE:70"
+  },
+  {
+    "time": "Sep 21 05:16:15.119",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:14:58.860",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 37:AD:FD:9F:12:45"
+  },
+  {
+    "time": "Sep 21 05:13:18.642",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 74:53:29:7C:A6:95"
+  },
+  {
+    "time": "Sep 21 05:13:14.082",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8809.790396] wlan: Send EAPOL pkt to C4:FE:E0:63:0D:C8"
+  },
+  {
+    "time": "Sep 21 05:09:54.559",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:02:50.726",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:02:39.664",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:02:38.662",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 44:66:60:13:8F:EE"
+  },
+  {
+    "time": "Sep 21 05:01:49.513",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 05:01:46.987",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 53:3C:2A:60:79:15"
+  },
+  {
+    "time": "Sep 21 04:59:48.840",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1148.547764] wlan: Send EAPOL pkt to C4:52:1F:88:52:19"
+  },
+  {
+    "time": "Sep 21 04:59:34.805",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:58:14.208",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  7238.831318] wlan: Send EAPOL pkt to 0A:FC:BE:91:F1:D0"
+  },
+  {
+    "time": "Sep 21 04:55:05.567",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1651.392222] wlan: Send EAPOL pkt to 07:17:B8:30:56:94"
+  },
+  {
+    "time": "Sep 21 04:54:09.601",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:53:16.136",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:51:43.964",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 39:0E:B4:1D:73:5C"
+  },
+  {
+    "time": "Sep 21 04:51:43.810",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:49:46.345",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:45:40.138",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3498.950099] wlan: Send EAPOL pkt to 34:E8:78:FC:4D:AB"
+  },
+  {
+    "time": "Sep 21 04:43:39.165",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:42:32.413",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3266.735740] wlan: Send EAPOL pkt to 8A:44:99:35:F6:E5"
+  },
+  {
+    "time": "Sep 21 04:41:26.508",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 75:75:D0:51:9D:75"
+  },
+  {
+    "time": "Sep 21 04:40:03.674",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:37:10.089",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:36:21.555",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:29:05.536",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1511.685745] wlan: Send EAPOL pkt to 54:2C:4A:69:8C:79"
+  },
+  {
+    "time": "Sep 21 04:23:40.240",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 32:0D:84:E0:78:0F"
+  },
+  {
+    "time": "Sep 21 04:23:29.288",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:18:26.362",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:17:04.704",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:16:12.761",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:16:11.438",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to BB:12:98:C3:D7:78"
+  },
+  {
+    "time": "Sep 21 04:15:21.826",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:14:37.809",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 04:14:37.333",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 22:29:41:6F:97:55"
+  },
+  {
+    "time": "Sep 21 04:07:32.164",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 04:07:12.674",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 4F:9B:2E:A3:C3:83"
+  },
+  {
+    "time": "Sep 21 04:06:07.740",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 5B:1F:D1:BF:D3:29"
+  },
+  {
+    "time": "Sep 21 04:04:30.807",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 08:67:F8:AC:66:4D"
+  },
+  {
+    "time": "Sep 21 04:04:09.338",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  2495.127874] wlan: Send EAPOL pkt to 83:2D:3E:97:27:F2"
+  },
+  {
+    "time": "Sep 21 04:03:15.517",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to F6:68:9A:33:DC:5C"
+  },
+  {
+    "time": "Sep 21 04:02:49.905",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  4183.754948] wlan: Send EAPOL pkt to 58:69:D6:A8:82:27"
+  },
+  {
+    "time": "Sep 21 04:02:31.093",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3550.711867] wlan: Send EAPOL pkt to 05:CB:95:B5:CE:67"
+  },
+  {
+    "time": "Sep 21 04:02:16.895",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 03:59:42.445",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  4033.230958] wlan: Send EAPOL pkt to 9E:25:40:2B:E0:1C"
+  },
+  {
+    "time": "Sep 21 03:56:04.650",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 4C:B2:AA:22:70:F1"
+  },
+  {
+    "time": "Sep 21 03:55:58.251",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 29:8B:B9:B5:53:B5"
+  },
+  {
+    "time": "Sep 21 03:54:13.943",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5140.720966] wlan: Send EAPOL pkt to 17:F8:14:DB:A2:44"
+  },
+  {
+    "time": "Sep 21 03:45:53.735",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 7E:E8:8E:0A:73:7F"
+  },
+  {
+    "time": "Sep 21 03:42:33.171",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to F6:79:79:B2:1A:E1"
+  },
+  {
+    "time": "Sep 21 03:41:25.962",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 03:39:56.458",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8979.887620] wlan: Send EAPOL pkt to DD:BD:61:53:1F:E1"
+  },
+  {
+    "time": "Sep 21 03:39:48.426",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 03:33:13.184",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to E7:CA:53:74:00:82"
+  },
+  {
+    "time": "Sep 21 03:33:08.001",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 03:33:06.422",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 81:FC:EC:D1:0F:2E"
+  },
+  {
+    "time": "Sep 21 03:23:39.296",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  7598.121796] wlan: Send EAPOL pkt to 37:D7:C7:0E:8D:67"
+  },
+  {
+    "time": "Sep 21 03:13:42.146",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 03:13:08.639",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 03:10:09.349",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 03:07:03.503",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 03:03:43.593",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 03:01:12.911",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 03:01:06.952",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5377.339453] wlan: Send EAPOL pkt to 9A:78:0C:D3:3F:7E"
+  },
+  {
+    "time": "Sep 21 02:55:30.765",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 54:75:03:CC:40:A1"
+  },
+  {
+    "time": "Sep 21 02:52:32.911",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 02:52:26.819",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 02:50:18.802",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 02:49:11.802",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 02:41:21.462",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to C2:96:1B:BC:41:AB"
+  },
+  {
+    "time": "Sep 21 02:40:56.813",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3765.673732] wlan: Send EAPOL pkt to EE:EB:0C:41:54:B4"
+  },
+  {
+    "time": "Sep 21 02:39:52.489",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  4205.300056] wlan: Send EAPOL pkt to 99:E5:A8:C1:F3:2A"
+  },
+  {
+    "time": "Sep 21 02:25:04.329",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8485.770235] wlan: Send EAPOL pkt to ED:BE:54:F5:EA:D6"
+  },
+  {
+    "time": "Sep 21 02:24:32.213",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  2543.714111] wlan: Send EAPOL pkt to 22:78:C6:A0:89:AB"
+  },
+  {
+    "time": "Sep 21 02:16:09.958",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 02:13:46.284",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 02:12:54.460",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8152.692969] wlan: Send EAPOL pkt to 51:98:97:29:F2:48"
+  },
+  {
+    "time": "Sep 21 02:12:45.969",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 02:07:27.857",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1840.137292] wlan: Send EAPOL pkt to 3E:E4:45:87:B4:64"
+  },
+  {
+    "time": "Sep 21 02:01:18.551",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 02:00:18.589",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1846.242931] wlan: Send EAPOL pkt to 6E:80:CC:AF:44:8D"
+  },
+  {
+    "time": "Sep 21 01:57:50.620",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 0B:D3:D0:F0:DD:27"
+  },
+  {
+    "time": "Sep 21 01:50:49.389",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 01:49:24.612",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  7012.142408] wlan: Send EAPOL pkt to D7:98:F7:61:55:8D"
+  },
+  {
+    "time": "Sep 21 01:41:49.497",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  6395.928659] wlan: Send EAPOL pkt to 62:2E:B8:0B:B9:CB"
+  },
+  {
+    "time": "Sep 21 01:35:00.795",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 67:23:9C:C1:61:B2"
+  },
+  {
+    "time": "Sep 21 01:33:43.492",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 01:27:41.625",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  2760.991518] wlan: Send EAPOL pkt to BD:21:1A:F4:C1:0B"
+  },
+  {
+    "time": "Sep 21 01:26:22.823",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 01:22:02.831",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 01:21:41.398",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8951.481272] wlan: Send EAPOL pkt to 05:27:96:29:AB:50"
+  },
+  {
+    "time": "Sep 21 01:20:00.143",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 01:14:43.926",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 01:12:16.358",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 43:31:96:1F:5D:C4"
+  },
+  {
+    "time": "Sep 21 01:08:38.363",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 01:06:35.853",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 1E:85:62:49:38:B1"
+  },
+  {
+    "time": "Sep 21 01:05:57.350",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  4983.238712] wlan: Send EAPOL pkt to 59:F9:5E:5A:48:51"
+  },
+  {
+    "time": "Sep 21 00:57:47.756",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 30:82:C1:8F:93:92"
+  },
+  {
+    "time": "Sep 21 00:57:16.180",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 58:D2:27:31:CF:82"
+  },
+  {
+    "time": "Sep 21 00:55:33.537",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:54:22.239",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:53:41.534",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to E8:89:7F:21:08:1C"
+  },
+  {
+    "time": "Sep 21 00:51:36.891",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:50:56.547",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:47:05.391",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 90:D6:C6:6C:50:8B"
+  },
+  {
+    "time": "Sep 21 00:45:47.327",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 92:8F:AE:66:D4:97"
+  },
+  {
+    "time": "Sep 21 00:44:30.472",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:43:55.142",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:41:23.894",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:39:23.900",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:38:51.508",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:35:17.206",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:32:04.686",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 6E:FB:F2:DD:65:76"
+  },
+  {
+    "time": "Sep 21 00:30:04.282",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to FE:1F:B5:DF:60:0A"
+  },
+  {
+    "time": "Sep 21 00:27:30.672",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8735.780164] wlan: Send EAPOL pkt to 98:AC:A1:95:02:12"
+  },
+  {
+    "time": "Sep 21 00:22:53.871",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 49:6E:46:B2:D7:EB"
+  },
+  {
+    "time": "Sep 21 00:22:50.577",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:18:10.975",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:17:21.149",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5597.755503] wlan: Send EAPOL pkt to 70:C1:57:BB:77:8C"
+  },
+  {
+    "time": "Sep 21 00:17:03.186",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:15:18.781",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:15:12.833",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:14:49.163",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5637.108010] wlan: Send EAPOL pkt to 58:2C:71:8D:0F:5C"
+  },
+  {
+    "time": "Sep 21 00:13:45.462",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:12:24.224",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:10:36.499",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  6729.815846] wlan: Send EAPOL pkt to 23:F4:AF:B9:A9:70"
+  },
+  {
+    "time": "Sep 21 00:09:00.528",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 21 00:08:34.294",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 7E:FB:66:B4:1B:8F"
+  },
+  {
+    "time": "Sep 21 00:02:45.428",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 21 00:02:24.813",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 20 23:58:19.216",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 20 23:57:51.471",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 20 23:53:57.239",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 20 23:49:16.910",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 20 23:45:56.195",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  8915.431149] wlan: Send EAPOL pkt to 85:82:68:28:CE:94"
+  },
+  {
+    "time": "Sep 20 23:40:15.690",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to D6:5A:1D:47:91:3B"
+  },
+  {
+    "time": "Sep 20 23:36:01.501",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  7413.784210] wlan: Send EAPOL pkt to C3:16:BF:45:1C:C3"
+  },
+  {
+    "time": "Sep 20 23:34:42.544",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 3E:4A:5F:57:87:3E"
+  },
+  {
+    "time": "Sep 20 23:23:32.550",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1216.254700] wlan: Send EAPOL pkt to 97:BA:D1:53:11:BA"
+  },
+  {
+    "time": "Sep 20 23:21:21.714",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  5748.388776] wlan: Send EAPOL pkt to 06:64:BE:28:53:2D"
+  },
+  {
+    "time": "Sep 20 23:21:21.645",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  3746.535458] wlan: Send EAPOL pkt to 14:D3:AE:76:96:0E"
+  },
+  {
+    "time": "Sep 20 23:19:20.474",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan: Send EAPOL pkt to 30:E6:43:77:C1:09"
+  },
+  {
+    "time": "Sep 20 23:17:59.231",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 20 23:11:55.460",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 20 23:05:36.746",
+    "process": "kernel",
+    "pid": null,
+    "message": "wlan0:"
+  },
+  {
+    "time": "Sep 20 23:00:14.641",
+    "process": "kernel",
+    "pid": null,
+    "message": "woal_cfg80211_set_rekey_data return: gtk_rekey_offload is DISABLE"
+  },
+  {
+    "time": "Sep 20 22:57:22.648",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  2897.211055] wlan: Send EAPOL pkt to 68:F9:3D:91:32:C2"
+  },
+  {
+    "time": "Sep 20 22:45:49.252",
+    "process": "kernel",
+    "pid": null,
+    "message": "[  1288.849958] wlan: Send EAPOL pkt to 7A:A7:70:BC:6C:47"
+  }
+]

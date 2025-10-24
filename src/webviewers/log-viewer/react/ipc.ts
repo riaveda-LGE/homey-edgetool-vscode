@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // ⛔️ host utils가 아니라 webview 전용 utils를 사용해야 함
-import { createUiLog } from '../../shared/utils';
+import { createUiLog, createUiMeasure } from '../../shared/utils';
 import { useLogStore } from './store';
 
 declare const acquireVsCodeApi: () => {
@@ -12,6 +12,12 @@ declare const acquireVsCodeApi: () => {
 
 export const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
 const ui = createUiLog(vscode, 'log-viewer-react');
+// 웹뷰 성능 계측기 (호스트로 perfMeasure 이벤트 전달)
+const measureUi = createUiMeasure(vscode, {
+  source: 'log-viewer-react',
+  minMs: 1,          // 1ms 이상만 샘플링
+  sampleEvery: 5,    // 과도한 전송 방지
+});
 
 const Env = z.object({ v: z.literal(1), type: z.string(), payload: z.any().optional() });
 const ZLogEntry = z.object({
@@ -70,7 +76,8 @@ export function setupIpc() {
     if (!parsed.success) return;
     const { type, payload } = parsed.data;
 
-    switch (type) {
+    return measureUi(`ipc.on:${type}`, () => {
+      switch (type) {
       case 'logs.state': {
         // host 쪽 pagination 상태 스냅샷(디버깅/초기 배너/프로그레스 용)
         const total = typeof payload?.total === 'number' ? payload.total : undefined;
@@ -112,11 +119,13 @@ export function setupIpc() {
         const v = typeof payload?.version === 'number' ? payload.version : undefined;
         if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
         let nextId = useLogStore.getState().nextId;
-        const rows = logs.map((e) => {
-          const raw = String(e.text ?? '');
-          const p = parseLine(raw);
-          const src = pickSrcName(e);
-          return { id: nextId++, idx: e.idx, ...p, src, raw };
+        const rows = measureUi('ipc.logs.batch.map', () => {
+          return logs.map((e) => {
+            const raw = String(e.text ?? '');
+            const p = parseLine(raw);
+            const src = pickSrcName(e);
+            return { id: nextId++, idx: e.idx, ...p, src, raw };
+          });
         });
         // ✅ 파일기반 버전만 채택(구버전 seq fallback은 page.response와 충돌 가능)
         if (typeof v === 'number') {
@@ -178,11 +187,13 @@ export function setupIpc() {
         }
         const items = z.array(ZLogEntry).parse(payload?.logs ?? []);
         let nextId = useLogStore.getState().nextId;
-        const rows = items.map((e) => {
-          const raw = String(e.text ?? '');
-          const p = parseLine(raw);
-          const src = pickSrcName(e);
-          return { id: nextId++, idx: e.idx, ...p, src, raw };
+        const rows = measureUi('ipc.page.response.map', () => {
+          return items.map((e) => {
+            const raw = String(e.text ?? '');
+            const p = parseLine(raw);
+            const src = pickSrcName(e);
+            return { id: nextId++, idx: e.idx, ...p, src, raw };
+          });
         });
         ui.debug?.(`page: response ${startIdx}-${payload?.endIdx} count=${rows.length} v=${respVersion ?? 'n/a'}`);
         useLogStore.getState().receiveRows(startIdx, rows);
@@ -226,6 +237,7 @@ export function setupIpc() {
         return;
       }
     }
+    });
   });
 }
 
@@ -275,14 +287,14 @@ export function postFilterUpdate(filter: {
   msg?: string;
 }) {
   ui.debug?.('[debug] postFilterUpdate: start');
-  const next = normalizeFilter(filter);
+  const next = measureUi('ipc.normalizeFilter', () => normalizeFilter(filter));
   if (!READY_FOR_FILTER) {
     PENDING_FILTER = next;
     ui.info(`filter.update deferred (viewer not ready): ${JSON.stringify(next)}`);
     ui.debug?.('[debug] postFilterUpdate: end');
     return;
   }
-  flushFilter(next);
+  measureUi('ipc.flushFilter', () => flushFilter(next));
   ui.debug?.('[debug] postFilterUpdate: end');
 }
 
