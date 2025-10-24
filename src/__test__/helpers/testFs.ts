@@ -17,34 +17,6 @@ export function cleanAndEnsureDir(p: string) {
   ensureDir(p);
 }
 
-export function iso(i: number) {
-  const d = new Date(1735689600000 + i * 1000);
-  return d.toISOString();
-}
-
-export async function writeIsoLogs(dir: string, spec: Record<string, number>): Promise<void> {
-  ensureDir(dir);
-  await Promise.all(
-    Object.entries(spec).map(
-      ([type, n]) =>
-        new Promise<void>((resolve, reject) => {
-          const file = path.join(dir, `${type}.log`);
-          const ws = fs.createWriteStream(file, { encoding: 'utf8' });
-          ws.on('error', reject);
-          ws.on('finish', resolve);
-          for (let i = 0; i < n; i++) ws.write(`${iso(i)} ${type} message ${i}\n`);
-          ws.end();
-        }),
-    ),
-  );
-}
-
-export async function setupTempInput(dir: string, spec: Record<string, number>): Promise<string> {
-  cleanAndEnsureDir(dir);
-  await writeIsoLogs(dir, spec);
-  return dir;
-}
-
 export function cleanOutputs(dir: string) {
   try {
     const ents = fs.readdirSync(dir, { withFileTypes: true });
@@ -52,11 +24,6 @@ export function cleanOutputs(dir: string) {
       if (e.isDirectory() && /^merge_log/.test(e.name)) cleanDir(path.join(dir, e.name));
     }
   } catch {}
-}
-
-export async function drainNextTicks() {
-  await new Promise<void>((r) => setImmediate(r));
-  await new Promise<void>((r) => setTimeout(r, 0));
 }
 
 function tsForPath() {
