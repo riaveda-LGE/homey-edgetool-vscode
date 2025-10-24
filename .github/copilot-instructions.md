@@ -170,12 +170,14 @@ homey-edgetool/
 ├─ doc/                                   # 프로젝트 문서
 │  ├─ instruction.md                      # 프로젝트 지침 및 사용법
 │  ├─ logging-0-parser.md                 # 로그 파서 설계 및 구현 문서
-│  └─ logging_parse_integration_logic.md  # 로그 파싱 통합 로직 문서
+│  ├─ logging_parse_integration_logic.md  # 로그 파싱 통합 로직 문서
+│  └─ perf-guide.md                       # 성능 가이드 문서
 ├─ media/                                 # 아이콘 및 정적 자원
 │  └─ resources/
 │     ├─ custom_log_parser.template.v1.json # 커스텀 로그 파서 템플릿 JSON # custom_log_parser_설정
 │     ├─ edge-icon.svg                    # 확장 아이콘 SVG 파일
-│     └─ help.md                          # 도움말 문서
+│     ├─ help.md                          # 도움말 문서
+│     └─ user_testcase_list.template.txt   # 사용자 테스트 케이스 목록 템플릿
 ├─ scripts/                               # 빌드/배포 및 유틸리티 스크립트
 │  ├─ clean-reinstall.ps1                 # 클린 재설치 PowerShell 스크립트
 │  ├─ deploy.js                           # 배포 JavaScript 스크립트
@@ -197,7 +199,7 @@ homey-edgetool/
 │  │  ├─ LegacyJsonlCompat.test.ts        # 레거시 JSONL 호환성 테스트 # 로그병합
 │  │  ├─ LogFieldExtractionGolden.test.ts # 로그 필드 추출 골든 테스트 # 로그파싱
 │  │  ├─ LogFileIntegration.test.ts       # 로그 파일 통합 테스트 # 로그병합 # 타임존_점프_감지_및_보정
-│  │  ├─ LogFieldExtractionGolden.test.ts # 로그 필드 추출 골든 테스트 # 로그파싱
+│  │  ├─ LogWebviewAscendingOrder.test.ts # 로그 웹뷰 오름차순 테스트
 │  │  ├─ MergeMode.test.ts                # 병합 모드 테스트 # 로그병합
 │  │  ├─ NoTrailingNewline.test.ts        # 후행 줄바꿈 없음 테스트 # 로그병합
 │  │  ├─ ParserTemplateIntegration.test.ts # 파서 템플릿 통합 테스트 # custom_log_parser_설정 # 로그파싱
@@ -261,8 +263,10 @@ homey-edgetool/
 │  │  │  ├─ adbClient.ts                  # ADB 클라이언트 구현
 │  │  │  └─ HomeyController.ts            # Homey 디바이스 제어 로직
 │  │  ├─ logging/
+│  │  │  ├─ console-logger.ts             # 콘솔 로거 구현
 │  │  │  ├─ extension-logger.ts           # OutputChannel 기반 로깅 싱크 구현
-│  │  │  └─ perf.ts                       # 성능 계측 데코레이터
+│  │  │  ├─ perf.ts                       # 성능 계측 데코레이터
+│  │  │  └─ test-mode.ts                  # 테스트 모드 로깅 유틸리티
 │  │  ├─ logs/
 │  │  │  ├─ ChunkWriter.ts                # 로그 청크 쓰기 유틸리티 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신
 │  │  │  ├─ HybridLogBuffer.ts            # 하이브리드 로그 버퍼 관리 (4-버퍼 시스템) # 스크롤에_따른_로그_뷰_로드_갱신
@@ -275,6 +279,7 @@ homey-edgetool/
 │  │  │  ├─ PagedReader.ts                # 페이지드 로그 리더 구현 # 스크롤에_따른_로그_뷰_로드_갱신 #로그병합
 │  │  │  ├─ PaginationService.ts          # 로그 페이지네이션 서비스 # 스크롤에_따른_로그_뷰_로드_갱신 #로그병합
 │  │  │  ├─ ParserEngine.ts               # 로그 파싱 엔진 구현 # 로그파싱 # custom_log_parser_설정
+│  │  │  ├─ Sanitizer.ts                  # 로그 데이터 정제 유틸리티
 │  │  │  ├─ time/                         # 시간 관련 유틸리티
 │  │  │  │  ├─ TimeParser.ts              # 로그 시간 파서 # 로그파싱 # 로그병합 # 타임존_점프_감지_및_보정
 │  │  │  │  └─ TimezoneHeuristics.ts      # 타임존 휴리스틱 로직 # 로그파싱 # 로그병합 # 타임존_점프_감지_및_보정
