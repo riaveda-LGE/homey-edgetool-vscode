@@ -1,4 +1,4 @@
-// src/__test__/LogMergePaginationTypeRestore.spec.ts
+// src/__test__/LogMergePaginationTypeRestore.test.ts
 
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
@@ -46,6 +46,53 @@ function normalizeForCompare(line: string): string {
 }
 function normalizeNewlines(s: string) {
   return s.replace(/\r\n/g, '\n');
+}
+
+// BOM 무시: 원본 vs 재구성 비교 시 U+FEFF 존재 여부는 의미 없으므로 제거
+function stripBomAll(s: string) {
+  return s.replace(/\uFEFF/g, '');
+}
+
+// ✅ 테스트에서만 사용할 "프로세스명 → 복원 대상 파일명" 매핑
+//   - 이 목록에 포함된 것들만 복원 및 원본 대조를 수행한다.
+const PROC_TO_FILE: Record<string, string> = {
+  'homey-matter': 'matter.log',
+  'homey-z3gateway': 'z3gateway.log',
+  'kernel': 'kernel.log',
+  'homey-pro': 'homey-pro.log',
+  'cpcd': 'cpcd.log',
+};
+const FILE_BASES_OF_INTEREST = new Set(
+  Object.values(PROC_TO_FILE).map((n) => n.replace(/\.log$/i, '')),
+);
+
+/** 파일명 정규화: PID 등 대괄호 태그 제거, 공백/대소문자/구분자 통일 */
+function canonicalizeProcName(name: string) {
+  return name
+    .replace(/\[[^\]]*\]/g, '') // [1863], [4413] 등 제거
+    .replace(/\s+/g, '')        // 공백 제거
+    .replace(/[_]+/g, '-')      // _ → - 통일(선택)
+    .toLowerCase();
+}
+
+/** REBUILT_DIR 내에서 proc에 해당하는 복원본 로그 실제 경로를 탐색 */
+function resolveRebuiltPath(proc: string, rebuiltDir: string) {
+  const direct = path.join(rebuiltDir, `${proc}.log`);
+  if (fs.existsSync(direct)) return direct;
+  try {
+    const files = fs.readdirSync(rebuiltDir).filter(f => f.toLowerCase().endsWith('.log'));
+    const target = canonicalizeProcName(proc);
+    const hit = files.find(f => canonicalizeProcName(path.basename(f, '.log')) === target);
+    if (hit) return path.join(rebuiltDir, hit);
+    // prefix 매치도 한 번 더 시도 (예: homey-matter vs homey-matter-xyz)
+    const prefix = files.find(f => canonicalizeProcName(path.basename(f, '.log')).startsWith(target));
+    if (prefix) return path.join(rebuiltDir, prefix);
+    // 못 찾으면 디버깅 편의로 목록 로그 출력
+    // (jest 실행 시 콘솔에 경고로 남김)
+    // eslint-disable-next-line no-console
+    console.warn(`[resolveRebuiltPath] Not found for "${proc}". Candidates: ${files.join(', ')}`);
+  } catch {}
+  return direct;
 }
 
 /** e.text 또는 parsed에서 process명 추출 */
@@ -170,29 +217,46 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
         skipInvalid: true,
       });
 
-      const originals = listOriginalLogFiles(TEST_LOG_DIR); // Map<proc, file>
+      // .test_log 내 원본 중, 매핑 대상에 해당하는 파일만 고른다.
+      const originalsAll = listOriginalLogFiles(TEST_LOG_DIR); // Map<fileBase, filePath>
+      const originals = new Map(
+        [...originalsAll].filter(([base]) => FILE_BASES_OF_INTEREST.has(base)),
+      );
       expect(originals.size).toBeGreaterThan(0);
 
       const REBUILT_DIR = path.join(workDir, 'rebuilt_by_process');
       await fsp.mkdir(REBUILT_DIR, { recursive: true });
 
-      // 맨 아래줄(가장 오래된)부터 위로 → 각 process.log에 append
-      const targetProcs = new Set(originals.keys());
+      // 프로세스명 → 실제 쓰기 대상 파일 경로 매핑 구성
+      const targetsByProc = new Map<string, string>();
+      for (const [procName, fileName] of Object.entries(PROC_TO_FILE)) {
+        const base = fileName.replace(/\.log$/i, '');
+        if (originals.has(base)) {
+          targetsByProc.set(procName, path.join(REBUILT_DIR, fileName));
+        }
+      }
+      const targetProcs = new Set(targetsByProc.keys());
+
+      // 맨 아래줄(가장 오래된)부터 위로 → 매핑된 파일에만 append
       for (let i = allDesc.length - 1; i >= 0; i--) {
         const e = allDesc[i] as LogEntry;
         const proc = extractProcess(e);
         if (!proc || !targetProcs.has(proc)) continue;
-        const outPath = path.join(REBUILT_DIR, `${proc}.log`);
+        const outPath = targetsByProc.get(proc)!;
         await fsp.appendFile(outPath, String(e.text ?? '') + '\n', 'utf8');
       }
 
       // 4) 복원본 vs 원본 라인-바이-라인 비교
-      for (const [proc, origPath] of originals) {
-        const rebuiltPath = path.join(REBUILT_DIR, `${proc}.log`);
-        const original = normalizeNewlines(fs.readFileSync(origPath, 'utf8'));
-        const rebuilt = fs.existsSync(rebuiltPath)
-          ? normalizeNewlines(fs.readFileSync(rebuiltPath, 'utf8'))
-          : '';
+      for (const [fileBase, origPath] of originals) {
+        const rebuiltPath = resolveRebuiltPath(fileBase, REBUILT_DIR);
+        const original = stripBomAll(normalizeNewlines(fs.readFileSync(origPath, 'utf8')));
+        let rebuilt = '';
+        if (fs.existsSync(rebuiltPath)) {
+          rebuilt = stripBomAll(normalizeNewlines(fs.readFileSync(rebuiltPath, 'utf8')));
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`[compare] rebuilt log not found for "${fileBase}" → expected at: ${rebuiltPath}`);
+        }
 
         const origLines = original.split('\n');
         const rebLines = rebuilt.split('\n');
@@ -231,7 +295,7 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
     } finally {
       // 🔚 테스트 산출물 정리 (디버깅을 위해 기본은 보존)
       try {
-        // if (workDir && fs.existsSync(workDir)) cleanDir(workDir);
+          if (workDir && fs.existsSync(workDir)) cleanDir(workDir);
       } catch {}
     }
   });
