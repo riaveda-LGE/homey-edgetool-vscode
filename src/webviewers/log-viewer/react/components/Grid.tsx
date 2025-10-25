@@ -22,6 +22,20 @@ export function Grid() {
 
   // 동일 요청 범위 중복 송신 방지 (훅은 반드시 최상위에서 선언)
   const lastReqRef = useRef<{ s: number; e: number } | null>(null);
+  // 빠른 스크롤의 과요청을 줄이기 위한 요청 스케줄러
+  const debounceTimerRef = useRef<number | null>(null);
+  const maxWaitTimerRef  = useRef<number | null>(null);
+  const pendingReqRef = useRef<{ s: number; e: number; payload: string } | null>(null);
+  // 기본(debounce) / 드래그 추정 시 확장 / 드래그 중에도 너무 오래 비우지 않기 위한 주기
+  // BASE_DEBOUNCE_MS ≤ DRAG_DEBOUNCE_MS ≤ MAX_WAIT_MS 관계 필수
+  const BASE_DEBOUNCE_MS = 48;   // 하나의 휠 burst를 잘 묶는 값(≈ 3프레임)
+  const DRAG_DEBOUNCE_MS = 80;
+  const MAX_WAIT_MS      = 240;
+  // 스크롤 속도로 "드래그 추정"을 한다(행/초 기준). 빠르면 일정 시간 동안 드래그 상태로 간주.
+  const DRAG_RPS_THRESHOLD = 120; // rows per second
+  const DRAG_IDLE_MS       = 140; // DRAG여부를 판단하는 변수. 해당값 이내에 DRAG가 발생해야 계속 DRAG로 판단.고속 스크롤 뒤 이 시간 동안 이벤트 없으면 드래그 종료.
+  const lastScrollSampleRef = useRef<{ top: number; t: number } | null>(null);
+  const dragActiveUntilRef = useRef(0);
 
   // ── 로그 스로틀/디듀프 유틸 ─────────────────────────────
   // (과도한 로그로 성능/가독성 저하 방지)
@@ -35,6 +49,51 @@ export function Grid() {
     lastLogTsRef.current.set(key, now);
     if (payloadStr) lastPayloadRef.current.set(key, payloadStr);
     return true;
+  };
+
+  const flushScheduledRequest = (reason: string) => {
+    const p = pendingReqRef.current;
+    if (!p) return;
+    pendingReqRef.current = null;
+    // 동일 범위 중복 요청 방지
+    if (lastReqRef.current && lastReqRef.current.s === p.s && lastReqRef.current.e === p.e) return;
+    lastReqRef.current = { s: p.s, e: p.e };
+    if (shouldLog('page.request', 200, p.payload)) {
+      ui.debug?.(`Grid.scroll → page.request (flush:${reason}) ${p.payload}`);
+    }
+    measureUi('Grid.page.request', () =>
+      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: p.s, endIdx: p.e } }));
+    // 한 번 보냈으면 타이머들은 정리
+    if (debounceTimerRef.current) { window.clearTimeout(debounceTimerRef.current); debounceTimerRef.current = null; }
+    if (maxWaitTimerRef.current)  { window.clearTimeout(maxWaitTimerRef.current);  maxWaitTimerRef.current  = null; }
+  };
+
+  const schedulePageRequest = (
+    startIdx: number,
+    endIdx: number,
+    payload: string,
+    opts?: { delayMs?: number; isDragging?: boolean },
+  ) => {
+    // pending이 같으면 무시
+    if (pendingReqRef.current && pendingReqRef.current.s === startIdx && pendingReqRef.current.e === endIdx) return;
+    pendingReqRef.current = { s: startIdx, e: endIdx, payload };
+    if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
+    const delay = Math.max(0, opts?.delayMs ?? BASE_DEBOUNCE_MS);
+    debounceTimerRef.current = window.setTimeout(() => {
+      debounceTimerRef.current = null;
+      flushScheduledRequest('debounce');
+    }, delay);
+
+    // 드래그 중에는 너무 오래 비우지 않도록 max-wait 보장(예: 240ms마다 1회)
+    if (opts?.isDragging) {
+      if (maxWaitTimerRef.current) window.clearTimeout(maxWaitTimerRef.current);
+      maxWaitTimerRef.current = window.setTimeout(() => {
+        maxWaitTimerRef.current = null;
+        flushScheduledRequest('max-wait');
+      }, MAX_WAIT_MS);
+    } else {
+      if (maxWaitTimerRef.current) { window.clearTimeout(maxWaitTimerRef.current); maxWaitTimerRef.current = null; }
+    }
   };
 
   // 더블클릭 → Dialog 오픈 시 잔여 click 이벤트가 먼저 발생하지 않도록 약간 지연
@@ -89,6 +148,8 @@ export function Grid() {
     return () => {
       measureUi('Grid.unmount', () => ui.info('Grid.unmount'));
       ro?.disconnect();
+      if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
+      if (maxWaitTimerRef.current)  window.clearTimeout(maxWaitTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -118,21 +179,33 @@ export function Grid() {
       const desiredStartRaw = estStart - halfOver;
       const desiredStart = Math.min(Math.max(1, desiredStartRaw), maxStart);
 
-      const delta = Math.abs(desiredStart - m.windowStart);
-      if (delta < Math.max(10, halfOver)) return; // 자잘한 스크롤 억제
+      // 방향성에 따른 임계치: 아래로(앞으로) 작은 이동은 생략, 위로(이전 구간 프리페치) 작은 이동은 허용
+      const diff = desiredStart - m.windowStart;
+      const smallMove = Math.abs(diff) < Math.max(10, halfOver);
+      if (smallMove && diff >= 0) return;
 
       const startIdx = desiredStart;
       const endIdx = Math.min(m.totalRows, startIdx + requestSize - 1);
 
-      // 동일 범위 중복 요청 방지
-      if (lastReqRef.current && lastReqRef.current.s === startIdx && lastReqRef.current.e === endIdx) return;
-      lastReqRef.current = { s: startIdx, e: endIdx };
-
-      const payload = `start=${startIdx} end=${endIdx} estStart=${estStart} cap=${capacity} req=${requestSize} maxStart=${maxStart} windowStart=${m.windowStart}`;
-      if (shouldLog('page.request', 200, payload)) {
-        ui.debug?.(`Grid.scroll → page.request ${payload}`);
+      // --- 드래그 추정(속도 기반) ------------------------------------------
+      const now = performance.now();
+      const last = lastScrollSampleRef.current;
+      if (last) {
+        const dt = Math.max(1, now - last.t);
+        const dy = Math.abs((cur.scrollTop - last.top));
+        const rowsPerSec = (dy / Math.max(1, m.rowH)) / (dt / 1000);
+        // 고속이면 일정 시간 동안 드래그 상태 유지
+        if (rowsPerSec >= DRAG_RPS_THRESHOLD) {
+          dragActiveUntilRef.current = now + DRAG_IDLE_MS;
+        }
       }
-      measureUi('Grid.page.request', () => vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } }));
+      lastScrollSampleRef.current = { top: cur.scrollTop, t: now };
+      const isDragging = now < dragActiveUntilRef.current;
+      const delayMs = isDragging ? DRAG_DEBOUNCE_MS : BASE_DEBOUNCE_MS;
+
+      const payload = `start=${startIdx} end=${endIdx} estStart=${estStart} cap=${capacity} req=${requestSize} maxStart=${maxStart} windowStart=${m.windowStart} dragging=${isDragging}`;
+      // 빠른 스크롤(드래그)일수록 요청을 더 묶고, 정지 시 마지막 범위를 보냄
+      schedulePageRequest(startIdx, endIdx, payload, { delayMs, isDragging });
 
       // ✅ FOLLOW 자동 해제: 사용자가 바닥 근처를 벗어나면 PAUSE로 전환
       const nearBottom =
@@ -281,7 +354,8 @@ export function Grid() {
       // 프로그램적 이동 동안 스크롤 핸들러 무시(자동 PAUSE 방지)
       ignoreScrollRef.current = true;
       lastWindowStartChangeTimeRef.current = Date.now();
-      measureUi('Grid.page.request.follow', () => vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: tailStart, endIdx: tailEnd } }));
+      measureUi('Grid.page.request.follow', () =>
+        vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: tailStart, endIdx: tailEnd } }));
       requestAnimationFrame(() => { ignoreScrollRef.current = false; });
     }
     scrollToBottom();
