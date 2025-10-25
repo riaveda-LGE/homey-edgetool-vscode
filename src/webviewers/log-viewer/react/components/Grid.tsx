@@ -167,9 +167,11 @@ export function Grid() {
       if (!cur) return;
 
       const headerOffset = listRef.current?.offsetTop ?? 0;
+      const viewportH = Math.max(0, (cur.clientHeight || 0) - headerOffset);
       const estStart = Math.floor(Math.max(0, cur.scrollTop - headerOffset) / Math.max(1, m.rowH)) + 1;
 
-      const capacity = Math.max(1, Math.floor((cur.clientHeight || 0) / Math.max(1, Math.round(m.rowH))));
+      // ⚠️ 헤더 높이를 제외한 가시 영역 높이로 용량(capacity) 계산
+      const capacity = Math.max(1, Math.floor(viewportH / Math.max(1, Math.round(m.rowH))));
       // 요청 폭을 뷰포트 용량 + overscan 으로 확장하되, windowSize 를 넘지 않도록 제한
       const requestSize = Math.max(capacity, Math.min(m.windowSize, capacity + m.overscan));
       // 스크롤 시작점의 상한선은 "요청 폭" 기준으로 계산해야 하단에서 빈칸이 줄어듦
@@ -282,20 +284,56 @@ export function Grid() {
   useEffect(() => {
     const idx = m.pendingJumpIdx;
     if (!idx || !parentRef.current) return;
+    const el = parentRef.current;
+    const headerOffset = listRef.current?.offsetTop ?? 0;
+    const viewportH = Math.max(0, el.clientHeight - headerOffset);
+    const rowH = Math.max(1, Math.round(m.rowH));
+    const cap = Math.max(1, Math.floor(viewportH / rowH));
+    // "중앙" 산정: 화면에 보이는 행수(cap)의 가운데
+    const centerOffset = Math.floor((cap - 1) / 2); // 중앙 위쪽에 놓일 행 수
+    const centerTopIdx = 1 + centerOffset; // 스크롤 top일 때 중앙에 오는 전역 idx
+    const centerBottomIdx = Math.max(1, m.totalRows - cap + 1 + centerOffset); // 스크롤 bottom일 때 중앙에 오는 전역 idx
+
+    // 규칙:
+    // idx < centerTopIdx     → top 앵커
+    // idx > centerBottomIdx  → bottom 앵커
+    // 그 외                   → 중앙 정렬
+    let mode: 'top' | 'center' | 'bottom';
+    if (idx < centerTopIdx) mode = 'top';
+    else if (idx > centerBottomIdx) mode = 'bottom';
+    else mode = 'center';
+
+    // 화면 스크롤 위치 계산
+    let targetScrollTop: number;
+    if (mode === 'top') {
+      targetScrollTop = headerOffset; // 헤더 바로 아래가 리스트 시작점
+    } else if (mode === 'bottom') {
+      targetScrollTop = headerOffset + m.totalRows * rowH - el.clientHeight;
+    } else {
+      const startForView = Math.max(1, Math.min(Math.max(1, m.totalRows - cap + 1), idx - centerOffset));
+      targetScrollTop = headerOffset + (startForView - 1) * rowH;
+    }
+
+    // 요청 범위(버퍼)는 기존처럼 windowSize 중심으로 확보
     const half = Math.floor(m.windowSize / 2);
-    const startIdx = Math.max(1, Math.min(Math.max(1, m.totalRows - m.windowSize + 1), idx - half));
-    const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
-    measureUi('Grid.jumpToIdx', () => ui.info(`Grid.jumpToIdx idx=${idx} → request ${startIdx}-${endIdx}`));
+    const reqStart = Math.max(1, Math.min(Math.max(1, m.totalRows - m.windowSize + 1), idx - half));
+    const reqEnd = Math.min(m.totalRows, reqStart + m.windowSize - 1);
+
+    measureUi('Grid.jumpToIdx', () =>
+      ui.info(`Grid.jumpToIdx idx=${idx} cap=${cap} centerTop=${centerTopIdx} centerBottom=${centerBottomIdx} mode=${mode} → request ${reqStart}-${reqEnd}`),
+    );
+
     // 점프 시에만 프로그램적 스크롤 적용(+ onScroll 무시)
     ignoreScrollRef.current = true;
     lastWindowStartChangeTimeRef.current = Date.now();
-    const headerOffset = listRef.current?.offsetTop ?? 0;
-    parentRef.current.scrollTop = headerOffset + Math.max(0, (idx - 1) * m.rowH);
+    el.scrollTop = Math.max(0, Math.min(targetScrollTop, el.scrollHeight - el.clientHeight));
     // 다음 프레임에서 해제
     requestAnimationFrame(() => {
       ignoreScrollRef.current = false;
     });
-    measureUi('Grid.page.request.jump', () => vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } }));
+    measureUi('Grid.page.request.jump', () =>
+      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: reqStart, endIdx: reqEnd } }),
+    );
   }, [m.pendingJumpIdx, m.windowSize, m.totalRows, m.rowH]);
 
   // pendingJumpIdx가 뷰포트로 로드되면 해당 행을 선택 상태로 확정
