@@ -1,6 +1,7 @@
 export function bindVerticalSplitter(
   splitter: HTMLElement,
   onChange: (deltaY: number, commit: boolean) => void,
+  measureUi?: <T>(name: string, fn: () => T) => T,
 ) {
   let dragging = false;
   let lastY = 0;
@@ -17,12 +18,16 @@ export function bindVerticalSplitter(
   const onPointerUp = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
+    if (measureUi) {
+      measureUi('Splitter.vertical.commit', () => onChange(0, true));
+    } else {
+      onChange(0, true);
+    }
     try {
       splitter.releasePointerCapture(e.pointerId);
     } catch {}
     document.body.style.userSelect = '';
     splitter.classList.remove('dragging');
-    onChange(0, true);
   };
 
   const onPointerDown = (e: PointerEvent) => {
@@ -51,6 +56,7 @@ export function bindContentSplitter(
   splitter: HTMLElement,
   getSizes: () => { top: number; bottom: number; minTop: number; minBottom: number },
   setSizes: (topPx: number, bottomPx: number, commit: boolean) => void,
+  measureUi?: <T>(name: string, fn: () => T) => T,
 ) {
   let dragging = false;
 
@@ -99,10 +105,17 @@ export function bindContentSplitter(
 
     // 커밋 시점 보정
     const { top, bottom } = getSizes();
-    setSizes(Math.max(top, minTop), Math.max(bottom, minBottom), true);
+    const commit = () =>
+      setSizes(Math.max(top, minTop), Math.max(bottom, minBottom), true);
+    if (measureUi) measureUi('Splitter.content.commit', commit);
+    else commit();
   };
 
   const onPointerDown = (e: PointerEvent) => {
+    if (measureUi) {
+      measureUi('Splitter.content.pointerdown', () => {});
+    }
+
     const sz = getSizes();
     minTop = sz.minTop;
     minBottom = sz.minBottom;

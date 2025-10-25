@@ -44,6 +44,13 @@
   font-weight: 700;
   opacity: 0.9;
 }
+/* 로그 타이틀 우측 버튼 영역 */
+#logActions {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
 
 /* 로그 본문 */
 .log-body {

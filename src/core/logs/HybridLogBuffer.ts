@@ -3,6 +3,7 @@ import type { LogEntry } from '@ipc/messages';
 
 import { REALTIME_BUFFER_MAX } from '../../shared/const.js';
 import { getLogger } from '../logging/extension-logger.js';
+import { measure } from '../logging/perf.js';
 
 export type BufferMetrics = { realtime: number; viewport: number; search: number; spill: number };
 
@@ -25,12 +26,14 @@ export class HybridLogBuffer implements IHybridLogBuffer {
     this.realtime.push(entry);
     if (this.realtime.length > REALTIME_BUFFER_MAX) this.realtime.shift();
   }
+  @measure()
   addBatch(entries: LogEntry[]) {
     for (const e of entries) this.add(e);
   }
   clear() {
     this.realtime = [];
   }
+  @measure()
   snapshot(count = 50): LogEntry[] {
     return this.realtime.slice(-count);
   }

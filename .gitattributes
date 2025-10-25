@@ -9,6 +9,7 @@
 *.js text eol=lf
 *.html text eol=lf
 *.css text eol=lf
+src/__test__/test_log/** text eol=lf
 
 # Binary files
 *.exe binary

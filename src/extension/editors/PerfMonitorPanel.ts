@@ -81,7 +81,7 @@ export class PerfMonitorPanel {
     );
 
     // 컴포넌트 초기화
-    this._captureManager = new PerfMonitorCaptureManager(this._panel);
+    this._captureManager = new PerfMonitorCaptureManager(this._panel, this._htmlGenerator);
     this._messageHandler = new PerfMonitorMessageHandler(this._captureManager, this._exportManager);
 
     this._panel.webview.html = this._htmlGenerator.getHtmlForWebview(this._panel.webview);

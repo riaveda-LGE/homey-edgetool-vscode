@@ -6,6 +6,7 @@ export class TreeView {
 
   constructor(
     private treeEl: HTMLElement,
+    private measureUi: <T>(name: string, fn: () => T) => T,
     private getNodeByPath: (p: string) => TreeNode | undefined,
     private onToggle: (n: TreeNode) => void,
     private onOpen: (n: TreeNode) => void,
@@ -17,37 +18,41 @@ export class TreeView {
       this.treeEl.addEventListener('keydown', this.onKey);
 
       this.treeEl.addEventListener('click', (e) => {
-        const nodeEl = (e.target as HTMLElement).closest('.tree-node') as HTMLElement | null;
-        if (!nodeEl) return;
-        const node = this.getNodeByPath(nodeEl.dataset.path || '');
-        if (!node) return;
+        this.measureUi('TreeView.click', () => {
+          const nodeEl = (e.target as HTMLElement).closest('.tree-node') as HTMLElement | null;
+          if (!nodeEl) return;
+          const node = this.getNodeByPath(nodeEl.dataset.path || '');
+          if (!node) return;
 
-        // 선택 표시 업데이트 + 포커스 고정
-        this.setSelected(nodeEl);
-        this.treeEl.focus();
+          // 선택 표시 업데이트 + 포커스 고정
+          this.setSelected(nodeEl);
+          this.treeEl.focus();
 
-        this.onSelect(node, (e as MouseEvent).ctrlKey || (e as MouseEvent).metaKey);
+          this.onSelect(node, (e as MouseEvent).ctrlKey || (e as MouseEvent).metaKey);
+        });
       });
 
       this.treeEl.addEventListener('dblclick', (e) => {
-        const nodeEl = (e.target as HTMLElement).closest('.tree-node') as HTMLElement | null;
-        if (!nodeEl) return;
-        const node = this.getNodeByPath(nodeEl.dataset.path || '');
-        if (!node) return;
+        this.measureUi('TreeView.dblclick', () => {
+          const nodeEl = (e.target as HTMLElement).closest('.tree-node') as HTMLElement | null;
+          if (!nodeEl) return;
+          const node = this.getNodeByPath(nodeEl.dataset.path || '');
+          if (!node) return;
 
-        // 더블클릭 시에도 선택 보장
-        this.setSelected(nodeEl);
-        this.treeEl.focus();
+          // 더블클릭 시에도 선택 보장
+          this.setSelected(nodeEl);
+          this.treeEl.focus();
 
-        if (node.kind === 'folder') {
-          // 루트는 토글 금지(항상 펼침)
-          if (node.path === '') return;
-          node.expanded = !node.expanded;
-          this.updateExpanded(node);
-          this.onToggle(node);
-        } else {
-          this.onOpen(node);
-        }
+          if (node.kind === 'folder') {
+            // 루트는 토글 금지(항상 펼침)
+            if (node.path === '') return;
+            node.expanded = !node.expanded;
+            this.updateExpanded(node);
+            this.onToggle(node);
+          } else {
+            this.onOpen(node);
+          }
+        });
       });
     }
   }
@@ -64,44 +69,47 @@ export class TreeView {
   }
 
   private onKey = (e: KeyboardEvent) => {
-    const items = Array.from(this.treeEl.querySelectorAll('.tree-node')) as HTMLElement[];
-    const idx = items.findIndex((el) => el.classList.contains('selected'));
+    this.measureUi('TreeView.key', () => {
+      const items = Array.from(this.treeEl.querySelectorAll('.tree-node')) as HTMLElement[];
+      const idx = items.findIndex((el) => el.classList.contains('selected'));
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items[Math.min(items.length - 1, idx + 1)]?.click();
-      return;
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items[Math.max(0, idx - 1)]?.click();
-      return;
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      items[idx]?.dispatchEvent(new Event('dblclick'));
-      return;
-    }
-
-    // Delete / Backspace 로 삭제
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      const selectedEls = Array.from(
-        this.treeEl.querySelectorAll('.tree-node.selected'),
-      ) as HTMLElement[];
-      const selectedNodes = selectedEls
-        .map((el) => this.getNodeByPath(el.dataset.path || ''))
-        .filter((n): n is TreeNode => !!n);
-
-      if (selectedNodes.length > 0) {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
-        e.stopPropagation();
-        this.onDelete(selectedNodes);
+        items[Math.min(items.length - 1, idx + 1)]?.click();
+        return;
       }
-    }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        items[Math.max(0, idx - 1)]?.click();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        items[idx]?.dispatchEvent(new Event('dblclick'));
+        return;
+      }
+
+      // Delete / Backspace 로 삭제
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const selectedEls = Array.from(
+          this.treeEl.querySelectorAll('.tree-node.selected'),
+        ) as HTMLElement[];
+        const selectedNodes = selectedEls
+          .map((el) => this.getNodeByPath(el.dataset.path || ''))
+          .filter((n): n is TreeNode => !!n);
+
+        if (selectedNodes.length > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.onDelete(selectedNodes);
+        }
+      }
+    });
   };
 
   nodeLabel(node: TreeNode) {
-    const wrap = document.createElement('div');
+    return this.measureUi('TreeView.nodeLabel', () => {
+      const wrap = document.createElement('div');
     wrap.className = 'tree-node';
     wrap.dataset.path = node.path;
     wrap.setAttribute('role', 'treeitem');
@@ -122,11 +130,13 @@ export class TreeView {
       icon.textContent = '📁';
       // ▶︎ 루트 토글 금지, 그 외엔 즉시 DOM 토글 + 상위(onToggle)로 데이터 로딩 요청
       chev.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (node.path === '') return; // 루트는 항상 펼침
-        node.expanded = !node.expanded;
-        this.updateExpanded(node);
-        this.onToggle(node);
+        this.measureUi('TreeView.chevron.click', () => {
+          e.stopPropagation();
+          if (node.path === '') return; // 루트는 항상 펼침
+          node.expanded = !node.expanded;
+          this.updateExpanded(node);
+          this.onToggle(node);
+        });
       });
     } else {
       icon.textContent = '📄';
@@ -152,16 +162,19 @@ export class TreeView {
       this.setSelected(wrap);
     }
 
-    return wrap;
+      return wrap;
+    });
   }
 
   mountNode(parent: HTMLElement, node: TreeNode) {
-    let el = node.el;
-    if (!el) {
-      el = this.nodeLabel(node);
-      node.el = el;
-    }
-    parent.appendChild(el);
+    this.measureUi('TreeView.mountNode', () => {
+      let el = node.el;
+      if (!el) {
+        el = this.nodeLabel(node);
+        node.el = el;
+      }
+      parent.appendChild(el);
+    });
   }
 
   ensureChildrenContainer(node: TreeNode): HTMLElement | null {
@@ -174,57 +187,61 @@ export class TreeView {
     items: { name: string; kind: Kind }[],
     register: (n: TreeNode) => void,
   ) {
-    if (!node.el) this.mountNode(this.treeEl, node);
-    const group = this.ensureChildrenContainer(node);
-    if (!group) return;
-    group.innerHTML = '';
-    const existing = new Map(node.children?.map((c) => [c.name, c]) || []);
-    node.children = [];
+    this.measureUi('TreeView.renderChildren', () => {
+      if (!node.el) this.mountNode(this.treeEl, node);
+      const group = this.ensureChildrenContainer(node);
+      if (!group) return;
+      group.innerHTML = '';
+      const existing = new Map(node.children?.map((c) => [c.name, c]) || []);
+      node.children = [];
 
-    items.sort((a, b) =>
-      a.kind === b.kind
-        ? a.name.localeCompare(b.name, undefined, { numeric: true })
-        : a.kind === 'folder'
-          ? -1
-          : 1,
-    );
+      items.sort((a, b) =>
+        a.kind === b.kind
+          ? a.name.localeCompare(b.name, undefined, { numeric: true })
+          : a.kind === 'folder'
+            ? -1
+            : 1,
+      );
 
-    items.forEach((it) => {
-      let child = existing.get(it.name);
-      if (!child) {
-        const path = (node.path ? node.path + '/' : '') + it.name;
-        child = {
-          path,
-          name: it.name,
-          kind: it.kind,
-          parent: node,
-          children: [],
-          expanded: false,
-          loaded: false,
-          selected: false,
-        };
-        register(child);
-      }
-      this.mountNode(group, child);
+      items.forEach((it) => {
+        let child = existing.get(it.name);
+        if (!child) {
+          const path = (node.path ? node.path + '/' : '') + it.name;
+          child = {
+            path,
+            name: it.name,
+            kind: it.kind,
+            parent: node,
+            children: [],
+            expanded: false,
+            loaded: false,
+            selected: false,
+          };
+          register(child);
+        }
+        this.mountNode(group, child);
 
-      if ((child as any).selected && child.el) {
-        this.setSelected(child.el);
-      }
+        if ((child as any).selected && child.el) {
+          this.setSelected(child.el);
+        }
 
-      node.children!.push(child);
+        node.children!.push(child);
+      });
+
+      node.loaded = true;
+      node.expanded = true; // 목록을 그렸다면 펼쳐진 상태
+      this.updateExpanded(node);
     });
-
-    node.loaded = true;
-    node.expanded = true; // 목록을 그렸다면 펼쳐진 상태
-    this.updateExpanded(node);
   }
 
   updateExpanded(node: TreeNode) {
-    if (!node.el) return;
-    const group = this.ensureChildrenContainer(node);
-    const isExpanded = node.path === '' ? true : !!node.expanded; // 루트는 항상 true
-    node.el.setAttribute('aria-expanded', node.kind === 'folder' ? String(isExpanded) : 'false');
-    node.el.classList.toggle('expanded', isExpanded);
-    if (group) group.style.display = isExpanded ? '' : 'none';
+    this.measureUi('TreeView.updateExpanded', () => {
+      if (!node.el) return;
+      const group = this.ensureChildrenContainer(node);
+      const isExpanded = node.path === '' ? true : !!node.expanded; // 루트는 항상 true
+      node.el.setAttribute('aria-expanded', node.kind === 'folder' ? String(isExpanded) : 'false');
+      node.el.classList.toggle('expanded', isExpanded);
+      if (group) group.style.display = isExpanded ? '' : 'none';
+    });
   }
 }

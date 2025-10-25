@@ -8,6 +8,9 @@ export class LogsView {
   append(line: string) {
     this.logs.append(line);
   }
+  prepend(lines: string[]) {
+    this.logs.prepend(lines);
+  }
   get element() {
     return this.logs.element;
   }

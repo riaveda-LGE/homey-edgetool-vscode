@@ -20,7 +20,7 @@ export interface HighlightRule {
 
 export interface LogRow {
   id: number;
-  /** 전역 인덱스(최신=1). 페이징 점프에 사용 */
+  /** 전역 인덱스(오름차순: 과거=1, 최신=total). 페이징/점프에 사용 */
   idx?: number;
   time: string;
   proc: string;
@@ -30,6 +30,13 @@ export interface LogRow {
   /** 원본 한 줄 전체 문자열(팝업, 복사용) */
   raw: string;
   bookmarked?: boolean;
+}
+
+export interface BookmarkItem {
+  idx: number;
+  time: string;
+  msg: string;
+  src?: string;
 }
 
 export type Filter = { pid: string; src: string; proc: string; msg: string };
@@ -61,4 +68,8 @@ export interface Model {
 
   filter: Filter;
   pendingJumpIdx?: number;
+  follow: boolean;
+  newSincePause: number;
+  /** 북마크: 전역 인덱스(idx) 기반의 영속 맵(세션 단위) */
+  bookmarks: Record<number, BookmarkItem>;
 }

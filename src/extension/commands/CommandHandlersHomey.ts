@@ -18,76 +18,74 @@ const defaultHostConfig: HostConfig = {
 
 export class CommandHandlersHomey {
   constructor(
-    private say: (s: string) => void,
-    private appendLog?: (s: string) => void,
   ) {}
 
   @measure()
   async homeyRestart() {
+    log.debug('[debug] CommandHandlersHomey homeyRestart: start');
     try {
       const controller = new HomeyController(defaultHostConfig);
       await controller.restart();
-      this.say('[info] Homey restarted successfully.');
+      log.debug('[debug] CommandHandlersHomey homeyRestart: end');
     } catch (e) {
       log.error('homeyRestart failed', e as any);
-      this.say('[error] Homey restart failed: ' + (e as Error).message);
     }
   }
 
   @measure()
   async homeyMount() {
+    log.debug('[debug] CommandHandlersHomey homeyMount: start');
     try {
       const controller = new HomeyController(defaultHostConfig);
       await controller.mount();
-      this.say('[info] Homey mounted successfully.');
+      log.debug('[debug] CommandHandlersHomey homeyMount: end');
     } catch (e) {
       log.error('homeyMount failed', e as any);
-      this.say('[error] Homey mount failed: ' + (e as Error).message);
     }
   }
 
   @measure()
   async homeyUnmount() {
+    log.debug('[debug] CommandHandlersHomey homeyUnmount: start');
     try {
       const controller = new HomeyController(defaultHostConfig);
       await controller.unmount();
-      this.say('[info] Homey unmounted successfully.');
+      log.debug('[debug] CommandHandlersHomey homeyUnmount: end');
     } catch (e) {
       log.error('homeyUnmount failed', e as any);
-      this.say('[error] Homey unmount failed: ' + (e as Error).message);
     }
   }
 
   @measure()
   async homeyDevToken() {
+    log.debug('[debug] CommandHandlersHomey homeyDevToken: start');
     try {
       // DevToken은 아직 구현되지 않음 - stub
-      this.say('[warn] homeyDevToken not implemented yet');
+      log.debug('[debug] CommandHandlersHomey homeyDevToken: end');
     } catch (e) {
       log.error('homeyDevToken failed', e as any);
-      this.say('[error] Failed to get DevToken: ' + (e as Error).message);
     }
   }
 
   @measure()
   async homeyConsoleToggle() {
+    log.debug('[debug] CommandHandlersHomey homeyConsoleToggle: start');
     try {
       // Console toggle은 아직 구현되지 않음 - stub
-      this.say('[warn] homeyConsoleToggle not implemented yet');
+      log.debug('[debug] CommandHandlersHomey homeyConsoleToggle: end');
     } catch (e) {
       log.error('homeyConsoleToggle failed', e as any);
-      this.say('[error] Homey console toggle failed: ' + (e as Error).message);
     }
   }
 
   @measure()
   async homeyDockerUpdate() {
+    log.debug('[debug] CommandHandlersHomey homeyDockerUpdate: start');
     try {
       // Docker update는 아직 구현되지 않음 - stub
-      this.say('[warn] homeyDockerUpdate not implemented yet');
+      log.debug('[debug] CommandHandlersHomey homeyDockerUpdate: end');
     } catch (e) {
       log.error('homeyDockerUpdate failed', e as any);
-      this.say('[error] Homey Docker update failed: ' + (e as Error).message);
     }
   }
 }

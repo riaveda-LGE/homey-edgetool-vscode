@@ -8,6 +8,10 @@ import {
   LOG_MAX_BUFFER,
 } from '../../shared/const.js';
 
+// test 모드(npm run test)에서는 VS Code 로그 채널 대신 콘솔로 보냄
+import { isTestMode } from './test-mode.js';
+import { getConsoleLogger } from './console-logger.js';
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Sink = (line: string) => void;
 
@@ -35,11 +39,20 @@ class ExtensionLoggerCore {
     error: typeof console.error;
   };
 
+  private webviewReady = false;
+
   setLevel(level: LogLevel) {
     this.level = level;
   }
   getLevel() {
     return this.level;
+  }
+
+  setWebviewReady(ready: boolean) {
+    this.webviewReady = ready;
+  }
+  getWebviewReady() {
+    return this.webviewReady;
   }
 
   addSink(sink: Sink) {
@@ -74,6 +87,7 @@ class ExtensionLoggerCore {
       error: console.error,
     };
     const c = this.getLogger('console');
+    this.channel.appendLine('[debug] extension-logger: patchConsole start');
 
     const shouldIgnore = (args: any[]) => {
       const joined = args.map(String).join(' ');
@@ -96,6 +110,7 @@ class ExtensionLoggerCore {
       this.origConsole!.error(...a);
       if (!shouldIgnore(a)) c.error(...a);
     };
+    this.channel.appendLine('[debug] extension-logger: patchConsole end');
   }
 
   unpatchConsole() {
@@ -141,6 +156,11 @@ class ExtensionLoggerCore {
               : '?';
 
     const line = `[${ts}] [${shortLevel}] [${scope}] ${body}`;
+
+    // edge-panel 준비 전: 즉시 console.log로 출력
+    if (!this.webviewReady) {
+      this.origConsole?.log(line);
+    }
 
     // 1) VSCode Output Channel
     this.channel.appendLine(line);
@@ -188,7 +208,17 @@ export function setLogLevel(level: LogLevel) {
 export function getLogLevel() {
   return core.getLevel();
 }
+export function setWebviewReady(ready: boolean) {
+  core.setWebviewReady(ready);
+}
+export function getWebviewReady() {
+  return core.getWebviewReady();
+}
 export function getLogger(scope: string) {
+  // ✅ 테스트 실행 시엔 뷰(panel) 대신 콘솔로 직행
+  if (isTestMode()) {
+    return getConsoleLogger(scope) as any;
+  }
   return core.getLogger(scope);
 }
 export function addLogSink(sink: Sink) {

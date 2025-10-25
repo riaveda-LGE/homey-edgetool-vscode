@@ -86,6 +86,7 @@ async function computeSha256(filePath: string): Promise<string> {
 export async function checkLatestVersion(
   currentVersion: string,
 ): Promise<{ hasUpdate: boolean; latest?: string; url?: string; sha256?: string }> {
+  log.debug('[debug] checkLatestVersion: start');
   return globalProfiler.measureFunction('checkLatestVersion', async () => {
     try {
       const data = await fetchJson<LatestJson>(LATEST_JSON_URL);
@@ -101,18 +102,22 @@ export async function checkLatestVersion(
 
       if (hasUpdate && !url) {
         log.warn(`latest.json has newer version ${latest} but missing url`);
+        log.debug('[debug] checkLatestVersion: end');
         return { hasUpdate: false, latest, url: undefined, sha256: undefined };
       }
 
+      log.debug('[debug] checkLatestVersion: end');
       return { hasUpdate, latest, url, sha256: sha256 || undefined };
     } catch (err) {
       const msg = (err as Error)?.message ?? String(err);
       // 마켓플레이스 등 404는 정보 없음으로 간주(기능엔 영향 없음)
       if (/HTTP\s+404\b/i.test(msg)) {
         log.warn(`checkLatestVersion: latest.json not found (404) - skipping update check`);
+        log.debug('[debug] checkLatestVersion: end');
         return { hasUpdate: false };
       }
       log.error(`checkLatestVersion failed: ${msg}`);
+      log.debug('[debug] checkLatestVersion: end');
       return { hasUpdate: false };
     }
   });
@@ -121,24 +126,24 @@ export async function checkLatestVersion(
 export async function downloadAndInstall(
   url: string,
   sha256: string,
-  progress?: (downloaded: number, total: number) => void,
+  onProgress?: (progress: number) => void,
 ): Promise<void> {
+  log.debug('[debug] downloadAndInstall: start');
   return globalProfiler.measureFunction('downloadAndInstall', async () => {
-    const tempDir = os.tmpdir();
-    const tempFile = path.join(tempDir, `homey-edgetool-${Date.now()}.vsix`);
-
     try {
-      log.info(`downloadAndInstall: downloading from ${url} to ${tempFile}`);
+      const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'homey-edgetool-update-'));
+      const tempFile = path.join(tempDir, 'update.vsix');
 
-      await downloadFile(url, tempFile, progress);
+      log.info(`downloadAndInstall: downloading ${url} to ${tempFile}`);
+      await downloadFile(url, tempFile, onProgress);
 
+      log.info(`downloadAndInstall: verifying sha256 ${sha256}`);
       const actualSha256 = await computeSha256(tempFile);
       if (actualSha256 !== sha256) {
         throw new Error(`SHA256 mismatch: expected ${sha256}, got ${actualSha256}`);
       }
 
-      log.info(`downloadAndInstall: SHA256 verified, installing ${tempFile}`);
-
+      log.info(`downloadAndInstall: installing ${tempFile}`);
       await vscode.commands.executeCommand(
         'workbench.extensions.installExtension',
         vscode.Uri.file(tempFile),
@@ -155,13 +160,15 @@ export async function downloadAndInstall(
       if (choice === '지금 다시 로드') {
         await vscode.commands.executeCommand('workbench.action.reloadWindow');
       }
-    } finally {
-      try {
-        await fs.promises.unlink(tempFile);
-        log.debug(`downloadAndInstall: cleaned up ${tempFile}`);
-      } catch (err) {
-        log.warn(`downloadAndInstall: failed to cleanup ${tempFile}: ${(err as Error).message}`);
-      }
+
+      log.info('downloadAndInstall: cleaning up');
+      await fs.promises.rm(tempDir, { recursive: true, force: true });
+      log.debug('[debug] downloadAndInstall: end');
+    } catch (err) {
+      const msg = (err as Error)?.message ?? String(err);
+      log.error(`downloadAndInstall failed: ${msg}`);
+      log.debug('[debug] downloadAndInstall: end');
+      throw err;
     }
   });
 }

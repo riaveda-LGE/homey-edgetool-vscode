@@ -1,0 +1,1202 @@
+[
+  {
+    "time": "Sep 20 15:16:03.869",
+    "process": "clip.bin",
+    "pid": "2760",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 15:12:39.144",
+    "process": "clip.bin",
+    "pid": "4678",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 15:12:23.618",
+    "process": "clip.bin",
+    "pid": "6828",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:180)"
+  },
+  {
+    "time": "Sep 20 15:11:43.348",
+    "process": "clip.bin",
+    "pid": "8906",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:190)"
+  },
+  {
+    "time": "Sep 20 15:04:49.091",
+    "process": "clip.bin",
+    "pid": "3098",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 15:02:45.990",
+    "process": "clip.bin",
+    "pid": "1806",
+    "message": "hexstr_len: [13]"
+  },
+  {
+    "time": "Sep 20 15:02:01.421",
+    "process": "clip.bin",
+    "pid": "5842",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:549)"
+  },
+  {
+    "time": "Sep 20 15:00:28.174",
+    "process": "clip.bin",
+    "pid": "2887",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:414)"
+  },
+  {
+    "time": "Sep 20 14:56:33.852",
+    "process": "clip.bin",
+    "pid": "9967",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2947)"
+  },
+  {
+    "time": "Sep 20 14:53:38.224",
+    "process": "clip.bin",
+    "pid": "1272",
+    "message": "hexstr_len: [17]"
+  },
+  {
+    "time": "Sep 20 14:51:16.565",
+    "process": "clip.bin",
+    "pid": "1650",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 14:40:42.206",
+    "process": "clip.bin",
+    "pid": "744",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:473)"
+  },
+  {
+    "time": "Sep 20 14:35:23.802",
+    "process": "clip.bin",
+    "pid": "417",
+    "message": "hexstr_len: [37]"
+  },
+  {
+    "time": "Sep 20 14:35:15.956",
+    "process": "clip.bin",
+    "pid": "5446",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 14:33:54.670",
+    "process": "clip.bin",
+    "pid": "5760",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2040)"
+  },
+  {
+    "time": "Sep 20 14:29:26.914",
+    "process": "clip.bin",
+    "pid": "9745",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:603)"
+  },
+  {
+    "time": "Sep 20 14:27:47.448",
+    "process": "clip.bin",
+    "pid": "3187",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 14:24:29.618",
+    "process": "clip.bin",
+    "pid": "7906",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 14:19:52.539",
+    "process": "clip.bin",
+    "pid": "4318",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 14:16:09.288",
+    "process": "clip.bin",
+    "pid": "2037",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2988)"
+  },
+  {
+    "time": "Sep 20 14:15:15.321",
+    "process": "clip.bin",
+    "pid": "713",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 14:15:12.982",
+    "process": "clip.bin",
+    "pid": "5979",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 14:06:12.756",
+    "process": "clip.bin",
+    "pid": "3460",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 14:06:07.128",
+    "process": "clip.bin",
+    "pid": "2602",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 14:01:24.633",
+    "process": "clip.bin",
+    "pid": "3361",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:820)"
+  },
+  {
+    "time": "Sep 20 14:01:10.581",
+    "process": "clip.bin",
+    "pid": "9230",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 14:00:11.582",
+    "process": "clip.bin",
+    "pid": "5703",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:826)"
+  },
+  {
+    "time": "Sep 20 13:54:40.371",
+    "process": "clip.bin",
+    "pid": "3927",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:471)"
+  },
+  {
+    "time": "Sep 20 13:51:28.641",
+    "process": "clip.bin",
+    "pid": "1119",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:958)"
+  },
+  {
+    "time": "Sep 20 13:49:41.575",
+    "process": "clip.bin",
+    "pid": "5655",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 13:39:31.271",
+    "process": "clip.bin",
+    "pid": "2579",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:139)"
+  },
+  {
+    "time": "Sep 20 13:38:20.346",
+    "process": "clip.bin",
+    "pid": "3630",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 13:37:35.598",
+    "process": "clip.bin",
+    "pid": "671",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 13:28:40.938",
+    "process": "clip.bin",
+    "pid": "1004",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 13:28:30.995",
+    "process": "clip.bin",
+    "pid": "7861",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:852)"
+  },
+  {
+    "time": "Sep 20 13:25:52.180",
+    "process": "clip.bin",
+    "pid": "8308",
+    "message": "hexstr_len: [9]"
+  },
+  {
+    "time": "Sep 20 13:20:04.470",
+    "process": "clip.bin",
+    "pid": "8809",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 13:15:26.643",
+    "process": "clip.bin",
+    "pid": "4135",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:256)"
+  },
+  {
+    "time": "Sep 20 13:11:57.939",
+    "process": "clip.bin",
+    "pid": "4210",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 13:06:05.675",
+    "process": "clip.bin",
+    "pid": "3121",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2986)"
+  },
+  {
+    "time": "Sep 20 13:01:59.761",
+    "process": "clip.bin",
+    "pid": "7107",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 13:00:36.089",
+    "process": "clip.bin",
+    "pid": "570",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:179)"
+  },
+  {
+    "time": "Sep 20 12:57:05.989",
+    "process": "clip.bin",
+    "pid": "5436",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:926)"
+  },
+  {
+    "time": "Sep 20 12:55:55.196",
+    "process": "clip.bin",
+    "pid": "5860",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 12:54:50.921",
+    "process": "clip.bin",
+    "pid": "7892",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:235)"
+  },
+  {
+    "time": "Sep 20 12:52:49.579",
+    "process": "clip.bin",
+    "pid": "4168",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:666)"
+  },
+  {
+    "time": "Sep 20 12:51:51.765",
+    "process": "clip.bin",
+    "pid": "8339",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:941)"
+  },
+  {
+    "time": "Sep 20 12:51:48.689",
+    "process": "clip.bin",
+    "pid": "9333",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3243)"
+  },
+  {
+    "time": "Sep 20 12:50:07.168",
+    "process": "clip.bin",
+    "pid": "7702",
+    "message": "hexstr_len: [59]"
+  },
+  {
+    "time": "Sep 20 12:42:17.953",
+    "process": "clip.bin",
+    "pid": "1015",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 12:37:02.169",
+    "process": "clip.bin",
+    "pid": "5089",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 12:36:43.649",
+    "process": "clip.bin",
+    "pid": "289",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2319)"
+  },
+  {
+    "time": "Sep 20 12:34:23.219",
+    "process": "clip.bin",
+    "pid": "2921",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 12:31:50.768",
+    "process": "clip.bin",
+    "pid": "9858",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:600)"
+  },
+  {
+    "time": "Sep 20 12:29:11.962",
+    "process": "clip.bin",
+    "pid": "9805",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:427)"
+  },
+  {
+    "time": "Sep 20 12:26:42.090",
+    "process": "clip.bin",
+    "pid": "3612",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3513)"
+  },
+  {
+    "time": "Sep 20 12:23:38.793",
+    "process": "clip.bin",
+    "pid": "5752",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:672)"
+  },
+  {
+    "time": "Sep 20 12:19:38.517",
+    "process": "clip.bin",
+    "pid": "2511",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:813)"
+  },
+  {
+    "time": "Sep 20 12:17:43.480",
+    "process": "clip.bin",
+    "pid": "3486",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 12:17:38.322",
+    "process": "clip.bin",
+    "pid": "1799",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:688)"
+  },
+  {
+    "time": "Sep 20 12:14:53.048",
+    "process": "clip.bin",
+    "pid": "7184",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 12:13:54.466",
+    "process": "clip.bin",
+    "pid": "4523",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 12:13:37.324",
+    "process": "clip.bin",
+    "pid": "2975",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:274)"
+  },
+  {
+    "time": "Sep 20 12:13:27.699",
+    "process": "clip.bin",
+    "pid": "3372",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:169)"
+  },
+  {
+    "time": "Sep 20 12:09:03.989",
+    "process": "clip.bin",
+    "pid": "3001",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 12:07:49.903",
+    "process": "clip.bin",
+    "pid": "1256",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:828)"
+  },
+  {
+    "time": "Sep 20 12:07:20.922",
+    "process": "clip.bin",
+    "pid": "4346",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 12:03:13.589",
+    "process": "clip.bin",
+    "pid": "1250",
+    "message": "hexstr_len: [23]"
+  },
+  {
+    "time": "Sep 20 12:02:01.701",
+    "process": "clip.bin",
+    "pid": "4021",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2031)"
+  },
+  {
+    "time": "Sep 20 12:01:00.628",
+    "process": "clip.bin",
+    "pid": "4545",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 12:00:39.027",
+    "process": "clip.bin",
+    "pid": "3846",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2763)"
+  },
+  {
+    "time": "Sep 20 11:58:59.596",
+    "process": "clip.bin",
+    "pid": "5679",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 11:56:39.338",
+    "process": "clip.bin",
+    "pid": "2435",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 11:54:37.164",
+    "process": "clip.bin",
+    "pid": "8673",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 11:50:20.194",
+    "process": "clip.bin",
+    "pid": "9373",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:381)"
+  },
+  {
+    "time": "Sep 20 11:50:13.445",
+    "process": "clip.bin",
+    "pid": "6817",
+    "message": "hexstr_len: [57]"
+  },
+  {
+    "time": "Sep 20 11:46:22.097",
+    "process": "clip.bin",
+    "pid": "6194",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 11:44:48.019",
+    "process": "clip.bin",
+    "pid": "6436",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:598)"
+  },
+  {
+    "time": "Sep 20 11:42:12.521",
+    "process": "clip.bin",
+    "pid": "2159",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 11:40:21.357",
+    "process": "clip.bin",
+    "pid": "2250",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 11:36:07.863",
+    "process": "clip.bin",
+    "pid": "1525",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:226)"
+  },
+  {
+    "time": "Sep 20 11:30:14.101",
+    "process": "clip.bin",
+    "pid": "8360",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:795)"
+  },
+  {
+    "time": "Sep 20 11:27:23.637",
+    "process": "clip.bin",
+    "pid": "9917",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:805)"
+  },
+  {
+    "time": "Sep 20 11:21:43.251",
+    "process": "clip.bin",
+    "pid": "6856",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 11:17:53.557",
+    "process": "clip.bin",
+    "pid": "6351",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2696)"
+  },
+  {
+    "time": "Sep 20 11:17:02.442",
+    "process": "clip.bin",
+    "pid": "257",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:963)"
+  },
+  {
+    "time": "Sep 20 11:15:38.677",
+    "process": "clip.bin",
+    "pid": "2742",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 11:11:19.062",
+    "process": "clip.bin",
+    "pid": "8640",
+    "message": "hexstr_len: [62]"
+  },
+  {
+    "time": "Sep 20 11:10:50.339",
+    "process": "clip.bin",
+    "pid": "1753",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 11:10:36.191",
+    "process": "clip.bin",
+    "pid": "242",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 11:09:01.201",
+    "process": "clip.bin",
+    "pid": "4111",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:613)"
+  },
+  {
+    "time": "Sep 20 11:08:52.959",
+    "process": "clip.bin",
+    "pid": "2999",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 11:07:57.687",
+    "process": "clip.bin",
+    "pid": "8425",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 11:02:59.321",
+    "process": "clip.bin",
+    "pid": "9034",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:56:29.567",
+    "process": "clip.bin",
+    "pid": "9965",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 10:55:52.907",
+    "process": "clip.bin",
+    "pid": "7927",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:52:16.956",
+    "process": "clip.bin",
+    "pid": "8031",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 10:49:35.409",
+    "process": "clip.bin",
+    "pid": "2129",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:48:10.390",
+    "process": "clip.bin",
+    "pid": "604",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 10:46:59.588",
+    "process": "clip.bin",
+    "pid": "6886",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3000)"
+  },
+  {
+    "time": "Sep 20 10:46:36.681",
+    "process": "clip.bin",
+    "pid": "2509",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 10:45:28.563",
+    "process": "clip.bin",
+    "pid": "4901",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 10:43:28.710",
+    "process": "clip.bin",
+    "pid": "9619",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 10:41:54.515",
+    "process": "clip.bin",
+    "pid": "4519",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:41:45.929",
+    "process": "clip.bin",
+    "pid": "5833",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:703)"
+  },
+  {
+    "time": "Sep 20 10:40:07.224",
+    "process": "clip.bin",
+    "pid": "5216",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 10:39:44.444",
+    "process": "clip.bin",
+    "pid": "9749",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 10:38:59.163",
+    "process": "clip.bin",
+    "pid": "4377",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:38:47.016",
+    "process": "clip.bin",
+    "pid": "5794",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 10:34:47.802",
+    "process": "clip.bin",
+    "pid": "380",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2858)"
+  },
+  {
+    "time": "Sep 20 10:34:06.032",
+    "process": "clip.bin",
+    "pid": "549",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:32:27.890",
+    "process": "clip.bin",
+    "pid": "8628",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:697)"
+  },
+  {
+    "time": "Sep 20 10:29:23.825",
+    "process": "clip.bin",
+    "pid": "1851",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 10:27:35.417",
+    "process": "clip.bin",
+    "pid": "1694",
+    "message": "hexstr_len: [58]"
+  },
+  {
+    "time": "Sep 20 10:22:53.036",
+    "process": "clip.bin",
+    "pid": "8547",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 10:20:10.815",
+    "process": "clip.bin",
+    "pid": "2450",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 10:18:58.389",
+    "process": "clip.bin",
+    "pid": "2910",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 10:14:34.049",
+    "process": "clip.bin",
+    "pid": "4333",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 10:12:22.989",
+    "process": "clip.bin",
+    "pid": "1750",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 10:10:51.005",
+    "process": "clip.bin",
+    "pid": "7966",
+    "message": "hexstr_len: [10]"
+  },
+  {
+    "time": "Sep 20 10:09:34.937",
+    "process": "clip.bin",
+    "pid": "6009",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:903)"
+  },
+  {
+    "time": "Sep 20 10:04:29.393",
+    "process": "clip.bin",
+    "pid": "7758",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:399)"
+  },
+  {
+    "time": "Sep 20 10:02:56.479",
+    "process": "clip.bin",
+    "pid": "2333",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2403)"
+  },
+  {
+    "time": "Sep 20 10:02:52.503",
+    "process": "clip.bin",
+    "pid": "5527",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2774)"
+  },
+  {
+    "time": "Sep 20 10:00:33.826",
+    "process": "clip.bin",
+    "pid": "2307",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 09:56:50.782",
+    "process": "clip.bin",
+    "pid": "5579",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2322)"
+  },
+  {
+    "time": "Sep 20 09:55:33.117",
+    "process": "clip.bin",
+    "pid": "533",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 09:55:24.127",
+    "process": "clip.bin",
+    "pid": "4130",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 09:54:14.612",
+    "process": "clip.bin",
+    "pid": "2032",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:131)"
+  },
+  {
+    "time": "Sep 20 09:47:49.145",
+    "process": "clip.bin",
+    "pid": "8806",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 09:45:46.739",
+    "process": "clip.bin",
+    "pid": "9575",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2028)"
+  },
+  {
+    "time": "Sep 20 09:45:43.120",
+    "process": "clip.bin",
+    "pid": "4091",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 09:40:25.519",
+    "process": "clip.bin",
+    "pid": "5556",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 09:38:13.465",
+    "process": "clip.bin",
+    "pid": "2436",
+    "message": "hexstr_len: [48]"
+  },
+  {
+    "time": "Sep 20 09:38:03.991",
+    "process": "clip.bin",
+    "pid": "797",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:829)"
+  },
+  {
+    "time": "Sep 20 09:37:32.540",
+    "process": "clip.bin",
+    "pid": "5877",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2093)"
+  },
+  {
+    "time": "Sep 20 09:31:26.620",
+    "process": "clip.bin",
+    "pid": "396",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:630)"
+  },
+  {
+    "time": "Sep 20 09:30:59.455",
+    "process": "clip.bin",
+    "pid": "3288",
+    "message": "[CLIP_INFO] [RX.Cloudlet] Got a packet from Cloudlet (_on_cloudlet_packet:841)"
+  },
+  {
+    "time": "Sep 20 09:28:52.436",
+    "process": "clip.bin",
+    "pid": "1697",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2966)"
+  },
+  {
+    "time": "Sep 20 09:26:42.147",
+    "process": "clip.bin",
+    "pid": "3714",
+    "message": "hexstr_len: [42]"
+  },
+  {
+    "time": "Sep 20 09:23:39.560",
+    "process": "clip.bin",
+    "pid": "844",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 09:21:16.367",
+    "process": "clip.bin",
+    "pid": "2231",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 09:20:25.760",
+    "process": "clip.bin",
+    "pid": "5130",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2424)"
+  },
+  {
+    "time": "Sep 20 09:17:13.869",
+    "process": "clip.bin",
+    "pid": "3427",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 09:17:13.230",
+    "process": "clip.bin",
+    "pid": "6681",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2948)"
+  },
+  {
+    "time": "Sep 20 09:16:43.909",
+    "process": "clip.bin",
+    "pid": "8186",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 09:15:54.661",
+    "process": "clip.bin",
+    "pid": "2451",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:870)"
+  },
+  {
+    "time": "Sep 20 09:12:45.459",
+    "process": "clip.bin",
+    "pid": "2704",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 09:12:35.760",
+    "process": "clip.bin",
+    "pid": "7603",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:142)"
+  },
+  {
+    "time": "Sep 20 09:04:34.983",
+    "process": "clip.bin",
+    "pid": "2770",
+    "message": "hexstr_len: [54]"
+  },
+  {
+    "time": "Sep 20 09:02:12.577",
+    "process": "clip.bin",
+    "pid": "6031",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 09:00:49.598",
+    "process": "clip.bin",
+    "pid": "9389",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 08:58:20.251",
+    "process": "clip.bin",
+    "pid": "8079",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:55:21.703",
+    "process": "clip.bin",
+    "pid": "7924",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 08:54:15.856",
+    "process": "clip.bin",
+    "pid": "3440",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 08:51:55.957",
+    "process": "clip.bin",
+    "pid": "4016",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2517)"
+  },
+  {
+    "time": "Sep 20 08:50:33.724",
+    "process": "clip.bin",
+    "pid": "3527",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:48:01.640",
+    "process": "clip.bin",
+    "pid": "6271",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3687)"
+  },
+  {
+    "time": "Sep 20 08:41:34.360",
+    "process": "clip.bin",
+    "pid": "7582",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:40:29.487",
+    "process": "clip.bin",
+    "pid": "2147",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2586)"
+  },
+  {
+    "time": "Sep 20 08:39:34.031",
+    "process": "clip.bin",
+    "pid": "4871",
+    "message": "hexstr_len: [41]"
+  },
+  {
+    "time": "Sep 20 08:36:51.097",
+    "process": "clip.bin",
+    "pid": "3674",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:34:13.175",
+    "process": "clip.bin",
+    "pid": "9125",
+    "message": "hexstr_len: [40]"
+  },
+  {
+    "time": "Sep 20 08:33:47.983",
+    "process": "clip.bin",
+    "pid": "7909",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 08:32:06.892",
+    "process": "clip.bin",
+    "pid": "2985",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:28:24.720",
+    "process": "clip.bin",
+    "pid": "8754",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:478)"
+  },
+  {
+    "time": "Sep 20 08:24:08.253",
+    "process": "clip.bin",
+    "pid": "8074",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:24:07.104",
+    "process": "clip.bin",
+    "pid": "757",
+    "message": "hexstr_len: [53]"
+  },
+  {
+    "time": "Sep 20 08:22:43.727",
+    "process": "clip.bin",
+    "pid": "8331",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:2896)"
+  },
+  {
+    "time": "Sep 20 08:22:15.420",
+    "process": "clip.bin",
+    "pid": "3787",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:18:18.888",
+    "process": "clip.bin",
+    "pid": "4703",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3677)"
+  },
+  {
+    "time": "Sep 20 08:17:30.586",
+    "process": "clip.bin",
+    "pid": "9896",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 08:17:09.911",
+    "process": "clip.bin",
+    "pid": "3944",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 08:16:05.276",
+    "process": "clip.bin",
+    "pid": "8545",
+    "message": "hexstr_len: [14]"
+  },
+  {
+    "time": "Sep 20 08:14:29.307",
+    "process": "clip.bin",
+    "pid": "9045",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:13:30.106",
+    "process": "clip.bin",
+    "pid": "8400",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:12:32.356",
+    "process": "clip.bin",
+    "pid": "8501",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 08:10:34.594",
+    "process": "clip.bin",
+    "pid": "2225",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:07:32.308",
+    "process": "clip.bin",
+    "pid": "1608",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:06:42.952",
+    "process": "clip.bin",
+    "pid": "9135",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:272)"
+  },
+  {
+    "time": "Sep 20 08:01:45.695",
+    "process": "clip.bin",
+    "pid": "2592",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 08:01:39.215",
+    "process": "clip.bin",
+    "pid": "2307",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:820)"
+  },
+  {
+    "time": "Sep 20 08:00:59.785",
+    "process": "clip.bin",
+    "pid": "8627",
+    "message": "[CLIP_INFO] [__] led msgQ get timeout (led_message_handler:2363)"
+  },
+  {
+    "time": "Sep 20 08:00:41.528",
+    "process": "clip.bin",
+    "pid": "8840",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3054)"
+  },
+  {
+    "time": "Sep 20 07:58:00.152",
+    "process": "clip.bin",
+    "pid": "1374",
+    "message": "[CLIP_INFO] xACGStart : 0, xTtsListCnt : 0, xVoiceState : 1, voice_active_mic : 0, xInPlayState : 0, xInternalSoundState : 0 (voicePlayerThread:3424)"
+  },
+  {
+    "time": "Sep 20 07:53:38.274",
+    "process": "clip.bin",
+    "pid": "2324",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:664)"
+  },
+  {
+    "time": "Sep 20 07:53:12.311",
+    "process": "clip.bin",
+    "pid": "2708",
+    "message": "[RX.Cloudlet] hex :  AA 08 F0 EF 00 46 82 BB"
+  },
+  {
+    "time": "Sep 20 07:53:06.375",
+    "process": "clip.bin",
+    "pid": "8266",
+    "message": "hexstr_len: [53]"
+  },
+  {
+    "time": "Sep 20 07:49:32.317",
+    "process": "clip.bin",
+    "pid": "8936",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:725)"
+  },
+  {
+    "time": "Sep 20 07:49:16.496",
+    "process": "clip.bin",
+    "pid": "5051",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:177)"
+  },
+  {
+    "time": "Sep 20 07:49:11.329",
+    "process": "clip.bin",
+    "pid": "1218",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:706)"
+  },
+  {
+    "time": "Sep 20 07:46:59.456",
+    "process": "clip.bin",
+    "pid": "2609",
+    "message": "[TX.UART]@@ bin: [AA 08 F0 EF 00 46 82 BB ]"
+  },
+  {
+    "time": "Sep 20 07:45:50.786",
+    "process": "clip.bin",
+    "pid": "7246",
+    "message": "@@================================="
+  },
+  {
+    "time": "Sep 20 07:43:52.788",
+    "process": "clip.bin",
+    "pid": "2415",
+    "message": "hexstr_len: [9]"
+  },
+  {
+    "time": "Sep 20 07:39:02.011",
+    "process": "clip.bin",
+    "pid": "7389",
+    "message": "[MQTT][CLIP_INFO] [PAHO] KeepAlive Ping Try to Send. try [1"
+  },
+  {
+    "time": "Sep 20 07:38:50.624",
+    "process": "clip.bin",
+    "pid": "7463",
+    "message": "=================================@@"
+  },
+  {
+    "time": "Sep 20 07:32:27.563",
+    "process": "clip.bin",
+    "pid": "2121",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:584)"
+  },
+  {
+    "time": "Sep 20 07:30:01.877",
+    "process": "clip.bin",
+    "pid": "8740",
+    "message": "hexstr_len: [36]"
+  },
+  {
+    "time": "Sep 20 07:28:32.515",
+    "process": "clip.bin",
+    "pid": "8000",
+    "message": "[CLIP_INFO] \t\t\t=================================@@ (_process_cloudlet_rx_pkt_msg:725)"
+  },
+  {
+    "time": "Sep 20 07:27:54.198",
+    "process": "clip.bin",
+    "pid": "7077",
+    "message": "[CLIP_INFO] \t\t\tGot MSG_CLOUDLET_RX_PKT for [EF] (_process_cloudlet_rx_pkt_msg:718)"
+  }
+]

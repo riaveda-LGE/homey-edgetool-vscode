@@ -20,18 +20,48 @@ export function Toolbar() {
     total: s.mergeTotal,
   }));
   const filter = useLogStore((s) => s.filter);
+  const follow = useLogStore((s) => s.follow);
+  const newSincePause = useLogStore((s) => s.newSincePause);
+  const setFollow = useLogStore((s) => s.setFollow);
+  const clearNewSincePause = useLogStore((s) => s.clearNewSincePause);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchDlgOpen, setSearchDlgOpen] = useState(false);
   const ui = useMemo(() => createUiLog(vscode, 'log-viewer.toolbar'), []);
 
-  const savePref = (k: string, v: boolean) =>
+  const savePref = (k: string, v: boolean) => {
+    ui.debug?.('[debug] Toolbar: savePref');
     vscode?.postMessage({ v: 1, type: 'logviewer.saveUserPrefs', payload: { prefs: { [k]: v } } });
+  };
 
   // ── 활성 필드 개수 표시(버튼의 필터(x) 용) ───────────────────────────
   const activeCount = (() => {
+    ui.debug?.('[debug] Toolbar: activeCount');
     const t = (v?: string) => String(v ?? '').trim();
     return ['pid', 'src', 'proc', 'msg'].reduce((n, k) => n + (t((filter as any)[k]) ? 1 : 0), 0);
   })();
+
+  const labelOf = (id: 'time' | 'proc' | 'pid' | 'src' | 'msg') => {
+    return id === 'time'
+      ? '시간'
+      : id === 'proc'
+        ? '프로세스'
+        : id === 'pid'
+          ? 'PID'
+          : id === 'src'
+            ? '파일'
+            : '메시지';
+  };
+  const prefKey = (id: 'time' | 'proc' | 'pid' | 'src' | 'msg') => {
+    return id === 'time'
+      ? 'showTime'
+      : id === 'proc'
+        ? 'showProc'
+        : id === 'pid'
+          ? 'showPid'
+          : id === 'src'
+            ? 'showSrc'
+            : 'showMsg';
+  };
 
   return (
     <>
@@ -128,6 +158,28 @@ export function Toolbar() {
         {`필터${activeCount > 0 ? `(${activeCount})` : ''}`}
       </button>
       <button
+        className={[
+          'tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-relative',
+          follow
+            ? 'tw-bg-[var(--accent)] tw-text-[var(--accent-fg)] hover:tw-bg-[var(--accent-hover)]'
+            : '',
+        ].join(' ')}
+        onClick={() => {
+          const next = !follow;
+          setFollow(next);
+          if (next) clearNewSincePause(); // FOLLOW 모드로 돌아올 때 배지 클리어
+          ui.info(`toolbar.follow.click follow=${next}`);
+        }}
+        title={follow ? '실시간 로그 따라가기 중지' : '실시간 로그 따라가기 재개'}
+      >
+        {follow ? '팔로우 중' : '맨 아래로'}
+        {newSincePause > 0 && !follow && (
+          <span className="tw-absolute -tw-top-1 -tw-right-1 tw-bg-red-500 tw-text-white tw-text-xs tw-rounded-full tw-px-1 tw-min-w-[18px] tw-h-4 tw-flex tw-items-center tw-justify-center">
+            {newSincePause > 99 ? '99+' : newSincePause}
+          </span>
+        )}
+      </button>
+      <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
         onClick={() => {
           toggleBookmarksPane();
@@ -149,27 +201,4 @@ export function Toolbar() {
       />
     </>
   );
-}
-
-function labelOf(id: 'time' | 'proc' | 'pid' | 'src' | 'msg') {
-  return id === 'time'
-    ? '시간'
-    : id === 'proc'
-      ? '프로세스'
-      : id === 'pid'
-        ? 'PID'
-        : id === 'src'
-          ? '파일'
-          : '메시지';
-}
-function prefKey(id: 'time' | 'proc' | 'pid' | 'src' | 'msg') {
-  return id === 'time'
-    ? 'showTime'
-    : id === 'proc'
-      ? 'showProc'
-      : id === 'pid'
-        ? 'showPid'
-        : id === 'src'
-          ? 'showSrc'
-          : 'showMsg';
 }

@@ -5,10 +5,11 @@ import * as vscode from 'vscode';
 import { resolveWorkspaceInfo } from '../core/config/userdata.js';
 import { getLogger, patchConsole, setLogLevel } from '../core/logging/extension-logger.js';
 import { globalProfiler } from '../core/logging/perf.js';
-import { LOG_LEVEL_DEFAULT } from '../shared/const.js';
+import { LOG_LEVEL_DEFAULT, RAW_DIR_NAME } from '../shared/const.js';
 import { PerfMonitorPanel } from './editors/PerfMonitorPanel.js';
 import { EdgePanelProvider, registerEdgePanelCommands } from './panels/extensionPanel.js';
 import { checkLatestVersion } from './update/updater.js';
+import { ensureParserConfigExists } from './setup/parserConfigSeeder.js';
 
 export async function activate(context: vscode.ExtensionContext) {
   return globalProfiler.measureFunction('activate', async () => {
@@ -71,7 +72,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
     try {
       // 1) 워크스페이스 디렉토리 준비(없으면 생성 → UI 출력엔 영향 없음)
-      await resolveWorkspaceInfo(context);
+      const info = await resolveWorkspaceInfo(context);
+      // 1-1) 초기화 정책: raw 폴더 제거
+      try {
+        const rawUri = vscode.Uri.joinPath(info.wsDirUri, RAW_DIR_NAME);
+        await vscode.workspace.fs.delete(rawUri, { recursive: true, useTrash: false });
+        log.info(`workspace init: removed raw folder at ${rawUri.fsPath}`);
+      } catch {
+        log.debug('workspace init: no raw folder to remove');
+      }
+      // 1-2) 파서 설정 보장(.config/custom_log_parser.json 없으면 템플릿으로 시드; README도 함께 생성)
+      await ensureParserConfigExists(context, context.extensionUri);
+
 
       // 2) 버전/업데이트 체크 및 패널 등록
       const version = String((context.extension as any).packageJSON?.version ?? '0.0.0');

@@ -4,12 +4,16 @@ import * as vscode from 'vscode';
 import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
 import {
   addLogSink,
-  getBufferedLogs,
   getLogger,
   removeLogSink,
+  setWebviewReady,
 } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
+import {
+  PANEL_VIEW_TYPE,
+  RANDOM_STRING_LENGTH,
+  DEBUG_LOG_MEMORY_MAX,
+} from '../../shared/const.js';
 import { readFileAsText } from '../../shared/utils.js';
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';
@@ -40,6 +44,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   private _disposables = new Set<() => void>();
 
+  // ── Debug Log Panel: 메모리 링버퍼(최대 DEBUG_LOG_MEMORY_MAX줄) ─────
+  private _ring: string[] = [];
+  private _sinkBound = false;
+
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
@@ -55,12 +63,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       updateUrl: latestInfo?.url,
       latestSha: latestInfo?.sha256,
       lastCheckTime: new Date().toISOString(),
-      logs: getBufferedLogs(),
+      logs: [], // 초기에는 스풀에서 tail 로 채움
     };
-  }
-
-  public appendLog(line: string) {
-    this._view?.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
   }
 
   private _trackDisposable(disposable: () => void) {
@@ -77,6 +81,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._disposables.clear();
   }
 
+  @measure()
   async resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
@@ -103,6 +108,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    // ── Debug Log: 링버퍼 현재 상태로 초기 로드 ───────────────────────
+    this._state.logs = this._ring.slice(-DEBUG_LOG_MEMORY_MAX);
+
     // Explorer 브리지
     this._explorer = createExplorerBridge(this._context, (m) => {
       try {
@@ -111,16 +119,33 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
 
     // 로그 뷰어
-    this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri, (line) =>
-      this.appendLog(line),
-    );
+    this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri);
+
+    // ── Debug Log sink 등록(한 번만) ─────────────────────────────────
+    if (!this._sinkBound) {
+      const sink = (line: string) => {
+        try {
+          webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
+        } catch {}
+        // 메모리 링버퍼 유지 (최대 DEBUG_LOG_MEMORY_MAX줄)
+        this._ring.push(line);
+        if (this._ring.length > DEBUG_LOG_MEMORY_MAX) {
+          this._ring.splice(0, this._ring.length - DEBUG_LOG_MEMORY_MAX);
+        }
+        // 최신 상태를 상태 객체에도 반영(다음 initState 대비)
+        this._state.logs = this._ring.slice(-DEBUG_LOG_MEMORY_MAX);
+      };
+      addLogSink(sink);
+      this._sink = sink;
+      this._sinkBound = true;
+      this._trackDisposable(() => removeLogSink(sink));
+    }
 
     // 버튼 실행 라우터(ActionRouter)
     this._actionRouter = new EdgePanelActionRouter(
       webviewView,
       this._context,
       this._extensionUri,
-      (line) => this.appendLog(line),
       {
         updateAvailable: this._state.updateAvailable,
         updateUrl: this._state.updateUrl,
@@ -154,8 +179,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           (lg[lvl] ?? lg.info).call(lg, text);
           return;
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
+          setWebviewReady(true);
           const panelState = await readEdgePanelState(this._context);
-          const state = { ...this._state, logs: getBufferedLogs() };
+          // 링버퍼에서 초기 로그 제공
+          const state = { ...this._state, logs: this._ring.slice(-DEBUG_LOG_MEMORY_MAX) };
           webviewView.webview.postMessage({
             v: 1,
             type: 'initState',
@@ -205,6 +232,25 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this._logViewer?.stop();
           return;
         }
+
+        // ── Webview 메시지 처리: Debug Log Panel (메모리 링버퍼) ──────────
+        if (msg?.type === 'debuglog.clear' && msg?.v === 1) {
+          this._ring = [];
+          this._state.logs = [];
+          webviewView.webview.postMessage({ v: 1, type: 'debuglog.cleared', payload: {} });
+          return;
+        }
+        if (msg?.type === 'debuglog.copy' && msg?.v === 1) {
+          const text = this._ring.join('\n');
+          await vscode.env.clipboard.writeText(text);
+          webviewView.webview.postMessage({
+            v: 1,
+            type: 'debuglog.copy.done',
+            payload: { bytes: Buffer.byteLength(text, 'utf8'), lines: this._ring.length },
+          });
+          vscode.window.showInformationMessage('Debug logs copied to clipboard.');
+          return;
+        }
       } catch (e) {
         this.log.error('onDidReceiveMessage error', e as any);
       }
@@ -217,7 +263,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
           return;
         }
-        const state = { ...this._state, logs: getBufferedLogs() };
+        // 가시성 복귀 시에도 스풀 기반 상태 유지
+        const state = { ...this._state, logs: this._ring.slice(-DEBUG_LOG_MEMORY_MAX) };
         const panelState = await readEdgePanelState(this._context);
         webviewView.webview.postMessage({
           v: 1,
@@ -255,15 +302,8 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     });
     this._trackDisposable(() => winStateDisposable.dispose());
 
-    // OutputChannel -> EdgePanel
-    this._sink = (line: string) => {
-      try {
-        webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
-      } catch {}
-    };
-    addLogSink(this._sink);
-
     webviewView.onDidDispose(() => {
+      setWebviewReady(false);
       this._disposeTracked();
 
       if (this._sink) removeLogSink(this._sink);
@@ -286,19 +326,30 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
   @measure()
   public async handleHomeyLoggingCommand() {
+    this.log.debug('[debug] EdgePanelProvider handleHomeyLoggingCommand: start');
     await this._logViewer?.handleHomeyLoggingCommand();
+    this.log.debug('[debug] EdgePanelProvider handleHomeyLoggingCommand: end');
   }
 
+  @measure()
   public async startRealtime(filter?: string) {
+    this.log.debug('[debug] EdgePanelProvider startRealtime: start');
     await this._logViewer?.startRealtime(filter);
+    this.log.debug('[debug] EdgePanelProvider startRealtime: end');
   }
+  @measure()
   public async startFileMerge(dir: string) {
+    this.log.debug('[debug] EdgePanelProvider startFileMerge: start');
     await this._logViewer?.startFileMerge(dir);
+    this.log.debug('[debug] EdgePanelProvider startFileMerge: end');
   }
   public stopLogging() {
+    this.log.debug('[debug] EdgePanelProvider stopLogging: start');
     this._logViewer?.stop();
+    this.log.debug('[debug] EdgePanelProvider stopLogging: end');
   }
 
+  @measure()
   private _randomNonce(len = RANDOM_STRING_LENGTH || 32) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let out = '';
@@ -313,6 +364,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
    *  - src/href의 로컬 상대경로 → webview.asWebviewUri(...)로 재작성
    *  - 모든 <script> 태그에 nonce 속성 자동 주입(기존에 없을 때만)
    */
+  @measure()
   private async _getHtmlFromFiles(webview: vscode.Webview, root: vscode.Uri) {
     try {
       const indexHtml = vscode.Uri.joinPath(root, 'index.html');

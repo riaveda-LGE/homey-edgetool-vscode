@@ -3,44 +3,146 @@ import type { H2W, LogFilter, W2H } from '@ipc/messages';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { LOG_WINDOW_SIZE } from '../../shared/const.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
+import { measure, measureBlock, globalProfiler, perfNow } from '../../core/logging/perf.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
+export type BridgeOptions = {
+  /** UI가 보낸 로그를 호스트 채널/출력에 연결하고 싶을 때 */
+  onUiLog?: (args: {
+    level: 'debug' | 'info' | 'warn' | 'error';
+    text: string;
+    source?: string;
+    line: string;
+  }) => void;
+  /** 사용자 환경설정 읽기 (필요 시 주입) */
+  readUserPrefs?: () => Promise<any>;
+  /** 사용자 환경설정 저장 (필요 시 주입) */
+  writeUserPrefs?: (patch: any) => Promise<void>;
+};
+
 export class HostWebviewBridge {
   private log = getLogger('bridge');
-  private handlers = new Map<string, Handler>();
+  // 여러 리스너를 타입별로 보유 (동시 request의 ack/error 핸들러 지원)
+  private handlers = new Map<string, Set<Handler>>();
   private pendings = new Map<string, AbortController>(); // abortKey -> controller
   private seq = 0;
   private kickedOnce = false; // 초기 리프레시 신호를 중복 발사하지 않도록 가드
   // ── Search buffer (host-held) ────────────────────────────────────────
   private searchHits: { idx: number; text: string }[] = [];
+  // ── 로그 스로틀(반복 노이즈 억제) ─────────────────────────────────────
+  private lastLogTs = new Map<string, number>();
+  private lastPayload = new Map<string, string>();
+  private shouldLog(key: string, ms = 400, payload?: string) {
+    const now = Date.now();
+    const last = this.lastLogTs.get(key) ?? -Infinity;
+    if (payload && this.lastPayload.get(key) === payload) return false;
+    if (now - last < ms) return false;
+    this.lastLogTs.set(key, now);
+    if (payload) this.lastPayload.set(key, payload);
+    return true;
+  }
 
-  constructor(private readonly host: vscode.WebviewView | vscode.WebviewPanel) {}
+  constructor(
+    private readonly host: vscode.WebviewView | vscode.WebviewPanel,
+    private readonly options: BridgeOptions = {},
+  ) {}
 
+  @measure()
   start() {
     this.host.webview.onDidReceiveMessage(async (raw: any) => {
-      const msg = this.validateIncoming(raw);
-      if (!msg) return;
+      await measureBlock('host.bridge.onMessage', async () => {
+        const msg = this.validateIncoming(raw);
+        if (!msg) return;
 
       // ── 웹뷰가 준비 신호를 보낼 수 있는 경우(선행 핸드셰이크) ──
       if (msg.type === 'viewer.ready') {
         this.kickIfReady('viewer.ready');
         return;
       }
-      // ── 필터 업데이트: "호스트가 head 500줄을 즉시 푸시" ──
+
+      // ── UI 로그 브리지: webview → host ───────────────────────────────
+      if (msg.type === 'ui.log') {
+        const lvl = String(msg?.payload?.level ?? 'info').toLowerCase() as
+          | 'debug'
+          | 'info'
+          | 'warn'
+          | 'error';
+        const text = String(msg?.payload?.text ?? '');
+        const source = String(msg?.payload?.source ?? 'ui');
+        const line = `[${lvl}] [${source}] ${text}`;
+        try {
+          switch (lvl) {
+            case 'debug':
+              this.log.debug?.(line);
+              break;
+            case 'warn':
+              this.log.warn(line);
+              break;
+            case 'error':
+              this.log.error(line);
+              break;
+            default:
+              this.log.info(line);
+          }
+          this.options.onUiLog?.({ level: lvl, text, source, line });
+        } catch {}
+        return;
+      }
+
+      // ── 사용자 환경설정 라우팅(옵션 주입 기반) ────────────────────────
+      if (msg.type === 'logviewer.getUserPrefs') {
+        try {
+          if (!this.options.readUserPrefs) throw new Error('readUserPrefs not provided');
+          const prefs = await this.options.readUserPrefs();
+          this.send({ v: 1, type: 'logviewer.prefs', payload: { prefs } } as any);
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          this.log.error(`bridge: PREFS_READ_ERROR ${message}`);
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'prefs.read_failed', message, inReplyTo: msg.id },
+          });
+        }
+        return;
+      }
+
+      if (msg.type === 'logviewer.saveUserPrefs') {
+        try {
+          if (!this.options.writeUserPrefs) throw new Error('writeUserPrefs not provided');
+          const patch = msg?.payload?.prefs ?? {};
+          await this.options.writeUserPrefs(patch);
+          this.send({ v: 1, type: 'ack', payload: { inReplyTo: msg?.id } } as any);
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          this.log.error(`bridge: PREFS_WRITE_ERROR ${message}`);
+          this.send({
+            v: 1,
+            type: 'error',
+            payload: { code: 'prefs.write_failed', message, inReplyTo: msg.id },
+          });
+        }
+        return;
+      }
+      // ── 필터 업데이트: "호스트가 head(LOG_WINDOW_SIZE) 즉시 푸시" ──
       if (msg.type === 'logs.filter.update') {
         try {
           const filter = (msg.payload?.filter ?? {}) as LogFilter;
           this.log.info(`bridge: logs.filter.update ${JSON.stringify(filter)}`);
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, 500);
-          // ① 바뀐 데이터의 head 500줄을 즉시 푸시
+          // 표시 순서는 오름차순이지만, 사용자는 "최신"을 원한다 → 마지막 페이지로 보냄
+          const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
+          const endIdx = Math.max(1, total ?? 0);
+          const page = await paginationService.readRangeByIdx(startIdx, endIdx);
+          // ① 바뀐 데이터의 "마지막 페이지(최신 영역)" 즉시 푸시
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq },
+            payload: { logs: page, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           // ② 상태(총계/버전)도 함께 브로드캐스트
           this.send({
@@ -82,17 +184,22 @@ export class HostWebviewBridge {
           const { startIdx, endIdx } = msg.payload || {};
           const s = Number(startIdx) || 1;
           const e = Number(endIdx) || s;
-          this.log.debug?.(
-            `bridge: logs.page.request ${s}-${e} filterActive=${paginationService.isFilterActive()}`,
-          );
+          if (this.shouldLog('page.req', 300, `${s}-${e}`)) {
+            this.log.debug?.(
+              `bridge: logs.page.request ${s}-${e} filterActive=${paginationService.isFilterActive()}`,
+            );
+          }
           const logs = await paginationService.readRangeByIdx(s, e); // 내부에서 필터 적용 분기
           // 현재 pagination 버전을 함께 내려, 웹뷰가 세션 불일치를 걸러낼 수 있게 한다.
+          const version = paginationService.getVersion();
           this.send({
             v: 1,
             type: 'logs.page.response',
-            payload: { startIdx: s, endIdx: e, logs, version: paginationService.getVersion() },
+            payload: { startIdx: s, endIdx: e, logs, version },
           } as any);
-          this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length}`);
+          if (this.shouldLog('page.resp', 300, `${s}-${e}:${logs.length}`)) {
+            this.log.debug?.(`bridge: logs.page.response ${s}-${e} len=${logs.length} v=${version}`);
+          }
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: PAGE_READ_ERROR ${message}`);
@@ -117,11 +224,13 @@ export class HostWebviewBridge {
           this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
           paginationService.setFilter(filter);
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, 500);
+          const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
+          const endIdx = Math.max(1, total ?? 0);
+          const head = await paginationService.readRangeByIdx(startIdx, endIdx);
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq },
+            payload: { logs: head, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           // 상태도 함께 브로드캐스트
           this.send({
@@ -163,11 +272,13 @@ export class HostWebviewBridge {
           paginationService.setFilter(null);
           // 필터 해제 후 상단 500줄 재전송
           const total = await paginationService.getFilteredTotal();
-          const head = await paginationService.readRangeByIdx(1, 500);
+          const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
+          const endIdx = Math.max(1, total ?? 0);
+          const head = await paginationService.readRangeByIdx(startIdx, endIdx);
           this.send({
             v: 1,
             type: 'logs.batch',
-            payload: { logs: head, total, seq: ++this.seq },
+            payload: { logs: head, total, seq: ++this.seq, version: paginationService.getVersion() },
           } as any);
           this.send({
             v: 1,
@@ -206,26 +317,20 @@ export class HostWebviewBridge {
       if (msg.type === 'search.query') {
         try {
           const q: string = String(msg?.payload?.q || '').trim();
-          this.log.info(`bridge: search.query q="${q}"`);
-          this.searchHits = [];
-          if (q) {
-            const total = await paginationService.getFilteredTotal();
-            const N = Math.max(0, total || 0);
-            const WINDOW = 2000;
-            const ql = q.toLowerCase();
-            for (let start = 1; start <= N; start += WINDOW) {
-              const end = Math.min(N, start + WINDOW - 1);
-              const part = await paginationService.readRangeByIdx(start, end);
-              for (const e of part) {
-                const txt = String(e.text || '');
-                if (txt.toLowerCase().includes(ql)) {
-                  this.searchHits.push({ idx: Number((e as any).idx) || start, text: txt });
-                }
-              }
-            }
-          }
+          const regex = !!msg?.payload?.regex;
+          const range = msg?.payload?.range as [number, number] | undefined;
+          const top = typeof msg?.payload?.top === 'number' ? msg.payload.top : undefined;
+
+          this.log.info(`bridge: search.query q="${q}" regex=${regex} range=${range ?? '-'} top=${top ?? '-'}`);
+          // 단일 패스 검색으로 변경(필터 공간 기준)
+          this.searchHits = await paginationService.searchAll(q, { regex, range, top });
+
           this.log.info(`bridge: search.results hits=${this.searchHits.length}`);
-          this.send({ v: 1, type: 'search.results', payload: { hits: this.searchHits, q } } as any);
+          this.send({
+            v: 1,
+            type: 'search.results',
+            payload: { hits: this.searchHits, q },
+          } as any);
         } catch (err: any) {
           const message = err?.message || String(err);
           this.log.error(`bridge: SEARCH_ERROR ${message}`);
@@ -245,13 +350,14 @@ export class HostWebviewBridge {
         return;
       }
 
-      const h = this.handlers.get(msg.type);
-      if (!h) return this.warnUnknown(msg.type);
+      const handlers = this.handlers.get(msg.type);
+      if (!handlers || handlers.size === 0) return this.warnUnknown(msg.type);
       try {
-        await h(msg, this.api());
+        await Promise.all(Array.from(handlers).map(h => h(msg, this.api())));
       } catch (e) {
         this.sendError(e, msg.id);
       }
+      }); // measureBlock
     });
 
     // 패널이 막 열렸을 때도 한 번 킥 — 최신 뷰어는 자체적으로 요청을 시작하지 않으므로
@@ -260,38 +366,79 @@ export class HostWebviewBridge {
   }
 
   on(type: W2H['type'], handler: Handler) {
-    this.handlers.set(type, handler);
-    return { dispose: () => this.handlers.delete(type) };
+    const set = this.handlers.get(type) ?? new Set<Handler>();
+    set.add(handler);
+    this.handlers.set(type, set);
+    return {
+      dispose: () => {
+        const s = this.handlers.get(type);
+        if (!s) return;
+        s.delete(handler);
+        if (s.size === 0) this.handlers.delete(type);
+      },
+    };
   }
 
+  @measure()
   send<T extends H2W>(msg: T) {
-    this.host.webview.postMessage(msg);
+    // 내부 전송 시작/끝 로그는 노이즈가 많아 제거
+    if (!globalProfiler.isOn()) {
+      this.host.webview.postMessage(msg);
+      return;
+    }
+    const t0 = perfNow();
+    try {
+      this.host.webview.postMessage(msg);
+    } finally {
+      globalProfiler.recordFunctionCall('bridge.send', t0, perfNow() - t0);
+    }
   }
 
+  @measure()
   request<T extends H2W>(msg: Omit<T, 'id'>): Promise<unknown> {
-    const id = `req_${Date.now()}_${++this.seq}`;
-    return new Promise((resolve) => {
-      const disp = this.on('ack' as any, (ack: any) => {
-        if (ack?.payload?.inReplyTo === id) {
-          disp.dispose();
-          resolve(ack.payload);
-        }
+    const impl = () =>
+      new Promise((resolve, reject) => {
+        const id = `req_${Date.now()}_${++this.seq}`;
+        const cleanup = (...ds: Array<{ dispose: () => void }>) => {
+          ds.forEach(d => { try { d.dispose(); } catch {} });
+        };
+        const dAck = this.on('ack' as any, (ack: any) => {
+          if (ack?.payload?.inReplyTo === id) {
+            cleanup(dAck, dErr);
+            resolve(ack.payload);
+          }
+        });
+        const dErr = this.on('error' as any, (err: any) => {
+          if (err?.payload?.inReplyTo === id) {
+            cleanup(dAck, dErr);
+            // 에러 페이로드를 그대로 전달(reject)
+            reject(err.payload);
+          }
+        });
+        this.host.webview.postMessage({ ...msg, id });
       });
-      this.host.webview.postMessage({ ...msg, id });
-    });
+    return globalProfiler.isOn()
+      ? globalProfiler.measureFunction('host.bridge.request', impl)
+      : impl();
   }
 
+  @measure()
   registerAbort(abortKey: string, controller: AbortController) {
+    this.log.debug('[debug] HostWebviewBridge registerAbort: start');
     this.abort(abortKey); // 기존 있으면 정리
     this.pendings.set(abortKey, controller);
+    this.log.debug('[debug] HostWebviewBridge registerAbort: end');
   }
 
+  @measure()
   abort(abortKey: string) {
+    this.log.debug('[debug] HostWebviewBridge abort: start');
     const c = this.pendings.get(abortKey);
     if (c) {
       c.abort();
       this.pendings.delete(abortKey);
     }
+    this.log.debug('[debug] HostWebviewBridge abort: end');
   }
 
   private api(): BridgeAPI {
@@ -306,12 +453,14 @@ export class HostWebviewBridge {
   private validateIncoming(raw: any): W2H | null {
     if (!raw || typeof raw !== 'object') return null;
     if (raw.v !== 1 || typeof raw.type !== 'string') return null;
-    if (typeof raw.payload !== 'object') return null;
+    // payload는 없을 수도 있음(viewer.ready 등)
+    if (raw.payload !== undefined && typeof raw.payload !== 'object') return null;
     return raw as W2H;
   }
 
   private warnUnknown(type: string) {
-    this.log.warn(`unknown webview message: ${type}`);
+    // 알 수 없는 메시지는 초당 1회 수준으로만 경고
+    if (this.shouldLog('unknown', 1000, type)) this.log.warn(`unknown webview message: ${type}`);
   }
 
   private sendError(e: unknown, inReplyTo?: string) {
@@ -326,6 +475,7 @@ export class HostWebviewBridge {
    * - logs.state: 웹뷰가 UI 배너/프로그레스 등에 활용
    * - logs.refresh: 페이지 요청을 즉시 시작하도록 트리거
    */
+  @measure()
   private kickIfReady(origin: 'bridge.start' | 'viewer.ready') {
     try {
       const warm = paginationService.isWarmupActive();
@@ -334,6 +484,9 @@ export class HostWebviewBridge {
       const manifestDir = paginationService.getManifestDir();
 
       // 상태는 매번 보내도 무방(웹뷰가 최신값으로 덮어씀)
+      this.log.info(
+        `bridge: kickIfReady origin=${origin} warm=${warm} total=${total ?? 'unknown'} version=${version} manifest=${manifestDir ?? '-'}`,
+      );
       this.send({
         v: 1,
         type: 'logs.state',
@@ -354,6 +507,18 @@ export class HostWebviewBridge {
       }
     } catch (e) {
       this.log.warn(`bridge: kickIfReady failed: ${String(e)}`);
+    }
+  }
+
+  /** 리스너/대기중 컨트롤러 정리용 */
+  @measure()
+  dispose() {
+    try {
+      this.pendings.forEach((c) => c.abort());
+    } finally {
+      this.pendings.clear();
+      this.handlers.clear();
+      this.kickedOnce = false;
     }
   }
 }

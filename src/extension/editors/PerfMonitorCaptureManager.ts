@@ -3,9 +3,10 @@ import type { H2W } from '@ipc/messages';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { globalProfiler, PerformanceProfiler } from '../../core/logging/perf.js';
+import { globalProfiler, PerformanceProfiler, enableAutoFsIOMeasure } from '../../core/logging/perf.js';
 import { PERF_UPDATE_INTERVAL_MS } from '../../shared/const.js';
 import type { IPerfMonitorCaptureManager, PerfData } from './IPerfMonitorPanelComponents.js';
+import { PerfMonitorHtmlGenerator } from './PerfMonitorHtmlGenerator.js';
 
 export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   private _profiler = globalProfiler;
@@ -14,9 +15,12 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   private _isCapturing = false;
   private _webviewPerfData: Array<{ name: string; duration: number }> = [];
   private _panel?: vscode.WebviewPanel;
+  private _lastCpu?: NodeJS.CpuUsage;
+  private _htmlGen: PerfMonitorHtmlGenerator;
 
-  constructor(panel: vscode.WebviewPanel) {
+  constructor(panel: vscode.WebviewPanel, htmlGenerator: PerfMonitorHtmlGenerator) {
     this._panel = panel;
+    this._htmlGen = htmlGenerator;
   }
 
   get isCapturing(): boolean {
@@ -26,11 +30,15 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
   startCapture(): void {
     const log = getLogger('perfMonitor');
     log.info('PerfMonitorCaptureManager.startCapture called');
+    // I/O 자동 계측 활성화 (1회성)
+    enableAutoFsIOMeasure();
     this._profiler.enable();
     this._profiler.startCapture();
     this._isCapturing = true;
     this._webviewPerfData = [];
     this._captureData = [];
+    // 기준 CPU 스냅샷 (delta 계산용)
+    this._lastCpu = process.cpuUsage();
     log.info('Capture started, sending captureStarted message to webview');
     if (this._panel) {
       this._panel.webview.postMessage({
@@ -45,9 +53,13 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
 
     this._captureInterval = setInterval(() => {
       if (this._isCapturing && this._panel) {
+        // CPU delta (µs) 계산
+        const delta = this._lastCpu ? process.cpuUsage(this._lastCpu) : process.cpuUsage();
+        this._lastCpu = process.cpuUsage();
         const data: PerfData = {
           timestamp: new Date().toISOString(),
-          cpu: process.cpuUsage(),
+          // 차트는 delta를 ms로 환산해서 그리므로 여기엔 µs delta를 담아 보낸다
+          cpu: { user: delta.user, system: delta.system } as NodeJS.CpuUsage,
           memory: process.memoryUsage(),
         };
         this._captureData.push(data);
@@ -80,115 +92,14 @@ export class PerfMonitorCaptureManager implements IPerfMonitorCaptureManager {
     const combinedResult = { ...result, functionCalls: combinedFunctionCalls };
 
     if (this._panel) {
-      const webviewHtml = this.generateHtmlReport(combinedResult, true);
-      const exportHtml = this.generateHtmlReport(combinedResult, false);
+      const webviewHtml = this._htmlGen.generateHtmlReport(combinedResult, true);
+      const exportHtml = this._htmlGen.generateHtmlReport(combinedResult, false);
       this._panel.webview.postMessage({
         v: 1,
         type: 'perf.captureStopped',
         payload: { result: combinedResult, htmlReport: webviewHtml, exportHtml },
       } as H2W);
     }
-  }
-
-  private generateHtmlReport(result: any, isForWebview: boolean = false): string {
-    const a = result.analysis || {};
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Performance Report</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #1e1e1e;
-      color: #cccccc;
-    }
-    h1, h2 {
-      color: #ffffff;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      background-color: #2d2d2d;
-      color: #cccccc;
-    }
-    th, td {
-      border: 1px solid #555;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #3c3c3c;
-      color: #ffffff;
-    }
-    .bottleneck {
-      background-color: #4d2d2d;
-    }
-    .insight {
-      background-color: #2d3c4d;
-      color: #ffffff;
-      padding: 10px;
-      margin: 10px 0;
-      border-left: 4px solid #007acc;
-    }
-    tr:nth-child(even) {
-      background-color: #252525;
-    }
-    tr:hover {
-      background-color: #3a3a3a;
-    }
-  </style>
-</head>
-<body>
-  <h1>Performance Report</h1>
-  <h2>Summary</h2>
-  <p>Duration: ${(result.duration / 1000).toFixed(2)}s</p>
-  <p>Total Samples: ${a.totalSamples || 0}</p>
-  <p>Avg CPU User: ${((a.avgCpuUser || 0) / 1000).toFixed(2)}ms</p>
-  <p>Avg Memory: ${((a.avgMemory || 0) / 1024 / 1024).toFixed(2)}MB</p>
-
-  <h2>Insights</h2>
-  ${(a.insights || []).map((insight: string) => `<div class="insight">${insight}</div>`).join('')}
-
-  <h2>Function Calls</h2>
-  <table>
-    <tr><th>Function</th><th>Calls</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th></tr>
-    ${Object.entries(a.functionSummary || {})
-      .map(
-        ([name, stats]: [string, any]) =>
-          `<tr class="${(a.bottlenecks?.slowFunctions || []).includes(name) ? 'bottleneck' : ''}">
-        <td>${name}</td><td>${stats?.count || 0}</td><td>${(stats?.avgTime || 0).toFixed(2)}</td><td>${(stats?.maxTime || 0).toFixed(2)}</td><td>${(stats?.totalTime || 0).toFixed(2)}</td>
-      </tr>`,
-      )
-      .join('')}
-  </table>
-
-  ${
-    a.ioAnalysis && a.ioAnalysis.totalOperations > 0
-      ? `
-  <h2>I/O Operations</h2>
-  <table>
-    <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Errors</th></tr>
-    ${
-      a.ioAnalysis.readFile && a.ioAnalysis.readFile.count > 0
-        ? `<tr><td>File Read</td><td>${a.ioAnalysis.readFile.count}</td><td>${a.ioAnalysis.readFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.readFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.readFile.errors}</td></tr>`
-        : ''
-    }
-    ${
-      a.ioAnalysis.writeFile && a.ioAnalysis.writeFile.count > 0
-        ? `<tr><td>File Write</td><td>${a.ioAnalysis.writeFile.count}</td><td>${a.ioAnalysis.writeFile.avgDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.maxDuration.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.totalTime.toFixed(2)}</td><td>${a.ioAnalysis.writeFile.errors}</td></tr>`
-        : ''
-    }
-  </table>
-  `
-      : ''
-  }
-
-</body>
-</html>`;
-    return html;
   }
 
   addWebviewPerfData(name: string, duration: number): void {

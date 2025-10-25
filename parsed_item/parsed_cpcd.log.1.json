@@ -1,0 +1,1202 @@
+[
+  {
+    "time": "Sep 21 07:39:42.229",
+    "process": "cpcd",
+    "pid": "5302",
+    "message": "[3994-09-21T07:39:41.474000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 07:37:06.751",
+    "process": "cpcd",
+    "pid": "4635",
+    "message": "[3994-09-21T07:37:06.194000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 07:37:01.444",
+    "process": "cpcd",
+    "pid": "5833",
+    "message": "[3994-09-21T07:37:00.620000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 07:32:42.383",
+    "process": "cpcd",
+    "pid": "7404",
+    "message": "[3994-09-21T07:32:41.685000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 07:32:00.771",
+    "process": "cpcd",
+    "pid": "1993",
+    "message": "[3994-09-21T07:32:00.111000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 07:31:58.077",
+    "process": "cpcd",
+    "pid": "3311",
+    "message": "[3994-09-21T07:31:57.479000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 07:31:19.699",
+    "process": "cpcd",
+    "pid": "4183",
+    "message": "[3994-09-21T07:31:18.589000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 07:28:45.958",
+    "process": "cpcd",
+    "pid": "9159",
+    "message": "[3994-09-21T07:28:45.417000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 07:27:35.155",
+    "process": "cpcd",
+    "pid": "3600",
+    "message": "[3994-09-21T07:27:34.686000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 07:27:13.627",
+    "process": "cpcd",
+    "pid": "7198",
+    "message": "[3994-09-21T07:27:12.645000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 07:14:36.978",
+    "process": "cpcd",
+    "pid": "2181",
+    "message": "[3994-09-21T07:14:36.432000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 07:14:22.584",
+    "process": "cpcd",
+    "pid": "8326",
+    "message": "[3994-09-21T07:14:21.510000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 07:13:38.703",
+    "process": "cpcd",
+    "pid": "4725",
+    "message": "[3994-09-21T07:13:38.159000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 07:09:46.081",
+    "process": "cpcd",
+    "pid": "2283",
+    "message": "[3994-09-21T07:09:44.913000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 07:06:28.253",
+    "process": "cpcd",
+    "pid": "9646",
+    "message": "[3994-09-21T07:06:27.260000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 07:04:17.676",
+    "process": "cpcd",
+    "pid": "7077",
+    "message": "[3994-09-21T07:04:17.024000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 07:01:21.167",
+    "process": "cpcd",
+    "pid": "1626",
+    "message": "[3994-09-21T07:01:20.922000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:59:27.160",
+    "process": "cpcd",
+    "pid": "3792",
+    "message": "[3994-09-21T06:59:26.354000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:58:35.442",
+    "process": "cpcd",
+    "pid": "4905",
+    "message": "[3994-09-21T06:58:34.611000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:57:19.489",
+    "process": "cpcd",
+    "pid": "2457",
+    "message": "[3994-09-21T06:57:19.160000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:56:45.476",
+    "process": "cpcd",
+    "pid": "2067",
+    "message": "[3994-09-21T06:56:44.669000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 06:52:50.656",
+    "process": "cpcd",
+    "pid": "7130",
+    "message": "[3994-09-21T06:52:50.367000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:48:36.681",
+    "process": "cpcd",
+    "pid": "4136",
+    "message": "[3994-09-21T06:48:36.037000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:46:58.286",
+    "process": "cpcd",
+    "pid": "1694",
+    "message": "[3994-09-21T06:46:57.670000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:46:08.373",
+    "process": "cpcd",
+    "pid": "9519",
+    "message": "[3994-09-21T06:46:07.838000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 06:45:37.519",
+    "process": "cpcd",
+    "pid": "4350",
+    "message": "[3994-09-21T06:45:36.693000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:44:07.170",
+    "process": "cpcd",
+    "pid": "8819",
+    "message": "[3994-09-21T06:44:06.960000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 06:43:36.438",
+    "process": "cpcd",
+    "pid": "3811",
+    "message": "[3994-09-21T06:43:35.312000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:43:17.524",
+    "process": "cpcd",
+    "pid": "9858",
+    "message": "[3994-09-21T06:43:16.694000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:42:47.220",
+    "process": "cpcd",
+    "pid": "3217",
+    "message": "[3994-09-21T06:42:46.809000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 06:41:10.213",
+    "process": "cpcd",
+    "pid": "6113",
+    "message": "[3994-09-21T06:41:09.404000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 06:40:46.734",
+    "process": "cpcd",
+    "pid": "9282",
+    "message": "[3994-09-21T06:40:45.635000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:36:58.159",
+    "process": "cpcd",
+    "pid": "8714",
+    "message": "[3994-09-21T06:36:57.479000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 06:34:40.739",
+    "process": "cpcd",
+    "pid": "8740",
+    "message": "[3994-09-21T06:34:39.652000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:34:25.681",
+    "process": "cpcd",
+    "pid": "3422",
+    "message": "[3994-09-21T06:34:24.685000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:28:58.851",
+    "process": "cpcd",
+    "pid": "2982",
+    "message": "[3994-09-21T06:28:57.958000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:22:26.146",
+    "process": "cpcd",
+    "pid": "8037",
+    "message": "[3994-09-21T06:22:25.546000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:21:36.219",
+    "process": "cpcd",
+    "pid": "1129",
+    "message": "[3994-09-21T06:21:35.608000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:20:34.411",
+    "process": "cpcd",
+    "pid": "8445",
+    "message": "[3994-09-21T06:20:33.512000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:20:20.096",
+    "process": "cpcd",
+    "pid": "9340",
+    "message": "[3994-09-21T06:20:19.699000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:11:42.112",
+    "process": "cpcd",
+    "pid": "4301",
+    "message": "[3994-09-21T06:11:41.369000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 06:08:54.870",
+    "process": "cpcd",
+    "pid": "8893",
+    "message": "[3994-09-21T06:08:54.191000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:08:18.302",
+    "process": "cpcd",
+    "pid": "6356",
+    "message": "[3994-09-21T06:08:17.392000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 06:04:39.017",
+    "process": "cpcd",
+    "pid": "2263",
+    "message": "[3994-09-21T06:04:37.967000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 06:01:16.751",
+    "process": "cpcd",
+    "pid": "7322",
+    "message": "[3994-09-21T06:01:15.854000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 06:00:49.949",
+    "process": "cpcd",
+    "pid": "4954",
+    "message": "[3994-09-21T06:00:49.516000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 06:00:48.464",
+    "process": "cpcd",
+    "pid": "9998",
+    "message": "[3994-09-21T06:00:47.355000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 05:59:35.697",
+    "process": "cpcd",
+    "pid": "4880",
+    "message": "[3994-09-21T05:59:35.090000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:50:13.975",
+    "process": "cpcd",
+    "pid": "3184",
+    "message": "[3994-09-21T05:50:12.919000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:49:10.866",
+    "process": "cpcd",
+    "pid": "8836",
+    "message": "[3994-09-21T05:49:10.555000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:42:53.826",
+    "process": "cpcd",
+    "pid": "6328",
+    "message": "[3994-09-21T05:42:53.256000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:42:24.339",
+    "process": "cpcd",
+    "pid": "7352",
+    "message": "[3994-09-21T05:42:23.342000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:41:11.941",
+    "process": "cpcd",
+    "pid": "6354",
+    "message": "[3994-09-21T05:41:11.541000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:40:24.064",
+    "process": "cpcd",
+    "pid": "4674",
+    "message": "[3994-09-21T05:40:23.294000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:39:40.047",
+    "process": "cpcd",
+    "pid": "8235",
+    "message": "[3994-09-21T05:39:39.369000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:38:28.365",
+    "process": "cpcd",
+    "pid": "5181",
+    "message": "[3994-09-21T05:38:27.813000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:31:40.056",
+    "process": "cpcd",
+    "pid": "9826",
+    "message": "[3994-09-21T05:31:39.198000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:28:49.344",
+    "process": "cpcd",
+    "pid": "1295",
+    "message": "[3994-09-21T05:28:48.845000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:27:30.540",
+    "process": "cpcd",
+    "pid": "7952",
+    "message": "[3994-09-21T05:27:30.039000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 05:24:58.090",
+    "process": "cpcd",
+    "pid": "7639",
+    "message": "[3994-09-21T05:24:57.161000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:21:50.547",
+    "process": "cpcd",
+    "pid": "2212",
+    "message": "[3994-09-21T05:21:49.459000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:17:05.510",
+    "process": "cpcd",
+    "pid": "9017",
+    "message": "[3994-09-21T05:17:05.130000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:15:41.452",
+    "process": "cpcd",
+    "pid": "6101",
+    "message": "[3994-09-21T05:15:40.372000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:15:22.595",
+    "process": "cpcd",
+    "pid": "8521",
+    "message": "[3994-09-21T05:15:22.119000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:14:42.083",
+    "process": "cpcd",
+    "pid": "9663",
+    "message": "[3994-09-21T05:14:41.508000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:13:26.985",
+    "process": "cpcd",
+    "pid": "6956",
+    "message": "[3994-09-21T05:13:26.699000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:11:27.584",
+    "process": "cpcd",
+    "pid": "4537",
+    "message": "[3994-09-21T05:11:27.381000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 05:09:32.392",
+    "process": "cpcd",
+    "pid": "1623",
+    "message": "[3994-09-21T05:09:31.737000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:07:10.269",
+    "process": "cpcd",
+    "pid": "3334",
+    "message": "[3994-09-21T05:07:09.461000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 05:05:01.758",
+    "process": "cpcd",
+    "pid": "8700",
+    "message": "[3994-09-21T05:05:01.175000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 05:04:48.735",
+    "process": "cpcd",
+    "pid": "1190",
+    "message": "[3994-09-21T05:04:47.580000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:59:12.697",
+    "process": "cpcd",
+    "pid": "3685",
+    "message": "[3994-09-21T04:59:12.122000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:59:08.322",
+    "process": "cpcd",
+    "pid": "2838",
+    "message": "[3994-09-21T04:59:07.344000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:57:33.952",
+    "process": "cpcd",
+    "pid": "7345",
+    "message": "[3994-09-21T04:57:32.928000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 04:50:57.935",
+    "process": "cpcd",
+    "pid": "6193",
+    "message": "[3994-09-21T04:50:56.852000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 04:50:46.187",
+    "process": "cpcd",
+    "pid": "6368",
+    "message": "[3994-09-21T04:50:45.018000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:49:49.905",
+    "process": "cpcd",
+    "pid": "3778",
+    "message": "[3994-09-21T04:49:49.368000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:47:30.110",
+    "process": "cpcd",
+    "pid": "4959",
+    "message": "[3994-09-21T04:47:29.872000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 04:41:58.394",
+    "process": "cpcd",
+    "pid": "4523",
+    "message": "[3994-09-21T04:41:57.637000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 04:40:02.826",
+    "process": "cpcd",
+    "pid": "4718",
+    "message": "[3994-09-21T04:40:01.872000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 04:39:55.622",
+    "process": "cpcd",
+    "pid": "2284",
+    "message": "[3994-09-21T04:39:54.438000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:39:29.846",
+    "process": "cpcd",
+    "pid": "3961",
+    "message": "[3994-09-21T04:39:29.497000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 04:34:10.450",
+    "process": "cpcd",
+    "pid": "5590",
+    "message": "[3994-09-21T04:34:10.100000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 04:32:09.591",
+    "process": "cpcd",
+    "pid": "7360",
+    "message": "[3994-09-21T04:32:08.644000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:30:52.464",
+    "process": "cpcd",
+    "pid": "1128",
+    "message": "[3994-09-21T04:30:51.600000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 04:25:43.001",
+    "process": "cpcd",
+    "pid": "9996",
+    "message": "[3994-09-21T04:25:42.418000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:24:34.400",
+    "process": "cpcd",
+    "pid": "6544",
+    "message": "[3994-09-21T04:24:33.778000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 04:19:59.971",
+    "process": "cpcd",
+    "pid": "5231",
+    "message": "[3994-09-21T04:19:59.453000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 04:19:47.485",
+    "process": "cpcd",
+    "pid": "5110",
+    "message": "[3994-09-21T04:19:46.778000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 04:16:16.456",
+    "process": "cpcd",
+    "pid": "5759",
+    "message": "[3994-09-21T04:16:15.379000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 04:14:54.875",
+    "process": "cpcd",
+    "pid": "3794",
+    "message": "[3994-09-21T04:14:54.537000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 04:14:03.267",
+    "process": "cpcd",
+    "pid": "6696",
+    "message": "[3994-09-21T04:14:03.033000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 04:13:02.798",
+    "process": "cpcd",
+    "pid": "4693",
+    "message": "[3994-09-21T04:13:02.121000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 04:11:31.270",
+    "process": "cpcd",
+    "pid": "5552",
+    "message": "[3994-09-21T04:11:30.917000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 04:08:04.831",
+    "process": "cpcd",
+    "pid": "1420",
+    "message": "[3994-09-21T04:08:03.792000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 04:01:02.886",
+    "process": "cpcd",
+    "pid": "9243",
+    "message": "[3994-09-21T04:01:02.386000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:59:01.376",
+    "process": "cpcd",
+    "pid": "3413",
+    "message": "[3994-09-21T03:59:00.461000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:57:00.238",
+    "process": "cpcd",
+    "pid": "7569",
+    "message": "[3994-09-21T03:56:59.313000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:54:21.017",
+    "process": "cpcd",
+    "pid": "3984",
+    "message": "[3994-09-21T03:54:20.676000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:53:36.429",
+    "process": "cpcd",
+    "pid": "2313",
+    "message": "[3994-09-21T03:53:35.376000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:50:50.579",
+    "process": "cpcd",
+    "pid": "3293",
+    "message": "[3994-09-21T03:50:50.256000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:46:09.228",
+    "process": "cpcd",
+    "pid": "2388",
+    "message": "[3994-09-21T03:46:08.835000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 03:38:26.412",
+    "process": "cpcd",
+    "pid": "1195",
+    "message": "[3994-09-21T03:38:25.283000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:36:19.823",
+    "process": "cpcd",
+    "pid": "5672",
+    "message": "[3994-09-21T03:36:19.098000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:32:34.321",
+    "process": "cpcd",
+    "pid": "4247",
+    "message": "[3994-09-21T03:32:33.538000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 03:32:32.002",
+    "process": "cpcd",
+    "pid": "9058",
+    "message": "[3994-09-21T03:32:31.454000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:31:35.586",
+    "process": "cpcd",
+    "pid": "2742",
+    "message": "[3994-09-21T03:31:35.047000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:31:05.948",
+    "process": "cpcd",
+    "pid": "9181",
+    "message": "[3994-09-21T03:31:05.670000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:24:39.723",
+    "process": "cpcd",
+    "pid": "7760",
+    "message": "[3994-09-21T03:24:39.465000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:21:48.758",
+    "process": "cpcd",
+    "pid": "7189",
+    "message": "[3994-09-21T03:21:47.571000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 03:14:40.462",
+    "process": "cpcd",
+    "pid": "6135",
+    "message": "[3994-09-21T03:14:39.363000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:10:15.493",
+    "process": "cpcd",
+    "pid": "2072",
+    "message": "[3994-09-21T03:10:14.736000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 03:08:34.137",
+    "process": "cpcd",
+    "pid": "9616",
+    "message": "[3994-09-21T03:08:33.626000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:04:16.992",
+    "process": "cpcd",
+    "pid": "3180",
+    "message": "[3994-09-21T03:04:16.762000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 03:01:24.122",
+    "process": "cpcd",
+    "pid": "6343",
+    "message": "[3994-09-21T03:01:22.937000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:56:35.608",
+    "process": "cpcd",
+    "pid": "3392",
+    "message": "[3994-09-21T02:56:34.777000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:56:30.808",
+    "process": "cpcd",
+    "pid": "4010",
+    "message": "[3994-09-21T02:56:30.194000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:55:34.064",
+    "process": "cpcd",
+    "pid": "1381",
+    "message": "[3994-09-21T02:55:33.622000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:55:23.273",
+    "process": "cpcd",
+    "pid": "1289",
+    "message": "[3994-09-21T02:55:22.106000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:47:09.121",
+    "process": "cpcd",
+    "pid": "7762",
+    "message": "[3994-09-21T02:47:08.495000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 02:46:43.642",
+    "process": "cpcd",
+    "pid": "5552",
+    "message": "[3994-09-21T02:46:43.144000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 02:45:36.916",
+    "process": "cpcd",
+    "pid": "6331",
+    "message": "[3994-09-21T02:45:35.829000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:43:54.597",
+    "process": "cpcd",
+    "pid": "2946",
+    "message": "[3994-09-21T02:43:54.131000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:36:11.774",
+    "process": "cpcd",
+    "pid": "4142",
+    "message": "[3994-09-21T02:36:11.303000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:34:37.309",
+    "process": "cpcd",
+    "pid": "5883",
+    "message": "[3994-09-21T02:34:36.191000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:32:39.309",
+    "process": "cpcd",
+    "pid": "6728",
+    "message": "[3994-09-21T02:32:38.890000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:31:15.618",
+    "process": "cpcd",
+    "pid": "1327",
+    "message": "[3994-09-21T02:31:15.268000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:29:40.224",
+    "process": "cpcd",
+    "pid": "4524",
+    "message": "[3994-09-21T02:29:39.909000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:28:47.525",
+    "process": "cpcd",
+    "pid": "3228",
+    "message": "[3994-09-21T02:28:47.036000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:27:53.655",
+    "process": "cpcd",
+    "pid": "1972",
+    "message": "[3994-09-21T02:27:53.353000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 02:25:39.943",
+    "process": "cpcd",
+    "pid": "2165",
+    "message": "[3994-09-21T02:25:39.240000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:24:07.171",
+    "process": "cpcd",
+    "pid": "1709",
+    "message": "[3994-09-21T02:24:06.929000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:18:53.613",
+    "process": "cpcd",
+    "pid": "5171",
+    "message": "[3994-09-21T02:18:52.850000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:15:15.993",
+    "process": "cpcd",
+    "pid": "6350",
+    "message": "[3994-09-21T02:15:15.124000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 02:13:37.040",
+    "process": "cpcd",
+    "pid": "5594",
+    "message": "[3994-09-21T02:13:36.223000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:10:57.517",
+    "process": "cpcd",
+    "pid": "1228",
+    "message": "[3994-09-21T02:10:56.705000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:10:27.672",
+    "process": "cpcd",
+    "pid": "1295",
+    "message": "[3994-09-21T02:10:26.899000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:07:30.857",
+    "process": "cpcd",
+    "pid": "3754",
+    "message": "[3994-09-21T02:07:30.084000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 02:06:33.100",
+    "process": "cpcd",
+    "pid": "6961",
+    "message": "[3994-09-21T02:06:32.120000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:06:15.698",
+    "process": "cpcd",
+    "pid": "9951",
+    "message": "[3994-09-21T02:06:15.435000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:04:08.627",
+    "process": "cpcd",
+    "pid": "1119",
+    "message": "[3994-09-21T02:04:08.047000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 02:02:58.944",
+    "process": "cpcd",
+    "pid": "8961",
+    "message": "[3994-09-21T02:02:57.916000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 02:00:43.214",
+    "process": "cpcd",
+    "pid": "9965",
+    "message": "[3994-09-21T02:00:42.072000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:57:51.874",
+    "process": "cpcd",
+    "pid": "4916",
+    "message": "[3994-09-21T01:57:51.401000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:56:32.610",
+    "process": "cpcd",
+    "pid": "3734",
+    "message": "[3994-09-21T01:56:31.630000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 01:54:11.563",
+    "process": "cpcd",
+    "pid": "6047",
+    "message": "[3994-09-21T01:54:10.875000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:52:52.096",
+    "process": "cpcd",
+    "pid": "1650",
+    "message": "[3994-09-21T01:52:51.758000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 01:51:37.940",
+    "process": "cpcd",
+    "pid": "8824",
+    "message": "[3994-09-21T01:51:37.227000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:50:15.645",
+    "process": "cpcd",
+    "pid": "7711",
+    "message": "[3994-09-21T01:50:15.211000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:50:14.975",
+    "process": "cpcd",
+    "pid": "2423",
+    "message": "[3994-09-21T01:50:14.243000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 01:48:47.879",
+    "process": "cpcd",
+    "pid": "2052",
+    "message": "[3994-09-21T01:48:46.869000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 01:46:42.318",
+    "process": "cpcd",
+    "pid": "5354",
+    "message": "[3994-09-21T01:46:41.613000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:44:34.863",
+    "process": "cpcd",
+    "pid": "1342",
+    "message": "[3994-09-21T01:44:34.077000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 01:42:52.040",
+    "process": "cpcd",
+    "pid": "5744",
+    "message": "[3994-09-21T01:42:51.491000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 01:41:06.551",
+    "process": "cpcd",
+    "pid": "4533",
+    "message": "[3994-09-21T01:41:05.617000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 01:31:33.846",
+    "process": "cpcd",
+    "pid": "8303",
+    "message": "[3994-09-21T01:31:33.331000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 01:29:44.784",
+    "process": "cpcd",
+    "pid": "5204",
+    "message": "[3994-09-21T01:29:44.155000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 01:29:05.775",
+    "process": "cpcd",
+    "pid": "7992",
+    "message": "[3994-09-21T01:29:05.365000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:29:03.711",
+    "process": "cpcd",
+    "pid": "3255",
+    "message": "[3994-09-21T01:29:02.604000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:25:17.839",
+    "process": "cpcd",
+    "pid": "7436",
+    "message": "[3994-09-21T01:25:17.208000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:18:45.262",
+    "process": "cpcd",
+    "pid": "8320",
+    "message": "[3994-09-21T01:18:44.093000Z] Info :   file_tracing = true"
+  },
+  {
+    "time": "Sep 21 01:14:00.241",
+    "process": "cpcd",
+    "pid": "3357",
+    "message": "[3994-09-21T01:13:59.756000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 01:05:14.626",
+    "process": "cpcd",
+    "pid": "6195",
+    "message": "[3994-09-21T01:05:14.380000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 00:59:42.587",
+    "process": "cpcd",
+    "pid": "6932",
+    "message": "[3994-09-21T00:59:41.770000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 00:59:35.949",
+    "process": "cpcd",
+    "pid": "2671",
+    "message": "[3994-09-21T00:59:35.393000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 00:52:52.466",
+    "process": "cpcd",
+    "pid": "1845",
+    "message": "[3994-09-21T00:52:51.511000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 00:49:44.740",
+    "process": "cpcd",
+    "pid": "4029",
+    "message": "[3994-09-21T00:49:44.443000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 00:49:15.864",
+    "process": "cpcd",
+    "pid": "5254",
+    "message": "[3994-09-21T00:49:14.940000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:43:30.828",
+    "process": "cpcd",
+    "pid": "6380",
+    "message": "[3994-09-21T00:43:30.203000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:41:34.875",
+    "process": "cpcd",
+    "pid": "1640",
+    "message": "[3994-09-21T00:41:34.378000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 21 00:37:54.103",
+    "process": "cpcd",
+    "pid": "5505",
+    "message": "[3994-09-21T00:37:53.709000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:33:34.498",
+    "process": "cpcd",
+    "pid": "1813",
+    "message": "[3994-09-21T00:33:34.284000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 00:27:39.793",
+    "process": "cpcd",
+    "pid": "4349",
+    "message": "[3994-09-21T00:27:38.989000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:26:31.291",
+    "process": "cpcd",
+    "pid": "4463",
+    "message": "[3994-09-21T00:26:30.213000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:18:12.862",
+    "process": "cpcd",
+    "pid": "6767",
+    "message": "[3994-09-21T00:18:12.130000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:15:16.777",
+    "process": "cpcd",
+    "pid": "2232",
+    "message": "[3994-09-21T00:15:16.374000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 00:14:57.589",
+    "process": "cpcd",
+    "pid": "8470",
+    "message": "[3994-09-21T00:14:56.571000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 00:13:39.941",
+    "process": "cpcd",
+    "pid": "3284",
+    "message": "[3994-09-21T00:13:38.749000Z] Info :   enable_frame_trace = true"
+  },
+  {
+    "time": "Sep 21 00:10:47.083",
+    "process": "cpcd",
+    "pid": "3738",
+    "message": "[3994-09-21T00:10:46.304000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 21 00:09:38.840",
+    "process": "cpcd",
+    "pid": "4235",
+    "message": "[3994-09-21T00:09:38.044000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 21 00:00:43.565",
+    "process": "cpcd",
+    "pid": "7160",
+    "message": "[3994-09-21T00:00:43.276000Z] Info :   stdout_tracing = false"
+  },
+  {
+    "time": "Sep 21 00:00:28.648",
+    "process": "cpcd",
+    "pid": "8135",
+    "message": "[3994-09-21T00:00:28.135000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:59:32.196",
+    "process": "cpcd",
+    "pid": "1305",
+    "message": "[3994-09-20T23:59:31.453000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:59:13.511",
+    "process": "cpcd",
+    "pid": "4745",
+    "message": "[3994-09-20T23:59:12.699000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:55:19.074",
+    "process": "cpcd",
+    "pid": "7590",
+    "message": "[3994-09-20T23:55:18.121000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:52:58.667",
+    "process": "cpcd",
+    "pid": "2982",
+    "message": "[3994-09-20T23:52:57.779000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:51:25.576",
+    "process": "cpcd",
+    "pid": "2311",
+    "message": "[3994-09-20T23:51:24.940000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:49:40.758",
+    "process": "cpcd",
+    "pid": "9101",
+    "message": "[3994-09-20T23:49:39.775000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:49:09.237",
+    "process": "cpcd",
+    "pid": "9909",
+    "message": "[3994-09-20T23:49:08.987000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:43:08.894",
+    "process": "cpcd",
+    "pid": "4437",
+    "message": "[3994-09-20T23:43:08.526000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:39:45.672",
+    "process": "cpcd",
+    "pid": "2610",
+    "message": "[3994-09-20T23:39:45.310000Z] Info :   enable_frame_trace = false"
+  },
+  {
+    "time": "Sep 20 23:39:42.193",
+    "process": "cpcd",
+    "pid": "2879",
+    "message": "[3994-09-20T23:39:41.394000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:32:12.804",
+    "process": "cpcd",
+    "pid": "5653",
+    "message": "[3994-09-20T23:32:11.638000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:26:48.886",
+    "process": "cpcd",
+    "pid": "5346",
+    "message": "[3994-09-20T23:26:48.184000Z] Info :   stdout_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:25:05.784",
+    "process": "cpcd",
+    "pid": "8258",
+    "message": "[3994-09-20T23:25:05.150000Z] Info :   lttng_tracing = true"
+  },
+  {
+    "time": "Sep 20 23:24:57.082",
+    "process": "cpcd",
+    "pid": "5392",
+    "message": "[3994-09-20T23:24:56.692000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:23:40.889",
+    "process": "cpcd",
+    "pid": "3397",
+    "message": "[3994-09-20T23:23:40.302000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:09:25.291",
+    "process": "cpcd",
+    "pid": "5737",
+    "message": "[3994-09-20T23:09:24.324000Z] Info :   file_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:07:19.821",
+    "process": "cpcd",
+    "pid": "6935",
+    "message": "[3994-09-20T23:07:19.311000Z] Info :   lttng_tracing = false"
+  },
+  {
+    "time": "Sep 20 23:05:14.797",
+    "process": "cpcd",
+    "pid": "3449",
+    "message": "[3994-09-20T23:05:14.289000Z] Info :   lttng_tracing = true"
+  }
+]

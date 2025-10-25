@@ -21,9 +21,25 @@ if (-not (Test-Path -LiteralPath $ListPath)) {
 }
 
 # 목록을 UTF-8로 읽고(# 주석/빈줄 무시)
-$lines = Get-Content -Path $ListPath -Encoding UTF8 |
-         ForEach-Object { $_.Trim() } |
-         Where-Object { $_ -and -not $_.StartsWith('#') }
+$rawLines = Get-Content -Path $ListPath -Encoding UTF8 |
+           ForEach-Object { $_.Trim() } |
+           Where-Object { $_ -and -not $_.StartsWith('#') }
+
+# git status 형식 파싱: "status:   path" → path 추출
+$lines = $rawLines | ForEach-Object {
+    if ($_ -match '^(modified|new file|deleted|renamed):\s+(.+)$') {
+        $matches[2]
+    } else {
+        $_
+    }
+}
+
+# 중복 제거
+$uniqueLines = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($line in $lines) {
+    [void]$uniqueLines.Add($line)
+}
+$lines = $uniqueLines
 
 $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 $maxLinesPerFile = 5000
@@ -94,6 +110,9 @@ function SaveCurrentBuffer {
 }
 
 foreach ($relPath in $lines) {
+    # 경로 구분자 표준화: / → \ (Windows 호환성)
+    $relPath = $relPath -replace '/', '\'
+
     # ✅ 상대경로는 '프로젝트 루트' 기준
     $filePath = if ([IO.Path]::IsPathRooted($relPath)) { $relPath }
                 else { Join-Path $ProjectRoot $relPath }
@@ -143,8 +162,9 @@ foreach ($relPath in $lines) {
         $full = (Get-Item -LiteralPath $filePath).FullName
         if (-not $seen.Add($full)) { continue }
 
-        # 제목 줄에 목록 그대로 남김
-        [void]$sb.AppendLine($relPath)
+        # 제목 줄에 프로젝트 루트 기준 상대 경로로 남김
+        $relFilePath = $full.Substring($ProjectRoot.Length + 1).Replace('\', '/')
+        [void]$sb.AppendLine($relFilePath)
         $currentLineCount++
 
         # 파일을 UTF-8로 강제 읽기

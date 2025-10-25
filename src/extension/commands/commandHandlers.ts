@@ -7,12 +7,14 @@ import * as vscode from 'vscode';
 // 사용자 구성 저장소
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { measure } from '../../core/logging/perf.js';
 import type { EdgePanelProvider } from '../panels/extensionPanel.js';
 import { CommandHandlersConnect } from './CommandHandlersConnect.js';
 import { CommandHandlersGit } from './CommandHandlersGit.js';
 import { CommandHandlersHomey } from './CommandHandlersHomey.js';
 import { CommandHandlersHost } from './CommandHandlersHost.js';
 import { CommandHandlersLogging } from './CommandHandlersLogging.js';
+import { CommandHandlersParser } from './CommandHandlersParser.js';
 import { CommandHandlersUpdate } from './CommandHandlersUpdate.js';
 import { CommandHandlersWorkspace } from './CommandHandlersWorkspace.js';
 
@@ -20,8 +22,6 @@ const log = getLogger('cmd');
 const exec = promisify(execCb);
 
 class CommandHandlers {
-  private say: (s: string) => void;
-
   // 분리된 핸들러들
   private workspaceHandler: CommandHandlersWorkspace;
   private updateHandler: CommandHandlersUpdate;
@@ -30,28 +30,25 @@ class CommandHandlers {
   private hostHandler: CommandHandlersHost;
   private gitHandler: CommandHandlersGit;
   private connectHandler: CommandHandlersConnect;
+  private parserHandler: CommandHandlersParser;
 
   constructor(
-    private appendLog?: (s: string) => void,
     private context?: vscode.ExtensionContext,
     private extensionUri?: vscode.Uri,
     private provider?: EdgePanelProvider, // 🔁 provider 주입 (Logging에서 사용)
   ) {
-    this.say = (s: string) => {
-      log.info(s);
-      this.appendLog?.(s);
-    };
-
     // 핸들러 초기화
-    this.workspaceHandler = new CommandHandlersWorkspace(this.say, this.context);
-    this.updateHandler = new CommandHandlersUpdate(this.say, this.appendLog, this.extensionUri);
-    this.homeyHandler = new CommandHandlersHomey(this.say, this.appendLog);
-    this.loggingHandler = new CommandHandlersLogging(this.say, this.appendLog, this.provider);
-    this.hostHandler = new CommandHandlersHost(this.say, this.appendLog);
-    this.gitHandler = new CommandHandlersGit(this.say, this.appendLog);
-    this.connectHandler = new CommandHandlersConnect(this.say, this.appendLog);
+    this.workspaceHandler = new CommandHandlersWorkspace(this.context);
+    this.updateHandler = new CommandHandlersUpdate(this.extensionUri);
+    this.homeyHandler = new CommandHandlersHomey();
+    this.loggingHandler = new CommandHandlersLogging(this.provider);
+    this.hostHandler = new CommandHandlersHost();
+    this.gitHandler = new CommandHandlersGit();
+    this.connectHandler = new CommandHandlersConnect();
+    this.parserHandler = new CommandHandlersParser(this.context);
   }
 
+  @measure()
   async route(raw: string) {
     const cmd = String(raw || '').trim();
 
@@ -89,6 +86,9 @@ class CommandHandlers {
       case 'openHelp':
         return this.updateHandler.openHelp();
 
+      case 'initParser':
+        return this.parserHandler.initParser();
+
       // === 과거 라인 기반 명령들(가능한 쓰지 않음) ===
       case 'connect_info':
         return this.connectHandler.connectInfo();
@@ -96,12 +96,13 @@ class CommandHandlers {
         return this.connectHandler.connectChange();
 
       default:
-        this.say(`[info] unknown command: ${raw}`);
+        log.info(`[info] unknown command: ${raw}`);
     }
   }
 
+  @measure()
   async help() {
-    this.say(`Commands:
+    log.info(`Commands:
   openHomeyLogging
   homeyRestart | homeyMount | homeyUnmount
   changeWorkspaceQuick | openWorkspace
@@ -111,10 +112,9 @@ class CommandHandlers {
 }
 
 export function createCommandHandlers(
-  appendLog?: (s: string) => void,
   context?: vscode.ExtensionContext,
   extensionUri?: vscode.Uri,
   provider?: EdgePanelProvider,
 ) {
-  return new CommandHandlers(appendLog, context, extensionUri, provider);
+  return new CommandHandlers(context, extensionUri, provider);
 }

@@ -1,15 +1,20 @@
 import { create } from 'zustand';
 
 import { LOG_OVERSCAN, LOG_ROW_HEIGHT, LOG_WINDOW_SIZE } from '../../../shared/const';
+import { createUiMeasure } from '../../shared/utils';
+import { vscode } from './ipc';
+import { createUiLog } from '../../shared/utils';
 import { postFilterUpdate } from './ipc';
-import type { ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
+import type { BookmarkItem, ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
 
 const initial: Model = {
   rows: [],
   nextId: 1,
   bufferSize: 2000,
   totalRows: 0,
-  windowSize: LOG_WINDOW_SIZE,
+  // overscan 확장 요청에도 충분히 커버되도록 최소 버퍼 보장
+  // (LOG_WINDOW_SIZE 가 작게 설정된 환경 대비)
+  windowSize: Math.max(LOG_WINDOW_SIZE, LOG_OVERSCAN * 2 + 128),
   windowStart: 1,
   rowH: LOG_ROW_HEIGHT,
   overscan: LOG_OVERSCAN,
@@ -26,6 +31,9 @@ const initial: Model = {
   mergeDone: 0,
   mergeTotal: 0,
   filter: { pid: '', src: '', proc: '', msg: '' },
+  follow: true,
+  newSincePause: 0,
+  bookmarks: {},
 };
 
 type Actions = {
@@ -37,125 +45,285 @@ type Actions = {
   closeSearch(): void;
   openSearchPanel(): void;
   setSearchResults(hits: { idx: number; text: string }[], opts?: { q?: string }): void;
-  toggleBookmark(rowId: number): void;
+  toggleBookmark: (rowId: number) => void;
+  toggleBookmarkByIdx: (globalIdx: number) => void;
   toggleBookmarksPane(): void;
   setBookmarksPane(open: boolean): void;
   jumpToRow(rowId: number, idx?: number): void;
   jumpToIdx(idx: number): void;
   resizeColumn(col: 'time' | 'proc' | 'pid' | 'src', dx: number): void;
-  mergeProgress(args: { inc?: number; total?: number; reset?: boolean; active?: boolean }): void;
+  mergeProgress(args: {
+    inc?: number; total?: number; reset?: boolean; active?: boolean; done?: number
+  }): void;
+  measureUi: ReturnType<typeof createUiMeasure>;
   setFilterField(f: keyof Filter, v: string): void;
   applyFilter(next: Filter): void; // ← 디바운스 후 한 번만 전송
   resetFilters(): void;
+  setFollow(follow: boolean): void;
+  incNewSincePause(): void;
+  clearNewSincePause(): void;
 };
 
 export const useLogStore = create<Model & Actions>()((set, get) => ({
   ...initial,
+  // 로거: 스토어 변경 시점 추적
+  __ui: createUiLog(vscode, 'log-viewer.store'),
+  measureUi: createUiMeasure(vscode),
   setTotalRows(total) {
-    set({ totalRows: Math.max(0, total | 0) });
+    get().measureUi('store.setTotalRows', () => {
+      const prev = get().totalRows;
+      const next = Math.max(0, total | 0);
+      set({ totalRows: next });
+      // 총행수 변화가 실제로 있을 때만 1회 기록
+      if (prev !== next) (get() as any).__ui?.info?.(`store.totalRows ${prev}→${next}`);
+    });
   },
 
   receiveRows(startIdx, rows) {
-    const state = get();
-    const maxId = Math.max(state.nextId, (rows.at(-1)?.id ?? 0) + 1);
-    // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
-    let selectedRowId = state.selectedRowId;
-    if (state.pendingJumpIdx) {
-      const hit = rows.find((r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
-      if (hit) selectedRowId = hit.id;
-    }
-    set({
-      rows,
-      nextId: maxId,
-      windowStart: Math.max(1, startIdx | 0),
-      selectedRowId,
+    get().measureUi('store.receiveRows', () => {
+      const state = get();
+      const maxIdInBatch = rows.reduce((m, r) => Math.max(m, r.id ?? 0), 0);
+      const maxId = Math.max(state.nextId, maxIdInBatch + 1);
+      // 북마크 맵을 반영하여 플래그 복원
+      const bm = state.bookmarks || {};
+      const rowsWithBm = rows.map((r) => {
+        const k = typeof r.idx === 'number' ? r.idx : undefined;
+        return k && bm[k] ? { ...r, bookmarked: true } : r;
+      });
+      // ── PROBE: 수신 버퍼 정합성
+      const first = rowsWithBm[0]?.idx;
+      const last  = rowsWithBm.length ? rowsWithBm[rowsWithBm.length - 1]?.idx : undefined;
+      const asc   = rowsWithBm.every((r, i, arr) =>
+        i === 0 || ((arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity)));
+      (get() as any).__ui?.info?.(
+        `[probe:store] receive start=${startIdx} len=${rowsWithBm.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
+      );
+      // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
+      let selectedRowId = state.selectedRowId;
+      if (state.pendingJumpIdx) {
+        const hit = rowsWithBm.find((r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
+        if (hit) selectedRowId = hit.id;
+      }
+      set({
+        rows: rowsWithBm,
+        nextId: maxId,
+        windowStart: Math.max(1, startIdx | 0),
+        selectedRowId,
+      });
+      // 과도한 로그 방지: 범위 바뀔 때만 간단 요약
+      const end = startIdx + rows.length - 1;
+      (get() as any).__ui?.debug?.(`store.receiveRows ${startIdx}-${end} (${rows.length})`);
+      // ── PROBE: 머지 후 창 범위/샘플
+      const s2 = get();
+      const winStart = s2.windowStart ?? 1;
+      const winEnd   = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
+      const sample   = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
+      const sampleStr = sample.map((r: any) => `${r.idx ?? '?'}|${r.time ?? '-'}`).join(', ');
+      (get() as any).__ui?.info?.(
+        `[probe:store] window=${winStart}-${winEnd} sample(top10)=${sampleStr} nextId(after)=${s2.nextId}`,
+      );
     });
   },
 
   toggleColumn(col, on) {
-    set({ showCols: { ...get().showCols, [col]: on } });
+    get().measureUi('store.toggleColumn', () => {
+      set({ showCols: { ...get().showCols, [col]: on } });
+      (get() as any).__ui?.debug?.(`store.toggleColumn ${col}=${on}`);
+    });
   },
 
   setHighlights(rules) {
-    const norm = rules
-      .filter((r) => r.text.trim())
-      .slice(0, 5)
-      .map((r) => ({ text: r.text.trim(), color: r.color ?? ('c1' as const) }));
-    set({ highlights: norm });
+    get().measureUi('store.setHighlights', () => {
+      const norm = rules
+        .filter((r) => r.text.trim())
+        .slice(0, 5)
+        .map((r) => ({ text: r.text.trim(), color: r.color ?? ('c1' as const) }));
+      set({ highlights: norm });
+      (get() as any).__ui?.debug?.(`store.setHighlights n=${norm.length}`);
+    });
   },
 
   setSearch(q) {
-    // 쿼리만 저장. 패널 오픈은 명시적으로 openSearchPanel에서 처리.
-    const t = q.trim();
-    if (!t) return set({ searchQuery: '', searchHits: [], searchOpen: false });
-    set({ searchQuery: t });
+    get().measureUi('store.setSearch', () => {
+      // 쿼리만 저장. 패널 오픈은 명시적으로 openSearchPanel에서 처리.
+      const t = q.trim();
+      if (!t) return set({ searchQuery: '', searchHits: [], searchOpen: false });
+      set({ searchQuery: t });
+      (get() as any).__ui?.debug?.('store.setSearch');
+    });
   },
   closeSearch() {
-    set({ searchOpen: false, searchQuery: '', searchHits: [] });
+    get().measureUi('store.closeSearch', () => {
+      set({ searchOpen: false, searchQuery: '', searchHits: [] });
+      (get() as any).__ui?.debug?.('store.closeSearch');
+    });
   },
   openSearchPanel() {
-    set({ searchOpen: true });
+    get().measureUi('store.openSearchPanel', () => {
+      set({ searchOpen: true });
+      (get() as any).__ui?.debug?.('store.openSearchPanel');
+    });
   },
   setSearchResults(hits, opts) {
-    const st = get();
-    // 사용자가 닫은 뒤(쿼리도 비움) 늦게 도착한 결과는 무시하여 재오픈 방지
-    if (!st.searchOpen && !st.searchQuery.trim()) return;
-    const nextQ = (opts?.q ?? st.searchQuery) || '';
-    set({ searchOpen: true, searchHits: hits, searchQuery: nextQ });
+    get().measureUi('store.setSearchResults', () => {
+      const st = get();
+      // 사용자가 닫은 뒤(쿼리도 비움) 늦게 도착한 결과는 무시하여 재오픈 방지
+      if (!st.searchOpen && !st.searchQuery.trim()) return;
+      const nextQ = (opts?.q ?? st.searchQuery) || '';
+      set({ searchOpen: true, searchHits: hits, searchQuery: nextQ });
+      (get() as any).__ui?.info?.(`search.results hits=${hits.length}`);
+    });
   },
 
   toggleBookmark(rowId) {
-    // 북마크 패널 자동 열림 방지: 단순히 행의 상태만 토글
-    const rows = get().rows.map((r) => (r.id === rowId ? { ...r, bookmarked: !r.bookmarked } : r));
-    set({ rows });
+    get().measureUi('store.toggleBookmark', () => {
+      const st = get();
+      const row = st.rows.find((r) => r.id === rowId);
+      const idx = row?.idx;
+      if (typeof idx !== 'number' || idx <= 0) {
+        (get() as any).__ui?.warn?.(`store.toggleBookmark ignored: invalid idx for rowId=${rowId}`);
+        return;
+      }
+      // 모든 토글은 단일 경로로
+      st.toggleBookmarkByIdx(idx);
+    });
+  },
+
+  toggleBookmarkByIdx(globalIdx) {
+    get().measureUi('store.toggleBookmarkByIdx', () => {
+      const st = get();
+      const bookmarks = { ...st.bookmarks };
+      if (bookmarks[globalIdx]) {
+        // 북마크 제거
+        delete bookmarks[globalIdx];
+      } else {
+        // 북마크 추가: 현재 로드된 행에서 정보를 가져옴
+        const row = st.rows.find((r) => r.idx === globalIdx);
+        if (row) {
+          bookmarks[globalIdx] = {
+            idx: globalIdx,
+            time: row.time,
+            msg: row.msg,
+            src: row.src,
+          };
+        }
+      }
+      // 현재 로드된 행의 bookmarked 필드 업데이트
+      const rows = st.rows.map((r) =>
+        r.idx === globalIdx ? { ...r, bookmarked: !!bookmarks[globalIdx] } : r
+      );
+      set({ bookmarks, rows });
+      (get() as any).__ui?.debug?.(`store.toggleBookmarkByIdx idx=${globalIdx} added=${!!bookmarks[globalIdx]}`);
+    });
   },
 
   toggleBookmarksPane() {
-    set({ showBookmarks: !get().showBookmarks });
+    get().measureUi('store.toggleBookmarksPane', () => {
+      set({ showBookmarks: !get().showBookmarks });
+      (get() as any).__ui?.debug?.('store.toggleBookmarksPane');
+    });
   },
   setBookmarksPane(open) {
-    set({ showBookmarks: !!open });
+    get().measureUi('store.setBookmarksPane', () => {
+      set({ showBookmarks: !!open });
+      (get() as any).__ui?.debug?.(`store.setBookmarksPane ${!!open}`);
+    });
   },
   jumpToRow(rowId, idx) {
-    // 직접 클릭/북마크/검색결과에서 선택: 즉시 선택 표시
-    set({ selectedRowId: rowId });
-    // 참고: 실제 스크롤 이동은 jumpToIdx가 담당
-    // (여기서는 선택만 처리; idx는 디버깅/확장용으로 보존)
+    get().measureUi('store.jumpToRow', () => {
+      // 직접 클릭/북마크/검색결과에서 선택: 즉시 선택 표시
+      set({ selectedRowId: rowId });
+      // 참고: 실제 스크롤 이동은 jumpToIdx가 담당
+      // (여기서는 선택만 처리; idx는 디버깅/확장용으로 보존)
+      (get() as any).__ui?.debug?.(`store.jumpToRow id=${rowId} idx=${idx ?? '-'}`);
+    });
   },
   jumpToIdx(idx) {
-    set({ pendingJumpIdx: Math.max(1, idx | 0) });
+    get().measureUi('store.jumpToIdx', () => {
+      // 검색/북마크 등 "명시적 점프" 시에는 tail 팔로우를 자동 해제한다.
+      // (follow=true 상태에서 점프 직후 다시 tail로 되돌아가는 현상 방지)
+      set({ pendingJumpIdx: Math.max(1, idx | 0), follow: false });
+      (get() as any).__ui?.info?.(`store.jumpToIdx idx=${idx} (auto-pause follow)`);
+    });
   },
 
   resizeColumn(col, dx) {
-    const next = { ...get().colW };
-    const base = Math.max(60, ((next as any)[col] || 120) + dx);
-    (next as any)[col] = base;
-    set({ colW: next });
+    get().measureUi('store.resizeColumn', () => {
+      const next = { ...get().colW };
+      const base = Math.max(60, ((next as any)[col] || 120) + dx);
+      (next as any)[col] = base;
+      set({ colW: next });
+      (get() as any).__ui?.debug?.(`store.resizeColumn ${col} += ${dx}`);
+    });
   },
 
-  mergeProgress({ inc, total, reset, active }) {
-    const cur = get();
-    const t = typeof total === 'number' ? Math.max(0, total) : cur.mergeTotal;
-    const base = reset ? 0 : cur.mergeDone;
-    const done = Math.max(0, base + (inc ?? 0));
-    let act = active ?? cur.mergeActive;
-    if (t > 0 && done >= t) act = false;
-    set({ mergeTotal: t, mergeDone: done, mergeActive: act });
+  mergeProgress({ inc, total, reset, active, done }) {
+    get().measureUi('store.mergeProgress', () => {
+      const cur = get();
+      const t = typeof total === 'number' ? Math.max(0, total) : cur.mergeTotal;
+      // 우선순위: 명시 done → (reset?0:base)+inc
+      const base = reset ? 0 : cur.mergeDone;
+      const doneVal = typeof done === 'number'
+        ? Math.max(0, done)
+        : Math.max(0, base + (inc ?? 0));
+      let act = active ?? cur.mergeActive;
+      if (t > 0 && doneVal >= t) act = false;
+      set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });
+      // 10% 단위 또는 완료 시에만 기록
+      const pct = t > 0 ? Math.floor((doneVal / t) * 100) : 0;
+      const key = '__lastMergePct';
+      const last = (get() as any)[key] ?? -1;
+      if (!act || pct >= 100 || pct >= last + 10) {
+        (get() as any).__ui?.info?.(`merge.progress ${pct}% (${doneVal}/${t}) active=${act}`);
+        (get() as any)[key] = pct;
+      }
+    });
   },
 
   // ── 필터 상태 ─────────────────────────────────────────────────────────
   setFilterField(f, v) {
-    const next = { ...get().filter, [f]: v };
-    set({ filter: next }); // ← 여기서는 전송하지 않음
+    get().measureUi('store.setFilterField', () => {
+      const next = { ...get().filter, [f]: v };
+      set({ filter: next }); // ← 여기서는 전송하지 않음
+      (get() as any).__ui?.debug?.(`store.setFilterField ${f}="${v}"`);
+    });
   },
   applyFilter(next) {
-    set({ filter: next });
-    postFilterUpdate(next); // ← 실제 전송은 여기서만
+    get().measureUi('store.applyFilter', () => {
+      (get() as any).__ui?.debug?.('[debug] applyFilter: start');
+      set({ filter: next });
+      postFilterUpdate(next); // ← 실제 전송은 여기서만
+      (get() as any).__ui?.info?.(`store.applyFilter ${JSON.stringify(next)}`);
+      (get() as any).__ui?.debug?.('[debug] applyFilter: end');
+    });
   },
   resetFilters() {
-    const empty = { pid: '', src: '', proc: '', msg: '' };
-    set({ filter: empty });
-    postFilterUpdate(empty); // 초기화는 즉시 반영
+    get().measureUi('store.resetFilters', () => {
+      (get() as any).__ui?.debug?.('[debug] resetFilters: start');
+      const empty = { pid: '', src: '', proc: '', msg: '' };
+      set({ filter: empty });
+      postFilterUpdate(empty); // 초기화는 즉시 반영
+      (get() as any).__ui?.info?.('store.resetFilters');
+      (get() as any).__ui?.debug?.('[debug] resetFilters: end');
+    });
+  },
+  setFollow(follow) {
+    get().measureUi('store.setFollow', () => {
+      set({ follow });
+      (get() as any).__ui?.debug?.(`store.setFollow ${follow}`);
+    });
+  },
+  incNewSincePause() {
+    get().measureUi('store.incNewSincePause', () => {
+      set({ newSincePause: get().newSincePause + 1 });
+      (get() as any).__ui?.debug?.('store.incNewSincePause');
+    });
+  },
+  clearNewSincePause() {
+    get().measureUi('store.clearNewSincePause', () => {
+      set({ newSincePause: 0 });
+      (get() as any).__ui?.debug?.('store.clearNewSincePause');
+    });
   },
 }));
 

@@ -1,5 +1,107 @@
 // === src/core/logs/time/TimezoneHeuristics.ts ===
 import { getLogger } from '../../logging/extension-logger.js';
+// 로그 스팸 완화: per-line 출력 최소화, 집계로 대체
+import { measure } from '../../logging/perf.js';
+
+/**
+ * 파일 타입별(Time series 단위) 단조 보정기.
+ * - 병합은 "최신 → 오래된" 순으로 진행된다고 가정한다.
+ * - 정수 그라뉼러리티(밀리초) 슬롯 단위로 단조비증가(desc)를 보장.
+ * - 글로벌 offset 누적 적용.
+ * - 작은 역전(≤ SMALL_DELTA_MS)은 전역 오프셋을 바꾸지 않고
+ *   **해당 라인만** 1ms 로컬 클램프한다(표시 문자열은 원본 유지).
+ */
+export class MonotonicCorrector {
+  private lastCorrected?: number; // 직전 반환한 보정 ts(단조감소 체크용)
+  private readonly log = getLogger('MonotonicCorrector');
+  /**
+   * 작은 역전 허용 폭(1~2s 권장). 이내면 글로벌 offset 조정 금지.
+   */
+  private readonly SMALL_DELTA_MS = 1500;
+  // 집계 카운터(스팸 억제용)
+  private clampCount = 0;        // per-line 클램프 누적
+  private shiftCount = 0;        // per-line 시프트 누적
+  private worstShiftHours = 0;   // 가장 큰 시프트(시간)
+  private worstShiftAt?: number; // 가장 큰 시프트 최초 관측 시각
+
+  // (선택) per-line 샘플 로그를 원하면 >0으로 조정
+  private readonly LOG_SAMPLE_N = 0;
+
+  // 과도한 보정을 방지하기 위한 안전 캡(필요 시 조정/제거 가능)
+  private readonly MAX_SHIFT_HOURS = 14;
+
+  // 글로벌 누적 오프셋(단조 보정용)
+  private globalOffsetMs = 0;
+
+  constructor(public readonly label: string, private readonly granularityMs: number = 1) {}
+
+  /**
+   * 최신→오래된 순으로 rawTs가 들어온다.
+   * index는 현재 처리 중인 로그의 인덱스(0부터).
+   * 반환: 보정된 ts(단조비증가 보장)
+   */
+  @measure()
+  adjust(rawTs: number): number {
+    if (typeof rawTs !== 'number' || Number.isNaN(rawTs)) return rawTs;
+
+    // 정수 그라뉼러리티(밀리초) 슬롯으로 클램프
+    const slotMs = Math.max(1, this.granularityMs);
+    const clamped = Math.floor(rawTs / slotMs) * slotMs;
+    if (clamped !== rawTs) this.clampCount++; // 집계: 슬롯 클램프 발생(소수 ms 등)
+
+    // 글로벌 오프셋 적용
+    let corrected = clamped + this.globalOffsetMs;
+
+    // 단조비증가(desc) 위반 시 보정
+    if (this.lastCorrected !== undefined && corrected > this.lastCorrected) {
+      const diffMs = corrected - this.lastCorrected;
+      // ⬇️ 작은 역전은 전역 오프셋을 건드리지 않고 해당 라인만 1ms 내림
+      if (diffMs <= this.SMALL_DELTA_MS) {
+        corrected = this.lastCorrected - 1; // 로컬 1ms 클램프
+        this.clampCount++;
+      } else {
+        // 큰 점프 → 글로벌 오프셋으로 보정(기존 동작)
+        const shiftHours = diffMs / (60 * 60 * 1000);
+        if (shiftHours > this.worstShiftHours) {
+          this.worstShiftHours = shiftHours;
+          this.worstShiftAt = rawTs;
+        }
+        this.globalOffsetMs -= diffMs;
+        corrected = clamped + this.globalOffsetMs;
+        this.shiftCount++;
+        if (this.LOG_SAMPLE_N > 0 && this.shiftCount % this.LOG_SAMPLE_N === 0) {
+          this.log.debug?.(
+            `Monotonic shift [${this.label}]: raw=${new Date(rawTs).toISOString()} ` +
+            `clamped=${new Date(clamped).toISOString()} corrected=${new Date(corrected).toISOString()} ` +
+            `shift=${shiftHours.toFixed(2)}h globalOffset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
+          );
+        }
+      }
+    }
+
+    this.lastCorrected = corrected;
+    return corrected;
+  }
+
+  // 집계 요약을 출력하고 카운터 초기화
+  @measure()
+  summary() {
+    if (this.shiftCount || this.clampCount) {
+      const worst =
+        this.worstShiftAt != null
+          ? `${this.worstShiftHours.toFixed(1)}h @ ${new Date(this.worstShiftAt).toISOString()}`
+          : 'n/a';
+      this.log.info(
+        `Monotonic summary [${this.label}] shifts=${this.shiftCount}, clamped=${this.clampCount}, ` +
+        `worst_shift=${worst}, global_offset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
+      );
+    }
+    this.clampCount = 0;
+    this.shiftCount = 0;
+    this.worstShiftHours = 0;
+    this.worstShiftAt = undefined;
+  }
+}
 
 /**
  * 파일 타입별(Time series 단위) 타임존 점프 보정기.
@@ -14,6 +116,23 @@ export class TimezoneCorrector {
   private lastCorrected?: number; // 직전 반환한 보정 ts(단조감소 체크용)
   private lastRawTs?: number; // 직전 rawTs
   private readonly log = getLogger('TimezoneCorrector');
+  // feed 방향 계측
+  private lastFeedTs?: number;
+  private feedInc = 0; // rawTs 증가(오래된→최신) 카운트
+  private feedDec = 0; // rawTs 감소(최신→오래된) 카운트
+
+  // 집계 카운터(스팸 억제용)
+  private clampCount = 0;        // per-line 클램프 누적
+  private suspectedCount = 0;    // 의심 구간 발생 수
+  private fixedCount = 0;        // retro 세그먼트 확정 수
+  private worstJumpHours = 0;    // 가장 큰 점프(시간)
+  private worstJumpAt?: number;  // 가장 큰 점프 최초 관측 시각
+
+  // (선택) per-line 샘플 로그를 원하면 >0으로 조정
+  private readonly LOG_SAMPLE_N = 0;
+
+  // 과도한 보정을 방지하기 위한 안전 캡(필요 시 조정/제거 가능)
+  private readonly MAX_TZ_OFFSET_HOURS = 14;
 
   // 점프 의심 상태(최대 1건)
   private suspected:
@@ -33,14 +152,22 @@ export class TimezoneCorrector {
   private readonly MIN_JUMP_HOURS = 3; // 점프 의심 임계값(현행 3h 유지)
   private readonly MIN_RETURN_HOURS = 1; // 복귀 최소 차이(요청하신 1h)
 
-  constructor(public readonly label: string) {}
+  constructor(public readonly label: string, private readonly expectDescFeed = true) {}
 
   /**
    * 최신→오래된 순으로 rawTs가 들어온다.
    * index는 현재 처리 중인 로그의 인덱스(0부터).
    * 반환: 보정된 ts(국소 보정이 필요한 경우 retroSegments에 구간 enqueue)
    */
+  @measure()
   adjust(rawTs: number, index: number): number {
+    // ── feed 방향 계측 ─────────────────
+    if (this.lastFeedTs !== undefined) {
+      if (rawTs > this.lastFeedTs) this.feedInc++;
+      else if (rawTs < this.lastFeedTs) this.feedDec++;
+    }
+    this.lastFeedTs = rawTs;
+
     // 1) suspected가 있으면 "복귀"를 **먼저** 판정 (분기 순서가 핵심!)
     if (this.suspected) {
       const s = this.suspected;
@@ -57,24 +184,26 @@ export class TimezoneCorrector {
 
       if (returned) {
         // 복귀 확정 → suspected 구간(start..index-1)에만 Δoffset 적용하는 retro segment 생성
-        // Δoffset은 "가능한 시간대 오프셋(±1h/±9h/±10h/±12h)" 중
-        // 감지된 jump 크기(hourDiff)에 가장 가까운 정수 시간으로 스냅한다.
-        // 이렇게 하면 기준선(preJumpRawTs)과 '완전히 같은 ts'가 되는 것을 방지.
-        const CANDIDATES = [1, 9, 10, 12]; // 허용 시간대 후보(시간)
-        const nearest = CANDIDATES.reduce(
-          (best, h) => (Math.abs(s.hourDiff - h) < Math.abs(s.hourDiff - best) ? h : best),
-          CANDIDATES[0],
+        // Δoffset은 "실측 jump 크기(hourDiff)"를 정수 시간으로 반올림하여 적용한다(분 단위 무시).
+        // 안전을 위해 1h~MAX_TZ_OFFSET_HOURS 범위로 클램프.
+        const sign = s.direction === 'positive' ? -1 : +1; // 시계가 +로 튀었으면 과거 방향(-)으로 보정
+        const roundedHours = Math.min(
+          this.MAX_TZ_OFFSET_HOURS,
+          Math.max(1, Math.round(s.hourDiff)),
         );
-        const sign = s.direction === 'positive' ? -1 : +1;
-        const deltaMs = sign * nearest * hour;
+        const deltaMs = sign * roundedHours * hour;
+        this.log.debug?.(
+          `TZ measured: jump=${s.hourDiff.toFixed(2)}h -> apply=${roundedHours}h, Δ=${deltaMs / 3600000}h`,
+        );
 
         // index-1 까지가 점프 구간 (현재 rawTs는 복귀 이후의 라인)
         const end = Math.max(s.startIndex, index - 1);
         if (end >= s.startIndex) {
           this.retroSegments.push({ start: s.startIndex, end, deltaMs });
           this.log.info(
-            `타임존 점프 판명 [${this.label}]: retro(${s.startIndex}..${end}) Δ=${deltaMs / 3600000}h (nearest)`,
+            `타임존 점프 판명 [${this.label}]: retro(${s.startIndex}..${end}) Δ=${deltaMs / 3600000}h (measured)`,
           );
+          this.fixedCount++;
         }
 
         // suspected 해제 (글로벌 offset 누적은 하지 않음)
@@ -108,9 +237,18 @@ export class TimezoneCorrector {
             direction,
             hourDiff,
           };
-          this.log.info(
-            `타임존 점프 의심 [${this.label}]: ${direction} ${hourDiff.toFixed(1)}h @idx=${index} (pre=${new Date(this.lastRawTs).toISOString()} jump=${new Date(rawTs).toISOString()})`,
-          );
+          // per-line 로그 대신 집계만 수행 (최대 점프 갱신)
+          this.suspectedCount++;
+          if (hourDiff > this.worstJumpHours) {
+            this.worstJumpHours = hourDiff;
+            this.worstJumpAt = rawTs;
+          }
+          // 필요 시 샘플링 디버그 (기본 비활성)
+          if (this.LOG_SAMPLE_N > 0 && this.suspectedCount % this.LOG_SAMPLE_N === 1) {
+            this.log.debug(
+              `타임존 점프 의심(sample) [${this.label}]: ${direction} ${hourDiff.toFixed(1)}h @idx=${index}`,
+            );
+          }
         }
         this.lastCorrected = corrected;
         this.lastRawTs = rawTs;
@@ -122,7 +260,11 @@ export class TimezoneCorrector {
     const clamped = (this.lastCorrected ?? corrected) - 1;
     this.lastCorrected = clamped;
     this.lastRawTs = rawTs;
-    this.log.info(`타임존 클램프 [${this.label}]: 1ms, ts=${new Date(clamped).toISOString()}`);
+    // per-line 클램프 로그 제거 → 집계만
+    this.clampCount++;
+    if (this.LOG_SAMPLE_N > 0 && this.clampCount % this.LOG_SAMPLE_N === 0) {
+      this.log.debug(`타임존 클램프(sample) [${this.label}]: +${this.LOG_SAMPLE_N} lines`);
+    }
     return clamped;
   }
 
@@ -130,19 +272,54 @@ export class TimezoneCorrector {
    * 테스트/마무리 시 호출: suspected가 남아있으면 폐기(복귀 증거 없으면 적용 금지)
    * 반환: 의심 상태가 있었고 폐기되었는지 여부
    */
+  @measure()
   finalizeSuspected(): boolean {
     const had = !!this.suspected;
     if (had) {
-      this.log.info(`타임존 suspected 폐기 [${this.label}]: 복귀 증거 없음`);
+      // 폐기 알림은 디버그로 강등 (최대 1회/타입)
+      this.log.debug(`타임존 suspected 폐기 [${this.label}]: 복귀 증거 없음`);
     }
     this.suspected = undefined;
+    // 처리 요약(1줄) 출력
+    this.flushSummary();
     return had;
+  }
+
+  // 집계 요약을 출력하고 카운터 초기화
+  @measure()
+  private flushSummary() {
+    if (this.suspectedCount || this.fixedCount || this.clampCount || this.feedInc || this.feedDec) {
+      const worst =
+        this.worstJumpAt != null
+          ? `${this.worstJumpHours.toFixed(1)}h @ ${new Date(this.worstJumpAt).toISOString()}`
+          : 'n/a';
+      const wrongDir =
+        this.expectDescFeed && this.feedInc > Math.max(10, this.feedDec * 4);
+      if (wrongDir) {
+        this.log.error(
+          `TZ feed direction anomaly [${this.label}]: expected latest→older, ` +
+          `but feed_inc=${this.feedInc} >> feed_dec=${this.feedDec}`,
+        );
+      }
+      this.log.info(
+        `TZ summary [${this.label}] suspected=${this.suspectedCount}, fixed=${this.fixedCount}, ` +
+        `clamped=${this.clampCount}, worst_jump=${worst}, feed_inc=${this.feedInc}, feed_dec=${this.feedDec}`,
+      );
+    }
+    this.feedInc = 0;
+    this.feedDec = 0;
+    this.clampCount = 0;
+    this.suspectedCount = 0;
+    this.fixedCount = 0;
+    this.worstJumpHours = 0;
+    this.worstJumpAt = undefined;
   }
 
   /**
    * 국소 소급 보정 구간을 한 번에 가져오고 비운다.
    * 각 구간: [start, end] inclusive 에 deltaMs 더하기.
    */
+  @measure()
   drainRetroSegments(): { start: number; end: number; deltaMs: number }[] {
     const out = this.retroSegments;
     this.retroSegments = [];

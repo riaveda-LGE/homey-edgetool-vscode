@@ -18,6 +18,8 @@ edgetool.exe
 *.tmp
 *.tmp.*
 *.txt
+*.log
+*.log.*
 
 # OS generated files
 .DS_Store
