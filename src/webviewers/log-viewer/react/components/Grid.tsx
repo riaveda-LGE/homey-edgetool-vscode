@@ -544,7 +544,8 @@ export function Grid() {
                     title={r.bookmarked ? '북마크 해제' : '북마크'}
                     onClick={(e) => {
                       e.stopPropagation();
-                      measureUi('Grid.toggleBookmark', () => useLogStore.getState().toggleBookmark(r.id));
+                      if (typeof r.idx !== 'number') return; // 방어
+                      measureUi('Grid.toggleBookmarkByIdx', () => useLogStore.getState().toggleBookmarkByIdx(r.idx));
                     }}
                   />
                 </div>

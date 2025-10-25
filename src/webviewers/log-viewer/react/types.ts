@@ -32,6 +32,13 @@ export interface LogRow {
   bookmarked?: boolean;
 }
 
+export interface BookmarkItem {
+  idx: number;
+  time: string;
+  msg: string;
+  src?: string;
+}
+
 export type Filter = { pid: string; src: string; proc: string; msg: string };
 
 export interface Model {
@@ -63,4 +70,6 @@ export interface Model {
   pendingJumpIdx?: number;
   follow: boolean;
   newSincePause: number;
+  /** 북마크: 전역 인덱스(idx) 기반의 영속 맵(세션 단위) */
+  bookmarks: Record<number, BookmarkItem>;
 }

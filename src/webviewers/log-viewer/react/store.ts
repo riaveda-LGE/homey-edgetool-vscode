@@ -5,7 +5,7 @@ import { createUiMeasure } from '../../shared/utils';
 import { vscode } from './ipc';
 import { createUiLog } from '../../shared/utils';
 import { postFilterUpdate } from './ipc';
-import type { ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
+import type { BookmarkItem, ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
 
 const initial: Model = {
   rows: [],
@@ -33,6 +33,7 @@ const initial: Model = {
   filter: { pid: '', src: '', proc: '', msg: '' },
   follow: true,
   newSincePause: 0,
+  bookmarks: {},
 };
 
 type Actions = {
@@ -44,7 +45,8 @@ type Actions = {
   closeSearch(): void;
   openSearchPanel(): void;
   setSearchResults(hits: { idx: number; text: string }[], opts?: { q?: string }): void;
-  toggleBookmark(rowId: number): void;
+  toggleBookmark: (rowId: number) => void;
+  toggleBookmarkByIdx: (globalIdx: number) => void;
   toggleBookmarksPane(): void;
   setBookmarksPane(open: boolean): void;
   jumpToRow(rowId: number, idx?: number): void;
@@ -82,22 +84,28 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       const state = get();
       const maxIdInBatch = rows.reduce((m, r) => Math.max(m, r.id ?? 0), 0);
       const maxId = Math.max(state.nextId, maxIdInBatch + 1);
+      // 북마크 맵을 반영하여 플래그 복원
+      const bm = state.bookmarks || {};
+      const rowsWithBm = rows.map((r) => {
+        const k = typeof r.idx === 'number' ? r.idx : undefined;
+        return k && bm[k] ? { ...r, bookmarked: true } : r;
+      });
       // ── PROBE: 수신 버퍼 정합성
-      const first = rows[0]?.idx;
-      const last  = rows.length ? rows[rows.length - 1]?.idx : undefined;
-      const asc   = rows.every((r, i, arr) =>
+      const first = rowsWithBm[0]?.idx;
+      const last  = rowsWithBm.length ? rowsWithBm[rowsWithBm.length - 1]?.idx : undefined;
+      const asc   = rowsWithBm.every((r, i, arr) =>
         i === 0 || ((arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity)));
       (get() as any).__ui?.info?.(
-        `[probe:store] receive start=${startIdx} len=${rows.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
+        `[probe:store] receive start=${startIdx} len=${rowsWithBm.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
       );
       // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
       let selectedRowId = state.selectedRowId;
       if (state.pendingJumpIdx) {
-        const hit = rows.find((r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
+        const hit = rowsWithBm.find((r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
         if (hit) selectedRowId = hit.id;
       }
       set({
-        rows,
+        rows: rowsWithBm,
         nextId: maxId,
         windowStart: Math.max(1, startIdx | 0),
         selectedRowId,
@@ -169,10 +177,43 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
 
   toggleBookmark(rowId) {
     get().measureUi('store.toggleBookmark', () => {
-      // 북마크 패널 자동 열림 방지: 단순히 행의 상태만 토글
-      const rows = get().rows.map((r) => (r.id === rowId ? { ...r, bookmarked: !r.bookmarked } : r));
-      set({ rows });
-      (get() as any).__ui?.debug?.('store.toggleBookmark');
+      const st = get();
+      const row = st.rows.find((r) => r.id === rowId);
+      const idx = row?.idx;
+      if (typeof idx !== 'number' || idx <= 0) {
+        (get() as any).__ui?.warn?.(`store.toggleBookmark ignored: invalid idx for rowId=${rowId}`);
+        return;
+      }
+      // 모든 토글은 단일 경로로
+      st.toggleBookmarkByIdx(idx);
+    });
+  },
+
+  toggleBookmarkByIdx(globalIdx) {
+    get().measureUi('store.toggleBookmarkByIdx', () => {
+      const st = get();
+      const bookmarks = { ...st.bookmarks };
+      if (bookmarks[globalIdx]) {
+        // 북마크 제거
+        delete bookmarks[globalIdx];
+      } else {
+        // 북마크 추가: 현재 로드된 행에서 정보를 가져옴
+        const row = st.rows.find((r) => r.idx === globalIdx);
+        if (row) {
+          bookmarks[globalIdx] = {
+            idx: globalIdx,
+            time: row.time,
+            msg: row.msg,
+            src: row.src,
+          };
+        }
+      }
+      // 현재 로드된 행의 bookmarked 필드 업데이트
+      const rows = st.rows.map((r) =>
+        r.idx === globalIdx ? { ...r, bookmarked: !!bookmarks[globalIdx] } : r
+      );
+      set({ bookmarks, rows });
+      (get() as any).__ui?.debug?.(`store.toggleBookmarkByIdx idx=${globalIdx} added=${!!bookmarks[globalIdx]}`);
     });
   },
 

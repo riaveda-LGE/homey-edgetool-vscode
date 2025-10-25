@@ -108,7 +108,7 @@ export function setupIpc() {
         // prefs 가 true 라도, 현재 세션에 실제 북마크가 있을 때만 열도록 제한.
         if (typeof p.bookmarksOpen === 'boolean') {
           const want = !!p.bookmarksOpen;
-          const hasAny = useLogStore.getState().rows.some((r) => r.bookmarked);
+          const hasAny = Object.keys(useLogStore.getState().bookmarks).length > 0;
           useLogStore.getState().setBookmarksPane(want && hasAny);
         }
         return;
