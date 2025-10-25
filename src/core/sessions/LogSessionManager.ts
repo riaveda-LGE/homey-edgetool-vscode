@@ -48,6 +48,8 @@ export type SessionCallbacks = {
     active?: boolean;
     reset?: boolean;
   }) => void;
+  /** 병합 단계 텍스트/상태 */
+  onStage?: (text: string, kind?: 'start' | 'done' | 'info') => void;
   /** 정식 병합(T1) 완료 후 하드리프레시 지시 */
   onRefresh?: (p: { total?: number; version?: number }) => void;
 };
@@ -74,7 +76,9 @@ export class LogSessionManager {
     current: { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean },
   ) {
     const now = Date.now();
-    const newPercent = current.total ? Math.round(((current.done || 0) / current.total) * 100) : 0;
+    const newPercent = current.total
+      ? Math.round((((current.done ?? 0) as number) / (current.total as number)) * 100)
+      : 0;
 
     // 퍼센트 변화 ≥1% 또는 250ms 경과 또는 완료 시에만 업데이트
     if (
@@ -261,6 +265,10 @@ export class LogSessionManager {
   ) {
     this.log.info(`[debug] LogSessionManager.startFileMergeSession: start dir=${opts.dir}`);
     let seq = 0;
+    // 진행 누적(세션 로컬)
+    let progressDone = 0;
+    // 단계 텍스트
+    opts.onStage?.('병합 세션 시작', 'info');
     this.log.info(
       `T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`,
     );
@@ -270,7 +278,8 @@ export class LogSessionManager {
     this.log.info(`T*: estimated total lines=${total ?? 'unknown'}`);
 
     // 진행률: 시작 알림(0/total, active)
-    opts.onProgress?.({ inc: 0, total, active: true, reset: true });
+    progressDone = 0;
+    opts.onProgress?.({ done: 0, total, active: true, reset: true });
 
     // ── T0: Manager 선행 웜업 ───────────────────────────────────────────────
     if (FF.warmupEnabled) {
@@ -364,6 +373,8 @@ export class LogSessionManager {
       warmup: false,
       whitelistGlobs: opts.whitelistGlobs,
       parser: opts.parserConfig,
+      // ⬇️ 타입별 정렬/병합 시작 등의 단계 신호를 그대로 위로 올려서 UI까지 전달
+      onStage: (text, kind) => opts.onStage?.(text, kind),
       onBatch: async (logs: LogEntry[]) => {
         // 1) 메모리 버퍼 업데이트
         this.hb.addBatch(logs);
@@ -409,7 +420,13 @@ export class LogSessionManager {
         }
 
         // 5) 진행률 증분 알림 (스로틀 적용)
-        this.throttledOnProgress(opts, { inc: logs.length, total, active: true });
+        progressDone += logs.length;
+        this.throttledOnProgress(opts, {
+          inc: logs.length,
+          done: progressDone,
+          total,
+          active: true,
+        });
 
         // 6) 메트릭
         opts.onMetrics?.({
@@ -471,6 +488,8 @@ export class LogSessionManager {
       total: manifest.data.totalLines ?? total,
       active: false,
     });
+
+    opts.onStage?.('파일 병합 완료', 'done');
 
     opts.onSaved?.({
       outDir,

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { LOG_OVERSCAN, LOG_ROW_HEIGHT, LOG_WINDOW_SIZE } from '../../../shared/const';
+// merge.stage 표시 텍스트 계산 유틸은 이 파일 내부에서 유지
 import { createUiMeasure } from '../../shared/utils';
 import { createUiLog } from '../../shared/utils';
 import { vscode } from './ipc';
@@ -30,11 +31,25 @@ const initial: Model = {
   mergeActive: false,
   mergeDone: 0,
   mergeTotal: 0,
+  // NOTE: 타입 상 Model에 없을 수 있어 런타임 전용으로 취급(액션으로만 갱신)
   filter: { pid: '', src: '', proc: '', msg: '' },
   follow: true,
   newSincePause: 0,
   bookmarks: {},
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+// merge.stage 표시용 텍스트를 (진행률 숫자 포함해) 계산
+function stripCounterSuffix(s: string) {
+  // 뒤쪽의 " (123/456)" 패턴을 제거
+  return String(s || '').replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+}
+function computeStageText(base: string, done: number, total: number) {
+  const b = stripCounterSuffix(base);
+  if (!b) return '';
+  return b;
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 type Actions = {
   setTotalRows(total: number): void;
@@ -59,6 +74,7 @@ type Actions = {
     active?: boolean;
     done?: number;
   }): void;
+  setMergeStage(text: string): void;
   measureUi: ReturnType<typeof createUiMeasure>;
   setFilterField(f: keyof Filter, v: string): void;
   applyFilter(next: Filter): void; // ← 디바운스 후 한 번만 전송
@@ -274,7 +290,7 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       const base = reset ? 0 : cur.mergeDone;
       const doneVal = typeof done === 'number' ? Math.max(0, done) : Math.max(0, base + (inc ?? 0));
       let act = active ?? cur.mergeActive;
-      if (t > 0 && doneVal >= t) act = false;
+      if (t > 0 && doneVal >= t) act = false; // 총량이 있을 때 완료 판정
       set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });
       // 10% 단위 또는 완료 시에만 기록
       const pct = t > 0 ? Math.floor((doneVal / t) * 100) : 0;
@@ -284,6 +300,28 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
         (get() as any).__ui?.info?.(`merge.progress ${pct}% (${doneVal}/${t}) active=${act}`);
         (get() as any)[key] = pct;
       }
+      // 완료 시 단계 텍스트 정리(UX: 100% 막대 잔상 제거)
+      if (!act) {
+        get().setMergeStage(''); // 완료 시 텍스트 클리어
+      } else {
+        // 진행 중일 때 현재 stage 텍스트를 진행률과 동기화
+        const curStage = (get() as any).mergeStage || '';
+        const synced = computeStageText(curStage, doneVal, t);
+        if (synced !== curStage) {
+          set({ ...(get() as any), mergeStage: synced } as any);
+        }
+      }
+    });
+  },
+
+  setMergeStage(text) {
+    get().measureUi('store.setMergeStage', () => {
+      const cur = get();
+      // 진행률과 동기화된 텍스트 계산
+      const synced = computeStageText(String(text || ''), cur.mergeDone, cur.mergeTotal);
+      // Model 타입과의 충돌을 피하기 위해 any로 저장
+      set({ ...(get() as any), mergeStage: synced } as any);
+      (get() as any).__ui?.info?.(`merge.stage "${synced}"`);
     });
   },
 

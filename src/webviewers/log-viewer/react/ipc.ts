@@ -48,6 +48,9 @@ function updateSessionVersion(next: number | undefined, origin: string) {
   ui.debug?.('[debug] updateSessionVersion: end');
 }
 
+// 병합 진행 상태 게이트(완료 후 불필요한 후행 progress 무시)
+let MERGE_ACTIVE = false;
+
 // 필터 전송 gate: warmup/초기 배치 수신 전에는 필터 변경을 보류
 let READY_FOR_FILTER = false;
 let PENDING_FILTER: { pid: string; src: string; proc: string; msg: string } | null = null;
@@ -65,7 +68,7 @@ function setReadyForFilter() {
 export function setupIpc() {
   ui.debug?.('ipc.setupIpc: start');
   // 1) 사용자 환경설정 요청
-  vscode?.postMessage({ v: 1, type: 'logviewer.getUserPrefs', payload: {} });
+  vscode?.postMessage({ v: 1, type: 'prefs.load', payload: {} });
   // 2) 최신 브리지와의 핸드셰이크 (hostWebviewBridge가 viewer.ready를 대기)
   vscode?.postMessage({ v: 1, type: 'viewer.ready', payload: {} } as any);
 
@@ -99,7 +102,7 @@ export function setupIpc() {
           if (typeof total === 'number') useLogStore.getState().setTotalRows(total);
           return;
         }
-        case 'logviewer.prefs': {
+        case 'prefs.data': {
           const p = (payload?.prefs ?? {}) as any;
           if (typeof p.showTime === 'boolean')
             useLogStore.getState().toggleColumn('time', !!p.showTime);
@@ -212,12 +215,50 @@ export function setupIpc() {
           return;
         }
         case 'merge.progress': {
+          // NOTE: 진행률은 Host가 100ms 스로틀링해서 보냄
+          // 병합 완료(active=false 또는 done>=total) 이후 도착하는 후행 이벤트는 무시
+          const pActive = typeof payload?.active === 'boolean' ? payload.active : undefined;
+          const pDone = typeof payload?.done === 'number' ? payload.done : undefined;
+          const pTotal = typeof payload?.total === 'number' ? payload.total : undefined;
+          const pInc = typeof payload?.inc === 'number' ? payload.inc : undefined;
+          const pReset = payload?.reset === true;
+
+          // MERGE_ACTIVE 토글(시그널 우선)
+          if (pActive === true) MERGE_ACTIVE = true;
+          if (pActive === false) MERGE_ACTIVE = false;
+          if (pTotal && pDone !== undefined && pDone >= pTotal) MERGE_ACTIVE = false;
+
+          // 완료된 이후의 지연(progress) 신호는 무시(호스트 타이머는 active=false로 정리되어야 함)
+          if (!MERGE_ACTIVE && pActive !== true) {
+            ui.debug?.('merge.progress: ignored (merge not active)');
+            return;
+          }
           useLogStore.getState().mergeProgress({
-            inc: typeof payload?.inc === 'number' ? payload.inc : undefined,
-            total: typeof payload?.total === 'number' ? payload.total : undefined,
+            inc: pInc,
+            total: pTotal,
             active: typeof payload?.active === 'boolean' ? payload.active : undefined,
-            done: typeof payload?.done === 'number' ? payload.done : undefined,
+            done: pDone,
+            reset: pReset,
           });
+          // ⬇️ 총로그수(표시용)도 초기에만 추정값으로 세팅
+          try {
+            const st = useLogStore.getState();
+            if (typeof pTotal === 'number') {
+              const cur = Number(st.totalRows ?? 0) || 0;
+              if (cur === 0 || pTotal > cur) {
+                st.setTotalRows(pTotal);
+              }
+            }
+          } catch {}
+          return;
+        }
+        case 'merge.stage': {
+          const text = String(payload?.text || '');
+          useLogStore.getState().setMergeStage(text);
+          // stage 신호 기반으로도 게이트 토글
+          const kind = String(payload?.kind || '');
+          if (kind === 'start') MERGE_ACTIVE = true;
+          if (kind === 'done') MERGE_ACTIVE = false;
           return;
         }
         case 'logmerge.saved': {
@@ -231,6 +272,7 @@ export function setupIpc() {
           } else {
             useLogStore.getState().mergeProgress({ inc: 0, active: false });
           }
+          MERGE_ACTIVE = false;
           return;
         }
         case 'search.results': {
@@ -321,11 +363,22 @@ function normalizeFilter(f: any) {
   return { pid, src, proc, msg };
 }
 
+function isEmptyFilter(f: { pid?: string; src?: string; proc?: string; msg?: string }) {
+  const s = (v: any) => String(v ?? '').trim();
+  return !s(f.pid) && !s(f.src) && !s(f.proc) && !s(f.msg);
+}
+
 function flushFilter(next: { pid: string; src: string; proc: string; msg: string }) {
   ui.debug?.('[debug] flushFilter: start');
-  const payload = { filter: next };
-  ui.info(`filter.update → host ${JSON.stringify(payload.filter)}`);
-  vscode?.postMessage({ v: 1, type: 'logs.filter.update', payload });
+  // 모든 필드가 빈 문자열이면 '해제'로 간주하여 null 전송
+  const payload =
+    isEmptyFilter(next)
+      ? { filter: null }
+      : { filter: next };
+  ui.info(
+    `filter.set → host ${JSON.stringify(payload.filter)}`
+  );
+  vscode?.postMessage({ v: 1, type: 'logs.filter.set', payload });
   ui.debug?.('[debug] flushFilter: end');
 }
 

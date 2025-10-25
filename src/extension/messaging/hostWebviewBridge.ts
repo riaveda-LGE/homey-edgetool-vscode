@@ -5,9 +5,14 @@ import * as vscode from 'vscode';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { globalProfiler, measure, measureBlock, perfNow } from '../../core/logging/perf.js';
 import { paginationService } from '../../core/logs/PaginationService.js';
-import { LOG_WINDOW_SIZE } from '../../shared/const.js';
+import { LOG_WINDOW_SIZE, MERGE_PROGRESS_THROTTLE_MS } from '../../shared/const.js';
 
 type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
+
+export type MergeReporter = {
+  onStage: (text: string, kind?: 'start' | 'done' | 'info') => void;
+  onProgress: (args: { inc?: number; done?: number; total?: number; active?: boolean; reset?: boolean }) => void;
+};
 
 export type BridgeOptions = {
   /** UI가 보낸 로그를 호스트 채널/출력에 연결하고 싶을 때 */
@@ -45,6 +50,32 @@ export class HostWebviewBridge {
     return true;
   }
 
+  // ── 진행률 스로틀(100ms) ──────────────────────────────────────────────
+  private progressLatest: { done?: number; total?: number; active?: boolean } = {};
+  private progressIncAcc = 0;           // 100ms 동안 inc 누적
+  private progressResetPending = false; // reset 1회 패스
+  private progressLastSentKey = '';
+  private progressTimer?: NodeJS.Timeout;
+  private startProgressTicker() {
+    if (this.progressTimer) return;
+    this.progressTimer = setInterval(() => {
+      const k = `${this.progressLatest.done ?? ''}|${this.progressLatest.total ?? ''}|${this.progressLatest.active ?? ''}|${this.progressIncAcc}|${this.progressResetPending ? 'R' : ''}`;
+      if (k === this.progressLastSentKey) return; // 변화 없음
+      this.progressLastSentKey = k;
+      const payload: any = { ...this.progressLatest };
+      if (this.progressIncAcc) payload.inc = this.progressIncAcc;
+      if (this.progressResetPending) payload.reset = true;
+      this.send({ v: 1, type: 'merge.progress', payload } as H2W);
+      // 전송 후 누적/플래그 초기화
+      this.progressIncAcc = 0;
+      this.progressResetPending = false;
+      if (this.progressLatest.active === false) {
+        clearInterval(this.progressTimer!);
+        this.progressTimer = undefined;
+      }
+    }, MERGE_PROGRESS_THROTTLE_MS);
+  }
+
   constructor(
     private readonly host: vscode.WebviewView | vscode.WebviewPanel,
     private readonly options: BridgeOptions = {},
@@ -64,6 +95,7 @@ export class HostWebviewBridge {
         }
 
         // ── UI 로그 브리지: webview → host ───────────────────────────────
+        // NOTE: 브리지가 모든 H2W를 전담해 중복 송신을 방지
         if (msg.type === 'ui.log') {
           const lvl = String(msg?.payload?.level ?? 'info').toLowerCase() as
             | 'debug'
@@ -89,97 +121,6 @@ export class HostWebviewBridge {
             }
             this.options.onUiLog?.({ level: lvl, text, source, line });
           } catch {}
-          return;
-        }
-
-        // ── 사용자 환경설정 라우팅(옵션 주입 기반) ────────────────────────
-        if (msg.type === 'logviewer.getUserPrefs') {
-          try {
-            if (!this.options.readUserPrefs) throw new Error('readUserPrefs not provided');
-            const prefs = await this.options.readUserPrefs();
-            this.send({ v: 1, type: 'logviewer.prefs', payload: { prefs } } as any);
-          } catch (err: any) {
-            const message = err?.message || String(err);
-            this.log.error(`bridge: PREFS_READ_ERROR ${message}`);
-            this.send({
-              v: 1,
-              type: 'error',
-              payload: { code: 'prefs.read_failed', message, inReplyTo: msg.id },
-            });
-          }
-          return;
-        }
-
-        if (msg.type === 'logviewer.saveUserPrefs') {
-          try {
-            if (!this.options.writeUserPrefs) throw new Error('writeUserPrefs not provided');
-            const patch = msg?.payload?.prefs ?? {};
-            await this.options.writeUserPrefs(patch);
-            this.send({ v: 1, type: 'ack', payload: { inReplyTo: msg?.id } } as any);
-          } catch (err: any) {
-            const message = err?.message || String(err);
-            this.log.error(`bridge: PREFS_WRITE_ERROR ${message}`);
-            this.send({
-              v: 1,
-              type: 'error',
-              payload: { code: 'prefs.write_failed', message, inReplyTo: msg.id },
-            });
-          }
-          return;
-        }
-        // ── 필터 업데이트: "호스트가 head(LOG_WINDOW_SIZE) 즉시 푸시" ──
-        if (msg.type === 'logs.filter.update') {
-          try {
-            const filter = (msg.payload?.filter ?? {}) as LogFilter;
-            this.log.info(`bridge: logs.filter.update ${JSON.stringify(filter)}`);
-            paginationService.setFilter(filter);
-            const total = await paginationService.getFilteredTotal();
-            // 표시 순서는 오름차순이지만, 사용자는 "최신"을 원한다 → 마지막 페이지로 보냄
-            const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
-            const endIdx = Math.max(1, total ?? 0);
-            const page = await paginationService.readRangeByIdx(startIdx, endIdx);
-            // ① 바뀐 데이터의 "마지막 페이지(최신 영역)" 즉시 푸시
-            this.send({
-              v: 1,
-              type: 'logs.batch',
-              payload: {
-                logs: page,
-                total,
-                seq: ++this.seq,
-                version: paginationService.getVersion(),
-              },
-            } as any);
-            // ② 상태(총계/버전)도 함께 브로드캐스트
-            this.send({
-              v: 1,
-              type: 'logs.state',
-              payload: {
-                total,
-                version: paginationService.getVersion(),
-                warm: paginationService.isWarmupActive(),
-                manifestDir: paginationService.getManifestDir(),
-              },
-            } as any);
-            // ③ UI가 이전 요청/버퍼를 정리하고 새 페이지를 확정적으로 요청하도록 트리거
-            this.send({
-              v: 1,
-              type: 'logs.refresh',
-              payload: {
-                reason: 'filter-changed',
-                total,
-                version: paginationService.getVersion(),
-                warm: paginationService.isWarmupActive(),
-              },
-            } as any);
-          } catch (err: any) {
-            const message = err?.message || String(err);
-            this.log.error(`bridge: FILTER_UPDATE_ERROR ${message}`);
-            this.send({
-              v: 1,
-              type: 'error',
-              payload: { code: 'FILTER_UPDATE_ERROR', message, detail: err, inReplyTo: msg.id },
-            });
-          }
           return;
         }
 
@@ -224,10 +165,10 @@ export class HostWebviewBridge {
           return;
         }
 
-        // ── 서버측 필터 설정 ────────────────────────────────────────────────
+        // ── 서버측 필터 설정(단일 API: null=해제) ──────────────────────────
         if (msg.type === 'logs.filter.set') {
           try {
-            const filter = (msg.payload?.filter || {}) as LogFilter;
+            const filter = (msg.payload?.filter ?? null) as LogFilter | null;
             this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
             paginationService.setFilter(filter);
             const total = await paginationService.getFilteredTotal();
@@ -276,58 +217,6 @@ export class HostWebviewBridge {
           }
           return;
         }
-
-        // ── 서버측 필터 해제 ────────────────────────────────────────────────
-        if (msg.type === 'logs.filter.clear') {
-          try {
-            this.log.info('bridge: logs.filter.clear');
-            paginationService.setFilter(null);
-            // 필터 해제 후 상단 500줄 재전송
-            const total = await paginationService.getFilteredTotal();
-            const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
-            const endIdx = Math.max(1, total ?? 0);
-            const head = await paginationService.readRangeByIdx(startIdx, endIdx);
-            this.send({
-              v: 1,
-              type: 'logs.batch',
-              payload: {
-                logs: head,
-                total,
-                seq: ++this.seq,
-                version: paginationService.getVersion(),
-              },
-            } as any);
-            this.send({
-              v: 1,
-              type: 'logs.state',
-              payload: {
-                total,
-                version: paginationService.getVersion(),
-                warm: paginationService.isWarmupActive(),
-                manifestDir: paginationService.getManifestDir(),
-              },
-            } as any);
-            this.send({
-              v: 1,
-              type: 'logs.refresh',
-              payload: {
-                reason: 'filter-changed',
-                total,
-                version: paginationService.getVersion(),
-                warm: paginationService.isWarmupActive(),
-              },
-            } as any);
-          } catch (err: any) {
-            const message = err?.message || String(err);
-            this.log.error(`bridge: FILTER_CLEAR_ERROR ${message}`);
-            this.send({
-              v: 1,
-              type: 'error',
-              payload: { code: 'FILTER_CLEAR_ERROR', message, detail: err, inReplyTo: msg.id },
-            });
-          }
-          return;
-        }
         // ──────────────────────────────────────────────
 
         // ── 전체 검색(노트패드++ 스타일): Enter 시 실행 ───────────────
@@ -369,6 +258,191 @@ export class HostWebviewBridge {
           return;
         }
 
+        // ── 새로운 메시지 타입들 처리 ──────────────────────────────────────
+        const anyMsg = msg as any;
+        if (anyMsg.type === 'prefs.load') {
+          try {
+            if (!this.options.readUserPrefs) throw new Error('readUserPrefs not provided');
+            const prefs = await this.options.readUserPrefs();
+            this.send({ v: 1, type: 'prefs.data', payload: { prefs } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'prefs.save') {
+          try {
+            if (!this.options.writeUserPrefs) throw new Error('writeUserPrefs not provided');
+            const patch = anyMsg.payload?.prefs ?? {};
+            await this.options.writeUserPrefs(patch);
+            this.send({ v: 1, type: 'ack', payload: { inReplyTo: anyMsg.id } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.search') {
+          try {
+            const { query, caseSensitive = false, regex = false, abortKey } = anyMsg.payload || {};
+            if (!query || typeof query !== 'string') {
+              throw new Error('Invalid search request: query required');
+            }
+
+            const controller = new AbortController();
+            if (abortKey) this.registerAbort(abortKey, controller);
+
+            // 검색 결과 수집 (간단 구현)
+            const hits: { idx: number; text: string }[] = [];
+            const total = await paginationService.getFilteredTotal() || 0;
+
+            for (let idx = 1; idx <= total && !controller.signal.aborted; idx++) {
+              try {
+                const page = await paginationService.readRangeByIdx(idx, idx);
+                if (page.length > 0) {
+                  const log = page[0];
+                  const text = `${log.level} ${log.text}`;
+                  const searchText = caseSensitive ? text : text.toLowerCase();
+                  const searchQuery = caseSensitive ? query : query.toLowerCase();
+
+                  if (regex) {
+                    const re = new RegExp(searchQuery, caseSensitive ? 'g' : 'gi');
+                    if (re.test(searchText)) {
+                      hits.push({ idx, text });
+                    }
+                  } else if (searchText.includes(searchQuery)) {
+                    hits.push({ idx, text });
+                  }
+                }
+              } catch {
+                // 개별 읽기 실패는 무시
+              }
+            }
+
+            if (!controller.signal.aborted) {
+              this.searchHits = hits;
+              this.send({ v: 1, type: 'logs.search.result', payload: { hits, total: hits.length } } as any);
+            }
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.bookmarks.load') {
+          try {
+            // 북마크는 웹뷰 로컬 스토리지에 저장되므로 호스트는 빈 응답
+            this.send({ v: 1, type: 'logs.bookmarks.data', payload: { bookmarks: {} } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.bookmarks.save') {
+          try {
+            this.send({ v: 1, type: 'ack', payload: { inReplyTo: anyMsg.id } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.bookmarks.toggle') {
+          try {
+            this.send({ v: 1, type: 'ack', payload: { inReplyTo: anyMsg.id } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.bookmarks.clear') {
+          try {
+            this.send({ v: 1, type: 'ack', payload: { inReplyTo: anyMsg.id } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.follow') {
+          try {
+            const { enabled } = anyMsg.payload || {};
+            // 팔로우 모드 상태 저장 (필요시 구현)
+            this.log.info(`Follow mode ${enabled ? 'enabled' : 'disabled'}`);
+            this.send({ v: 1, type: 'ack', payload: { inReplyTo: anyMsg.id } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.jump') {
+          try {
+            const { idx, mode = 'center' } = anyMsg.payload || {};
+            if (typeof idx !== 'number') {
+              throw new Error('Invalid jump request: idx required');
+            }
+
+            const total = await paginationService.getFilteredTotal() || 0;
+            if (idx < 1 || idx > total) {
+              throw new Error(`Index out of range: ${idx}, total: ${total}`);
+            }
+
+            let startIdx: number, endIdx: number;
+            const windowSize = LOG_WINDOW_SIZE;
+
+            switch (mode) {
+              case 'top':
+                startIdx = Math.max(1, idx);
+                endIdx = Math.min(total, startIdx + windowSize - 1);
+                break;
+              case 'bottom':
+                endIdx = Math.min(total, idx);
+                startIdx = Math.max(1, endIdx - windowSize + 1);
+                break;
+              case 'center':
+              default:
+                const halfWindow = Math.floor(windowSize / 2);
+                startIdx = Math.max(1, idx - halfWindow);
+                endIdx = Math.min(total, startIdx + windowSize - 1);
+                if (endIdx - startIdx + 1 < windowSize) {
+                  startIdx = Math.max(1, endIdx - windowSize + 1);
+                }
+                break;
+            }
+
+            const page = await paginationService.readRangeByIdx(startIdx, endIdx);
+            const version = paginationService.getVersion();
+            this.send({
+              v: 1,
+              type: 'logs.page.response',
+              payload: { startIdx, endIdx, logs: page, version },
+            } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
+        if (anyMsg.type === 'logs.capacity') {
+          try {
+            const { capacity } = anyMsg.payload || {};
+            if (typeof capacity !== 'number' || capacity < 1) {
+              throw new Error('Invalid capacity: must be positive number');
+            }
+
+            // 용량 설정은 웹뷰에서만 사용하므로 ack만
+            this.log.info(`Log capacity set to ${capacity}`);
+            this.send({ v: 1, type: 'ack', payload: { inReplyTo: anyMsg.id } } as any);
+          } catch (e) {
+            this.sendError(e, anyMsg.id);
+          }
+          return;
+        }
+
         const handlers = this.handlers.get(msg.type);
         if (!handlers || handlers.size === 0) return this.warnUnknown(msg.type);
         try {
@@ -398,19 +472,26 @@ export class HostWebviewBridge {
     };
   }
 
-  @measure()
-  send<T extends H2W>(msg: T) {
+  /** 브리지에서만 사용: 안전하게 웹뷰로 송신 */
+  private send(m: H2W) {
     // 내부 전송 시작/끝 로그는 노이즈가 많아 제거
     if (!globalProfiler.isOn()) {
-      this.host.webview.postMessage(msg);
+      this.host.webview.postMessage(m);
       return;
     }
     const t0 = perfNow();
     try {
-      this.host.webview.postMessage(msg);
+      this.host.webview.postMessage(m);
     } finally {
       globalProfiler.recordFunctionCall('bridge.send', t0, perfNow() - t0);
     }
+  }
+
+  /** 외부(패널 매니저 등)에서 단방향 알림을 보낼 때 사용하는 공개 API.
+   *  내부 계측/스로틀은 private send를 그대로 사용해 일관성을 유지한다. */
+  public notify<T extends H2W>(msg: T): void {
+    // 단방향이므로 ack를 기다리지 않는다.
+    this.send(msg);
   }
 
   @measure()
@@ -438,7 +519,7 @@ export class HostWebviewBridge {
             reject(err.payload);
           }
         });
-        this.host.webview.postMessage({ ...msg, id });
+        this.send({ ...(msg as any), id } as any);
       });
     return globalProfiler.isOn()
       ? globalProfiler.measureFunction('host.bridge.request', impl)
@@ -533,6 +614,36 @@ export class HostWebviewBridge {
     }
   }
 
+  /** 외부(예: extensionPanel/manager)에서 사용할 병합 리포터 생성기
+   *  - onStage/onProgress만 호출하면 브리지가 알아서 웹뷰로 전파(중복 제거/스로틀)
+   */
+  createMergeReporter(): MergeReporter {
+    return {
+      onStage: (text, kind) => {
+        try {
+          const payload = { text: String(text || ''), kind: kind ?? 'info', at: Date.now() };
+          this.send({ v: 1, type: 'merge.stage', payload } as H2W);
+          // 상태 텍스트는 즉시 전달
+        } catch (e) {
+          this.log.debug?.(`bridge.stage.send: ${e}`);
+        }
+      },
+      onProgress: (args) => {
+        try {
+          // 최신값만 보관 → 100ms마다 변화 시에만 송신
+          if (typeof args.inc === 'number') this.progressIncAcc += Math.max(0, args.inc | 0);
+          if (typeof args.done === 'number') this.progressLatest.done = Math.max(0, args.done | 0);
+          if (typeof args.total === 'number') this.progressLatest.total = Math.max(0, args.total | 0);
+          if (typeof args.active === 'boolean') this.progressLatest.active = args.active;
+          if (args.reset === true) this.progressResetPending = true;
+          this.startProgressTicker();
+        } catch (e) {
+          this.log.debug?.(`bridge.progress.defer: ${e}`);
+        }
+      },
+    };
+  }
+
   /** 리스너/대기중 컨트롤러 정리용 */
   @measure()
   dispose() {
@@ -542,6 +653,11 @@ export class HostWebviewBridge {
       this.pendings.clear();
       this.handlers.clear();
       this.kickedOnce = false;
+      // ⬇️ 진행률 타이머 정리 (누수 방지)
+      if (this.progressTimer) {
+        clearInterval(this.progressTimer);
+        this.progressTimer = undefined;
+      }
     }
   }
 }

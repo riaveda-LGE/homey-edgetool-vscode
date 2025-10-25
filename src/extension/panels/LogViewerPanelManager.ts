@@ -150,6 +150,8 @@ export class LogViewerPanelManager {
   async startFileMerge(dir: string) {
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: start');
     if (!this.panel) await this.handleHomeyLoggingCommand();
+    // 브리지 진행률 리포터(중앙 스로틀)
+    const reporter = this.bridge?.createMergeReporter();
     this.mode = 'filemerge';
     this.initialSent = false;
     this.log.info(`merge: start (dir=${dir})`);
@@ -235,9 +237,9 @@ export class LogViewerPanelManager {
 
       // ── 진행률: 로그는 샘플링해서 출력, 메시지 전달은 매번 유지 ─────────
       onProgress: (p) => {
-        const { inc, total, done, active } = p ?? {};
-        // 항상 웹뷰에는 전달
-        this._send('merge.progress', { inc, total, done, active });
+        const { inc, total, done, active, reset } = p ?? {};
+        // 중앙 스로틀(브리지)로 전달
+        reporter?.onProgress?.({ inc, total, done, active, reset });
 
         // ─ 로그 노이즈 억제 ─
         const now = Date.now();
@@ -280,6 +282,7 @@ export class LogViewerPanelManager {
           this.progLastLogMs = 0;
         }
       },
+      onStage: (text, kind) => reporter?.onStage?.(text, kind),
     });
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: end');
   }
@@ -322,7 +325,7 @@ export class LogViewerPanelManager {
           `[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`,
         );
       }
-      this.bridge?.send({ v: 1, type, payload } as any);
+      this.bridge?.notify({ v: 1, type, payload } as any);
     } catch {
       // no-op: 전송 실패는 상위 브리지에서 추가 로깅됨
     } finally {

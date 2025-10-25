@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import type { FileHandle } from 'fs/promises';
 import * as path from 'path';
 
-import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
+import { DEFAULT_BATCH_SIZE, MERGED_DIR_NAME } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measureBlock } from '../logging/perf.js';
@@ -131,6 +131,9 @@ export type MergeOptions = {
   rawDirPath?: string; // (옵션) 보정 전 RAW 저장 위치
   /** warmup 선행패스 사용 여부 (기본: false, 상위 FeatureFlags로 채워짐) */
   warmup?: boolean;
+  /** 병합 단계 알림(예: "Warmup 병합 시작", "로그병합 완료") */
+  onStage?: (text: string, kind?: 'start' | 'done' | 'info') => void;
+  onProgress?: (args: { done?: number; total?: number; active?: boolean }) => void;
   /** warmup 모드일 때 타입별 최대 선행 읽기 라인수 (기본: 500 등) */
   warmupPerTypeLimit?: number;
   /** warmup 모드일 때 최초 즉시 방출 목표치 (기본: 500) */
@@ -155,6 +158,10 @@ export async function mergeDirectory(opts: MergeOptions) {
   return measureBlock('logs.mergeDirectory', async function () {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
     // 파서 컴파일
+
+    // (참고) 전체 예상 총량 — 진행률 표시에 사용
+    let totalEstimated: number | undefined = undefined;
+
     const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
     // 화이트리스트(files 토큰) → "베이스네임" 매칭 정규식 셋으로 변환
     const allowPathRegexes = opts.whitelistGlobs?.length
@@ -168,6 +175,7 @@ export async function mergeDirectory(opts: MergeOptions) {
       opts.warmup &&
       (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')
     ) {
+      opts.onStage?.('Warmup 병합 시작', 'start');
       try {
         const warmLogs = await warmupTailPrepass({
           dir: opts.dir,
@@ -178,10 +186,13 @@ export async function mergeDirectory(opts: MergeOptions) {
         if (warmLogs.length) {
           if (opts.onWarmupBatch) opts.onWarmupBatch(warmLogs);
           else opts.onBatch(warmLogs);
+          opts.onStage?.('초기 배치 전달', 'info');
+          opts.onProgress?.({ done: (warmLogs?.length ?? 0), active: true });
           log.info(`warmup: delivered initial batch (n=${warmLogs.length})`);
         } else {
           log.debug?.('warmup: skipped or not enough lines');
         }
+        opts.onStage?.('Warmup 병합 완료', 'done');
       } catch (e: any) {
         log.warn(`warmup: failed (${e?.message ?? e}) — fallback to full merge`);
       }
@@ -193,6 +204,17 @@ export async function mergeDirectory(opts: MergeOptions) {
     log.info(
       `T1: mergeDirectory start dir=${opts.dir} files=${files.length} reverse=${!!opts.reverse} batchSize=${batchSize}`,
     );
+    try {
+      // 진행률 총량 추정(라인 수 총합). 큰 폴더에서도 빠르게 동작하도록 구현되어 있음.
+      const estimated = await countTotalLinesInDir(opts.dir, allowPathRegexes);
+      totalEstimated = Math.max(0, Number(estimated?.total ?? 0));
+      if (totalEstimated === 0) totalEstimated = undefined;
+      if (totalEstimated !== undefined) {
+        opts.onProgress?.({ total: totalEstimated, active: true });
+      }
+    } catch {
+      // 총량 추정 실패는 무시(진행률은 done-only로 동작)
+    }
     if (!files.length) {
       log.warn('mergeDirectory: no log files to merge');
       return;
@@ -271,7 +293,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     }
 
     // 중간 산출물 디렉터리
-    const mergedDir = opts.mergedDirPath || path.join(opts.dir, 'merged');
+    const mergedDir = opts.mergedDirPath || path.join(opts.dir, MERGED_DIR_NAME);
     if (fs.existsSync(mergedDir)) fs.rmSync(mergedDir, { recursive: true, force: true });
     await fs.promises.mkdir(mergedDir, { recursive: true });
 
@@ -292,7 +314,17 @@ export async function mergeDirectory(opts: MergeOptions) {
 
       log.debug(`T1: processing type=${typeKey} files=${fileList.length}`);
       const logs: LogEntry[] = [];
-      // 타입 단위 집계(파일 요약을 함께 찍기 위함)
+      // ── 진행 텍스트(타입별) 준비 ───────────────────────────────────────
+      const STAGE_UPDATE_MIN_MS = 600; // 전송 최소 간격(ms) — UI 스팸 방지
+      let lastStageAt = 0;
+      const updateStage = (force = false) => {
+        const now = Date.now();
+        if (!force && now - lastStageAt < STAGE_UPDATE_MIN_MS) return;
+        lastStageAt = now;
+        opts.onStage?.(`${typeKey} 로그를 정렬중`, 'info');
+      };
+      // 시작 시 표시
+      opts.onStage?.(`${typeKey} 로그를 정렬중`, 'info');
       const fileSummaries: Array<{
         file: string;
         lines: number;
@@ -362,6 +394,8 @@ export async function mergeDirectory(opts: MergeOptions) {
           // ── ts 출처·품질 집계 ─────────────────────────────────────────
           // 여기서부터는 유효 라인만 집계
           sum.lines++;
+          // ⬇︎ 진행 텍스트 갱신(600ms 스로틀)
+          updateStage();
           const p = (entry as any)?.parsed as
             | {
                 time?: string | null;
@@ -469,7 +503,13 @@ export async function mergeDirectory(opts: MergeOptions) {
         await fs.promises.appendFile(mergedFile, JSON.stringify(logEntry) + '\n');
       }
       log.info(`T1: saved ${logs.length} logs to ${mergedFile} (desc ts)`);
+      // 타입별 최종 진행치로 한 번 더 고정
+      updateStage(true);
+      opts.onStage?.(`${typeKey} 타입 정렬 완료`, 'done');
     }
+
+    // 3) 타입별 정렬이 모두 끝나면, 이제 JSONL → k-way 단일 병합을 시작
+    opts.onStage?.('파일 병합을 시작', 'start');
 
     // 3) merged(JSONL)에서 타입별로 **순방향** 100줄씩 읽어 k-way 병합(최신→오래된)
     const mergedFiles = await listMergedJsonlFiles(mergedDir); // ← .jsonl 전용
@@ -488,6 +528,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     log.info(`T1: cursors ready types=${cursors.size}`);
 
     // k-way max-heap: ts 큰 것(최신) 우선
+    opts.onStage?.('로그병합 시작', 'start');
     const heap = new MaxHeap<HeapItem>((a, b) => {
       // ts desc
       if (a.ts !== b.ts) return a.ts - b.ts;
@@ -545,6 +586,9 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (outBatch.length >= batchSize) {
         emitted += outBatch.length;
         opts.onBatch(outBatch.splice(0, outBatch.length));
+        // 진행률 갱신(100ms 스로틀은 브리지에서 처리)
+        const d = emitted;
+        opts.onProgress?.({ done: d, total: totalEstimated, active: true });
       }
 
       // 같은 타입에서 계속 최신쪽을 이어서 읽어 옴
@@ -559,6 +603,8 @@ export async function mergeDirectory(opts: MergeOptions) {
     if (!opts.signal?.aborted && outBatch.length) {
       emitted += outBatch.length;
       opts.onBatch(outBatch);
+      const d = emitted;
+      opts.onProgress?.({ done: d, total: totalEstimated, active: true });
     }
 
     // Abort 시 열려 있는 리더 자원 정리
@@ -566,7 +612,11 @@ export async function mergeDirectory(opts: MergeOptions) {
       for (const [, cursor] of cursors) await cursor.close();
     }
     log.info(`T1: done emitted=${emitted}`);
+    // 완료
+    opts.onStage?.('로그병합 완료', 'done');
+
     if (emitted > 0) {
+      opts.onProgress?.({ done: emitted, total: totalEstimated, active: false });
       const firstIso = toIso(lastEmittedTs); // 마지막 갱신값은 최종 최소(가장 오래된)
       log.info(
         `[probe:kway-desc] emitted=${emitted} violations=${violations}` +

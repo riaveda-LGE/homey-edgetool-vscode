@@ -138,9 +138,12 @@ export type H2W =
   /** 파일 병합 저장 완료/정보 */
   | Envelope<'logmerge.saved', MergeSavedInfo>
   /** 병합 진행률(증분/완료) */
-  | Envelope<'merge.progress', { inc?: number; total?: number; done?: number; active?: boolean }>
+  | Envelope<'merge.progress', { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean }>
+  /** 병합 단계 알림(시작/완료/안내 텍스트) */
+  | Envelope<'merge.stage', { text: string; kind?: 'start' | 'done' | 'info'; at?: number }>
+
   /** 사용자 환경설정 전달 */
-  | Envelope<'logviewer.prefs', { prefs: any }>
+  | Envelope<'prefs.data', { prefs: any }>
   /** 단순 확인 응답(예: saveUserPrefs ack) */
   | Envelope<'ack', { inReplyTo?: string }>
   /** 정식 병합 완료 후 UI 하드리프레시 트리거(중복/정렬 반영) */
@@ -174,16 +177,16 @@ export type W2H =
   | Envelope<'logging.startFileMerge', { dir: string; types?: string[]; reverse?: boolean }>
   | Envelope<'logging.stop', Empty>
   | Envelope<'logs.page.request', { startIdx: number; endIdx: number }>
-  /** 서버측 필터 적용/해제 */
-  | Envelope<'logs.filter.set', { filter: LogFilter }>
-  | Envelope<'logs.filter.clear', Empty>
-  | Envelope<'logs.filter.update', { filter: LogFilter }>
+  /** 서버측 필터 적용/해제(단일 API, null=해제) */
+  | Envelope<'logs.filter.set', { filter: LogFilter | null }>
   | Envelope<'search.query', { q: string; regex?: boolean; range?: [number, number]; top?: number }>
   | Envelope<'search.clear', Empty>
   | Envelope<'homey.command.run', { name: string; args?: string[] }>
   | Envelope<'button.click', { id: string }>
   | Envelope<'perfMeasure', { name: string; duration: number }>
   | Envelope<'perf.startCapture', Empty>
+  | Envelope<'prefs.load', Empty>
+  | Envelope<'prefs.save', { prefs: any }>
   | Envelope<'perf.stopCapture', Empty>
   | Envelope<'perf.startMonitoring', Empty>
   | Envelope<'perf.stopMonitoring', Empty>
@@ -200,8 +203,6 @@ export type W2H =
   | Envelope<'ui.toggleLogs', Empty>
   | Envelope<'ui.requestButtons', Empty>
   | Envelope<'perf.ready', Empty>
-  | Envelope<'logviewer.getUserPrefs', Empty>
-  | Envelope<'logviewer.saveUserPrefs', { prefs: any }>
   /** Debug Log Panel: 상단 스크롤 시 이전 로그 요청 */
   | Envelope<'debuglog.loadOlder', { limit?: number }>
   /** Debug Log Panel: 전체 삭제 */
