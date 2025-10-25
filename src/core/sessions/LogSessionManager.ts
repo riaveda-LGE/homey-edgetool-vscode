@@ -6,28 +6,28 @@ import * as path from 'path';
 
 import {
   DEFAULT_BATCH_SIZE,
+  LOG_WINDOW_SIZE,
   MERGED_CHUNK_MAX_LINES,
   MERGED_DIR_NAME,
   MERGED_MANIFEST_FILENAME,
-  LOG_WINDOW_SIZE,
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { __setWarmupFlagsForTests, Flags as FF } from '../../shared/featureFlags.js';
+import type { ParserConfig } from '../config/schema.js';
 import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { ChunkWriter } from '../logs/ChunkWriter.js';
 import { HybridLogBuffer } from '../logs/HybridLogBuffer.js';
 import {
+  compileWhitelistPathRegexes,
   countTotalLinesInDir,
   mergeDirectory,
   warmupTailPrepass,
-  compileWhitelistPathRegexes,
 } from '../logs/LogFileIntegration.js';
-import { compileParserConfig } from '../logs/ParserEngine.js';
-import type { ParserConfig } from '../config/schema.js';
 import { ManifestWriter } from '../logs/ManifestWriter.js';
 import { paginationService } from '../logs/PaginationService.js';
+import { compileParserConfig } from '../logs/ParserEngine.js';
 
 export type SessionCallbacks = {
   onBatch: (logs: LogEntry[], total?: number, seq?: number) => void;
@@ -41,7 +41,13 @@ export type SessionCallbacks = {
     merged: number;
   }) => void;
   /** 병합 진행률(증분/상태) 전달 */
-  onProgress?: (p: { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean }) => void;
+  onProgress?: (p: {
+    inc?: number;
+    total?: number;
+    done?: number;
+    active?: boolean;
+    reset?: boolean;
+  }) => void;
   /** 정식 병합(T1) 완료 후 하드리프레시 지시 */
   onRefresh?: (p: { total?: number; version?: number }) => void;
 };
@@ -99,8 +105,7 @@ export class LogSessionManager {
     // - caller가 indexOutDir을 준 경우 우선
     // - 그 외에는 OS temp 하위에 <MERGED_DIR_NAME>-rt-<pid> 고정 사용
     const baseOut =
-      opts.indexOutDir ||
-      path.join(os.tmpdir(), `${MERGED_DIR_NAME}-rt-${process.pid}`);
+      opts.indexOutDir || path.join(os.tmpdir(), `${MERGED_DIR_NAME}-rt-${process.pid}`);
     const outDir = await this.prepareCleanOutputDir(baseOut);
     this.log.info(`realtime: outDir=${outDir}`);
 
@@ -229,7 +234,8 @@ export class LogSessionManager {
       if (tail.length) opts.onBatch(tail, total, ++this.seq);
     } catch (e) {
       this.log.warn(`realtime: final flush failed: ${String(e)}`);
-    } finally { // stream 종료 처리 이후에
+    } finally {
+      // stream 종료 처리 이후에
       if (this.rtFlushTimer) {
         clearTimeout(this.rtFlushTimer);
         this.rtFlushTimer = undefined;
@@ -245,7 +251,13 @@ export class LogSessionManager {
    */
   @measure()
   async startFileMergeSession(
-    opts: { dir: string; signal?: AbortSignal; indexOutDir?: string; whitelistGlobs?: string[]; parserConfig?: ParserConfig } & SessionCallbacks,
+    opts: {
+      dir: string;
+      signal?: AbortSignal;
+      indexOutDir?: string;
+      whitelistGlobs?: string[];
+      parserConfig?: ParserConfig;
+    } & SessionCallbacks,
   ) {
     this.log.info(`[debug] LogSessionManager.startFileMergeSession: start dir=${opts.dir}`);
     let seq = 0;
@@ -510,12 +522,8 @@ export class LogSessionManager {
 
   /** 실제 병합과 동일한 규칙(EOF 개행 없음 보정 포함)으로 총 라인수를 계산 */
   @measure()
-  private async estimateTotalLines(
-    dir: string,
-    whitelistGlobs?: string[],
-  ): Promise<number> {
-    const allow =
-      whitelistGlobs?.length ? compileWhitelistPathRegexes(whitelistGlobs) : undefined;
+  private async estimateTotalLines(dir: string, whitelistGlobs?: string[]): Promise<number> {
+    const allow = whitelistGlobs?.length ? compileWhitelistPathRegexes(whitelistGlobs) : undefined;
     const { total } = await countTotalLinesInDir(dir, allow);
     return total;
   }

@@ -2,6 +2,7 @@
 import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
+
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 

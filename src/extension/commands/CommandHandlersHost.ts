@@ -7,8 +7,7 @@ import { measure } from '../../core/logging/perf.js';
 const log = getLogger('cmd.host');
 
 export class CommandHandlersHost {
-  constructor(
-  ) {}
+  constructor() {}
 
   @measure()
   async hostCommand(cmd: string) {

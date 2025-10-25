@@ -19,9 +19,9 @@ export class MonotonicCorrector {
    */
   private readonly SMALL_DELTA_MS = 1500;
   // 집계 카운터(스팸 억제용)
-  private clampCount = 0;        // per-line 클램프 누적
-  private shiftCount = 0;        // per-line 시프트 누적
-  private worstShiftHours = 0;   // 가장 큰 시프트(시간)
+  private clampCount = 0; // per-line 클램프 누적
+  private shiftCount = 0; // per-line 시프트 누적
+  private worstShiftHours = 0; // 가장 큰 시프트(시간)
   private worstShiftAt?: number; // 가장 큰 시프트 최초 관측 시각
 
   // (선택) per-line 샘플 로그를 원하면 >0으로 조정
@@ -33,7 +33,10 @@ export class MonotonicCorrector {
   // 글로벌 누적 오프셋(단조 보정용)
   private globalOffsetMs = 0;
 
-  constructor(public readonly label: string, private readonly granularityMs: number = 1) {}
+  constructor(
+    public readonly label: string,
+    private readonly granularityMs: number = 1,
+  ) {}
 
   /**
    * 최신→오래된 순으로 rawTs가 들어온다.
@@ -72,8 +75,8 @@ export class MonotonicCorrector {
         if (this.LOG_SAMPLE_N > 0 && this.shiftCount % this.LOG_SAMPLE_N === 0) {
           this.log.debug?.(
             `Monotonic shift [${this.label}]: raw=${new Date(rawTs).toISOString()} ` +
-            `clamped=${new Date(clamped).toISOString()} corrected=${new Date(corrected).toISOString()} ` +
-            `shift=${shiftHours.toFixed(2)}h globalOffset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
+              `clamped=${new Date(clamped).toISOString()} corrected=${new Date(corrected).toISOString()} ` +
+              `shift=${shiftHours.toFixed(2)}h globalOffset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
           );
         }
       }
@@ -93,7 +96,7 @@ export class MonotonicCorrector {
           : 'n/a';
       this.log.info(
         `Monotonic summary [${this.label}] shifts=${this.shiftCount}, clamped=${this.clampCount}, ` +
-        `worst_shift=${worst}, global_offset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
+          `worst_shift=${worst}, global_offset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
       );
     }
     this.clampCount = 0;
@@ -122,11 +125,11 @@ export class TimezoneCorrector {
   private feedDec = 0; // rawTs 감소(최신→오래된) 카운트
 
   // 집계 카운터(스팸 억제용)
-  private clampCount = 0;        // per-line 클램프 누적
-  private suspectedCount = 0;    // 의심 구간 발생 수
-  private fixedCount = 0;        // retro 세그먼트 확정 수
-  private worstJumpHours = 0;    // 가장 큰 점프(시간)
-  private worstJumpAt?: number;  // 가장 큰 점프 최초 관측 시각
+  private clampCount = 0; // per-line 클램프 누적
+  private suspectedCount = 0; // 의심 구간 발생 수
+  private fixedCount = 0; // retro 세그먼트 확정 수
+  private worstJumpHours = 0; // 가장 큰 점프(시간)
+  private worstJumpAt?: number; // 가장 큰 점프 최초 관측 시각
 
   // (선택) per-line 샘플 로그를 원하면 >0으로 조정
   private readonly LOG_SAMPLE_N = 0;
@@ -152,7 +155,10 @@ export class TimezoneCorrector {
   private readonly MIN_JUMP_HOURS = 3; // 점프 의심 임계값(현행 3h 유지)
   private readonly MIN_RETURN_HOURS = 1; // 복귀 최소 차이(요청하신 1h)
 
-  constructor(public readonly label: string, private readonly expectDescFeed = true) {}
+  constructor(
+    public readonly label: string,
+    private readonly expectDescFeed = true,
+  ) {}
 
   /**
    * 최신→오래된 순으로 rawTs가 들어온다.
@@ -293,17 +299,16 @@ export class TimezoneCorrector {
         this.worstJumpAt != null
           ? `${this.worstJumpHours.toFixed(1)}h @ ${new Date(this.worstJumpAt).toISOString()}`
           : 'n/a';
-      const wrongDir =
-        this.expectDescFeed && this.feedInc > Math.max(10, this.feedDec * 4);
+      const wrongDir = this.expectDescFeed && this.feedInc > Math.max(10, this.feedDec * 4);
       if (wrongDir) {
         this.log.error(
           `TZ feed direction anomaly [${this.label}]: expected latest→older, ` +
-          `but feed_inc=${this.feedInc} >> feed_dec=${this.feedDec}`,
+            `but feed_inc=${this.feedInc} >> feed_dec=${this.feedDec}`,
         );
       }
       this.log.info(
         `TZ summary [${this.label}] suspected=${this.suspectedCount}, fixed=${this.fixedCount}, ` +
-        `clamped=${this.clampCount}, worst_jump=${worst}, feed_inc=${this.feedInc}, feed_dec=${this.feedDec}`,
+          `clamped=${this.clampCount}, worst_jump=${worst}, feed_inc=${this.feedInc}, feed_dec=${this.feedDec}`,
       );
     }
     this.feedInc = 0;

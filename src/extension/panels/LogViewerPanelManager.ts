@@ -2,21 +2,21 @@
 // === src/extension/panels/LogViewerPanelManager.ts ===
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { measure, globalProfiler, perfNow } from '../../core/logging/perf.js';
 
 import {
   getCurrentWorkspacePathFs,
   readLogViewerPrefs,
   writeLogViewerPrefs,
 } from '../../core/config/userdata.js';
-import { getLogger } from '../../core/logging/extension-logger.js';
-import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
-import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
-import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
-import { paginationService } from '../../core/logs/PaginationService.js';
 import { readParserWhitelistGlobs } from '../../core/config/userdata.js';
 import { readParserConfigJson } from '../../core/config/userdata.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
+import { globalProfiler, measure, perfNow } from '../../core/logging/perf.js';
+import { paginationService } from '../../core/logs/PaginationService.js';
+import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
+import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
 import type { MergeSavedInfo } from '../../shared/ipc/messages.js';
+import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
 
 export class LogViewerPanelManager {
   private log = getLogger('LogViewerPanelManager');
@@ -58,7 +58,9 @@ export class LogViewerPanelManager {
   @measure()
   async handleHomeyLoggingCommand() {
     const already = !!this.panel;
-    this.log.debug(`[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`);
+    this.log.debug(
+      `[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`,
+    );
     this.log.debug(`[debug] viewer: handleHomeyLoggingCommand (panelExists=${already})`);
 
     // (중요) 뷰어 오픈 시 raw 삭제 금지 — 초기화는 워크스페이스 설정/보장 단계에서만 수행
@@ -316,7 +318,9 @@ export class LogViewerPanelManager {
           this.lastPageLogMs = now;
         }
       } else if (type === 'logs.refresh') {
-        this.log.debug(`[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`);
+        this.log.debug(
+          `[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`,
+        );
       }
       this.bridge?.send({ v: 1, type, payload } as any);
     } catch {

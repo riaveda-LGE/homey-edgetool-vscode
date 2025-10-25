@@ -1,14 +1,11 @@
+import type { ParsedPayload } from '@ipc/messages';
 import * as fs from 'fs';
 import * as path from 'path';
-import type {
-  ParserConfig,
-  ParserPreflight,
-  ParserRequirements,
-} from '../config/schema.js';
+
+import type { ParserConfig, ParserPreflight, ParserRequirements } from '../config/schema.js';
+import { getLogger } from '../logging/extension-logger.js';
 import { parseTs } from './time/TimeParser.js';
 import { guessLevel } from './time/TimeParser.js'; // same module에서 export 중이면 병합, 아니면 적절히 import
-import type { ParsedPayload } from '@ipc/messages';
-import { getLogger } from '../logging/extension-logger.js';
 
 export type { ParserConfig };
 
@@ -38,7 +35,11 @@ function stripBomStart(s: string): string {
 // ANSI escape 제거(표준 범위)
 function stripAnsi(s: string | undefined): string | undefined {
   if (!s) return s;
-  return s.replace(/[\u001B\u009B][[\]()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g, '');
+
+  return s.replace(
+    /[\u001B\u009B][[\]()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g, // eslint-disable-line no-control-regex -- ANSI escape 허용 필요
+    '',
+  );
 }
 
 // time 토큰 정리: 혹시 남아있을 수도 있는 대괄호 제거 + trim
@@ -57,7 +58,9 @@ function applyCompiledOne(
 ): string | undefined {
   if (!rx) return undefined;
   // 전역 플래그(g/y) 정규식 상태에 따른 건너뛰기 방지
-  try { (rx as any).lastIndex = 0; } catch {}
+  try {
+    (rx as any).lastIndex = 0;
+  } catch {}
   const m = rx.exec(line);
   if (!m?.groups) return undefined;
   if (wantKey && Object.prototype.hasOwnProperty.call(m.groups, wantKey)) {
@@ -71,15 +74,21 @@ function applyCompiledOne(
 }
 
 /** 컴파일된 정규식으로 각 필드 개별 추출 */
-function extractFieldsByCompiledRule(line: string, regex: {
-  time?: RegExp; process?: RegExp; pid?: RegExp; message?: RegExp;
-}): ParsedFields {
+function extractFieldsByCompiledRule(
+  line: string,
+  regex: {
+    time?: RegExp;
+    process?: RegExp;
+    pid?: RegExp;
+    message?: RegExp;
+  },
+): ParsedFields {
   // 테스트/직접호출 경로에서도 안전하도록 라인 선제 정규화
   const sanitized = stripBomStart(line);
   const raw = {
-    time:    applyCompiledOne(regex.time, sanitized, 'time'),
+    time: applyCompiledOne(regex.time, sanitized, 'time'),
     process: applyCompiledOne(regex.process, sanitized, 'process'),
-    pid:     applyCompiledOne(regex.pid, sanitized, 'pid'),
+    pid: applyCompiledOne(regex.pid, sanitized, 'pid'),
     message: applyCompiledOne(regex.message, sanitized, 'message'),
   };
   return {
@@ -196,7 +205,10 @@ export function compileParserConfig(cfg?: ParserConfig): CompiledParser | undefi
   return compiled;
 }
 
-export function matchRuleForPath(relOrAbsPath: string, cp: CompiledParser): CompiledRule | undefined {
+export function matchRuleForPath(
+  relOrAbsPath: string,
+  cp: CompiledParser,
+): CompiledRule | undefined {
   // 경로 → POSIX 슬래시 → basename만 추출하여 파일명만으로 매칭
   const norm = relOrAbsPath.replace(/\\/g, '/');
   const base = norm.includes('/') ? norm.slice(norm.lastIndexOf('/') + 1) : norm;
@@ -206,7 +218,11 @@ export function matchRuleForPath(relOrAbsPath: string, cp: CompiledParser): Comp
   return undefined;
 }
 
-function isLineMatchByRequirements(line: string, rule: CompiledRule, req: Required<ParserRequirements>): boolean {
+function isLineMatchByRequirements(
+  line: string,
+  rule: CompiledRule,
+  req: Required<ParserRequirements>,
+): boolean {
   const f = extractFieldsByCompiledRule(line, rule.regex);
   const need = req.fields;
   // 필수 지정된 필드가 모두 존재해야 "매치"로 간주
@@ -230,7 +246,9 @@ async function readSampleLines(filePath: string, maxLines: number): Promise<stri
     const done = () => {
       if (finished) return;
       finished = true;
-      try { rs.close(); } catch {}
+      try {
+        rs.close();
+      } catch {}
       // 표본은 '완전한 라인'만 사용 (잔여는 버림)
       resolve(out.slice(0, maxLines));
     };
@@ -241,7 +259,10 @@ async function readSampleLines(filePath: string, maxLines: number): Promise<stri
       const parts = txt.split(/\r?\n/);
       residual = parts.pop() ?? '';
       for (let p of parts) {
-        if (!bomStripped) { p = stripBomStart(p); bomStripped = true; }
+        if (!bomStripped) {
+          p = stripBomStart(p);
+          bomStripped = true;
+        }
         if (p) out.push(p);
         if (out.length >= maxLines) {
           return done(); // ★ 조기 종료 시 바로 resolve
@@ -257,8 +278,10 @@ async function readSampleLines(filePath: string, maxLines: number): Promise<stri
       }
       done();
     });
-    rs.on('close', () => done());     // ★ close에서도 안전하게 resolve
-    rs.on('error', (e) => { if (!finished) reject(e); });
+    rs.on('close', () => done()); // ★ close에서도 안전하게 resolve
+    rs.on('error', (e) => {
+      if (!finished) reject(e);
+    });
   });
 }
 
@@ -288,7 +311,7 @@ export async function shouldUseParserForFile(
       if (pf.hardSkip.some((rx) => rx.test(line))) {
         log.info(
           `preflight.summary: file=${relPath || filePath} decision=false reason=hard-skip ` +
-          `req=${JSON.stringify(cp.requirements.fields)}`
+            `req=${JSON.stringify(cp.requirements.fields)}`,
         );
         log.debug?.(`shouldUseParserForFile: hard skip matched for ${relPath || filePath}`);
         return false;
@@ -301,12 +324,14 @@ export async function shouldUseParserForFile(
     if (isLineMatchByRequirements(line, rule, cp.requirements)) matched++;
   }
   const ratio = matched / sample.length;
-  log.debug?.(`shouldUseParserForFile: match ratio ${ratio.toFixed(2)} (${matched}/${sample.length}) for ${relPath || filePath}`);
+  log.debug?.(
+    `shouldUseParserForFile: match ratio ${ratio.toFixed(2)} (${matched}/${sample.length}) for ${relPath || filePath}`,
+  );
   const decision = ratio >= pf.min_match_ratio;
   log.info(
     `preflight.summary: file=${relPath || filePath} decision=${decision} ` +
-    `ratio=${ratio.toFixed(2)} matched=${matched} sample=${sample.length} ` +
-    `min=${pf.min_match_ratio} req=${JSON.stringify(cp.requirements.fields)}`
+      `ratio=${ratio.toFixed(2)} matched=${matched} sample=${sample.length} ` +
+      `min=${pf.min_match_ratio} req=${JSON.stringify(cp.requirements.fields)}`,
   );
   return decision;
 }
@@ -324,12 +349,12 @@ export function lineToEntryWithParser(
   const log = getLogger('ParserEngine');
   const bn = path.basename(filePath);
   // ⬇️ 파싱 실패 시 '고정' fallback: prevTs(or 0)
-  let ts = parseTs(line) ?? (opts?.fallbackTs ?? 0);
+  let ts = parseTs(line) ?? opts?.fallbackTs ?? 0;
   let level: 'D' | 'I' | 'W' | 'E' = guessLevel(line);
-  let type: 'system' | 'homey' | 'application' | 'other' = 'system';
-  let source = bn;
-  let file = bn;
-  let path_ = filePath;
+  const type: 'system' | 'homey' | 'application' | 'other' = 'system';
+  const source = bn;
+  const file = bn;
+  const path_ = filePath;
   let text = line;
   let parsed: ParsedPayload | undefined;
 

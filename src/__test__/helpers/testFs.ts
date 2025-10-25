@@ -5,7 +5,9 @@ import * as path from 'path';
 export const OUT_ROOT = path.resolve(__dirname, '..', 'out');
 
 export function cleanDir(p: string) {
-  try { fs.rmSync(p, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(p, { recursive: true, force: true });
+  } catch {}
 }
 
 export function ensureDir(p: string) {
@@ -33,7 +35,9 @@ function tsForPath() {
 }
 
 function randSuffix(len = 5) {
-  return Math.random().toString(36).slice(2, 2 + len);
+  return Math.random()
+    .toString(36)
+    .slice(2, 2 + len);
 }
 
 export function uniqueOutSubdir(label?: string): string {
@@ -41,14 +45,22 @@ export function uniqueOutSubdir(label?: string): string {
   const safeLabel = label ? `-${label.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 24)}` : '';
   for (let i = 0; i < 5; i++) {
     const candidate = path.join(OUT_ROOT, `run-${tsForPath()}-${randSuffix()}${safeLabel}`);
-    try { fs.mkdirSync(candidate, { recursive: false }); return candidate; }
-    catch (e: any) { if (e?.code !== 'EEXIST') throw e; }
+    try {
+      fs.mkdirSync(candidate, { recursive: false });
+      return candidate;
+    } catch (e: any) {
+      if (e?.code !== 'EEXIST') throw e;
+    }
   }
   let k = 1;
   while (true) {
     const candidate = path.join(OUT_ROOT, `run-${tsForPath()}-${randSuffix()}${safeLabel}-${k++}`);
-    try { fs.mkdirSync(candidate, { recursive: false }); return candidate; }
-    catch (e: any) { if (e?.code !== 'EEXIST') throw e; }
+    try {
+      fs.mkdirSync(candidate, { recursive: false });
+      return candidate;
+    } catch (e: any) {
+      if (e?.code !== 'EEXIST') throw e;
+    }
   }
 }
 

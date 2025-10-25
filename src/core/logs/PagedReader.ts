@@ -5,10 +5,10 @@ import * as path from 'path';
 import * as readline from 'readline';
 
 import { safeParseJson } from '../../shared/utils.js';
-import type { LogManifest } from './ManifestTypes.js';
-import { isLogManifest } from './ManifestTypes.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
+import type { LogManifest } from './ManifestTypes.js';
+import { isLogManifest } from './ManifestTypes.js';
 
 const log = getLogger('PagedReader');
 
@@ -118,7 +118,9 @@ export class PagedReader {
     endLineExcl: number, // 청크 내부 기준 0-based 미포함
     opts: PageReadOptions,
   ): Promise<LogEntry[]> {
-    log.debug?.(`_readChunkSlice: reading ${path.basename(filePath)} lines ${startLine}-${endLineExcl-1}`);
+    log.debug?.(
+      `_readChunkSlice: reading ${path.basename(filePath)} lines ${startLine}-${endLineExcl - 1}`,
+    );
     const out: LogEntry[] = [];
     let idx = 0;
 

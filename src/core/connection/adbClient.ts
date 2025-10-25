@@ -1,7 +1,7 @@
 // === src/core/connection/adbClient.ts ===
-import { runCommandLine } from './ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measureBlock } from '../logging/perf.js';
+import { runCommandLine } from './ExecRunner.js';
 
 const log = getLogger('adb');
 

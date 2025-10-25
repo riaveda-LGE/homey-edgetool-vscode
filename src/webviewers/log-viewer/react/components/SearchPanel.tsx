@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+
+import { createUiLog } from '../../../shared/utils';
 import { useLogStore } from '../../react/store';
 import { vscode } from '../ipc';
-import { createUiLog } from '../../../shared/utils';
 
 export function SearchPanel() {
   const open = useLogStore((s) => s.searchOpen);

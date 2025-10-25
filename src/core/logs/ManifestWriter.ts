@@ -2,9 +2,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { measure } from '../logging/perf.js';
 import type { LogChunkMeta, LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
-import { measure } from '../logging/perf.js';
 
 export class ManifestWriter {
   private manifest: LogManifest;

@@ -1,9 +1,9 @@
 // === src/extension/editors/PerfMonitorExportManager.ts ===
 import * as vscode from 'vscode';
 
-import { perfNow } from '../../core/logging/perf.js';
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { perfNow } from '../../core/logging/perf.js';
 import { globalProfiler } from '../../core/logging/perf.js';
 import type { IPerfMonitorExportManager } from './IPerfMonitorPanelComponents.js';
 

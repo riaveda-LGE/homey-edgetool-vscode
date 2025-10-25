@@ -57,9 +57,13 @@ export async function runCommandLine(
     const isWin = process.platform === 'win32';
     // honor opts.shell if provided, otherwise choose sensible default per-OS
     const sh =
-      opts.shell === 'powershell' ? 'powershell.exe' :
-      opts.shell === 'sh'         ? '/bin/sh' :
-      (isWin ? 'powershell.exe' : '/bin/sh');
+      opts.shell === 'powershell'
+        ? 'powershell.exe'
+        : opts.shell === 'sh'
+          ? '/bin/sh'
+          : isWin
+            ? 'powershell.exe'
+            : '/bin/sh';
     const args = sh.endsWith('powershell.exe')
       ? ['-NoLogo', '-NoProfile', '-Command', cmd]
       : ['-c', cmd];

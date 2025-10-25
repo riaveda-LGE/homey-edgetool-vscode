@@ -7,8 +7,7 @@ import { measure } from '../../core/logging/perf.js';
 const log = getLogger('cmd.git');
 
 export class CommandHandlersGit {
-  constructor(
-  ) {}
+  constructor() {}
 
   @measure()
   async gitPassthrough(args: string[]) {

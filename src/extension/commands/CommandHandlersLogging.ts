@@ -1,6 +1,6 @@
 // === src/extension/commands/CommandHandlersLogging.ts ===
-import { measure } from '../../core/logging/perf.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
+import { measure } from '../../core/logging/perf.js';
 import type { EdgePanelProvider } from '../panels/extensionPanel.js';
 
 const log = getLogger('cmd.logging');

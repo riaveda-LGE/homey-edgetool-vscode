@@ -7,8 +7,8 @@ import * as vscode from 'vscode';
 import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { ErrorCategory, XError } from '../../shared/errors.js';
 import { RAW_DIR_NAME } from '../../shared/const.js';
+import { ErrorCategory, XError } from '../../shared/errors.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 import { migrateParserConfigIfNeeded } from '../setup/parserConfigSeeder.js';
 
@@ -20,9 +20,7 @@ export class CommandHandlersWorkspace {
   private cacheExpiry = 0;
   private readonly CACHE_DURATION = 30000; // 30초 캐시
 
-  constructor(
-    private context?: vscode.ExtensionContext,
-  ) {}
+  constructor(private context?: vscode.ExtensionContext) {}
 
   // === 안내 팝업 없이 바로 폴더 선택(패널 버튼 전용)
   @measure()
@@ -80,9 +78,15 @@ export class CommandHandlersWorkspace {
 
       // .config 마이그레이션(새 ws에 없으면 이전 ws의 .config 복사, 둘 다 없으면 템플릿 시드)
       try {
-        await migrateParserConfigIfNeeded(prevInfo.wsDirUri, nextInfo.wsDirUri, this.context!.extensionUri);
+        await migrateParserConfigIfNeeded(
+          prevInfo.wsDirUri,
+          nextInfo.wsDirUri,
+          this.context!.extensionUri,
+        );
         log.debug('[debug] changeWorkspaceQuick: migration + old .config cleanup completed');
-      } catch (e: any) { log.warn(`parser config migrate skipped: ${e?.message ?? e}`); }
+      } catch (e: any) {
+        log.warn(`parser config migrate skipped: ${e?.message ?? e}`);
+      }
       const duration = Date.now() - startTime;
       log.debug(`changeWorkspaceQuick completed in ${duration}ms`);
     } catch (e: any) {

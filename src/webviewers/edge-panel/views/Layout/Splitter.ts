@@ -105,8 +105,7 @@ export function bindContentSplitter(
 
     // 커밋 시점 보정
     const { top, bottom } = getSizes();
-    const commit = () =>
-      setSizes(Math.max(top, minTop), Math.max(bottom, minBottom), true);
+    const commit = () => setSizes(Math.max(top, minTop), Math.max(bottom, minBottom), true);
     if (measureUi) measureUi('Splitter.content.commit', commit);
     else commit();
   };

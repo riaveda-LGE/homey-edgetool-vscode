@@ -15,6 +15,7 @@
 
 import { spawn } from 'node:child_process';
 import path from 'node:path';
+import process from 'node:process';
 
 const argv = process.argv.slice(2); // raw args passed after `--`
 const env = process.env;

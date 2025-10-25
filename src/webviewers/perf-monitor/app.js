@@ -22,7 +22,11 @@ function scheduleChartUpdate(data) {
   _updateScheduled = true;
   // 100ms 단위 스로틀
   globalThis.setTimeout(() => {
-    try { updateChartNow(_lastDataForChart); } catch (e) { uiLog.error(`chart update failed: ${e}`); }
+    try {
+      updateChartNow(_lastDataForChart);
+    } catch (e) {
+      uiLog.error(`chart update failed: ${e}`);
+    }
     _updateScheduled = false;
   }, 100);
 }
@@ -232,15 +236,16 @@ globalThis.document.addEventListener('DOMContentLoaded', function () {
       if (cpuValue) cpuValue.textContent = `${(latest.user + latest.system).toFixed(2)} ms`;
 
       const cpuList = globalThis.document.getElementById('cpuList');
-      if (cpuList) cpuList.innerHTML = perfData.cpu
-        .map(
-          (entry) =>
-            `<div class="perf-entry">
+      if (cpuList)
+        cpuList.innerHTML = perfData.cpu
+          .map(
+            (entry) =>
+              `<div class="perf-entry">
             ${new Date(entry.timestamp).toLocaleTimeString()}:
             User ${entry.user.toFixed(2)}ms, System ${entry.system.toFixed(2)}ms
           </div>`,
-        )
-        .join('');
+          )
+          .join('');
     }
 
     // 메모리
@@ -257,15 +262,16 @@ globalThis.document.addEventListener('DOMContentLoaded', function () {
       if (memValue) memValue.textContent = `${latest.heapUsed.toFixed(2)} MB`;
 
       const memList = globalThis.document.getElementById('memList');
-      if (memList) memList.innerHTML = perfData.memory
-        .map(
-          (entry) =>
-            `<div class="perf-entry">
+      if (memList)
+        memList.innerHTML = perfData.memory
+          .map(
+            (entry) =>
+              `<div class="perf-entry">
             ${new Date(entry.timestamp).toLocaleTimeString()}:
             Heap ${entry.heapUsed.toFixed(2)}MB, RSS ${entry.rss.toFixed(2)}MB
           </div>`,
-        )
-        .join('');
+          )
+          .join('');
     }
 
     // 타이밍
@@ -277,20 +283,21 @@ globalThis.document.addEventListener('DOMContentLoaded', function () {
     if (perfData.timings.length > 20) perfData.timings.shift();
 
     const timingList = globalThis.document.getElementById('timingList');
-    if (timingList) timingList.innerHTML = perfData.timings
-      .map(
-        (entry) =>
-          `<div class="perf-entry">
+    if (timingList)
+      timingList.innerHTML = perfData.timings
+        .map(
+          (entry) =>
+            `<div class="perf-entry">
           ${new Date(entry.timestamp).toLocaleTimeString()} -
           ${entry.operation}: ${data.duration?.toFixed(2)}ms
         </div>`,
-      )
-      .join('');
+        )
+        .join('');
 
     // 상태
     const status = globalThis.document.getElementById('status');
-    if (status) status.textContent =
-      `Last update: ${new Date(data.timestamp).toLocaleTimeString()} - ${data.operation}`;
+    if (status)
+      status.textContent = `Last update: ${new Date(data.timestamp).toLocaleTimeString()} - ${data.operation}`;
 
     updateDataDisplay();
   }
@@ -337,67 +344,76 @@ globalThis.document.addEventListener('DOMContentLoaded', function () {
 
   // Buttons
   const captureBtn = globalThis.document.getElementById('captureBtn');
-  if (captureBtn) captureBtn.addEventListener('click', function (e) {
-    const btn = /** @type {HTMLButtonElement} */ (e.currentTarget);
-    if (btn && btn.textContent === 'Start Capture') {
-      vscode.postMessage({ v: 1, type: 'perf.startCapture' });
-    } else {
-      vscode.postMessage({ v: 1, type: 'perf.stopCapture' });
-    }
-  });
+  if (captureBtn)
+    captureBtn.addEventListener('click', function (e) {
+      const btn = /** @type {HTMLButtonElement} */ (e.currentTarget);
+      if (btn && btn.textContent === 'Start Capture') {
+        vscode.postMessage({ v: 1, type: 'perf.startCapture' });
+      } else {
+        vscode.postMessage({ v: 1, type: 'perf.stopCapture' });
+      }
+    });
 
   const exportBtn = globalThis.document.getElementById('exportBtn');
-  if (exportBtn) exportBtn.addEventListener('click', function () {
-    measureUi('ui.exportJson', () => vscode.postMessage({ v: 1, type: 'perf.exportJson' }));
-  });
+  if (exportBtn)
+    exportBtn.addEventListener('click', function () {
+      measureUi('ui.exportJson', () => vscode.postMessage({ v: 1, type: 'perf.exportJson' }));
+    });
 
   const exportHtmlBtn = globalThis.document.getElementById('exportHtmlBtn');
-  if (exportHtmlBtn) exportHtmlBtn.addEventListener('click', function () {
-    measureUi('ui.exportHtml', () =>
-      vscode.postMessage({ v: 1, type: 'perf.exportHtmlReport', payload: { html: exportHtml } }),
-    );
-  });
+  if (exportHtmlBtn)
+    exportHtmlBtn.addEventListener('click', function () {
+      measureUi('ui.exportHtml', () =>
+        vscode.postMessage({ v: 1, type: 'perf.exportHtmlReport', payload: { html: exportHtml } }),
+      );
+    });
 
   const copyDataBtn = globalThis.document.getElementById('copyDataBtn');
-  if (copyDataBtn) copyDataBtn.addEventListener('click', async () => {
-    const dataStr = JSON.stringify(perfData, null, 2);
-    try {
-      await globalThis.navigator.clipboard.writeText(dataStr);
-      globalThis.alert('Performance data copied to clipboard!');
-    } catch (err) {
-      const textArea = globalThis.document.createElement('textarea');
-      textArea.value = dataStr;
-      globalThis.document.body.appendChild(textArea);
-      textArea.select();
-      textArea.focus();
-      globalThis.document.execCommand('selectall');
-      globalThis.document.execCommand('copy');
-      globalThis.document.body.removeChild(textArea);
-      globalThis.alert('Performance data copied to clipboard!');
-    }
-  });
+  if (copyDataBtn)
+    copyDataBtn.addEventListener('click', async () => {
+      const dataStr = JSON.stringify(perfData, null, 2);
+      try {
+        await globalThis.navigator.clipboard.writeText(dataStr);
+        globalThis.alert('Performance data copied to clipboard!');
+      } catch (err) {
+        const textArea = globalThis.document.createElement('textarea');
+        textArea.value = dataStr;
+        globalThis.document.body.appendChild(textArea);
+        textArea.select();
+        textArea.focus();
+        globalThis.document.execCommand('selectall');
+        globalThis.document.execCommand('copy');
+        globalThis.document.body.removeChild(textArea);
+        globalThis.alert('Performance data copied to clipboard!');
+      }
+    });
 
   const exportDataBtn = globalThis.document.getElementById('exportDataBtn');
-  if (exportDataBtn) exportDataBtn.addEventListener('click', () => {
-    const dataStr = JSON.stringify(perfData, null, 2);
-    const blob = new globalThis.Blob([dataStr], { type: 'application/json' });
-    const url = globalThis.URL.createObjectURL(blob);
-    const a = globalThis.document.createElement('a');
-    a.href = url;
-    a.download =
-      'homey-perf-data-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.json';
-    globalThis.document.body.appendChild(a);
-    a.click();
-    globalThis.document.body.removeChild(a);
-    globalThis.URL.revokeObjectURL(url);
-  });
+  if (exportDataBtn)
+    exportDataBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(perfData, null, 2);
+      const blob = new globalThis.Blob([dataStr], { type: 'application/json' });
+      const url = globalThis.URL.createObjectURL(blob);
+      const a = globalThis.document.createElement('a');
+      a.href = url;
+      a.download =
+        'homey-perf-data-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.json';
+      globalThis.document.body.appendChild(a);
+      a.click();
+      globalThis.document.body.removeChild(a);
+      globalThis.URL.revokeObjectURL(url);
+    });
 
   // Ready
   vscode.postMessage({ v: 1, type: 'perf.ready', payload: {} });
 
   // cleanup (웹뷰 닫힘/리로드)
   globalThis.addEventListener('beforeunload', () => {
-    try { if (resizeObserver) resizeObserver.disconnect(); } catch {}
-    try { if (chart) chart.destroy(); } catch {}
+    try {
+      if (resizeObserver) resizeObserver.disconnect();
+    } catch {}
+    try {
+      if (chart) chart.destroy();
+    } catch {}
   });
 });

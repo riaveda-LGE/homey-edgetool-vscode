@@ -64,9 +64,7 @@ export class IndexedLogStore {
     for (const e of logs) {
       // 파일 세그먼트 이름 결정: file → basename(path) → source
       let name: string | undefined =
-        (e as any).file && String((e as any).file).trim()
-          ? String((e as any).file)
-          : undefined;
+        (e as any).file && String((e as any).file).trim() ? String((e as any).file) : undefined;
       if (!name) {
         const p = (e as any).path ? String((e as any).path) : '';
         name = p ? path.basename(p) : undefined;

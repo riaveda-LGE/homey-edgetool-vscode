@@ -7,8 +7,7 @@ import { measure } from '../../core/logging/perf.js';
 const log = getLogger('cmd.connect');
 
 export class CommandHandlersConnect {
-  constructor(
-  ) {}
+  constructor() {}
 
   @measure()
   async connectInfo() {

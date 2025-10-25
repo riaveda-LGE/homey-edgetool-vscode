@@ -11,10 +11,7 @@
   "preflight": {
     "sample_lines": 200,
     "min_match_ratio": 0.8,
-    "hard_skip_if_any_line_matches": [
-      "^=+\\([^)]*\\)=+$",
-      "^(WIFI|BT|CLIP)==>"
-    ]
+    "hard_skip_if_any_line_matches": ["^=+\\([^)]*\\)=+$", "^(WIFI|BT|CLIP)==>"]
   },
   "parser": [
     {
@@ -35,9 +32,7 @@
       }
     },
     {
-      "files": [
-        "^kernel\\.log(?:\\.\\d+)?$"
-      ],
+      "files": ["^kernel\\.log(?:\\.\\d+)?$"],
       "regex": {
         "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
         "process": "^\\[[^\\]]+\\]\\s+(?<process>kernel)(?=:)",
@@ -46,9 +41,7 @@
       }
     },
     {
-      "files": [
-        "^bt_player\\.log(?:\\.\\d+)?$"
-      ],
+      "files": ["^bt_player\\.log(?:\\.\\d+)?$"],
       "regex": {
         "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
         "process": "^\\[[^\\]]+\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",

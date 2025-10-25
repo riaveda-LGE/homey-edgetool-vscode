@@ -9,11 +9,7 @@ import {
   setWebviewReady,
 } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import {
-  PANEL_VIEW_TYPE,
-  RANDOM_STRING_LENGTH,
-  DEBUG_LOG_MEMORY_MAX,
-} from '../../shared/const.js';
+import { DEBUG_LOG_MEMORY_MAX, PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
 import { readFileAsText } from '../../shared/utils.js';
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';

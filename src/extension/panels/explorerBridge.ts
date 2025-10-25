@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { parentDir, relFromBase, toPosix } from '../../shared/utils.js';
 import { measure } from '../../core/logging/perf.js';
+import { parentDir, relFromBase, toPosix } from '../../shared/utils.js';
 
 const log = getLogger('explorerBridge');
 

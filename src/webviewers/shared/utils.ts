@@ -55,7 +55,7 @@ export function createUiMeasure(
 ) {
   // 기본값을 false로 낮춰 Host 쪽 'unknown webview message: perfMeasure' 경고 소거
   // (필요 시 호출부에서 enabled:true로 켜서 사용)
-  let enabled = opts?.enabled ?? false;
+  const enabled = opts?.enabled ?? false;
   const minMs = Math.max(0, opts?.minMs ?? 0);
   const sampleEvery = Math.max(1, opts?.sampleEvery ?? 1);
   const source = opts?.source ?? 'ui';
@@ -66,9 +66,13 @@ export function createUiMeasure(
     const dt = globalThis.performance.now() - t0;
     if (enabled && dt >= minMs) {
       counter++;
-      if ((counter % sampleEvery) === 0) {
+      if (counter % sampleEvery === 0) {
         try {
-          vscodeApi?.postMessage?.({ v: 1, type: 'perfMeasure', payload: { name, duration: dt, source } });
+          vscodeApi?.postMessage?.({
+            v: 1,
+            type: 'perfMeasure',
+            payload: { name, duration: dt, source },
+          });
         } catch {
           // no-op
         }
@@ -79,7 +83,11 @@ export function createUiMeasure(
 }
 
 /** (선택) 객체의 메서드를 모두 UI 계측 래퍼로 감싸기 */
-export function wrapAllUiMethods<T extends object>(obj: T, measureUi: (name: string, fn: Function) => any, prefix?: string): T {
+export function wrapAllUiMethods<T extends object>(
+  obj: T,
+  measureUi: (name: string, fn: (...args: any[]) => any) => any,
+  prefix?: string,
+): T {
   const tag = prefix || (obj as any)?.constructor?.name || 'Object';
   return new Proxy(obj, {
     get(target, p, receiver) {

@@ -2,8 +2,8 @@ import { create } from 'zustand';
 
 import { LOG_OVERSCAN, LOG_ROW_HEIGHT, LOG_WINDOW_SIZE } from '../../../shared/const';
 import { createUiMeasure } from '../../shared/utils';
-import { vscode } from './ipc';
 import { createUiLog } from '../../shared/utils';
+import { vscode } from './ipc';
 import { postFilterUpdate } from './ipc';
 import type { BookmarkItem, ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
 
@@ -53,7 +53,11 @@ type Actions = {
   jumpToIdx(idx: number): void;
   resizeColumn(col: 'time' | 'proc' | 'pid' | 'src', dx: number): void;
   mergeProgress(args: {
-    inc?: number; total?: number; reset?: boolean; active?: boolean; done?: number
+    inc?: number;
+    total?: number;
+    reset?: boolean;
+    active?: boolean;
+    done?: number;
   }): void;
   measureUi: ReturnType<typeof createUiMeasure>;
   setFilterField(f: keyof Filter, v: string): void;
@@ -92,16 +96,19 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       });
       // ── PROBE: 수신 버퍼 정합성
       const first = rowsWithBm[0]?.idx;
-      const last  = rowsWithBm.length ? rowsWithBm[rowsWithBm.length - 1]?.idx : undefined;
-      const asc   = rowsWithBm.every((r, i, arr) =>
-        i === 0 || ((arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity)));
+      const last = rowsWithBm.length ? rowsWithBm[rowsWithBm.length - 1]?.idx : undefined;
+      const asc = rowsWithBm.every(
+        (r, i, arr) => i === 0 || (arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity),
+      );
       (get() as any).__ui?.info?.(
         `[probe:store] receive start=${startIdx} len=${rowsWithBm.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
       );
       // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
       let selectedRowId = state.selectedRowId;
       if (state.pendingJumpIdx) {
-        const hit = rowsWithBm.find((r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
+        const hit = rowsWithBm.find(
+          (r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx,
+        );
         if (hit) selectedRowId = hit.id;
       }
       set({
@@ -116,8 +123,8 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       // ── PROBE: 머지 후 창 범위/샘플
       const s2 = get();
       const winStart = s2.windowStart ?? 1;
-      const winEnd   = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
-      const sample   = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
+      const winEnd = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
+      const sample = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
       const sampleStr = sample.map((r: any) => `${r.idx ?? '?'}|${r.time ?? '-'}`).join(', ');
       (get() as any).__ui?.info?.(
         `[probe:store] window=${winStart}-${winEnd} sample(top10)=${sampleStr} nextId(after)=${s2.nextId}`,
@@ -210,10 +217,12 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       }
       // 현재 로드된 행의 bookmarked 필드 업데이트
       const rows = st.rows.map((r) =>
-        r.idx === globalIdx ? { ...r, bookmarked: !!bookmarks[globalIdx] } : r
+        r.idx === globalIdx ? { ...r, bookmarked: !!bookmarks[globalIdx] } : r,
       );
       set({ bookmarks, rows });
-      (get() as any).__ui?.debug?.(`store.toggleBookmarkByIdx idx=${globalIdx} added=${!!bookmarks[globalIdx]}`);
+      (get() as any).__ui?.debug?.(
+        `store.toggleBookmarkByIdx idx=${globalIdx} added=${!!bookmarks[globalIdx]}`,
+      );
     });
   },
 
@@ -263,9 +272,7 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       const t = typeof total === 'number' ? Math.max(0, total) : cur.mergeTotal;
       // 우선순위: 명시 done → (reset?0:base)+inc
       const base = reset ? 0 : cur.mergeDone;
-      const doneVal = typeof done === 'number'
-        ? Math.max(0, done)
-        : Math.max(0, base + (inc ?? 0));
+      const doneVal = typeof done === 'number' ? Math.max(0, done) : Math.max(0, base + (inc ?? 0));
       let act = active ?? cur.mergeActive;
       if (t > 0 && doneVal >= t) act = false;
       set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });

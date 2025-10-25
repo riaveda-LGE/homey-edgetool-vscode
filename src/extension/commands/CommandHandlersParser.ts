@@ -5,10 +5,10 @@ import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 import {
-  PARSER_TEMPLATE_REL,
   PARSER_CONFIG_REL,
   PARSER_README_REL,
   PARSER_README_TEMPLATE_REL,
+  PARSER_TEMPLATE_REL,
 } from '../../shared/const.js';
 
 const log = getLogger('cmd.parser');

@@ -34,7 +34,9 @@ export class ConnectionManager implements IConnectionManager {
 
   @measure()
   async connect() {
-    this.log.info(`[debug] ConnectionManager.connect: start type=${this.cfg.type} id=${this.cfg.id}`);
+    this.log.info(
+      `[debug] ConnectionManager.connect: start type=${this.cfg.type} id=${this.cfg.id}`,
+    );
     // 가벼운 프리체크 정도만: 실제 연결은 실행 시점에 테스트됨
     this.connected = true;
     this.log.info(`[debug] ConnectionManager.connect: end`);
@@ -68,7 +70,9 @@ export class ConnectionManager implements IConnectionManager {
       this.log.debug(`[debug] ConnectionManager.run: end code=${code}`);
       return { code };
     } catch (e) {
-      this.log.error(`[debug] ConnectionManager.run: error ${e instanceof Error ? e.message : String(e)}`);
+      this.log.error(
+        `[debug] ConnectionManager.run: error ${e instanceof Error ? e.message : String(e)}`,
+      );
       throw new XError(
         ErrorCategory.Connection,
         `Command failed: ${e instanceof Error ? e.message : String(e)}`,
@@ -104,7 +108,9 @@ export class ConnectionManager implements IConnectionManager {
       );
       this.log.debug(`[debug] ConnectionManager.stream: end`);
     } catch (e) {
-      this.log.error(`[debug] ConnectionManager.stream: error ${e instanceof Error ? e.message : String(e)}`);
+      this.log.error(
+        `[debug] ConnectionManager.stream: error ${e instanceof Error ? e.message : String(e)}`,
+      );
       throw new XError(
         ErrorCategory.Connection,
         `Stream failed: ${e instanceof Error ? e.message : String(e)}`,

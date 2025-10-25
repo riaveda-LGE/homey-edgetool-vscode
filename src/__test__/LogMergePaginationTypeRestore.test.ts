@@ -1,27 +1,25 @@
 // src/__test__/LogMergePaginationTypeRestore.test.ts
 
+import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
 
+import { ChunkWriter } from '../core/logs/ChunkWriter.js';
 import { mergeDirectory } from '../core/logs/LogFileIntegration.js';
 import { ManifestWriter } from '../core/logs/ManifestWriter.js';
-import { ChunkWriter } from '../core/logs/ChunkWriter.js';
 import { PagedReader } from '../core/logs/PagedReader.js';
 import { paginationService } from '../core/logs/PaginationService.js';
-import { MERGED_CHUNK_MAX_LINES } from '../shared/const.js';
 import type { ParserConfig } from '../core/logs/ParserEngine.js';
-import type { LogEntry } from '@ipc/messages';
-
 import {
   compileParserConfig,
-  matchRuleForPath,
   extractByCompiledRule,
+  matchRuleForPath,
   shouldUseParserForFile,
 } from '../core/logs/ParserEngine.js';
-
+import { MERGED_CHUNK_MAX_LINES } from '../shared/const.js';
 // 🔁 테스트 FS 헬퍼: 고정 out 루트 하위에 유니크 디렉터리 생성/삭제
-import { prepareUniqueOutDir, cleanDir } from './helpers/testFs.js';
+import { cleanDir, prepareUniqueOutDir } from './helpers/testFs.js';
 
 jest.setTimeout(120_000);
 
@@ -36,13 +34,15 @@ const PARSER_TEMPLATE_PATH = path.join(
 );
 
 // ── 유틸(비교 안정화) ──────────────────────────────────────────────────
-const ANSI_RE =
-  /[\u001B\u009B][[\]()#;?]*(?:\d{1,4}(?:;\d{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g;
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /[\u001B\u009B][[\]()#;?]*(?:\d{1,4}(?:;\d{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g;
 function stripAnsi(s: string) {
   return s.replace(ANSI_RE, '');
 }
 function normalizeForCompare(line: string): string {
-  return stripAnsi(line).replace(/[ \t]+/g, ' ').trim();
+  return stripAnsi(line)
+    .replace(/[ \t]+/g, ' ')
+    .trim();
 }
 function normalizeNewlines(s: string) {
   return s.replace(/\r\n/g, '\n');
@@ -58,9 +58,9 @@ function stripBomAll(s: string) {
 const PROC_TO_FILE: Record<string, string> = {
   'homey-matter': 'matter.log',
   'homey-z3gateway': 'z3gateway.log',
-  'kernel': 'kernel.log',
+  kernel: 'kernel.log',
   'homey-pro': 'homey-pro.log',
-  'cpcd': 'cpcd.log',
+  cpcd: 'cpcd.log',
 };
 const FILE_BASES_OF_INTEREST = new Set(
   Object.values(PROC_TO_FILE).map((n) => n.replace(/\.log$/i, '')),
@@ -70,8 +70,8 @@ const FILE_BASES_OF_INTEREST = new Set(
 function canonicalizeProcName(name: string) {
   return name
     .replace(/\[[^\]]*\]/g, '') // [1863], [4413] 등 제거
-    .replace(/\s+/g, '')        // 공백 제거
-    .replace(/[_]+/g, '-')      // _ → - 통일(선택)
+    .replace(/\s+/g, '') // 공백 제거
+    .replace(/[_]+/g, '-') // _ → - 통일(선택)
     .toLowerCase();
 }
 
@@ -80,16 +80,18 @@ function resolveRebuiltPath(proc: string, rebuiltDir: string) {
   const direct = path.join(rebuiltDir, `${proc}.log`);
   if (fs.existsSync(direct)) return direct;
   try {
-    const files = fs.readdirSync(rebuiltDir).filter(f => f.toLowerCase().endsWith('.log'));
+    const files = fs.readdirSync(rebuiltDir).filter((f) => f.toLowerCase().endsWith('.log'));
     const target = canonicalizeProcName(proc);
-    const hit = files.find(f => canonicalizeProcName(path.basename(f, '.log')) === target);
+    const hit = files.find((f) => canonicalizeProcName(path.basename(f, '.log')) === target);
     if (hit) return path.join(rebuiltDir, hit);
     // prefix 매치도 한 번 더 시도 (예: homey-matter vs homey-matter-xyz)
-    const prefix = files.find(f => canonicalizeProcName(path.basename(f, '.log')).startsWith(target));
+    const prefix = files.find((f) =>
+      canonicalizeProcName(path.basename(f, '.log')).startsWith(target),
+    );
     if (prefix) return path.join(rebuiltDir, prefix);
     // 못 찾으면 디버깅 편의로 목록 로그 출력
     // (jest 실행 시 콘솔에 경고로 남김)
-    // eslint-disable-next-line no-console
+
     console.warn(`[resolveRebuiltPath] Not found for "${proc}". Candidates: ${files.join(', ')}`);
   } catch {}
   return direct;
@@ -100,7 +102,8 @@ function extractProcess(e: LogEntry): string | undefined {
   const p = (e as any)?.parsed?.process;
   if (p && String(p).trim()) return String(p).trim();
   const t = String(e.text || '');
-  const m = t.match(/^\[[^\]]+\]\s+([^\s:\[]+)(?:\[\d+\])?:/);
+  // ‘[’은 문자 클래스 내부에서 이스케이프가 불필요하므로 제거
+  const m = t.match(/^\[[^\]]+\]\s+([^\s:[]+)(?:\[\d+\])?:/);
   return m ? m[1] : undefined;
 }
 
@@ -130,9 +133,7 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
     if (!fs.existsSync(TEST_LOG_DIR)) {
       throw new Error(`Missing test logs: ${TEST_LOG_DIR}`);
     }
-    const parserConfig: ParserConfig = JSON.parse(
-      fs.readFileSync(PARSER_TEMPLATE_PATH, 'utf8'),
-    );
+    const parserConfig: ParserConfig = JSON.parse(fs.readFileSync(PARSER_TEMPLATE_PATH, 'utf8'));
     const compiled = compileParserConfig(parserConfig)!;
 
     // 0) 테스트 전용 작업 디렉터리 (helpers/testFs 사용)
@@ -189,25 +190,16 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
       const total = paginationService.getFileTotal() ?? 0;
       expect(total).toBe(merged);
 
-      const first = await paginationService.readRangeByIdx(
-        1,
-        Math.min(50, total),
-      );
+      const first = await paginationService.readRangeByIdx(1, Math.min(50, total));
       expectAscByTs(first);
 
       if (total > 200) {
         const mid = Math.floor(total / 2);
-        const midRows = await paginationService.readRangeByIdx(
-          mid - 25,
-          mid + 25,
-        );
+        const midRows = await paginationService.readRangeByIdx(mid - 25, mid + 25);
         expectAscByTs(midRows);
       }
 
-      const tailRows = await paginationService.readRangeByIdx(
-        Math.max(1, total - 49),
-        total,
-      );
+      const tailRows = await paginationService.readRangeByIdx(Math.max(1, total - 49), total);
       expectAscByTs(tailRows);
 
       // 3) (테스트 구현) 최종 병합된 로그를 “맨 아래줄부터 위로” 읽어 타입별 파일로 복원
@@ -254,16 +246,15 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
         if (fs.existsSync(rebuiltPath)) {
           rebuilt = stripBomAll(normalizeNewlines(fs.readFileSync(rebuiltPath, 'utf8')));
         } else {
-          // eslint-disable-next-line no-console
-          console.warn(`[compare] rebuilt log not found for "${fileBase}" → expected at: ${rebuiltPath}`);
+          console.warn(
+            `[compare] rebuilt log not found for "${fileBase}" → expected at: ${rebuiltPath}`,
+          );
         }
 
         const origLines = original.split('\n');
         const rebLines = rebuilt.split('\n');
-        if (origLines.length && origLines[origLines.length - 1] === '')
-          origLines.pop();
-        if (rebLines.length && rebLines[rebLines.length - 1] === '')
-          rebLines.pop();
+        if (origLines.length && origLines[origLines.length - 1] === '') origLines.pop();
+        if (rebLines.length && rebLines[rebLines.length - 1] === '') rebLines.pop();
 
         // === 실제 파이프라인의 "드랍 규칙"을 기대값에 반영 ===
         // 1) 이 파일에 파서가 적용되는지 프리플라이트로 확인
@@ -281,8 +272,7 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
           const hasTime = !!(f.time && String(f.time).trim());
           const hasProc = !!(f.process && String(f.process).trim());
           const pidRaw = f.pid;
-          const hasPid =
-            !(pidRaw === undefined || pidRaw === null || String(pidRaw).trim() === '');
+          const hasPid = !(pidRaw === undefined || pidRaw === null || String(pidRaw).trim() === '');
           return hasTime || hasProc || hasPid;
         });
 
@@ -295,7 +285,7 @@ describe('파일 병합 → Pagination 오름차순 → 타입별 복원 → 원
     } finally {
       // 🔚 테스트 산출물 정리 (디버깅을 위해 기본은 보존)
       try {
-          if (workDir && fs.existsSync(workDir)) cleanDir(workDir);
+        if (workDir && fs.existsSync(workDir)) cleanDir(workDir);
       } catch {}
     }
   });

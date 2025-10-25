@@ -92,13 +92,12 @@ export class PerfMonitorHtmlGenerator implements IPerfMonitorHtmlGenerator {
   <h2>I/O Operations</h2>
   <table>
     <tr><th>Operation</th><th>Count</th><th>Avg Time (ms)</th><th>Max Time (ms)</th><th>Total Time (ms)</th><th>Total Bytes</th><th>Errors</th></tr>
-    ${
-      Object.entries(a.ioAnalysis?.perOp || {})
-        .map(([op, s]: [string, any]) =>
-          `<tr><td>${op}</td><td>${s.count}</td><td>${(s.avgDuration||0).toFixed(2)}</td><td>${(s.maxDuration||0).toFixed(2)}</td><td>${(s.totalTime||0).toFixed(2)}</td><td>${s.totalBytes ?? 0}</td><td>${s.errors ?? 0}</td></tr>`
-        )
-        .join('')
-    }
+    ${Object.entries(a.ioAnalysis?.perOp || {})
+      .map(
+        ([op, s]: [string, any]) =>
+          `<tr><td>${op}</td><td>${s.count}</td><td>${(s.avgDuration || 0).toFixed(2)}</td><td>${(s.maxDuration || 0).toFixed(2)}</td><td>${(s.totalTime || 0).toFixed(2)}</td><td>${s.totalBytes ?? 0}</td><td>${s.errors ?? 0}</td></tr>`,
+      )
+      .join('')}
   </table>
   `
       : ''
