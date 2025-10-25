@@ -86,7 +86,8 @@ export function parseTs(line: string): number | undefined {
 }
 
 // ── 보조 유틸 ────────────────────────────────────────────────────────────
-function extractHeaderTimeToken(line: string): string | null {
+/** 전체 라인/토큰에서 헤더 타임 토큰을 추출 */
+export function extractHeaderTimeToken(line: string): string | null {
   const s = String(line ?? '').trim();
   if (!s) return null;
   if (s[0] === '[') {
@@ -95,17 +96,37 @@ function extractHeaderTimeToken(line: string): string | null {
     if (r > 0) return s.slice(1, r).trim();
     return null; // 비정상 대괄호는 시간 아님
   }
-  // 이미 추출된 time 토큰으로 들어온 경우(공백 포함 형태)도 그대로 해석할 수 있게 먼저 패턴 체크
-  if (
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(s) || // ABS
-    /^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/i.test(s) || // Mon DD ...
-    /^\d{1,2}-\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(s) // MM-DD ...
-  ) {
-    return s;
-  }
-  // 그 외(전체 라인에서 헤더만 떼야 하는 경우)에는 첫 공백 전까지를 헤더 토큰으로 간주
+  // 접두부에서 시간 헤더를 정밀 추출(전체 라인에서도 동작)
+  const ABS_PREFIX =
+    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))/;
+  const YMD_PREFIX =
+    /^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)/;
+  const MON_PREFIX =
+    /^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/i;
+  const MD_PREFIX =
+    /^(\d{1,2}-\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/;
+  const m =
+    s.match(ABS_PREFIX) ||
+    s.match(YMD_PREFIX) ||
+    s.match(MON_PREFIX) ||
+    s.match(MD_PREFIX);
+  if (m) return (m[1] || '').trim();
+  // 마지막 폴백: 첫 공백 전까지(ISO 날짜 단일 토큰 등)
   const sp = s.indexOf(' ');
   return (sp >= 0 ? s.slice(0, sp) : s).trim();
+}
+
+/** 주어진 time 토큰이 '연도 없는 포맷'인지 판별 */
+export function isYearlessTimeToken(token: string | null | undefined): boolean {
+  if (!token) return false;
+  const s = String(token).trim();
+  if (!s) return false;
+  const ABS_RX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+  const YMD_RX = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+  const MON_RX = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/i;
+  const MD_RX  = /^(\d{1,2})-(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+  if (ABS_RX.test(s) || YMD_RX.test(s)) return false;
+  return MON_RX.test(s) || MD_RX.test(s);
 }
 function monthNameToIndex(m: string): number {
   const names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];

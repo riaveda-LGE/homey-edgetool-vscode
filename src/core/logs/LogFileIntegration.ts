@@ -7,9 +7,9 @@ import * as path from 'path';
 import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { parseTs } from './time/TimeParser.js';
-import { TimezoneCorrector } from './time/TimezoneHeuristics.js';
-import { compileParserConfig, shouldUseParserForFile, lineToEntryWithParser } from './ParserEngine.js';
+import { parseTs, extractHeaderTimeToken, isYearlessTimeToken } from './time/TimeParser.js';
+import { MonotonicCorrector } from './time/TimezoneHeuristics.js';
+import { compileParserConfig, shouldUseParserForFile, lineToEntryWithParser, isParsedHeaderAllMissing } from './ParserEngine.js';
 import { measureBlock } from '../logging/perf.js';
 
 const log = getLogger('LogFileIntegration');
@@ -38,6 +38,66 @@ function tsRange(arr: { ts: number }[]): { max?: number; min?: number } {
   return { max: mx, min: mn };
 }
 const toIso = (t?: number) => (typeof t === 'number' ? new Date(t).toISOString() : 'n/a');
+
+// ────────────────────────────────────────────────────────────────────────────
+// 연도 없는 포맷(syslog류) → 논리 연도 롤오버 연결기
+// - 최신→오래된 스캔 중, ts가 "연도 없는 포맷"으로 파싱된 라인들에 한해
+//   연(-1) 단위로 이동시키며 단조비증가(desc)를 보장한다.
+// - 실제 연도 추정/주입 없음. 오직 순서 보존 목적.
+// - [방법 A] 같은 초 또는 소규모 지터(≤ JITTER_TOLERANCE_MS)는 "연도 이동 금지"하고
+//   해당 라인만 1ms 로컬 클램프하여 단조를 유지한다(출력 텍스트는 그대로).
+// ────────────────────────────────────────────────────────────────────────────
+class YearlessStitcher {
+  private shiftYears = 0;
+  private last?: number;
+  // 같은 초/수백 ms 뒤섞임 허용(연도 롤오버로 오판 금지)
+  private readonly JITTER_TOLERANCE_MS = 1500; // 1~2s 권장
+  // 주어진 ts를 years 만큼 ±이동(UTC 기준, 월/일/윤년 보존)
+  private shiftByYears(ts: number, years: number): number {
+    if (!years) return ts;
+    const d = new Date(ts);
+    return Date.UTC(
+      d.getUTCFullYear() + years,
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+      d.getUTCMilliseconds(),
+    );
+  }
+  apply(ts: number, isYearless: boolean): number {
+    if (!isYearless) {
+      // ⚠️ 유효하지 않은 ts(≤0, NaN)는 기준선에 반영하지 않음
+      if (!(ts > 0) || !Number.isFinite(ts)) return ts;
+      this.last = this.last === undefined ? ts : Math.min(this.last, ts);
+      return ts;
+    }
+    let corrected = this.shiftByYears(ts, this.shiftYears);
+    if (this.last === undefined) {
+      this.last = corrected;
+      return corrected;
+    }
+    // 단조 위반이면 연(-1) 적용 전에 "미세 역전" 예외를 먼저 검사
+    if (corrected > this.last) {
+      const delta = corrected - this.last;
+      const sameSecond =
+        Math.floor(corrected / 1000) === Math.floor(this.last / 1000);
+      // ⬇️ 같은 초 또는 허용 지터 이내면: 연도 이동 금지, 라인만 1ms 내림
+      if (sameSecond || delta <= this.JITTER_TOLERANCE_MS) {
+        corrected = this.last - 1; // 로컬 1ms 클램프(표시 문자열은 원본 유지)
+      } else {
+        // 진짜 큰 역전(연말↔연초 등)로 판단 → 연(-1)씩 이동
+        while (corrected > this.last) {
+          this.shiftYears -= 1;
+          corrected = this.shiftByYears(ts, this.shiftYears);
+        }
+      }
+    }
+    this.last = corrected;
+    return corrected;
+  }
+}
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 공개 API
@@ -271,13 +331,28 @@ export async function mergeDirectory(opts: MergeOptions) {
         const rr = await ReverseLineReader.open(fullPath);
         let line: string | null;
         let revIdx = 0;
+        let prevTs: number | undefined = undefined;
         while ((line = await rr.nextLine()) !== null) {
           // fullPath를 넘겨 path/file 일관성 유지
-          const entry = await lineToEntryWithParser(fullPath, line, useParserForThisFile ? compiledParser : undefined, {
-            fileRank: fileIdx,
-            revIdx: revIdx++,
-          });
+          const entry = await lineToEntryWithParser(
+            fullPath,
+            line,
+            useParserForThisFile ? compiledParser : undefined,
+            { fileRank: fileIdx, revIdx: revIdx++, fallbackTs: prevTs },
+          );
+
+          // 파서 적용 파일: time/process/pid 셋 모두 없으면 무효 라인으로 폐기
+          if (useParserForThisFile && isParsedHeaderAllMissing((entry as any)?.parsed)) {
+            // 다음 라인으로 계속 (prevTs는 갱신하지 않음)
+            continue;
+          }
+
+          // 폴백 ts는 '유지된' 이전 값으로 누적
+          if (typeof entry.ts === 'number' && Number.isFinite(entry.ts) && entry.ts > 0) {
+            prevTs = entry.ts;
+          }
           // ── ts 출처·품질 집계 ─────────────────────────────────────────
+          // 여기서부터는 유효 라인만 집계
           sum.lines++;
           const p = (entry as any)?.parsed as
             | { time?: string | null; process?: string | null; pid?: string | number | null; message?: string | null }
@@ -297,9 +372,9 @@ export async function mergeDirectory(opts: MergeOptions) {
           } else {
             sum.noParsedTime++;
           }
-          if (!entry.ts) sum.tsZero++;
+          if (!(typeof entry.ts === 'number' && Number.isFinite(entry.ts) && entry.ts > 0)) sum.tsZero++;
           // 테스트/골든 일관성: 파서가 message-only로 바꿨다면 헤더 복원(+ ts 재계산)
-          await restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
+          restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
           logs.push(entry); // 전체 logs가 최신→오래된 순
         }
         await rr.close();
@@ -331,33 +406,24 @@ export async function mergeDirectory(opts: MergeOptions) {
         }
       }
 
-      // 타임존 보정 (국소 소급 보정 지원)
+      // 연도 없는 포맷(syslog류) 롤오버 연결 (단조비증가 보장)
+      const yearlessStitcher = new YearlessStitcher();
+      for (const log of logs) {
+        const timeToken = extractHeaderTimeToken(log.text);
+        const isYearless = timeToken ? isYearlessTimeToken(timeToken) : false;
+        log.ts = yearlessStitcher.apply(log.ts, isYearless);
+      }
+
+      // 단조 보정 (MonotonicCorrector 사용)
       // ✅ 보정기는 "최신→오래된" 순으로 feed되는 것을 전제한다.
       // logs[]는 이미 최신→오래된 물리 순서이므로 0..N-1로 전진하며 처리한다.
-      const tzc = new TimezoneCorrector(typeKey);
-      let tzRetroSegmentsApplied = 0;
+      const tzc = new MonotonicCorrector(typeKey, 1); // 1ms 단위 클램프
       for (let asc = 0; asc < logs.length; asc++) {
-        const corrected = tzc.adjust(logs[asc].ts, asc);
+        const corrected = tzc.adjust(logs[asc].ts);
         logs[asc].ts = corrected;
-
-        // 복귀 확정 시 같은 asc 인덱스 구간에 Δoffset 직접 적용
-        const segs = tzc.drainRetroSegments();
-        if (segs.length) {
-          tzRetroSegmentsApplied += segs.length;
-          for (const seg of segs) {
-            const startK = Math.max(0, seg.start);
-            const endK   = Math.min(logs.length - 1, seg.end);
-            for (let j = startK; j <= endK; j++) {
-              logs[j].ts += seg.deltaMs;
-            }
-          }
-        }
       }
-      // 파일 끝에서 suspected가 남아있으면 폐기(복귀 증거 없음)
-      tzc.finalizeSuspected();
-      log.debug?.(
-        `T1: timezone correction type=${typeKey} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
-      );
+      // 요약 출력
+      tzc.summary();
 
       // ── 병합 DESC 검증(타임존 보정 후, 소트 전) 요약 ──
       if (logs.length) {
@@ -720,7 +786,16 @@ async function streamFileForward(
     if (!lines.length) break;
     for (const line of lines) {
       if (!line) continue;
-      const e = await lineToEntryWithParser(filePath, line, useParserForThisFile ? compiledParser : undefined, { fileRank, revIdx: revIdx++ });
+      const e = await lineToEntryWithParser(
+        filePath,
+        line,
+        useParserForThisFile ? compiledParser : undefined,
+        { fileRank, revIdx: revIdx++ }
+      );
+      // 파서 적용 파일: time/process/pid 셋 모두 없으면 무효 라인으로 폐기
+      if (useParserForThisFile && isParsedHeaderAllMissing((e as any)?.parsed)) {
+        continue;
+      }
       await restoreFullTextIfNeeded(e, /*preserve*/ true);
       batch.push(e);
       if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
@@ -898,6 +973,7 @@ class FileForwardCursor {
   private useParser = false;
   public isExhausted = false;
   private seq = 0;
+  private prevTs?: number;
 
   private constructor(
     public readonly filePath: string,
@@ -926,22 +1002,28 @@ class FileForwardCursor {
 
   async next(): Promise<{ ts: number; entry: LogEntry } | null> {
     if (this.isExhausted || !this.reader) return null;
-    const lines = await this.reader.nextLines(1);
-    if (!lines.length) {
-      this.isExhausted = true;
-      await this.reader.close();
-      this.reader = null;
-      return null;
+    while (true) {
+      const lines = await this.reader.nextLines(1);
+      if (!lines.length) {
+        this.isExhausted = true;
+        await this.reader.close();
+        this.reader = null;
+        return null;
+      }
+      const line = lines[0];
+      const e = await lineToEntryWithParser(
+        this.filePath,
+        line,
+        this.useParser ? this.compiledParser : undefined,
+        { fileRank: this.fileRank, revIdx: this.seq++, fallbackTs: this.prevTs },
+      );
+      if (this.useParser && isParsedHeaderAllMissing((e as any)?.parsed)) {
+        continue; // 무효 라인 건너뛰고 다음 라인 시도
+      }
+      await restoreFullTextIfNeeded(e, /*preserve*/ true);
+      if (typeof e.ts === 'number' && Number.isFinite(e.ts) && e.ts > 0) this.prevTs = e.ts;
+      return { ts: e.ts, entry: e };
     }
-    const line = lines[0];
-    const e = await lineToEntryWithParser(
-      this.filePath,
-      line,
-      this.useParser ? this.compiledParser : undefined,
-      { fileRank: this.fileRank, revIdx: this.seq++ },
-    );
-    await restoreFullTextIfNeeded(e, /*preserve*/ true);
-    return { ts: e.ts, entry: e };
   }
 
   async close() { try { await this.reader?.close(); } catch {} this.isExhausted = true; }
@@ -1229,19 +1311,21 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
   // 타입별 워커/버퍼 초기화
   const walkers = new Map<string, TypeTailWalker>();
   const buffers = new Map<string, LogEntry[]>();
+  const prevTsMap = new Map<string, number | undefined>(); // 타입별 prevTs 폴백
   for (const k of typeKeys) {
     const files = grouped.get(k)!.slice().sort(compareLogOrderDesc);
     walkers.set(k, new TypeTailWalker(dir, files, k));
     buffers.set(k, []);
+    prevTsMap.set(k, undefined);
   }
   log.debug?.(`warmupTailPrepass: walkers ready for ${typeKeys.length} types`);
 
   // 헬퍼: 라인 -> LogEntry (파일명을 source로)
-  const toEntry = async (fileName: string, line: string, useParser: boolean): Promise<LogEntry> => {
+  const toEntry = async (fileName: string, line: string, useParser: boolean, fallbackTs?: number): Promise<LogEntry> => {
     const full = path.join(dir, fileName);
-    const e = await lineToEntryWithParser(full, line, useParser ? compiledParser : undefined, {});
+    const e = await lineToEntryWithParser(full, line, useParser ? compiledParser : undefined, { fallbackTs });
     // 테스트/골든/정렬 일관성: 헤더 복원 + 헤더 기반 ts 재계산
-    await restoreFullTextIfNeeded(e, /*preserve*/ true);
+    restoreFullTextIfNeeded(e, /*preserve*/ true);
     return e;
   };
 
@@ -1250,6 +1334,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     if (need <= 0) return 0;
     const w = walkers.get(typeKey)!;
     let got = 0;
+    let prevTs = prevTsMap.get(typeKey);
     // 한 번에 너무 큰 I/O를 피하려고 소형 청크로 읽음
     const CHUNK = 64;
     while (got < need && !w.isExhausted && !aborted()) {
@@ -1257,9 +1342,17 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       const part = await w.next(n);
       if (!part.length) break;
       const buf = buffers.get(typeKey)!;
-      for (const { line, file, useParser } of part) buf.push(await toEntry(file, line, useParser));
+      for (const { line, file, useParser } of part) {
+        const e = await toEntry(file, line, useParser, prevTs);
+        if (useParser && isParsedHeaderAllMissing((e as any)?.parsed)) {
+          continue; // 무효 라인 폐기
+        }
+        if (typeof e.ts === 'number' && Number.isFinite(e.ts)) prevTs = e.ts;
+        buf.push(e);
+      }
       got += part.length;
     }
+    prevTsMap.set(typeKey, prevTs);
     return got;
   };
 
@@ -1343,28 +1436,21 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     const r0 = tsRange(arr);
     const inv0 = countDescInversions(arr);
     log.info(`[probe:warm-desc] type=${k} beforeTZ len=${arr.length} range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`);
-    const tzc = new TimezoneCorrector(k);
-    let tzRetroSegmentsApplied = 0;
+    // 연도 없는 포맷(syslog류) 롤오버 연결 (단조비증가 보장)
+    const yearlessStitcher = new YearlessStitcher();
+    for (const log of arr) {
+      const timeToken = extractHeaderTimeToken(log.text);
+      const isYearless = timeToken ? isYearlessTimeToken(timeToken) : false;
+      log.ts = yearlessStitcher.apply(log.ts, isYearless);
+    }
+    const tzc = new MonotonicCorrector(k, 1); // 1ms 단위 클램프
     // warm 버퍼도 물리 배열은 최신→오래된. ✅ 앞→뒤(0..N-1)로 feed
     for (let asc = 0; asc < arr.length; asc++) {
-      const corrected = tzc.adjust(arr[asc].ts, asc);
+      const corrected = tzc.adjust(arr[asc].ts);
       arr[asc].ts = corrected;
-      const segs = tzc.drainRetroSegments();
-      if (segs.length) {
-        tzRetroSegmentsApplied += segs.length;
-        for (const seg of segs) {
-          const startK = Math.max(0, seg.start);
-          const endK   = Math.min(arr.length - 1, seg.end);
-          for (let j = startK; j <= endK; j++) {
-            arr[j].ts += seg.deltaMs;
-          }
-        }
-      }
     }
-    tzc.finalizeSuspected();
-    log.debug?.(
-      `warmup(T0): timezone correction type=${k} retroSegmentsApplied=${tzRetroSegmentsApplied}`,
-    );
+    // 요약 출력
+    tzc.summary();
     // after TZ(before sort)
     const r1 = tsRange(arr);
     const inv1 = countDescInversions(arr);

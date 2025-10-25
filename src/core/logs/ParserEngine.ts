@@ -12,6 +12,16 @@ import { getLogger } from '../logging/extension-logger.js';
 
 export type { ParserConfig };
 
+/** parsed 헤더에서 time/process/pid 가 **셋 모두 없는지** 여부 */
+export function isParsedHeaderAllMissing(parsed?: ParsedPayload | null): boolean {
+  const p: any = parsed || {};
+  const hasTime = !!String(p.time ?? '').trim();
+  const hasProc = !!String(p.process ?? '').trim();
+  const pidRaw = p.pid;
+  const hasPid = !(pidRaw === undefined || pidRaw === null || String(pidRaw).trim() === '');
+  return !hasTime && !hasProc && !hasPid;
+}
+
 export type ParsedFields = {
   time?: string;
   process?: string;
@@ -39,16 +49,25 @@ function normalizeTimeToken(s: string | undefined): string | undefined {
   return m ? m[1] : t;
 }
 
-/** 단일 정규식 문자열을 적용해 named capture 를 반환(없으면 undefined) */
-function applyCompiledOne(rx: RegExp | undefined, line: string): string | undefined {
+/** 단일 정규식으로 named capture 반환(필드명이 있으면 우선, 없으면 첫 그룹) */
+function applyCompiledOne(
+  rx: RegExp | undefined,
+  line: string,
+  wantKey?: string,
+): string | undefined {
   if (!rx) return undefined;
+  // 전역 플래그(g/y) 정규식 상태에 따른 건너뛰기 방지
+  try { (rx as any).lastIndex = 0; } catch {}
   const m = rx.exec(line);
   if (!m?.groups) return undefined;
-  // groups 안에 해당 키가 없을 수 있으므로, 첫 번째 named key를 우선 반환
-  // (예: (?<time>...), (?<process>...) 등)
+  if (wantKey && Object.prototype.hasOwnProperty.call(m.groups, wantKey)) {
+    const v = (m.groups as any)[wantKey];
+    return v == null ? undefined : String(v);
+  }
   const keys = Object.keys(m.groups);
   if (!keys.length) return undefined;
-  return m.groups[keys[0]];
+  const v = (m.groups as any)[keys[0]];
+  return v == null ? undefined : String(v);
 }
 
 /** 컴파일된 정규식으로 각 필드 개별 추출 */
@@ -58,10 +77,10 @@ function extractFieldsByCompiledRule(line: string, regex: {
   // 테스트/직접호출 경로에서도 안전하도록 라인 선제 정규화
   const sanitized = stripBomStart(line);
   const raw = {
-    time:    applyCompiledOne(regex.time, sanitized),
-    process: applyCompiledOne(regex.process, sanitized),
-    pid:     applyCompiledOne(regex.pid, sanitized),
-    message: applyCompiledOne(regex.message, sanitized),
+    time:    applyCompiledOne(regex.time, sanitized, 'time'),
+    process: applyCompiledOne(regex.process, sanitized, 'process'),
+    pid:     applyCompiledOne(regex.pid, sanitized, 'pid'),
+    message: applyCompiledOne(regex.message, sanitized, 'message'),
   };
   return {
     time: normalizeTimeToken(raw.time),

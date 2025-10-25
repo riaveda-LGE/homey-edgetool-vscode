@@ -1,97 +1,107 @@
-# Homey EdgeTool — 로그 파이프라인 점검 결과 (updated 2025-10-24)
+# Homey EdgeTool — 로그 파이프라인 요약 (updated 2025-10-25)
 
-> 목적: 사용자가 요약한 파이프라인(커스텀 파서 → 타입별 버퍼/정렬 → 타임존 보정 → 통합 병합 ↓ → 페이지 서비스(오름차순 매핑) → 웹뷰 전달)이 **첨부 코드**에 실제로 구현되어 있는지 확인하고, 핵심 근거와 흐름을 간결하게 정리.
-
----
-
-## 1) 커스텀 파서 적용
-- **구성 파일/시드**
-  - `PARSER_TEMPLATE_REL = media/resources/custom_log_parser.template.v1.json` → 워크스페이스에 `.config/custom_log_parser.json`으로 시딩: `src/extension/setup/parserConfigSeeder.ts`
-- **동작 핵심**
-  - 파서 스키마: `src/core/config/schema.ts` (`ParserRequirements`, `ParserPreflight`, `ParserConfig`)
-  - 엔진: `src/core/logs/ParserEngine.ts`
-    - `compileParserConfig()`로 JSON 규칙 컴파일
-    - `shouldUseParserForFile()` / `preflight`로 샘플 매칭률·하드스킵 규칙 평가
-    - `lineToEntryWithParser()`에서 정규식 캡처로 **헤더 필드(time/process/pid/message) 파싱** 후, `parseTs()`/`guessLevel()`로 정규화
-    - 타이브레이커 메타: `_fRank`, `_rev` 부여(후술 k‑way 병합 시 안정 정렬 근거)
-
-**판정:** ✅  커스텀 파서 파일을 읽어 적용하고, 라인 단위로 헤더 필드를 파싱하는 구현이 확인됨.
+이 문서는 **현재 구현된 파서/타임스탬프 보정/로그 병합/페이지네이션** 흐름을 장황하지 않게 정리합니다.  
+핵심 원칙은 **입력은 다양해도, 출력/표시는 일관된 시간 기준과 순서**를 보장하는 것입니다.
 
 ---
 
-## 2) 로그 타입별 수집 및 내림차순 정렬
-- **타입 그룹화/내림차순 수집**
-  - `src/core/logs/LogFileIntegration.ts`
-    - 입력 파일 수집 후 `groupByType(files)`로 타입별 그룹 생성
-    - **최신 → 오래된** 순으로 각 타입 로그를 메모리에 적재
-- **보조 스토어/인덱스**
-  - `IndexedLogStore.ts`, `LogFileStorage.ts`, `ChunkWriter.ts`, `ManifestWriter.ts` (후술 통합 병합/청크/매니페스트 단계에서 사용)
-
-**판정:** ✅  타입별 버퍼링과 “최신→오래된(내림차순)” 처리 흐름이 코드 주석·루틴에서 확인됨.
-
----
-
-## 3) 타임존 점프 감지 및 보정
-- **휴리스틱 보정기**
-  - `src/core/logs/time/TimezoneHeuristics.ts` (`TimezoneCorrector`)
-    - 병합 가정: “**최신 → 오래된**” 순
-    - 급격한 오프셋 점프(임계 이상 시간 변화) 탐지 → 복귀 구간 확인 시 **국소 소급 보정(Δoffset)** 적용
-    - 보정 세그먼트는 drain 후 병합 시 반영
-- **타임 파싱**
-  - `src/core/logs/time/TimeParser.ts`의 `parseTs()` 등으로 기본 파싱/정규화
-
-**판정:** ✅  점프 감지 및 국소 보정 로직이 존재하며 병합 흐름에 연결됨.
-
----
-
-## 4) 통합 버퍼에 내림차순 병합(k‑way)
-- **핵심 구현**
-  - `src/core/logs/LogFileIntegration.ts`
-    - 타입별 정렬/보정 완료 후 **우선순위 큐 기반 k‑way merge**로 단일 스트림 생성(최신→오래된)
-    - `ChunkWriter`로 **NDJSON 청크** 단위 저장, `ManifestWriter`가 전역 **매니페스트**(`LogManifest`) 작성
-    - tie‑break에 `_fRank`, `_rev` 활용(파일 순서/역인덱스 등) → 안정·결정적 병합
-- **결과 스냅샷/인덱싱**
-  - `ManifestTypes.ts`, `IndexedLogStore.ts`로 **전역 라인 인덱스**/파일 세그먼트 기록
-
-**판정:** ✅  내림차순(최신 우선) 통합 병합과 청크/매니페스트 저장 구조가 확인됨.
+## 1) 전체 흐름 한눈에
+1. **프리플라이트(파일 단위)** — 커스텀 파서 적용 여부 결정  
+   - 샘플 라인 `sample_lines`개 스캔 → `min_match_ratio` 이상이면 적용  
+   - `hard_skip_if_any_line_matches` 중 하나라도 매치되면 **파서 미적용**
+2. **라인→엔트리 변환**  
+   - 파서 적용 시 `time/process/pid/message` 추출 → `parsed`에 저장  
+   - `preserveFullText=true`면 **헤더 복원**: `[{time}] {process}[{pid}]: {message}`로 `text` 재구성 및 `ts` 재계산(헤더 우선)
+3. **타입별 로딩(최신→오래된)**  
+   - 파일 회전 규칙 인식(`.log` → `.log.1` → `.log.2` …)  
+   - **드랍 규칙** 반영:  
+     - 빈 줄(`""`)은 스킵  
+     - 파서 적용 파일에서 `time/process/pid` **셋 모두 없음**이면 스킵
+4. **타임스탬프 정리**  
+   - `YearlessStitcher`: 연도 없는 포맷(syslog류)을 **단조 비증가(desc)** 되도록 연결  
+     - 같은 초/≤1.5s 지터는 연도 이동 없이 **해당 라인만 1ms 로컬 클램프**  
+   - `MonotonicCorrector`: 타입별 시계 흔들림을 전역 오프셋/로컬 클램프로 보정(1ms 그라뉼러리티)
+5. **타입별 저장 (최신순)**  
+   - 각 타입을 `ts desc`로 정렬해 `<type>.jsonl`로 저장 (`merged/`)  
+   - 필요 시 RAW 스냅샷(`<type>.raw.jsonl`)
+6. **전역 병합(k-way, 최신→오래된)**  
+   - 각 타입에서 100줄씩 스트리밍 → `ts desc` 힙 머지  
+   - 타이브레이커: **fileRank asc → filename asc → revIdx asc → typeKey asc → seq asc**
+7. **청크/매니페스트 출력 → 페이지 서비스**  
+   - `part-000001.ndjson` 등으로 청크화 + `index.json`(총 라인/세그먼트)  
+   - 페이지네이션은 **오름차순 인덱스**를 물리 `desc` 저장에 매핑
 
 ---
 
-## 5) PaginationService: 오름차순 매핑 후 전달
-- **페이지 리더**
-  - `src/core/logs/PagedReader.ts`: 매니페스트 기반으로 **청크 범위 읽기**
-- **페이지 서비스**
-  - `src/core/logs/PaginationService.ts`:
-    - 전역 총량/필터 캐시 관리
-    - **요청된 범위에 대해 “내림차순 저장본”을 “오름차순 좌표계”로 매핑**해 반환
-    - 필터가 있으면 **오름차순 인덱스**를 기준으로 부분 집합 계산
-- **웹뷰 계약**
-  - `src/ipc/messages.ts`:
-    - `LogEntry.id`: “**오름차순(과거=1, 최신=total)**” 명시 — UI/브리지는 항상 오름차순 좌표계를 사용
-  - `src/webviewers/log-viewer/react/ipc.ts`:
-    - 코멘트: “표시 순서는 오름차순, 최신에 초점 → ‘마지막 페이지’를 요청”
+## 2) 커스텀 파서(간단 규칙)
+- **파일 매칭:** 파일 **이름(basename)** 만 정규식 또는 리터럴 `^…$`로 매칭
+- **필드 추출:** named capture로 `time/process/pid/message` 개별 파싱
+- **요구사항 검사:** `requirements.fields`에서 지정한 필드는 **모두 존재**해야 “매치”
+- **헤더 복원:** 파서가 message-only를 만들어도 테스트/표시 일관성을 위해 헤더 형식으로 **재구성**하고, `parseTs`를 **헤더 우선**으로 재적용
 
-**판정:** ✅  저장은 내림차순이지만, **전달은 오름차순 매핑**으로 이뤄짐이 타입/주석/계약에서 명시됨.
+> `parseTs` 규칙:  
+> - ISO8601(Z/±오프셋) 그대로 사용  
+> - `YYYY-MM-DD HH:MM:SS(.sss)`(오프셋 없음)는 **UTC 해석**  
+> - `Mon DD HH:MM:SS(.sss)` / `MM-DD HH:MM:SS(.sss)`는 **연도만 현재 연도 주입 + UTC 해석** (정렬용, 실제 연도 추정 아님)
 
 ---
 
-## 6) 웹뷰 동작 개요
-- 초기 상태/프리페치(워밍업)는 `HostWebviewBridge` ↔ `LogViewerPanelManager`로 라우팅
-- 웹뷰는 특정 범위 페이지를 요청 → **오름차순으로 정렬된 LogEntry[]** 수신 후 렌더
-  - UI 상태 관리: `react/store.ts`(Zustand), 가상 스크롤/그리드: `react/components/Grid.tsx`
-
-**판정:** ✅  “범위 요청 → 오름차순 데이터 수신 → 렌더” 흐름 일치.
+## 3) 순서/정합성 보장 포인트
+- **타입 내부:** 최신→오래된으로 스캔 후 보정 → 저장 시 **`ts desc`** 유지  
+- **전역:** k-way로 **`ts desc`** 방출(최신부터)  
+- **UI/페이지:** 사용자는 항상 **오름차순 인덱스**로 요청하지만, 내부는 자동으로 `desc` 저장에서 매핑
+- **역전 처리:**  
+  - 작은 역전(≤1.5s): 전역 오프셋 변경 없이 **해당 라인만 1ms 내림**  
+  - 큰 점프: 전역 오프셋을 조정하여 **단조 유지**
 
 ---
 
-## 결론 (요약)
-- 커스텀 파서 JSON을 읽어 **헤더 파싱** → **타입별 최신순 수집** → **타임존 점프 보정** → **k‑way 내림차순 병합 + 청크/매니페스트** → **PaginationService가 요청 시 오름차순으로 매핑해 전달** → **웹뷰는 오름차순으로 표시**  
-→ **사용자 설명과 구현이 실질적으로 일치**합니다.
+## 4) 드랍 규칙(실제 파이프라인 & 테스트 기대값 동일)
+- **빈 줄**: 항상 제외
+- **파서 적용 파일**에서 `time/process/pid` **셋 모두 없음**: 제외  
+👉 테스트에서도 동일 필터를 적용해 **원본 vs 복원**을 비교합니다(ANSI/공백 차이 무시).
 
-### 부록: 빠른 근거 맵
-- 시드/경로: `const.ts`(PARSER_*), `parserConfigSeeder.ts`
-- 파서: `ParserEngine.ts`, `schema.ts`, `TimeParser.ts`
-- 병합: `LogFileIntegration.ts`, `ChunkWriter.ts`, `ManifestWriter.ts`, `ManifestTypes.ts`, `IndexedLogStore.ts`
-- 보정: `TimezoneHeuristics.ts`
-- 페이징: `PaginationService.ts`, `PagedReader.ts`
-- 계약/웹뷰: `messages.ts`, `extension/messaging/hostWebviewBridge.ts`, `webviewers/log-viewer/react/ipc.ts`, `react/store.ts`, `react/components/*.tsx`
+---
+
+## 5) 워밍업(T0) — 빠른 첫 화면
+- 타입 수만큼 균등 할당(+잔여 재분배)으로 꼬리(tail)에서 수집  
+- 타입별로 위의 **타임스탬프 보정**을 그대로 수행 후 `ts desc` 정렬  
+- k-way로 정확히 **N개**를 만들어 **페이지네이션 warm 버퍼**에 시딩
+
+---
+
+## 6) 파일 선택/리스트업
+- 입력은 루트(비재귀)에서 `*.log(.N)/*.txt`만 허용  
+- 옵션 화이트리스트는 **basename 정규식**만 지원(`^…`는 정규식, 나머지는 리터럴 고정)
+
+---
+
+## 7) 페이지네이션/필터/검색(요약)
+- **readRangeByIdx(s,e)**: 논리 **오름차순** 인덱스 요청 → 물리 `desc` 저장에서 매핑 후 반환  
+- **필터**: `msg/proc/pid/src` 지원(콤마로 OR, 공백으로 AND 그룹) — 파일 후보는 `file`(또는 `path`의 basename)만 사용  
+- **검색(searchAll)**: 워밍업/파일 기반 공통의 **단일 패스 선형 스캔**, 옵션으로 regex/범위/top 지원
+
+---
+
+## 8) 리버스 모드(디버그용)
+- `reverse=true`이면 **전역 ts 오름차순**으로 k-way 병합(파일 단위가 아닌 전역 시계 기준)
+
+---
+
+## 9) 산출물
+- **중간물**: `merged/<type>.jsonl` (최신순), 선택적으로 `t1_raw/<type>.raw.jsonl`  
+- **최종물**: `part-XXXXXX.ndjson` + `index.json`(총 라인/세그먼트)
+
+---
+
+## 10) 테스트 커버리지(핵심만)
+- 병합 결과를 페이지 서비스로 **오름차순** 읽어 검증(중간/말단 구간 포함)  
+- 전역 결과에서 **프로세스별 파일로 역복원** → **원본과 라인-대-라인 비교**  
+- 비교 시 **드랍 규칙 반영 + ANSI/공백 무시**
+
+---
+
+### 구현에서 기억할 것
+- 파일 매칭/화이트리스트/프리플라이트는 **항상 basename 기준**  
+- 헤더 복원 시 **헤더 기반 `parseTs`가 우선**, 실패 시에만 full-line 파싱 사용  
+- `YearlessStitcher`와 `MonotonicCorrector`의 적용 순서: **스티치 → 단조 보정**

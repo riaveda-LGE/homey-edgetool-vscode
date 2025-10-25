@@ -4,6 +4,106 @@ import { getLogger } from '../../logging/extension-logger.js';
 import { measure } from '../../logging/perf.js';
 
 /**
+ * 파일 타입별(Time series 단위) 단조 보정기.
+ * - 병합은 "최신 → 오래된" 순으로 진행된다고 가정한다.
+ * - 정수 그라뉼러리티(밀리초) 슬롯 단위로 단조비증가(desc)를 보장.
+ * - 글로벌 offset 누적 적용.
+ * - 작은 역전(≤ SMALL_DELTA_MS)은 전역 오프셋을 바꾸지 않고
+ *   **해당 라인만** 1ms 로컬 클램프한다(표시 문자열은 원본 유지).
+ */
+export class MonotonicCorrector {
+  private lastCorrected?: number; // 직전 반환한 보정 ts(단조감소 체크용)
+  private readonly log = getLogger('MonotonicCorrector');
+  /**
+   * 작은 역전 허용 폭(1~2s 권장). 이내면 글로벌 offset 조정 금지.
+   */
+  private readonly SMALL_DELTA_MS = 1500;
+  // 집계 카운터(스팸 억제용)
+  private clampCount = 0;        // per-line 클램프 누적
+  private shiftCount = 0;        // per-line 시프트 누적
+  private worstShiftHours = 0;   // 가장 큰 시프트(시간)
+  private worstShiftAt?: number; // 가장 큰 시프트 최초 관측 시각
+
+  // (선택) per-line 샘플 로그를 원하면 >0으로 조정
+  private readonly LOG_SAMPLE_N = 0;
+
+  // 과도한 보정을 방지하기 위한 안전 캡(필요 시 조정/제거 가능)
+  private readonly MAX_SHIFT_HOURS = 14;
+
+  // 글로벌 누적 오프셋(단조 보정용)
+  private globalOffsetMs = 0;
+
+  constructor(public readonly label: string, private readonly granularityMs: number = 1) {}
+
+  /**
+   * 최신→오래된 순으로 rawTs가 들어온다.
+   * index는 현재 처리 중인 로그의 인덱스(0부터).
+   * 반환: 보정된 ts(단조비증가 보장)
+   */
+  @measure()
+  adjust(rawTs: number): number {
+    if (typeof rawTs !== 'number' || Number.isNaN(rawTs)) return rawTs;
+
+    // 정수 그라뉼러리티(밀리초) 슬롯으로 클램프
+    const slotMs = Math.max(1, this.granularityMs);
+    const clamped = Math.floor(rawTs / slotMs) * slotMs;
+    if (clamped !== rawTs) this.clampCount++; // 집계: 슬롯 클램프 발생(소수 ms 등)
+
+    // 글로벌 오프셋 적용
+    let corrected = clamped + this.globalOffsetMs;
+
+    // 단조비증가(desc) 위반 시 보정
+    if (this.lastCorrected !== undefined && corrected > this.lastCorrected) {
+      const diffMs = corrected - this.lastCorrected;
+      // ⬇️ 작은 역전은 전역 오프셋을 건드리지 않고 해당 라인만 1ms 내림
+      if (diffMs <= this.SMALL_DELTA_MS) {
+        corrected = this.lastCorrected - 1; // 로컬 1ms 클램프
+        this.clampCount++;
+      } else {
+        // 큰 점프 → 글로벌 오프셋으로 보정(기존 동작)
+        const shiftHours = diffMs / (60 * 60 * 1000);
+        if (shiftHours > this.worstShiftHours) {
+          this.worstShiftHours = shiftHours;
+          this.worstShiftAt = rawTs;
+        }
+        this.globalOffsetMs -= diffMs;
+        corrected = clamped + this.globalOffsetMs;
+        this.shiftCount++;
+        if (this.LOG_SAMPLE_N > 0 && this.shiftCount % this.LOG_SAMPLE_N === 0) {
+          this.log.debug?.(
+            `Monotonic shift [${this.label}]: raw=${new Date(rawTs).toISOString()} ` +
+            `clamped=${new Date(clamped).toISOString()} corrected=${new Date(corrected).toISOString()} ` +
+            `shift=${shiftHours.toFixed(2)}h globalOffset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
+          );
+        }
+      }
+    }
+
+    this.lastCorrected = corrected;
+    return corrected;
+  }
+
+  // 집계 요약을 출력하고 카운터 초기화
+  @measure()
+  summary() {
+    if (this.shiftCount || this.clampCount) {
+      const worst =
+        this.worstShiftAt != null
+          ? `${this.worstShiftHours.toFixed(1)}h @ ${new Date(this.worstShiftAt).toISOString()}`
+          : 'n/a';
+      this.log.info(
+        `Monotonic summary [${this.label}] shifts=${this.shiftCount}, clamped=${this.clampCount}, ` +
+        `worst_shift=${worst}, global_offset=${this.globalOffsetMs / (60 * 60 * 1000)}h`,
+      );
+    }
+    this.clampCount = 0;
+    this.shiftCount = 0;
+    this.worstShiftHours = 0;
+    this.worstShiftAt = undefined;
+  }
+}
+
+/**
  * 파일 타입별(Time series 단위) 타임존 점프 보정기.
  * - 병합은 "최신 → 오래된" 순으로 진행된다고 가정한다.
  * - 점프 의심은 직전 rawTs 대비 ≥ MIN_JUMP_HOURS 시간 변화.

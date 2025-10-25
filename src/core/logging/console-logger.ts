@@ -24,13 +24,7 @@ const IS_TEST =
   process.env.NODE_ENV === 'test';
 
 // 테스트 시 파일로 로그를 모은다: src/__test__/out/console.log
-const TEST_LOG_PATH = path.resolve(
-  __dirname,
-  '..', '..', '..',           // → src
-  '__test__',
-  'out',
-  'console.log',
-);
+const TEST_LOG_PATH = path.join(process.cwd(), 'src', '__test__', 'out', 'console.log');
 
 let _testWs: fs.WriteStream | null = null;
 function getTestWriteStream(): fs.WriteStream {
