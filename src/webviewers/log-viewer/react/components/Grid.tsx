@@ -254,7 +254,8 @@ export function Grid() {
     }
     if (!tracks.some((t) => t !== '0px')) tracks[0] = '1fr';
     measureUi('Grid.buildGridTemplate.end', () => ui.debug?.('[debug] Grid: buildGridTemplate end'));
-    return `var(--col-bm-w) ${tracks.join(' ')}`;
+    // 북마크 고정폭 열 + 인덱스 고정폭 열 + 본문 컬럼들
+    return `var(--col-bm-w) var(--col-idx-w) ${tracks.join(' ')}`;
   }, [m.showCols.time, m.showCols.proc, m.showCols.pid, m.showCols.src, m.showCols.msg, m.colW.time, m.colW.proc, m.colW.pid, m.colW.src]);
   const anyHidden = !(
     m.showCols.time &&
@@ -279,6 +280,12 @@ export function Grid() {
 
   const totalSize = rowVirtualizer.getTotalSize();
   const virtualItems = rowVirtualizer.getVirtualItems();
+
+  // 인덱스 열 너비(총행수 자릿수 기반): 최소 48px, 최대 120px
+  const idxWidthPx = useMemo(() => {
+    const digits = Math.max(2, String(Math.max(1, m.totalRows || 0)).length);
+    return Math.min(120, Math.max(48, 14 + digits * 8)); // pad + digit*8px
+  }, [m.totalRows]);
 
   // ── 인덱스 점프 처리(북마크/검색 등) ────────────────────────────────
   useEffect(() => {
@@ -377,11 +384,12 @@ export function Grid() {
     measureUi('Grid.anchor', () => ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`));
   };
 
-  // (1) FOLLOW=true로 전환될 때:
+  // (1) FOLLOW=true일 때 바닥으로 앵커링:
   //  - 현재 커버리지의 바닥이 전체 tail이 아니면 마지막 페이지를 요청
   //  - 이후 바닥으로 앵커링
   useEffect(() => {
-    if (!m.follow) return;
+    // 명시적 점프(검색/북마크) 진행 중에는 tail로 강제 이동하지 않는다.
+    if (!m.follow || m.pendingJumpIdx) return;
     const endIdx = m.windowStart + Math.max(0, m.rows.length) - 1;
     const atTail = m.totalRows > 0 && endIdx >= m.totalRows - 1; // 1줄 관용 오차
     if (!atTail && m.totalRows > 0) {
@@ -397,7 +405,7 @@ export function Grid() {
       requestAnimationFrame(() => { ignoreScrollRef.current = false; });
     }
     scrollToBottom();
-  }, [m.follow, m.totalRows, m.windowSize, m.windowStart, m.rows.length]);
+  }, [m.follow, m.pendingJumpIdx, m.totalRows, m.windowSize, m.windowStart, m.rows.length]);
 
   // (2) FOLLOW=true 상태에서 새 데이터가 들어오면 → 계속 바닥으로 고정
   useEffect(() => {
@@ -552,6 +560,7 @@ export function Grid() {
                     ? 'tw-bg-[var(--row-focus)] tw-shadow-[inset_0_0_0_1px_var(--row-focus-border)]'
                     : '',
                 ].join(' ')}
+                // 행 컨테이너: 인덱스 고정폭 변수를 함께 주입
                 style={{
                   position: 'absolute',
                   top: v.start,
@@ -560,6 +569,8 @@ export function Grid() {
                   height: v.size,
                   gridTemplateColumns: gridCols,
                   columnGap: anyHidden ? 0 : undefined,
+                  // CSS Custom Property 주입
+                  ['--col-idx-w' as any]: `${idxWidthPx}px`,
                 }}
                 onClick={() => useLogStore.getState().jumpToRow(r.id, r.idx)}
                 aria-selected={isSelected || undefined}
@@ -587,6 +598,10 @@ export function Grid() {
                     }}
                   />
                 </div>
+                {/* ── 인덱스 고정폭 열(항상 보임) ─────────────────────────── */}
+                <Cell kind="idx" mono align="right">
+                  {typeof r.idx === 'number' ? r.idx : ''}
+                </Cell>
                 <Cell
                   kind="time"
                   hidden={!m.showCols.time}
@@ -640,7 +655,7 @@ function Cell({
   hidden?: boolean;
   mono?: boolean;
   align?: 'left' | 'right';
-  kind: 'time' | 'proc' | 'pid' | 'src' | 'msg';
+  kind: 'idx' | 'time' | 'proc' | 'pid' | 'src' | 'msg';
   /** 이 셀이 마지막 보이는 컬럼인지(오른쪽 경계선/구분선 제거) */
   last?: boolean;
   onDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void;

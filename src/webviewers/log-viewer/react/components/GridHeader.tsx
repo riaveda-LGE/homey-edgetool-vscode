@@ -10,6 +10,7 @@ export function GridHeader() {
   const colW = useLogStore((s) => s.colW);
   const resize = useLogStore((s) => s.resizeColumn);
   const measureUi = useLogStore((s) => s.measureUi);
+  const totalRows = useLogStore((s) => s.totalRows);
   // grid header 전용 ui logger
   const ui = createUiLog(vscode, 'log-viewer.grid-header');
 
@@ -33,10 +34,16 @@ export function GridHeader() {
       }
     }
     if (!tracks.some((t) => t !== '0px')) tracks[0] = '1fr';
-    // ⬇️ 항상 보이는 '북마크' 고정폭 열을 맨 앞에 추가
-    return `var(--col-bm-w) ${tracks.join(' ')}`;
+    // ⬇️ 항상 보이는 '북마크' 고정폭 열 + '인덱스' 고정폭 열을 앞에 추가
+    return `var(--col-bm-w) var(--col-idx-w) ${tracks.join(' ')}`;
   };
   const cols = buildGridTemplate();
+
+  // 인덱스 열 너비(총행수 자릿수 기반)
+  const idxWidthPx = (() => {
+    const digits = Math.max(2, String(Math.max(1, totalRows || 0)).length);
+    return Math.min(120, Math.max(48, 14 + digits * 8));
+  })();
 
   const anyHidden = !(show.time && show.proc && show.pid && show.src && show.msg);
 
@@ -109,10 +116,20 @@ export function GridHeader() {
   return (
     <div
       className="tw-sticky tw-top-0 tw-bg-[var(--panel)] tw-border-b tw-border-[var(--border-strong)] tw-z-[1]"
-      style={{ display: 'grid', gridTemplateColumns: cols, columnGap: anyHidden ? 0 : undefined }}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: cols,
+        columnGap: anyHidden ? 0 : undefined,
+        // CSS Custom Property 주입
+        ['--col-idx-w' as any]: `${idxWidthPx}px`,
+      }}
     >
       {/* 북마크 헤더(비어있는 고정 폭 컬럼, 오른쪽 구분선 유지) */}
       <div className="tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)]" aria-hidden />
+      {/* 인덱스 헤더(우측 정렬, 모노스페이스) */}
+      <div className="tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)] tw-text-right tw-font-mono tw-tabular-nums">
+        #
+      </div>
       {col('time', '시간', true, (dx) => measureUi('GridHeader.resize.time', () => resize('time', dx)), !show.time, lastVisible === 'time')}
       {col(
         'proc',

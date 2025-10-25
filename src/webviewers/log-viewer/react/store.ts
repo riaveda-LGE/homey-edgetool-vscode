@@ -240,8 +240,10 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
   },
   jumpToIdx(idx) {
     get().measureUi('store.jumpToIdx', () => {
-      set({ pendingJumpIdx: Math.max(1, idx | 0) });
-      (get() as any).__ui?.debug?.(`store.jumpToIdx idx=${idx}`);
+      // 검색/북마크 등 "명시적 점프" 시에는 tail 팔로우를 자동 해제한다.
+      // (follow=true 상태에서 점프 직후 다시 tail로 되돌아가는 현상 방지)
+      set({ pendingJumpIdx: Math.max(1, idx | 0), follow: false });
+      (get() as any).__ui?.info?.(`store.jumpToIdx idx=${idx} (auto-pause follow)`);
     });
   },
 

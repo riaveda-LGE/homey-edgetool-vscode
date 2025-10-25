@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useLogStore } from '../../react/store';
 import { BookmarkSquare } from './BookmarkSquare';
 import { createUiLog } from '../../../shared/utils';
@@ -9,10 +10,19 @@ export function Bookmarks() {
   const selectedId = useLogStore((s) => s.selectedRowId);
   const selectedIdx = rows.find((r) => r.id === selectedId)?.idx;
   const list = Object.values(bookmarks).sort((a, b) => a.idx - b.idx);
+  const totalRows = useLogStore((s) => s.totalRows);
+  // 인덱스 열 너비(총행수 자릿수 기반): 최소 48px, 최대 120px
+  const idxWidthPx = useMemo(() => {
+    const digits = Math.max(2, String(Math.max(1, totalRows || 0)).length);
+    return Math.min(120, Math.max(48, 14 + digits * 8));
+  }, [totalRows]);
   const ui = createUiLog(vscode, 'log-viewer.bookmarks');
   ui.debug?.('[debug] Bookmarks: render');
   return (
-    <aside className="tw-w-[260px] tw-bg-[var(--panel)] tw-border-l tw-border-[var(--border-strong)] tw-flex tw-flex-col tw-min-h-0">
+    <aside
+      className="tw-w-[260px] tw-bg-[var(--panel)] tw-border-l tw-border-[var(--border-strong)] tw-flex tw-flex-col tw-min-h-0"
+      style={{ ['--col-idx-w' as any]: `${idxWidthPx}px` }}
+    >
       <div className="tw-font-semibold tw-px-3 tw-py-2 tw-border-b tw-border-[var(--border)]">
         북마크
       </div>
@@ -34,8 +44,8 @@ export function Bookmarks() {
                 st.jumpToIdx(r.idx);
               }}
             >
-              {/* 왼쪽 정렬된 사각형 별 버튼 + 내용 */}
-              <div className="tw-grid tw-grid-cols-[28px,1fr] tw-gap-2 tw-items-center">
+              {/* 왼쪽 정렬된 사각형 별 버튼 + 인덱스 + 내용 */}
+              <div className="tw-grid tw-grid-cols-[28px_var(--col-idx-w)_1fr] tw-gap-2 tw-items-center">
                 {/* 공통 별 사각형 버튼(패널에서도 동일 스타일) */}
                 <BookmarkSquare
                   checked
@@ -47,6 +57,10 @@ export function Bookmarks() {
                     useLogStore.getState().toggleBookmarkByIdx(r.idx);
                   }}
                 />
+                {/* 전역 인덱스 표시(고정폭, 모노스페이스, 우측 정렬) */}
+                <div className="tw-font-mono tw-tabular-nums tw-text-right tw-text-xs tw-opacity-80">
+                  {r.idx}
+                </div>
                 <div className="tw-min-w-0">
                   <div className="tw-text-xs tw-opacity-80">{r.time}</div>
                   <div className="tw-text-sm tw-truncate">{r.msg}</div>
