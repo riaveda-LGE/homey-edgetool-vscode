@@ -83,7 +83,7 @@ export class ChunkWriter {
       this.writtenThisChunk = 0;
       if (lines === 0) {
         // 빈 flush 방지
-        return undefined;
+        return { file: '', lines: 0 };
       }
       const text = buf.map((e) => JSON.stringify(e)).join('\n') + '\n';
 
