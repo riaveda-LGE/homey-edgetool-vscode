@@ -102,7 +102,8 @@ export function Toolbar() {
       ))}
 
       <div className="tw-flex tw-items-center tw-gap-2 tw-ml-3 tw-flex-1">
-        {(progress.active || (progress.total > 0 && Math.min(progress.done, progress.total) < progress.total)) && (
+        {(progress.active ||
+          (progress.total > 0 && Math.min(progress.done, progress.total) < progress.total)) && (
           <div className="tw-flex tw-items-center tw-gap-2 tw-min-w-[200px] tw-max-w-[440px]">
             {/* 총 로그수 + 단계 텍스트 */}
             <div className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-opacity-80 tw-min-w-[160px]">

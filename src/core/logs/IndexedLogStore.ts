@@ -27,19 +27,16 @@ export class IndexedLogStore {
   /** merged_list 폴더를 제거해 초기화 */
   @measure()
   async reset() {
-    this.log.debug('[debug] IndexedLogStore reset: start');
     try {
       await fs.promises.rm(this.outDir, { recursive: true, force: true });
     } catch (e) {
       this.log.warn(`reset failed: ${String(e)}`);
     }
-    this.log.debug('[debug] IndexedLogStore reset: end');
   }
 
   /** 세션 시작. (선행 라인 플랜이 있다면 from/lines를 미리 채워 저장) */
   @measure()
   async begin(plan?: { name: string; lines: number }[]) {
-    this.log.debug('[debug] IndexedLogStore begin: start');
     await fs.promises.mkdir(this.outDir, { recursive: true });
     this.segments = [];
     this.total = 0;
@@ -52,15 +49,17 @@ export class IndexedLogStore {
         this.segments.push(seg);
         from += p.lines;
       }
+      // 🔧 총 라인 수를 선행 플랜 합계로 초기화(후속 from 계산/진행률 정합성)
+      this.total = from;
+      // 🔧 같은 파일이 이어질 경우를 대비해 커서를 마지막 세그먼트로 예열
+      this.cur = this.segments[this.segments.length - 1];
       await this.writeIndex(); // 초기 플랜을 먼저 기록
     }
-    this.log.debug('[debug] IndexedLogStore begin: end');
   }
 
   /** 병합 스트림에서 받은 배치를 반영 */
   @measure()
   onBatch(logs: LogEntry[]) {
-    this.log.debug('[debug] IndexedLogStore onBatch: start');
     for (const e of logs) {
       // 파일 세그먼트 이름 결정: file → basename(path) → source
       let name: string | undefined =
@@ -83,36 +82,24 @@ export class IndexedLogStore {
       }
       this.cur.lines++;
     }
-    this.log.debug('[debug] IndexedLogStore onBatch: end');
   }
 
   /** 세션 종료 시 index.json 저장(총 라인수 포함) */
   @measure()
   async finalize() {
-    this.log.debug('[debug] IndexedLogStore finalize: start');
     await this.writeIndex();
-    this.log.debug('[debug] IndexedLogStore finalize: end');
   }
 
   getTotal() {
-    // sync 메서드지만 호출 빈도/핫패스 추적으로 계측
-    // (decorator는 sync/async 모두 지원)
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    this['__measure_getTotal__']?.();
-    this.log.debug('[debug] IndexedLogStore getTotal: start');
     const result = this.total;
-    this.log.debug('[debug] IndexedLogStore getTotal: end');
     return result;
   }
 
   @measure()
   private async writeIndex() {
-    this.log.debug('[debug] IndexedLogStore writeIndex: start');
     const sum = this.total || this.segments.reduce((a, b) => a + b.lines, 0);
     const payload = { totalLines: sum, files: this.segments };
     const p = path.join(this.outDir, 'index.json');
     await fs.promises.writeFile(p, JSON.stringify(payload, null, 2), 'utf8');
-    this.log.debug('[debug] IndexedLogStore writeIndex: end');
   }
 }

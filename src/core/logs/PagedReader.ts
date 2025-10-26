@@ -5,10 +5,10 @@ import * as path from 'path';
 import * as readline from 'readline';
 
 import { safeParseJson } from '../../shared/utils.js';
-import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import type { LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
+import { getLogger } from '../logging/extension-logger.js';
 
 const log = getLogger('PagedReader');
 
@@ -25,40 +25,46 @@ export class PagedReader {
 
   @measure()
   static async open(manifestDir: string): Promise<PagedReader> {
-    log.debug('[debug] PagedReader open: start');
     const mf = path.join(manifestDir, 'manifest.json');
     const buf = await fs.promises.readFile(mf, 'utf8');
     const json = JSON.parse(buf);
     if (!isLogManifest(json)) {
       throw new Error('Invalid manifest.json');
     }
-    // 정합성 보장: 정렬
+    // 정합성 보장: 정렬 + mergedLines 재계산(마지막 청크 기준)
     json.chunks.sort((a, b) => a.start - b.start);
+    if (json.chunks.length > 0) {
+      const last = json.chunks[json.chunks.length - 1];
+      const derived = last.start + last.lines;
+      if (json.mergedLines !== derived) {
+        // 파일에는 그대로 두고 메모리상으로만 보정해 사용
+        log.debug?.(
+          `manifest: mergedLines corrected in-memory ${json.mergedLines} -> ${derived}`,
+        );
+        (json as any).mergedLines = derived;
+      }
+    }
     const result = new PagedReader(manifestDir, json);
-    log.debug('[debug] PagedReader open: end');
     return result;
   }
 
   getManifest(): Readonly<LogManifest> {
-    log.debug('[debug] PagedReader getManifest: start');
     const result = this.manifest;
-    log.debug('[debug] PagedReader getManifest: end');
     return result;
   }
 
   getTotalLines(): number | undefined {
-    log.debug('[debug] PagedReader getTotalLines: start');
-    const result = this.manifest.totalLines ?? this.manifest.mergedLines;
-    log.debug('[debug] PagedReader getTotalLines: end');
-    return result;
+    // ⚠️ 실제 읽기 가능한 커버리지는 mergedLines가 유일하게 정확함.
+    // totalLines는 추정치(사전 계산)일 수 있어 더 클 수 있다.
+    const merged = this.manifest.mergedLines;
+    if (typeof merged === 'number' && merged > 0) return merged;
+    return this.manifest.totalLines;
   }
 
   getPageCount(pageSize: number): number {
-    log.debug('[debug] PagedReader getPageCount: start');
     const total = this.getTotalLines() ?? 0;
     if (total <= 0) return 0;
     const result = Math.ceil(total / Math.max(1, pageSize));
-    log.debug('[debug] PagedReader getPageCount: end');
     return result;
   }
 
@@ -68,12 +74,10 @@ export class PagedReader {
     pageSize: number,
     opts: PageReadOptions = {},
   ): Promise<LogEntry[]> {
-    log.debug('[debug] PagedReader readPage: start');
     const size = Math.max(1, pageSize);
     const start = pageIndex * size;
     const endExcl = start + size;
     const result = await this.readLineRange(start, endExcl, opts);
-    log.debug('[debug] PagedReader readPage: end');
     return result;
   }
 
@@ -83,7 +87,6 @@ export class PagedReader {
     endExcl: number,
     opts: PageReadOptions = {},
   ): Promise<LogEntry[]> {
-    log.debug('[debug] PagedReader readLineRange: start');
     const out: LogEntry[] = [];
     if (endExcl <= start) return out;
 
@@ -107,7 +110,6 @@ export class PagedReader {
       out.push(...picked);
       if (out.length >= need) break;
     }
-    log.debug('[debug] PagedReader readLineRange: end');
     return out.length > need ? out.slice(0, need) : out;
   }
 
@@ -118,18 +120,30 @@ export class PagedReader {
     endLineExcl: number, // 청크 내부 기준 0-based 미포함
     opts: PageReadOptions,
   ): Promise<LogEntry[]> {
-    log.debug?.(
-      `_readChunkSlice: reading ${path.basename(filePath)} lines ${startLine}-${endLineExcl - 1}`,
-    );
     const out: LogEntry[] = [];
     let idx = 0;
+
+    // 파일 유효성 선확인(디렉터리/누락 시 건너뜀 → EISDIR 방지)
+    try {
+      const st = await fs.promises.stat(filePath);
+      if (!st.isFile()) {
+        log.debug?.(`pagedReader: skip non-file chunk path=${filePath}`);
+        return out;
+      }
+    } catch {
+      log.debug?.(`pagedReader: skip missing chunk path=${filePath}`);
+      return out;
+    }
 
     const rs = fs.createReadStream(filePath, { encoding: 'utf8' });
     const rl = readline.createInterface({ input: rs });
 
     const onAbort = () => {
       try {
-        rs.close();
+        // 스트림과 인터페이스를 모두 종료하여 핸들 누수 방지
+        rl.close();
+        (rs as any).destroy?.();
+        (rs as any).close?.();
       } catch {}
     };
     opts.signal?.addEventListener('abort', onAbort);
@@ -154,13 +168,12 @@ export class PagedReader {
     } finally {
       opts.signal?.removeEventListener('abort', onAbort);
       try {
-        // 정상/에러/abort 어떤 경로든 스트림을 명시적으로 닫아 핸들 누수 방지
+        // 정상/에러/abort 어떤 경로든 인터페이스/스트림을 명시적으로 닫아 핸들 누수 방지
+        rl.close();
         (rs as any).destroy?.();
         (rs as any).close?.();
       } catch {}
     }
-
-    log.debug?.(`_readChunkSlice: got ${out.length} entries from ${path.basename(filePath)}`);
     return out;
   }
 }

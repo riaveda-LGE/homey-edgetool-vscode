@@ -82,7 +82,11 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._view = webviewView;
 
     // 단일 송신 경로(후속 스로틀/로깅을 위해 postMessage 직접 호출 금지)
-    const sendEdge = (m: any) => { try { webviewView.webview.postMessage(m); } catch {} };
+    const sendEdge = (m: any) => {
+      try {
+        webviewView.webview.postMessage(m);
+      } catch {}
+    };
 
     const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'edge-panel');
 

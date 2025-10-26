@@ -42,7 +42,9 @@ const initial: Model = {
 // merge.stage 표시용 텍스트를 (진행률 숫자 포함해) 계산
 function stripCounterSuffix(s: string) {
   // 뒤쪽의 " (123/456)" 패턴을 제거
-  return String(s || '').replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+  return String(s || '')
+    .replace(/\s*\(\d+\/\d+\)\s*$/, '')
+    .trim();
 }
 function computeStageText(base: string, done: number, total: number) {
   const b = stripCounterSuffix(base);
@@ -116,9 +118,6 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       const asc = rowsWithBm.every(
         (r, i, arr) => i === 0 || (arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity),
       );
-      (get() as any).__ui?.info?.(
-        `[probe:store] receive start=${startIdx} len=${rowsWithBm.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
-      );
       // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
       let selectedRowId = state.selectedRowId;
       if (state.pendingJumpIdx) {
@@ -142,9 +141,6 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       const winEnd = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
       const sample = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
       const sampleStr = sample.map((r: any) => `${r.idx ?? '?'}|${r.time ?? '-'}`).join(', ');
-      (get() as any).__ui?.info?.(
-        `[probe:store] window=${winStart}-${winEnd} sample(top10)=${sampleStr} nextId(after)=${s2.nextId}`,
-      );
     });
   },
 

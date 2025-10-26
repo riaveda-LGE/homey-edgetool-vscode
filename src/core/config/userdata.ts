@@ -343,15 +343,50 @@ export async function readParserConfigJson(
   });
 }
 
-/** parser[].files 전부 모아 고유화한 화이트리스트(globs) 반환 */
+/** parser[].file 토큰에서 화이트리스트(정규식 문자열) 고유화하여 반환 */
 export async function readParserWhitelistGlobs(ctx: vscode.ExtensionContext): Promise<string[]> {
   return measureBlock('userdata.readParserWhitelistGlobs', async function () {
     const cfg = await readParserConfigJson(ctx);
     if (!cfg?.parser?.length) return [];
     const set = new Set<string>();
+
+    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const buildRegexFromRotation = (base: string, spec: string): string | null => {
+      const b = escapeRe(base);
+      if (spec === 'n') return `^${b}(?:\\.\\d+)?$`;
+      const mRange = spec.match(/^:(\d+)$/);
+      if (mRange) {
+        const k = parseInt(mRange[1], 10);
+        if (!(k >= 0)) return null;
+        if (k === 0) return `^${b}$`;
+        const nums = Array.from({ length: k }, (_, i) => String(i + 1)).join('|');
+        return `^${b}(?:\\.(?:${nums}))?$`;
+      }
+      const mOne = spec.match(/^\d+$/);
+      if (mOne) {
+        const k = parseInt(spec, 10);
+        if (k === 0) return `^${b}$`;
+        return `^${b}\\.${k}$`;
+      }
+      return null;
+    };
+    const tokenToWhitelist = (token?: string): string[] => {
+      const t = (token ?? '').trim();
+      if (!t) return [];
+      if (t.startsWith('^')) return [t]; // 사용자가 직접 정규식 제공
+      const m = t.match(/^(.+)\.\{([^}]+)\}$/);
+      if (!m) return [t]; // 리터럴 파일명(그대로 앵커링)
+      const rx = buildRegexFromRotation(m[1], m[2]);
+      return rx ? [rx] : [];
+    };
+
     for (const rule of cfg.parser) {
-      for (const g of rule.files ?? []) if (typeof g === 'string' && g.trim()) set.add(g.trim());
+      // need === false 이면 완전히 제외
+      if ((rule as any)?.need === false) continue;
+      if ((rule as any)?.file) {
+        for (const g of tokenToWhitelist((rule as any).file)) set.add(g);
+      }
     }
-    return [...set];
+    return Array.from(set);
   });
 }

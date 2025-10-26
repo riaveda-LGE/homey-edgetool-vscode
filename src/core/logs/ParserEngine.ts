@@ -107,24 +107,49 @@ function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** 템플릿 files 토큰을 "파일명(basename) 전용" 정규식으로 컴파일
- *  - **정규식**: '^'로 시작하면 그대로(i 플래그)
- *  - **리터럴**: 그 외는 정확히 그 파일명만 매칭하도록 ^…$ 앵커링(i 플래그)
- *  - 매칭 대상은 항상 **basename**.
+/** 파일 토큰 → "파일명(basename) 전용" 정규식(들)로 컴파일
+ *  - 형태: "<base>.{n|0|k|:k}" 또는 리터럴/정규식("^" 시작)
+ *  - 매칭 대상은 항상 **basename**
  */
-function fileTokenToRegex(token: string): RegExp | null {
-  if (!token || typeof token !== 'string') return null;
+function fileDescriptorToRegexes(token: string): RegExp[] {
+  if (!token || typeof token !== 'string') return [];
   const t = token.trim();
-  // 정규식 고정식(시작 앵커 포함)을 우선 인식
+  if (!t) return [];
+  // 사용자가 직접 정규식을 준 경우(하위호환)
   if (t.startsWith('^')) {
     try {
-      return new RegExp(t, 'i');
+      return [new RegExp(t, 'i')];
     } catch {
-      return null;
+      return [];
     }
   }
-  // 글롭 미지원: 리터럴 파일명 그대로 매칭
-  return new RegExp(`^${escapeRe(t)}$`, 'i');
+  const m = t.match(/^(.+)\.\{([^}]+)\}$/);
+  if (!m) {
+    // 순수 리터럴 파일명
+    return [new RegExp(`^${escapeRe(t)}$`, 'i')];
+  }
+  const base = escapeRe(m[1]);
+  const spec = m[2].trim();
+  let pattern: string | null = null;
+  if (spec === 'n') {
+    pattern = `^${base}(?:\\.\\d+)?$`;
+  } else if (/^:\d+$/.test(spec)) {
+    const k = parseInt(spec.slice(1), 10);
+    if (k === 0) pattern = `^${base}$`;
+    else {
+      const nums = Array.from({ length: k }, (_, i) => String(i + 1)).join('|');
+      pattern = `^${base}(?:\\.(?:${nums}))?$`;
+    }
+  } else if (/^\d+$/.test(spec)) {
+    const k = parseInt(spec, 10);
+    pattern = k === 0 ? `^${base}$` : `^${base}\\.${k}$`;
+  }
+  if (!pattern) return [];
+  try {
+    return [new RegExp(pattern, 'i')];
+  } catch {
+    return [];
+  }
 }
 
 export type CompiledRule = {
@@ -175,19 +200,23 @@ export function compileParserConfig(cfg?: ParserConfig): CompiledParser | undefi
   });
 
   const rules: CompiledRule[] = [];
-  for (const r of cfg.parser) {
-    if (!Array.isArray(r.files) || !r.files.length) continue;
-    const fileRegexes = r.files
-      .map((g) => fileTokenToRegex(String(g).trim()))
-      .filter(Boolean) as RegExp[];
+  for (const rAny of cfg.parser) {
+    // need === false 규칙은 완전히 제외
+    if ((rAny as any)?.need === false) continue;
+
+    const fileRegexes: RegExp[] = (rAny as any)?.file
+      ? fileDescriptorToRegexes(String((rAny as any).file))
+      : [];
     if (!fileRegexes.length) continue;
+
+    const regexSrc = (rAny as any).regex ?? {};
     const cr: CompiledRule = {
       fileRegexes,
       regex: {
-        time: r.regex?.time ? new RegExp(r.regex.time) : undefined,
-        process: r.regex?.process ? new RegExp(r.regex.process) : undefined,
-        pid: r.regex?.pid ? new RegExp(r.regex.pid) : undefined,
-        message: r.regex?.message ? new RegExp(r.regex.message) : undefined,
+        time: regexSrc.time ? new RegExp(regexSrc.time) : undefined,
+        process: regexSrc.process ? new RegExp(regexSrc.process) : undefined,
+        pid: regexSrc.pid ? new RegExp(regexSrc.pid) : undefined,
+        message: regexSrc.message ? new RegExp(regexSrc.message) : undefined,
       },
     };
     rules.push(cr);
