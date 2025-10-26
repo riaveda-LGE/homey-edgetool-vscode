@@ -4,13 +4,6 @@ import type { LogEntry } from '@ipc/messages';
 import { getLogger } from '../logging/extension-logger.js';
 import { PagedReader } from './PagedReader.js';
 
-// 경로에서 basename만 추출 (Node path 미의존, 슬래시/역슬래시 모두 지원)
-function basename(p: string): string {
-  if (!p) return '';
-  const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
-  return i >= 0 ? p.slice(i + 1) : p;
-}
-
 class PaginationService {
   private manifestDir?: string;
   private reader?: PagedReader;
@@ -19,8 +12,8 @@ class PaginationService {
   private bump(reason: string) {
     const prev = this.version;
     this.version++;
-    // 버전 증분은 잦으므로 debug로만 기록
-    this.log.debug?.(`pagination: version bump ${prev} → ${this.version} (${reason})`);
+    // ⬇️ 디버그: 버전 변경 이유 및 이전→이후 값을 남겨 세션 불일치(drop) 원인 추적
+    this.log.debug?.(`pagination.bump v${prev}→v${this.version} reason=${reason}`);
   }
   // ── Warmup (메모리 기반 페이지) ─────────────────────────────────────────
   private warmActive = false;
@@ -34,14 +27,14 @@ class PaginationService {
 
   async setManifestDir(dir: string) {
     if (this.manifestDir !== dir) {
-      this.log.debug?.(`PaginationService.setManifestDir: start dir=${dir}`);
+      // quiet
       this.reader = await PagedReader.open(dir);
       this.manifestDir = dir;
       this.bump('setManifestDir');
       this.invalidateFilterCache();
-      this.log.debug?.(`PaginationService.setManifestDir: end`);
+      // quiet
     } else {
-      this.log.debug?.(`pagination: already set dir=${dir}`);
+      // quiet
     }
     // ⚠️ 워밍업 모드는 여기서 유지 — 최종 T1 완료(reload) 때 파일 기반으로 스위치
   }
@@ -52,11 +45,12 @@ class PaginationService {
       this.log.warn('pagination: reload requested without manifestDir');
       return;
     }
-    this.log.info(`pagination: reload dir=${this.manifestDir}`);
+    // ⚠️ 전환 레이스 방지: 먼저 warm 모드를 끄고 그 다음 파일 리더를 연다.
+    //    (이 순서를 바꾸면 warm 경로가 범위를 벗어난 요청에 대해 1줄만 반환하는
+    //     문제가 발생할 수 있음)
+    this.clearWarmup();
     this.reader = await PagedReader.open(this.manifestDir);
     this.bump('reload');
-    // 파일 기반 준비 끝 → 이제 warm 모드 종료
-    this.clearWarmup();
     // 데이터셋 버전이 바뀌었으므로 필터 총계 캐시 무효화
     this.invalidateFilterCache();
   }
@@ -75,6 +69,11 @@ class PaginationService {
   }
   /** 파일 기반 모드일 때 추론 가능한 총 라인 수(없으면 undefined) */
   getFileTotal(): number | undefined {
+    // 추정치(totalLines) 대신 실제 저장된 라인 수(mergedLines)를 우선 사용
+    try {
+      const mf = (this.reader as any)?.getManifest?.();
+      if (typeof mf?.mergedLines === 'number') return mf.mergedLines;
+    } catch {}
     return this.reader?.getTotalLines();
   }
   /** 필터 상태 */
@@ -86,28 +85,29 @@ class PaginationService {
   }
   setFilter(f: { pid?: string; src?: string; proc?: string; msg?: string } | null) {
     const norm = this.normalizeFilter(f);
-    const key = JSON.stringify(norm);
-    const changed = key !== this.filteredCacheKey;
+    const prevKey = this.filter ? JSON.stringify(this.filter) : undefined;
+    const nextKey = norm ? JSON.stringify(norm) : undefined;
+    const changed = prevKey !== nextKey;
     this.filter = norm;
     if (changed) {
-      this.invalidateFilterCache();
-      this.bump('filter.set'); // UI가 구버전 응답을 버리도록 bump
-      this.log.info(`pagination: filter set ${key}`);
+      this.log.debug?.(`pagination.filter.set changed=true prev=${prevKey ?? '∅'} next=${nextKey ?? '∅'}`);
+      this.invalidateFilterCache('filter.set');
+      this.bump('filter.set'); // 실제 변경시에만 bump
     } else {
-      this.log.debug?.('pagination: filter unchanged');
+      this.log.debug?.(`pagination.filter.set no-change key=${nextKey ?? '∅'}`);
     }
   }
   /** 필터 활성 시 총 라인 수 계산 */
   async getFilteredTotal(): Promise<number | undefined> {
     if (!this.filter) {
       // 필터가 없으면 warm/file 총계를 그대로 반환
-      return this.warmActive ? this.getWarmTotal() : (this.reader?.getTotalLines() ?? 0);
+      return this.warmActive ? this.getWarmTotal() : (this.getFileTotal() ?? 0);
     }
-    const key = JSON.stringify(this.filter) + `@v${this.version}`;
+    // 캐시 키는 "필터 + 데이터셋 버전 + 모드(warm/file)"로 구성
+    const baseKey = JSON.stringify(this.filter);
+    const key = `${baseKey}@v${this.version}${this.warmActive ? ':warm' : ':file'}`;
     if (this.filteredCacheKey === key && typeof this.filteredTotalCache === 'number') {
-      this.log.debug?.(
-        `pagination: filteredTotal(cache) key=${key} total=${this.filteredTotalCache}`,
-      );
+      this.log.debug?.(`pagination.filter.total cache-hit key=${key} total=${this.filteredTotalCache}`);
       return this.filteredTotalCache;
     }
     // 1) 워밍업
@@ -115,12 +115,12 @@ class PaginationService {
       const total = (this.warmBuffer ?? []).filter((e) => this.matchesFilter(e)).length;
       this.filteredCacheKey = key;
       this.filteredTotalCache = total;
-      this.log.debug?.(`pagination: filteredTotal(warm) total=${total}`);
+      this.log.debug?.(`pagination.filter.total(warm) key=${key} total=${total}`);
       return total;
     }
     // 2) 파일 기반 — 창 단위로 전체 순회
     if (!this.reader) return 0;
-    const totalLines = this.reader.getTotalLines() ?? 0;
+    const totalLines = this.getFileTotal() ?? 0;
     const WINDOW = 5000;
     let cnt = 0;
     for (let from = 0; from < totalLines; from += WINDOW) {
@@ -131,7 +131,7 @@ class PaginationService {
     }
     this.filteredCacheKey = key;
     this.filteredTotalCache = cnt;
-    this.log.debug?.(`pagination: filteredTotal(file) total=${cnt}, lines=${totalLines}`);
+    this.log.debug?.(`pagination.filter.total(file) key=${key} total=${cnt} scanned=${totalLines}`);
     return cnt;
   }
   /** 브리지/패널에서 디버깅용으로 한 번에 읽어갈 수 있는 스냅샷 */
@@ -141,7 +141,7 @@ class PaginationService {
       manifestDir: this.manifestDir,
       warmActive: this.warmActive,
       warmTotal: this.getWarmTotal(),
-      fileTotal: this.reader?.getTotalLines(),
+      fileTotal: this.getFileTotal(),
       filter: this.filter || null,
     };
   }
@@ -152,9 +152,7 @@ class PaginationService {
     this.warmTotal = Math.max(this.warmBuffer.length, virtualTotal || 0);
     this.warmActive = this.warmBuffer.length > 0;
     this.bump('warm.seed');
-    this.log.info(
-      `pagination: warmup seeded entries=${this.warmBuffer.length} virtualTotal=${this.warmTotal}`,
-    );
+    // quiet
   }
 
   clearWarmup() {
@@ -163,9 +161,13 @@ class PaginationService {
     this.warmBuffer = null;
     this.warmTotal = 0;
     this.warmActive = false;
+    this.pendingWarned = false; // 파일 기반으로 전환되면 경고 상태 초기화
     this.bump('warm.clear');
-    this.log.debug?.(`pagination: warmup cleared (released ${n} entries)`);
+    // quiet
   }
+
+  // 초기 그리드-점프 시 warm/manifest가 아직 준비되지 않은 경우의 과도기 경고 억제용
+  private pendingWarned = false;
 
   /** 1-based inclusive 인덱스 범위를 읽어온다. */
   async readRangeByIdx(startIdx: number, endIdx: number): Promise<LogEntry[]> {
@@ -174,40 +176,74 @@ class PaginationService {
       return await this.readRangeFiltered(startIdx, endIdx);
     }
     // ── 워밍업 메모리 모드: 파일 리더가 없어도 슬라이스 제공 ─────────────
+    //     단, warm 총량을 초과하는 범위가 요청되면 1줄로 클램프하지 말고
+    //     파일 기반(가능 시)으로 폴백하거나 빈 배열을 반환한다.
     if (this.warmActive) {
       const buf = this.warmBuffer ?? [];
       if (startIdx > endIdx || endIdx <= 0) {
         this.log.warn(`pagination(warm): invalid range ${startIdx}-${endIdx}`);
         return [];
       }
-      // 논리(오름차순) idx → 물리(warm: 최신→오래된) 슬라이스로 변환
       const N = buf.length;
-      if (N === 0) return [];
-      const s = Math.max(1, Math.min(N, startIdx));
-      const e = Math.max(1, Math.min(N, endIdx));
-      const { physStart, physEndExcl } = mapAscToDescRange(N, s, e);
-      const picked = buf.slice(physStart, physEndExcl).slice().reverse(); // 오름차순으로 반환
-      for (let i = 0; i < picked.length; i++) {
-        const e = picked[i] as any;
-        e.idx = s + i; // 논리 오름차순 인덱스 보장
+      if (N === 0) {
+        // warm은 활성인데 버퍼가 비었다면 파일 기반으로 폴백 시도
+        if (!this.reader) return [];
+        // fallthrough → 파일 기반 분기
+      } else {
+        // 요청 구간이 warm 총량을 완전히 벗어난 경우
+        if (startIdx > N && endIdx > N) {
+          if (this.reader) {
+            this.log.debug?.(
+              `pagination(warm): out-of-range ${startIdx}-${endIdx} (N=${N}) → fallback to file-backed`,
+            );
+            // fallthrough → 파일 기반 분기
+          } else {
+            // 아직 파일 리더 준비 전이면 빈 응답으로 대기(잘못된 1줄 클램프 방지)
+            this.log.debug?.(
+              `pagination(warm): out-of-range ${startIdx}-${endIdx} (N=${N}) with no reader → return empty`,
+            );
+            return [];
+          }
+        } else {
+          // 부분 겹침(끝만 초과) 또는 정상 범위 → warm 슬라이스 제공
+          const s = Math.max(1, Math.min(N, startIdx));
+          const e = Math.max(1, Math.min(N, endIdx));
+          const { physStart, physEndExcl } = mapAscToDescRange(N, s, e);
+          const picked = buf.slice(physStart, physEndExcl).slice().reverse();
+          for (let i = 0; i < picked.length; i++) {
+            const eRow = picked[i] as any;
+            eRow.idx = s + i;
+          }
+          this.log.debug?.(
+            `pagination(warm): read ${startIdx}-${endIdx} -> ${picked.length} (phys ${physStart}-${physEndExcl})`,
+          );
+          return picked as LogEntry[];
+        }
       }
-      this.log.debug?.(
-        `pagination(warm): read ${startIdx}-${endIdx} -> ${picked.length} (phys ${physStart}-${physEndExcl})`,
-      );
-      return picked as LogEntry[];
     }
 
     // ── 파일 기반 모드 ───────────────────────────────────────────────────
+    // 초기화 경합(첫 렌더 직후) 동안에는 예외를 던지지 말고 빈 결과를 반환해 UI가
+    // placeholder를 유지하도록 한다. 곧 warm 또는 manifest가 준비되면 재요청됨.
     if (!this.reader) {
-      const err = 'PaginationService: manifest not set (no warm buffer)';
-      this.log.error(err);
-      throw new Error(err);
+      if (!this.pendingWarned) {
+        this.log.debug?.('pagination: reader not ready yet (no warm buffer/manifest). returning empty slice.');
+        this.pendingWarned = true;
+      }
+      return [];
     }
     if (startIdx > endIdx) {
       this.log.warn(`pagination: invalid range ${startIdx}-${endIdx}`);
       return [];
     }
-    const total = this.reader.getTotalLines() ?? 0;
+    // ⚠️ 파일 기반에서는 "실제 저장된 라인 수(mergedLines)"를 총량으로 사용
+    const reportedTotal = this.reader.getTotalLines() ?? 0;
+    let total = reportedTotal;
+    try {
+      const mf = (this.reader as any)?.getManifest?.();
+      if (typeof mf?.mergedLines === 'number' && mf.mergedLines > 0) total = mf.mergedLines;
+    } catch {}
+
     if (total <= 0) return [];
     const s = Math.max(1, Math.min(total, startIdx));
     const e = Math.max(1, Math.min(total, endIdx));
@@ -217,13 +253,23 @@ class PaginationService {
     if (physEndExcl <= physStart) return [];
     const rowsDesc = await this.reader.readLineRange(physStart, physEndExcl, { skipInvalid: true });
     const rowsAsc = rowsDesc.slice().reverse();
+    if (rowsAsc.length === 0 && e - s + 1 > 0) {
+      // 디버깅 지원: total(=mergedLines 우선)과 실제 커버리지 괴리 탐지
+      try {
+        const mf = (this.reader as any).getManifest?.();
+        const merged = mf?.mergedLines;
+        const hint = mf?.totalLines;
+        const last = mf?.chunks?.[mf?.chunks?.length - 1];
+        this.log.warn(
+          `pagination: empty slice ${s}-${e} (need=${e - s + 1}) phys=${physStart}-${physEndExcl} total(effective)=${total} merged=${merged} hint(totalLines)=${hint} lastChunk=${last?.file || 'n/a'}@${last ? (last.start + '+' + last.lines) : 'n/a'}`,
+        );
+      } catch {}
+    }
     for (let i = 0; i < rowsAsc.length; i++) {
       const eRow = rowsAsc[i] as any;
       eRow.idx = s + i; // 논리 오름차순 인덱스
     }
-    this.log.debug?.(
-      `pagination: read ${startIdx}-${endIdx} -> ${rowsAsc.length} (phys ${physStart}-${physEndExcl})`,
-    );
+    // quiet
     return rowsAsc;
   }
 
@@ -249,8 +295,11 @@ class PaginationService {
     }
 
     // 2) 파일 기반: 전체를 창(window) 단위로 순회하며 필요한 슬라이스만 수집
-    if (!this.reader) throw new Error('PaginationService: manifest not set');
-    const total = this.reader.getTotalLines() ?? 0;
+    if (!this.reader) {
+      this.log.debug?.('pagination: reader not ready for filtered read; returning empty slice.');
+      return [];
+    }
+    const total = this.getFileTotal() ?? 0;
     if (total <= 0) return [];
 
     // ⬇️ 논리 오름차순을 보장하기 위해 "물리 끝→앞"으로 창을 옮겨 읽고, 각 창을 reverse
@@ -284,9 +333,12 @@ class PaginationService {
     if (!norm.pid && !norm.src && !norm.proc && !norm.msg) return null;
     return norm;
   }
-  private invalidateFilterCache() {
+  /** 필터 총계 캐시 무효화(이유 로깅 포함) */
+  private invalidateFilterCache(reason?: string) {
     this.filteredTotalCache = undefined;
-    this.filteredCacheKey = this.filter ? JSON.stringify(this.filter) : undefined;
+    // 버전/모드 포함 키는 다음 계산 시 재생성
+    this.filteredCacheKey = undefined;
+    this.log.debug?.(`pagination.filter.cache.invalidate reason=${reason ?? 'unknown'}`);
   }
 
   // ── 필터 매칭 유틸: "wlan host, deauth" → [["wlan","host"],["deauth"]] ─────────
@@ -330,7 +382,7 @@ class PaginationService {
     // ⬇︎ 세그먼트 키 일관성: file → basename(path)만을 후보로 사용 (source 미사용)
     const file = String((e as any).file ?? '');
     const p = String((e as any).path ?? '');
-    const srcCands = [file || (p ? basename(p) : '')];
+    const srcCands = [file.toLowerCase()];
     const has = (s?: string) => !!(s && String(s).trim());
     if (has(f.msg) && !this.matchTextByGroups(msg, f.msg)) return false;
     if (has(f.proc) && !this.matchTextByGroups(proc, f.proc)) return false;
@@ -415,7 +467,7 @@ class PaginationService {
 
     // 2) 파일 기반 모드 — 한 번의 선형 스캔
     if (!this.reader) return hits;
-    const total = this.reader.getTotalLines() ?? 0;
+    const total = this.getFileTotal() ?? 0;
     if (total <= 0) return hits;
     const WINDOW = 4000;
     let v = 0;

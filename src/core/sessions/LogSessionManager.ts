@@ -144,7 +144,6 @@ export class LogSessionManager {
         if (!paginationOpened) {
           await paginationService.setManifestDir(outDir);
           paginationOpened = true;
-          this.log.info(`realtime: pagination opened dir=${outDir}`);
           // ✅ 파일기반 세션 버전을 웹뷰에 전달(웹뷰가 페이지 요청을 바로 시작하도록)
           try {
             opts.onRefresh?.({
@@ -373,6 +372,7 @@ export class LogSessionManager {
       warmup: false,
       whitelistGlobs: opts.whitelistGlobs,
       parser: opts.parserConfig,
+      preserveFullText: true,
       // ⬇️ 타입별 정렬/병합 시작 등의 단계 신호를 그대로 위로 올려서 UI까지 전달
       onStage: (text, kind) => opts.onStage?.(text, kind),
       onBatch: async (logs: LogEntry[]) => {
@@ -398,9 +398,6 @@ export class LogSessionManager {
 
         // 3) 청크 파일 쓰기
         const createdParts = await chunkWriter.appendBatch(logs);
-        if (createdParts.length) {
-          this.log.debug?.(`T1: chunk append parts=${createdParts.length}`);
-        }
         for (const p of createdParts) {
           manifest.addChunk(p.file, p.lines, mergedSoFar);
           mergedSoFar += p.lines;
@@ -412,12 +409,16 @@ export class LogSessionManager {
         if (!paginationOpened && manifest.data.chunkCount > 0) {
           try {
             await paginationService.setManifestDir(outDir);
-            this.log.info(`T1: pagination opened early (T0 checkpoint) dir=${outDir}`);
           } catch (e) {
             this.log.warn(`T1: early pagination open failed: ${String(e)}`);
           }
           paginationOpened = true;
         }
+
+        // NOTE: 일부 환경에서 manifest 스냅샷 직후 곧바로 큰 범위를 읽으면
+        //       I/O 캐시 타이밍에 따라 간헐적으로 빈 슬라이스가 나올 수 있다.
+        //       여기서는 오로지 초기 오픈만 수행하고, 실제 tail 페이징은
+        //       웹뷰 요청에 의해 이뤄지도록(=빈 화면 순간을 최소화) 위임한다.
 
         // 5) 진행률 증분 알림 (스로틀 적용)
         progressDone += logs.length;
@@ -468,7 +469,8 @@ export class LogSessionManager {
     }
     // 파일 기반 최신 head 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
     try {
-      const totalLines = manifest.data.totalLines ?? total ?? 0;
+      // ⚠️ tail 계산은 반드시 "실제 저장된 라인 수"를 우선 사용
+      const totalLines = (manifest.data.mergedLines ?? manifest.data.totalLines ?? total ?? 0);
       const endIdx = Math.max(1, totalLines);
       const startIdx = Math.max(1, endIdx - LOG_WINDOW_SIZE + 1);
       const freshTail = await paginationService.readRangeByIdx(startIdx, endIdx);
@@ -476,7 +478,7 @@ export class LogSessionManager {
         this.log.info(
           `T1: deliver refreshed last-page ${startIdx}-${endIdx} (${freshTail.length}) (file-backed, window=${LOG_WINDOW_SIZE})`,
         );
-        opts.onBatch(freshTail, manifest.data.totalLines ?? total, ++seq);
+        opts.onBatch(freshTail, totalLines, ++seq);
       }
     } catch (e) {
       this.log.warn(`T1: failed to deliver refreshed head: ${String(e)}`);
@@ -500,7 +502,11 @@ export class LogSessionManager {
     });
 
     // ✅ 웹뷰에 하드리프레시 지시(중복 제거/정렬 갱신 반영용)
-    opts.onRefresh?.({ total: manifest.data.totalLines, version: paginationService.getVersion() });
+    opts.onRefresh?.({
+      // total은 mergedLines로 고정 (UI 스크롤/점프 총량 일치)
+      total: (manifest.data.mergedLines ?? manifest.data.totalLines),
+      version: paginationService.getVersion(),
+    });
     this.log.info(`[debug] LogSessionManager.startFileMergeSession: end`);
   }
 

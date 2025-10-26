@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { createUiLog } from '../../../shared/utils';
-import { vscode } from '../ipc';
-
 export function SearchDialog({
   open,
   initialQuery,
@@ -16,16 +13,12 @@ export function SearchDialog({
   onCancel: () => void;
 }) {
   // search dialog 전용 ui logger
-  const ui = createUiLog(vscode, 'log-viewer.search-dialog');
-  ui.debug?.('[debug] SearchDialog: render');
   const [q, setQ] = useState(initialQuery ?? '');
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
-    ui.debug?.('[debug] SearchDialog: useEffect open/initialQuery');
     if (open) setQ(initialQuery ?? '');
   }, [open, initialQuery]);
   useEffect(() => {
-    ui.debug?.('[debug] SearchDialog: useEffect keydown');
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCancel();
@@ -35,7 +28,6 @@ export function SearchDialog({
     return () => window.removeEventListener('keydown', onKey, true);
   }, [open, q, onSearch, onCancel]);
   useEffect(() => {
-    ui.debug?.('[debug] SearchDialog: useEffect focus');
     if (open) setTimeout(() => inputRef.current?.focus(), 0);
   }, [open]);
   if (!open) return null;

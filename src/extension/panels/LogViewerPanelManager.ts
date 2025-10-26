@@ -46,22 +46,19 @@ export class LogViewerPanelManager {
   ) {}
 
   dispose() {
-    this.log.debug('[debug] LogViewerPanelManager dispose: start');
+    // quiet
     try {
       this.session?.dispose();
     } catch {}
     this.session = undefined;
     if (this.panel) this.panel.dispose();
-    this.log.debug('[debug] LogViewerPanelManager dispose: end');
+    // quiet
   }
 
   @measure()
   async handleHomeyLoggingCommand() {
     const already = !!this.panel;
-    this.log.debug(
-      `[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`,
-    );
-    this.log.debug(`[debug] viewer: handleHomeyLoggingCommand (panelExists=${already})`);
+    // quiet
 
     // (중요) 뷰어 오픈 시 raw 삭제 금지 — 초기화는 워크스페이스 설정/보장 단계에서만 수행
 
@@ -80,7 +77,7 @@ export class LogViewerPanelManager {
         },
       );
       this.panel.onDidDispose(() => {
-        this.log.info('viewer: panel disposed');
+        // quiet
         try {
           this.bridge?.dispose?.();
         } catch {}
@@ -90,42 +87,42 @@ export class LogViewerPanelManager {
 
       // 정식 Log Viewer UI 로드
       const uiRoot = vscode.Uri.joinPath(this.extensionUri, 'dist', 'webviewers', 'log-viewer');
-      this.log.debug('viewer: loading UI html…');
+      // quiet
       this.panel.webview.html = await this._getHtmlFromFiles(this.panel.webview, uiRoot);
-      this.log.info('viewer: UI html loaded');
+      // quiet
 
       // 메시지 라우팅을 bridge로 일원화
       this.bridge = new HostWebviewBridge(this.panel, {
         onUiLog: ({ level, text, source, line }) => {},
         readUserPrefs: async () => {
-          this.log.debug('viewer: getUserPrefs requested');
+          // quiet
           const prefs = await readLogViewerPrefs(this.context);
-          this.log.debug('viewer: getUserPrefs responded');
+          // quiet
           return prefs;
         },
         writeUserPrefs: async (patch: any) => {
           await writeLogViewerPrefs(this.context, patch ?? {});
-          this.log.debug('viewer: prefs saved');
+          // quiet
         },
       });
       this.bridge.start();
-      this.log.debug('viewer: host-webview bridge started');
+      // quiet
 
-      this.log.info('Homey Log Viewer opened');
+      // quiet
       await vscode.commands.executeCommand('homey.logging.openViewer');
     }
     this.panel.reveal(undefined, true);
-    this.log.debug(`LogViewerPanelManager.handleHomeyLoggingCommand: end`);
+    // quiet
   }
 
   /** 실시간 세션 시작: 라인 들어오는 대로 즉시 UI 전송 */
   @measure()
   async startRealtime(filter?: string) {
-    this.log.debug('[debug] LogViewerPanelManager startRealtime: start');
+    // quiet
     if (!this.panel) await this.handleHomeyLoggingCommand();
     this.mode = 'realtime';
     this.initialSent = true; // 실시간은 제한 없음
-    this.log.info(`realtime: start (filter=${filter ?? ''})`);
+    // quiet
 
     this.session?.dispose();
     this.session = new LogSessionManager({ id: 'default', type: 'adb', timeoutMs: 15000 });
@@ -133,28 +130,26 @@ export class LogViewerPanelManager {
     await this.session.startRealtimeSession({
       filter,
       onBatch: (logs) => {
-        if ((logs?.length ?? 0) > 0) {
-          this.log.debug(`realtime: batch ${logs.length} lines`);
-        }
+        // quiet
         this._send('logs.batch', { logs });
       },
       onMetrics: (m) => {
         this._send('metrics.update', m);
       },
     });
-    this.log.debug('[debug] LogViewerPanelManager startRealtime: end');
+    // quiet
   }
 
   /** 파일 병합 세션 시작: 최초 최신 LOG_WINDOW_SIZE만 보내고, 이후는 스크롤 요청에 따른 페이지 읽기 */
   @measure()
   async startFileMerge(dir: string) {
-    this.log.debug('[debug] LogViewerPanelManager startFileMerge: start');
+    // quiet
     if (!this.panel) await this.handleHomeyLoggingCommand();
     // 브리지 진행률 리포터(중앙 스로틀)
     const reporter = this.bridge?.createMergeReporter();
     this.mode = 'filemerge';
     this.initialSent = false;
-    this.log.info(`merge: start (dir=${dir})`);
+    // quiet
 
     // 워크스페이스 준비는 확장 활성화/변경 단계에서 이미 보장됨
 
@@ -178,11 +173,7 @@ export class LogViewerPanelManager {
     let whitelistGlobs: string[] | undefined;
     try {
       whitelistGlobs = await readParserWhitelistGlobs(this.context);
-      if (whitelistGlobs?.length) {
-        this.log.info(`merge: applying whitelist globs (${whitelistGlobs.length})`);
-      } else {
-        this.log.info(`merge: no whitelist globs found; will fallback to default (*.log*/.txt)`);
-      }
+      // quiet
     } catch (e: any) {
       this.log.warn(`merge: failed to read parser whitelist globs (${e?.message ?? e})`);
     }
@@ -191,11 +182,7 @@ export class LogViewerPanelManager {
     let parserConfig: any;
     try {
       parserConfig = await readParserConfigJson(this.context);
-      if (parserConfig) {
-        this.log.info(`merge: parser config loaded`);
-      } else {
-        this.log.info(`merge: no parser config found`);
-      }
+      // quiet
     } catch (e: any) {
       this.log.warn(`merge: failed to read parser config (${e?.message ?? e})`);
     }
@@ -207,27 +194,21 @@ export class LogViewerPanelManager {
       parserConfig,
       onBatch: (logs, total, seq) => {
         if (this.initialSent) return;
-        this.log.info(
-          `merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`,
-        );
+        // quiet
         // 초기 배치에도 현재 pagination 버전을 함께 전달(웹뷰 버전 동기화)
         const ver = paginationService.getVersion();
         this._send('logs.batch', { logs, total, seq, version: ver });
         this.initialSent = true;
       },
       onSaved: (info: MergeSavedInfo) => {
-        this.log.info(
-          `merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`,
-        );
+        // quiet
         this._send('logmerge.saved', info);
       },
       onMetrics: (m) => this._send('metrics.update', m),
 
       // 정식 병합(T1) 완료 → UI 하드리프레시
       onRefresh: ({ total, version }) => {
-        this.log.info(
-          `merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`,
-        );
+        // quiet
         this._send('logs.refresh', {
           reason: 'full-reindex',
           total,
@@ -254,13 +235,7 @@ export class LogViewerPanelManager {
             this.progAcc >= this.PROG_LINES_THRESHOLD &&
             now - this.progLastLogMs >= this.PROG_LOG_INTERVAL_MS
           ) {
-            const pct =
-              this.progTotal && this.progTotal > 0
-                ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
-                : undefined;
-            this.log.debug(
-              `[debug] host→ui: merge.progress ~${pct ?? '?'}% (≈${this.progDoneAcc}/${this.progTotal ?? '?'})`,
-            );
+            // quiet
             this.progAcc = 0;
             this.progLastLogMs = now;
           }
@@ -268,13 +243,7 @@ export class LogViewerPanelManager {
           // 완료 시에는 정확 수치 1회만 출력
           if (typeof total === 'number') this.progTotal = total;
           if (typeof done === 'number') this.progDoneAcc = done;
-          const pct =
-            this.progTotal && this.progTotal > 0
-              ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
-              : 100;
-          this.log.debug(
-            `[debug] host→ui: merge.progress done=${this.progDoneAcc}/${this.progTotal ?? '?'} (${pct}%)`,
-          );
+          // quiet
           // 상태 초기화
           this.progAcc = 0;
           this.progDoneAcc = 0;

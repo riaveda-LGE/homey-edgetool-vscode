@@ -44,6 +44,13 @@ export class ManifestWriter {
         } else {
           w.manifest.mergedLines = 0;
         }
+        // totalLines(힌트치)가 실제 mergedLines보다 작은 경우, 최소한 mergedLines로 상향
+        if (
+          typeof (w.manifest as any).totalLines === 'number' &&
+          (w.manifest as any).totalLines < w.manifest.mergedLines
+        ) {
+          (w.manifest as any).totalLines = w.manifest.mergedLines;
+        }
         return w;
       }
     } catch {}
@@ -78,6 +85,39 @@ export class ManifestWriter {
   async save() {
     await fs.promises.mkdir(this.outDir, { recursive: true });
     const txt = JSON.stringify(this.manifest, null, 2);
-    await fs.promises.writeFile(this.manifestPath, txt, 'utf8');
+    // 🔒 원자적 저장: 임시 파일에 쓴 뒤 rename
+    const tmp = path.join(
+      this.outDir,
+      `manifest.json.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    );
+    await fs.promises.writeFile(tmp, txt, 'utf8');
+    try {
+      await fs.promises.rename(tmp, this.manifestPath);
+    } catch (e) {
+      // rename 실패 시(드물게 Windows 등) 최후 수단으로 직접 overwrite 후 tmp 정리
+      try {
+        await fs.promises.writeFile(this.manifestPath, txt, 'utf8');
+      } finally {
+        try {
+          await fs.promises.unlink(tmp);
+        } catch {}
+      }
+    }
   }
+}
+
+/**
+ * manifest에 기록된 청크 파일명에서 마지막 part 번호를 추출해
+ * 다음에 쓸 파트 인덱스(0-based, 내부 카운터용)를 계산한다.
+ * - ChunkWriter는 내부적으로 (currentIndex + 1)을 파일명에 사용하므로
+ *   여기서 반환하는 값은 "마지막 번호 그대로"여야 한다.
+ */
+export function nextPartIndexFrom(manifest: Readonly<LogManifest>): number {
+  const lastNum = (manifest?.chunks ?? [])
+    .map((c) => {
+      const m = c.file?.match(/part-(\d+)\.ndjson$/i);
+      return m ? parseInt(m[1], 10) : 0;
+    })
+    .reduce((a, b) => Math.max(a, b), 0);
+  return lastNum; // ← ChunkWriter는 +1 해서 파일명 생성
 }

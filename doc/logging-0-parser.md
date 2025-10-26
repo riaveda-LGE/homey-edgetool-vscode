@@ -76,18 +76,8 @@ JSON 스키마 (v1)
   },
   "parser": [
     { 
-      // 이 규칙이 적용될 파일 글로브(화이트리스트)
-      "files": [
-        "^system\\.log(?:\\.\\d+)?$",
-        "^clip\\.log(?:\\.\\d+)?$",
-        "^cpcd\\.log(?:\\.\\d+)?$",
-        "^homey-pro\\.log(?:\\.\\d+)?$",
-        "^matter\\.log(?:\\.\\d+)?$",
-        "^otbr-agent\\.log(?:\\.\\d+)?$",
-        "^z3gateway\\.log(?:\\.\\d+)?$"
-      ],
-      // 각 필드를 개별 정규식으로 캡처(반드시 named capture 사용: (?<time>...), (?<process>...) 등)
-      // 아래는 실제 템플릿의 정규식 예시 (media/resources/custom_log_parser.template.v1.json 참고)
+      "file": "system.log.{n}",
+      "need" : true,
       "regex": {
         "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
         "process": "^\\[[^\\]]+\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",
@@ -95,27 +85,9 @@ JSON 스키마 (v1)
         "message": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[\\d+\\])?:\\s+(?<message>.+)$"
       }
     },
-    {
-      "files": ["^kernel\\.log(?:\\.\\d+)?$"],
-      "regex": {
-        "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
-        "process": "^\\[[^\\]]+\\]\\s+(?<process>kernel)(?=:)",
-        "pid": "^\\[[^\\]]+\\]\\s+kernel(?::)",
-        "message": "^\\[[^\\]]+\\]\\s+kernel:\\s+(?<message>.+)$"
-      }
-    },
-    {
-      "files": ["^bt_player\\.log(?:\\.\\d+)?$"],
-      "regex": {
-        "time": "^\\[(?<time>(?:[A-Z][a-z]{2})\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?)\\]",
-        "process": "^\\[[^\\]]+\\]\\s+(?<process>[A-Za-z0-9._-]+)(?=\\[|:)",
-        "pid": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[(?<pid>\\d+)\\])?:",
-        "message": "^\\[[^\\]]+\\]\\s+[A-Za-z0-9._-]+(?:\\[\\d+\\])?:\\s+(?<message>.+)$"
-      }
-    }
+    ...
   ]
 }
-
 ```
 
 키 설명
@@ -150,26 +122,43 @@ min_match_ratio: 필수 필드 충족 라인 비율이 미만이면 커스텀 �
 
 
 4. parser[]
+## 1) 설정 스키마
 
-files: 이 규칙을 적용할 파일 글로브(화이트리스트) 목록입니다. 병합 수집 단계에서 우선 이 글로브로 필터링됩니다.
+```jsonc
+{
+  "file": "system.log.{n | 0 | K | :K}",
+  "need": true | false,
+  "regex": {
+    "time":    "<REGEX>",
+    "process": "<REGEX>",
+    "pid":     "<REGEX>",
+    "message": "<REGEX>"
+  }
+}
+```
+- 여러 파일군을 정의하려면 위 블록을 배열로 나란히 나열합니다.
 
-regex: 각 필드를 개별 정규식으로 지정하며, 반드시 명명된 캡처 그룹을 사용합니다. (예: (?<time>...))
+### 필드 설명
+- **file**: 로테이션 세트를 나타내는 패턴. `system.log.{...}` 처럼 **basename + .log + {선택자}** 형식.
+- **need**: 이 항목을 **파싱에 포함(true)** / **완전히 무시(false)**.
+- **regex**: 각 라인의 `time / process / pid / message`를 추출하는 정규식. 기존 규칙과 동일.
 
-캡처된 process/pid/message 는 UI 컬럼/검색 보조에 사용됩니다.
-
-
-> 참고: 현재(ts 계산)는 내부 파서가 라인 전체에서 시간을 추정합니다. regex.time 캡처는 프리플라이트와 UI 보강용이며, 직접적으로 타임스탬프 계산을 대체하지 않습니다. (추후 확장 예정)
 ---
 
-UI/명령
+## 2) 파일 선택자 문법 (`{}` 내부)
 
-버튼/명령: "작업폴더 ▸ Parser 초기화" — .config/custom_log_parser.json 과 .config/custom_log_parser_readme.md 를 템플릿으로 재생성합니다.
+`{}`에는 아래 중 하나가 올 수 있습니다.
 
-활성화 시 자동 시드: .config/custom_log_parser.json 이 없으면 템플릿으로 생성합니다.
+- `n` : **모든 로테이션 파일 포함**
+  - 예: `system.log`, `system.log.1`, `system.log.2`, …
+- `0` : **베이스 파일만 포함**
+  - 예: `system.log`
+- `K` (정수): **정확히 해당 로테이션 번호만 포함**
+  - 예: `7` → `system.log.7` (K>0), `0`은 `system.log`와 동일
+- `:K` : **최신부터 K까지 구간 포함(포함 범위)**
+  - 예: `:2` → `system.log`, `system.log.1`, `system.log.2`
 
-작업폴더 변경 시 마이그레이션: 새 워크스페이스에 .config 가 없으면 이전 워크스페이스의 .config 폴더를 복사하고, 이전 폴더의 .config 는 도구가 제거합니다.
-
-
+> ⚠️ 존재하지 않는 파일은 **조용히 건너뜁니다**(누락 허용). 검색은 **루트(비재귀)** 기준으로 수행합니다.
 
 ---
 
@@ -184,28 +173,4 @@ A. 앞으로 스키마를 확장할 때 하위 호환/마이그레이션을 제�
 Q. 정규식이 너무 복잡합니다.
 A. 템플릿을 그대로 사용해도 되며, 파일별로 files 글로브와 regex 를 환경에 맞게 줄일 수 있습니다. 단, requirements.fields 로 지정된 필드는 프리플라이트 판단에서 필수로 취급됩니다.
 
-Q. 프리플라이트에서 스킵된 파일은 어떻게 확인하나요?
-A. 현재는 내부 로그로 확인할 수 있습니다. (스킵 사유 메시지 보강은 추후 제공 예정)
-
-
 ---
-
-구현 현황 체크리스트 (코드 기준)
-
-경로 상수: .config/custom_log_parser.json / .config/custom_log_parser_readme.md
-
-내장 템플릿: media/resources/custom_log_parser.template.v1.json
-
-README 템플릿: doc/logging-0-parser.md
-
-초기화 명령: 템플릿/README 강제 재생성 (덮어쓰기)
-
-마이그레이션: 이전 워크스페이스 .config → 새 워크스페이스 .config 복사(만약 새 워크스페이스에 .config가 이미 있을 경우 복사X), 이전 것은 삭제 처리
-
-런타임 동작:
-
-글로브 화이트리스트 수집 → 타입 그룹화 → 타임존 보정 → JSONL 중간 산출 → k-way 병합
-
-커스텀 파서가 있으면 파일별 preflight 후 process/pid/message 등 UI 보강 필드 추출
-
-커스텀 파서 미적용/부재 시 기존 휴리스틱으로 안전 폴백

@@ -138,7 +138,10 @@ export type H2W =
   /** 파일 병합 저장 완료/정보 */
   | Envelope<'logmerge.saved', MergeSavedInfo>
   /** 병합 진행률(증분/완료) */
-  | Envelope<'merge.progress', { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean }>
+  | Envelope<
+      'merge.progress',
+      { inc?: number; total?: number; done?: number; active?: boolean; reset?: boolean }
+    >
   /** 병합 단계 알림(시작/완료/안내 텍스트) */
   | Envelope<'merge.stage', { text: string; kind?: 'start' | 'done' | 'info'; at?: number }>
 

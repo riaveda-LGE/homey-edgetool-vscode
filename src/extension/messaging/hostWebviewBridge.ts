@@ -11,7 +11,13 @@ type Handler = (msg: W2H, api: BridgeAPI) => Promise<void> | void;
 
 export type MergeReporter = {
   onStage: (text: string, kind?: 'start' | 'done' | 'info') => void;
-  onProgress: (args: { inc?: number; done?: number; total?: number; active?: boolean; reset?: boolean }) => void;
+  onProgress: (args: {
+    inc?: number;
+    done?: number;
+    total?: number;
+    active?: boolean;
+    reset?: boolean;
+  }) => void;
 };
 
 export type BridgeOptions = {
@@ -52,7 +58,7 @@ export class HostWebviewBridge {
 
   // ── 진행률 스로틀(100ms) ──────────────────────────────────────────────
   private progressLatest: { done?: number; total?: number; active?: boolean } = {};
-  private progressIncAcc = 0;           // 100ms 동안 inc 누적
+  private progressIncAcc = 0; // 100ms 동안 inc 누적
   private progressResetPending = false; // reset 1회 패스
   private progressLastSentKey = '';
   private progressTimer?: NodeJS.Timeout;
@@ -292,27 +298,48 @@ export class HostWebviewBridge {
 
             const controller = new AbortController();
             if (abortKey) this.registerAbort(abortKey, controller);
+            // 정규식 사전 컴파일(실패 시 즉시 에러 반환)
+            let re: RegExp | null = null;
+            if (regex) {
+              try {
+                // 존재 여부만 보면 되므로 'g' 불필요. 대소문자 옵션은 i 플래그로 처리.
+                re = new RegExp(query, caseSensitive ? '' : 'i');
+              } catch (err) {
+                this.send({
+                  v: 1,
+                  type: 'error',
+                  payload: { code: 'INVALID_REGEX', message: String(err), inReplyTo: anyMsg.id },
+                } as any);
+                return;
+              }
+            }
 
             // 검색 결과 수집 (간단 구현)
             const hits: { idx: number; text: string }[] = [];
-            const total = await paginationService.getFilteredTotal() || 0;
+            const total = (await paginationService.getFilteredTotal()) || 0;
 
             for (let idx = 1; idx <= total && !controller.signal.aborted; idx++) {
               try {
                 const page = await paginationService.readRangeByIdx(idx, idx);
                 if (page.length > 0) {
                   const log = page[0];
-                  const text = `${log.level} ${log.text}`;
-                  const searchText = caseSensitive ? text : text.toLowerCase();
-                  const searchQuery = caseSensitive ? query : query.toLowerCase();
+                  const rawLevel = (log as any)?.level;
+                  const rawText = (log as any)?.text ?? '';
+                  const text =
+                    typeof rawLevel === 'string' && rawLevel.length > 0
+                      ? `${rawLevel} ${rawText}`
+                      : String(rawText);
 
                   if (regex) {
-                    const re = new RegExp(searchQuery, caseSensitive ? 'g' : 'gi');
-                    if (re.test(searchText)) {
+                    if (re!.test(text)) {
                       hits.push({ idx, text });
                     }
-                  } else if (searchText.includes(searchQuery)) {
-                    hits.push({ idx, text });
+                  } else {
+                    const hay = caseSensitive ? text : text.toLowerCase();
+                    const needle = caseSensitive ? query : query.toLowerCase();
+                    if (hay.includes(needle)) {
+                      hits.push({ idx, text });
+                    }
                   }
                 }
               } catch {
@@ -322,10 +349,19 @@ export class HostWebviewBridge {
 
             if (!controller.signal.aborted) {
               this.searchHits = hits;
-              this.send({ v: 1, type: 'logs.search.result', payload: { hits, total: hits.length } } as any);
+              this.send({
+                v: 1,
+                type: 'logs.search.result',
+                payload: { hits, total: hits.length },
+              } as any);
             }
-          } catch (e) {
-            this.sendError(e, anyMsg.id);
+          } catch (e: any) {
+            const message = e?.message || String(e);
+            this.send({
+              v: 1,
+              type: 'error',
+              payload: { code: 'SEARCH_ERROR', message, inReplyTo: anyMsg.id },
+            } as any);
           }
           return;
         }
@@ -386,7 +422,7 @@ export class HostWebviewBridge {
               throw new Error('Invalid jump request: idx required');
             }
 
-            const total = await paginationService.getFilteredTotal() || 0;
+            const total = (await paginationService.getFilteredTotal()) || 0;
             if (idx < 1 || idx > total) {
               throw new Error(`Index out of range: ${idx}, total: ${total}`);
             }
@@ -404,7 +440,7 @@ export class HostWebviewBridge {
                 startIdx = Math.max(1, endIdx - windowSize + 1);
                 break;
               case 'center':
-              default:
+              default: {
                 const halfWindow = Math.floor(windowSize / 2);
                 startIdx = Math.max(1, idx - halfWindow);
                 endIdx = Math.min(total, startIdx + windowSize - 1);
@@ -412,6 +448,7 @@ export class HostWebviewBridge {
                   startIdx = Math.max(1, endIdx - windowSize + 1);
                 }
                 break;
+              }
             }
 
             const page = await paginationService.readRangeByIdx(startIdx, endIdx);
@@ -633,7 +670,8 @@ export class HostWebviewBridge {
           // 최신값만 보관 → 100ms마다 변화 시에만 송신
           if (typeof args.inc === 'number') this.progressIncAcc += Math.max(0, args.inc | 0);
           if (typeof args.done === 'number') this.progressLatest.done = Math.max(0, args.done | 0);
-          if (typeof args.total === 'number') this.progressLatest.total = Math.max(0, args.total | 0);
+          if (typeof args.total === 'number')
+            this.progressLatest.total = Math.max(0, args.total | 0);
           if (typeof args.active === 'boolean') this.progressLatest.active = args.active;
           if (args.reset === true) this.progressResetPending = true;
           this.startProgressTicker();

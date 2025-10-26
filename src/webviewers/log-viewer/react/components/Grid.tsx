@@ -423,7 +423,16 @@ export function Grid() {
     const list = listRef.current;
     if (!el || !list) return;
     const headerOffset = list.offsetTop || 0;
-    const endIdx = m.windowStart + m.rows.length - 1;
+    // ⚠️ 리프레시 직후 rows가 비어 있을 수 있다.
+    //    이 때 endIdx=0 앵커가 발생해 상단으로 튀는 현상을 방지한다.
+    const hasRows = (m.rows?.length ?? 0) > 0;
+    // rows가 비어있으면, 현재 총 행수 기준으로 하단을 계산한다(유효 totalRows가 없으면 앵커 생략).
+    const fallbackEndIdx = Math.max(1, m.totalRows || 0);
+    const endIdx = hasRows ? (m.windowStart + m.rows.length - 1) : fallbackEndIdx;
+    if (!hasRows && endIdx <= 0) {
+      // 총행수도 모르거나 0이면 아직 앵커링하지 않는다.
+      return;
+    }
     const target = headerOffset + endIdx * Math.max(1, m.rowH) - el.clientHeight;
     ignoreScrollRef.current = true;
     lastWindowStartChangeTimeRef.current = Date.now();
@@ -435,6 +444,21 @@ export function Grid() {
       ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`),
     );
   };
+
+  // ── 리프레시 직후 빈 화면 완화: totalRows만 갱신되고 rows는 비어있을 때, 즉시 테일 구간 요청 ──
+  useEffect(() => {
+    // 조건:
+    //  - 총행수(totalRows)는 존재
+    //  - 현재 로우는 비어 있음(리프레시 직후 과도기)
+    //  - 바닥 팔로우가 켜져 있거나(보통 기본) 최초 앵커링 전
+    if ((m.totalRows ?? 0) > 0 && (m.rows?.length ?? 0) === 0 && (m.follow || !initialAnchoredRef.current)) {
+      const endIdx = Math.max(1, m.totalRows);
+      const startIdx = Math.max(1, endIdx - m.windowSize + 1);
+      const payload = `refresh:auto start=${startIdx} end=${endIdx} total=${m.totalRows}`;
+      // 리프레시 직후엔 스크롤 속도가 없으므로 기본 딜레이로 즉시 요청
+      schedulePageRequest(startIdx, endIdx, payload, { delayMs: BASE_DEBOUNCE_MS, isDragging: false });
+    }
+  }, [m.totalRows, m.rows?.length, m.follow, m.windowSize]);
 
   // (1) FOLLOW=true일 때 바닥으로 앵커링:
   //  - 현재 커버리지의 바닥이 전체 tail이 아니면 마지막 페이지를 요청

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // ⛔️ host utils가 아니라 webview 전용 utils를 사용해야 함
-import { createUiLog, createUiMeasure } from '../../shared/utils';
+import { createUiMeasure } from '../../shared/utils';
 import { useLogStore } from './store';
 
 declare const acquireVsCodeApi: () => {
@@ -11,7 +11,6 @@ declare const acquireVsCodeApi: () => {
 };
 
 export const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
-const ui = createUiLog(vscode, 'log-viewer-react');
 // 웹뷰 성능 계측기 (호스트로 perfMeasure 이벤트 전달)
 const measureUi = createUiMeasure(vscode, {
   source: 'log-viewer-react',
@@ -37,15 +36,15 @@ const ZLogEntry = z.object({
 // 현재 세션(version) 추적
 let CURRENT_SESSION_VERSION: number | undefined;
 function updateSessionVersion(next: number | undefined, origin: string) {
-  ui.debug?.('[debug] updateSessionVersion: start');
+  // quiet
   const prev = CURRENT_SESSION_VERSION;
   if (typeof next === 'number' && next !== prev) {
     CURRENT_SESSION_VERSION = next;
-    ui.info(`session.version ← ${next} (prev=${prev ?? 'n/a'}, origin=${origin})`);
+    // quiet
   } else {
-    ui.debug?.(`session.version keep ${prev ?? 'n/a'} (origin=${origin}, next=${next ?? 'n/a'})`);
+    // quiet
   }
-  ui.debug?.('[debug] updateSessionVersion: end');
+  // quiet
 }
 
 // 병합 진행 상태 게이트(완료 후 불필요한 후행 progress 무시)
@@ -55,18 +54,18 @@ let MERGE_ACTIVE = false;
 let READY_FOR_FILTER = false;
 let PENDING_FILTER: { pid: string; src: string; proc: string; msg: string } | null = null;
 function setReadyForFilter() {
-  ui.debug?.('[debug] setReadyForFilter: start');
+  // quiet
   if (!READY_FOR_FILTER) {
     READY_FOR_FILTER = true;
-    ui.info('filter: ready — flushing any pending filter');
+    // quiet
     if (PENDING_FILTER) flushFilter(PENDING_FILTER);
     PENDING_FILTER = null;
   }
-  ui.debug?.('[debug] setReadyForFilter: end');
+  // quiet
 }
 
 export function setupIpc() {
-  ui.debug?.('ipc.setupIpc: start');
+  // quiet
   // 1) 사용자 환경설정 요청
   vscode?.postMessage({ v: 1, type: 'prefs.load', payload: {} });
   // 2) 최신 브리지와의 핸드셰이크 (hostWebviewBridge가 viewer.ready를 대기)
@@ -87,13 +86,9 @@ export function setupIpc() {
           updateSessionVersion(version, 'logs.state');
           // 최초 1회만 info, 이후는 debug로 하향
           if ((setupIpc as any).__stateOnceLogged) {
-            ui.debug?.(
-              `logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`,
-            );
+            // quiet
           } else {
-            ui.info(
-              `logs.state: warm=${warm} total=${total ?? 'unknown'} version=${version ?? 'n/a'}`,
-            );
+            // quiet
           }
           (setupIpc as any).__stateOnceLogged = true;
           // ⚠️ 과거엔 warm 일 때만 ready. 파일 기반( warm=false ) 초기 클릭이 묵살되는 이슈가 있어
@@ -147,7 +142,7 @@ export function setupIpc() {
             updateSessionVersion(v, 'logs.batch');
           }
 
-          ui.debug?.(`logs.batch: recv=${rows.length} total=${total ?? 'n/a'} ver=${v ?? 'n/a'}`);
+          // quiet
           // 🚩 정렬 이후 첫 원소의 idx를 startIdx로 사용
           const startIdx = rows.length && typeof rows[0].idx === 'number' ? rows[0].idx! : 1;
           useLogStore.getState().receiveRows(startIdx, rows);
@@ -163,9 +158,7 @@ export function setupIpc() {
           const version = typeof payload?.version === 'number' ? payload.version : undefined;
           const warm = !!payload?.warm;
           updateSessionVersion(version, 'logs.refresh');
-          ui.info(
-            `logs.refresh: reason=${payload?.reason ?? ''} warm=${warm} total=${total} version=${version ?? 'n/a'}`,
-          );
+          // quiet
           useLogStore.getState().setTotalRows(total);
           setReadyForFilter(); // 풀 리인덱스 이후에도 허용
           useLogStore.getState().receiveRows(1, []);
@@ -173,7 +166,7 @@ export function setupIpc() {
           const size = useLogStore.getState().windowSize || 500;
           const endIdx = Math.max(1, total);
           const startIdx = Math.max(1, endIdx - size + 1);
-          ui.info(`refresh: request last page ${startIdx}-${endIdx} total=${total}`);
+          // quiet
           vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
           return;
         }
@@ -184,13 +177,19 @@ export function setupIpc() {
             typeof CURRENT_SESSION_VERSION === 'number' &&
             respVersion !== CURRENT_SESSION_VERSION
           ) {
-            ui.warn(
-              `page.response: IGNORE stale version resp=${respVersion} current=${CURRENT_SESSION_VERSION}`,
-            );
+            // 🔎 디버그: 버전 불일치로 드랍된 응답을 기록하여 원인 추적
+            try {
+              console.debug(
+                `[ipc] logs.page.response dropped due to version mismatch: resp=${respVersion} current=${CURRENT_SESSION_VERSION}`,
+              );
+            } catch {}
             return;
           }
           // 진입 시점에 아직 세션 버전을 모르면(초기 핸드셰이크 경합) 1회 채택
           if (typeof respVersion === 'number' && typeof CURRENT_SESSION_VERSION !== 'number') {
+            try {
+              console.debug(`[ipc] logs.page.response adopt-on-first resp=${respVersion}`);
+            } catch {}
             updateSessionVersion(respVersion, 'logs.page.response(adopt-on-first)');
           }
           const items = z.array(ZLogEntry).parse(payload?.logs ?? []);
@@ -208,9 +207,7 @@ export function setupIpc() {
           const rows = sorted.map((r) => ({ ...r, id: nextId++ }));
           probeRows('page', rows);
           const startIdx = rows.length && typeof rows[0].idx === 'number' ? rows[0].idx! : 1;
-          ui.debug?.(
-            `page: response ${startIdx}-${rows.at(-1)?.idx} count=${rows.length} v=${respVersion ?? 'n/a'}`,
-          );
+          // quiet
           useLogStore.getState().receiveRows(startIdx, rows);
           return;
         }
@@ -230,7 +227,7 @@ export function setupIpc() {
 
           // 완료된 이후의 지연(progress) 신호는 무시(호스트 타이머는 active=false로 정리되어야 함)
           if (!MERGE_ACTIVE && pActive !== true) {
-            ui.debug?.('merge.progress: ignored (merge not active)');
+            // quiet
             return;
           }
           useLogStore.getState().mergeProgress({
@@ -280,14 +277,14 @@ export function setupIpc() {
             idx: Number(h?.idx) || 0,
             text: String(h?.text || ''),
           }));
-          ui.info(`search.results recv hits=${hits.length}`);
+          // quiet
           // q 동기화(+ 닫힘 상태 레이스 방지 로직은 store 쪽에 존재)
           const q = typeof payload?.q === 'string' ? String(payload.q) : undefined;
           useLogStore.getState().setSearchResults(hits, { q });
           return;
         }
         case 'error': {
-          ui.error(`host-error: ${String(payload?.code ?? '')} ${String(payload?.message ?? '')}`);
+          // quiet
           return;
         }
       }
@@ -340,26 +337,26 @@ export function postFilterUpdate(filter: {
   proc?: string;
   msg?: string;
 }) {
-  ui.debug?.('[debug] postFilterUpdate: start');
+  // quiet
   const next = measureUi('ipc.normalizeFilter', () => normalizeFilter(filter));
   if (!READY_FOR_FILTER) {
     PENDING_FILTER = next;
-    ui.info(`filter.update deferred (viewer not ready): ${JSON.stringify(next)}`);
-    ui.debug?.('[debug] postFilterUpdate: end');
+    // quiet
+    // quiet
     return;
   }
   measureUi('ipc.flushFilter', () => flushFilter(next));
-  ui.debug?.('[debug] postFilterUpdate: end');
+  // quiet
 }
 
 function normalizeFilter(f: any) {
-  ui.debug?.('[debug] normalizeFilter: start');
+  // quiet
   const s = (v: any) => String(v ?? '').trim();
   const pid = s(f?.pid);
   const src = s(f?.src);
   const proc = s(f?.proc);
   const msg = s(f?.msg);
-  ui.debug?.('[debug] normalizeFilter: end');
+  // quiet
   return { pid, src, proc, msg };
 }
 
@@ -369,17 +366,12 @@ function isEmptyFilter(f: { pid?: string; src?: string; proc?: string; msg?: str
 }
 
 function flushFilter(next: { pid: string; src: string; proc: string; msg: string }) {
-  ui.debug?.('[debug] flushFilter: start');
+  // quiet
   // 모든 필드가 빈 문자열이면 '해제'로 간주하여 null 전송
-  const payload =
-    isEmptyFilter(next)
-      ? { filter: null }
-      : { filter: next };
-  ui.info(
-    `filter.set → host ${JSON.stringify(payload.filter)}`
-  );
+  const payload = isEmptyFilter(next) ? { filter: null } : { filter: next };
+  // quiet
   vscode?.postMessage({ v: 1, type: 'logs.filter.set', payload });
-  ui.debug?.('[debug] flushFilter: end');
+  // quiet
 }
 
 // ────────────── PROBE: 수신 배치 내용 요약 ──────────────
@@ -391,9 +383,9 @@ function probeRows(
   const head = rows.slice(0, 5).map(fmt).join(' || ');
   const tail = rows.slice(-5).map(fmt).join(' || ');
   const mono = isMonoAsc(rows.map((r) => (typeof r.idx === 'number' ? r.idx : Infinity)));
-  ui.info(`[probe:${tag}] rows=len=${rows.length} idxAsc=${mono}`);
-  ui.debug?.(`[probe:${tag}] head ${head}`);
-  ui.debug?.(`[probe:${tag}] tail ${tail}`);
+  // quiet
+  // quiet
+  // quiet
 }
 function isMonoAsc(a: number[]) {
   for (let i = 1; i < a.length; i++) if (a[i - 1] > a[i]) return false;
