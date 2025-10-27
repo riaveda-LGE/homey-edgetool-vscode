@@ -178,12 +178,11 @@ export class HostWebviewBridge {
             const filter = (msg.payload?.filter ?? null) as LogFilter | null;
             this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
             paginationService.setFilter(filter);
-            const total = warm
-              ? paginationService.getWarmTotal()
-              : paginationService.getFileTotal();
-            const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
-            const endIdx = Math.max(1, total ?? 0);
-            const head = await paginationService.readRangeByIdx(startIdx, endIdx);
+            // ⬇️ 중요: 필터 적용 후의 총계(필터 미적용이면 전체 총계)를 기준으로 total/윈도우 계산
+            const total = (await paginationService.getFilteredTotal()) ?? 0;
+            const startIdx = Math.max(1, total - LOG_WINDOW_SIZE + 1);
+            const endIdx = Math.max(1, total);
+            const head = total > 0 ? await paginationService.readRangeByIdx(startIdx, endIdx) : [];
             this.send({
               v: 1,
               type: 'logs.batch',
@@ -620,10 +619,14 @@ export class HostWebviewBridge {
    * - logs.refresh: 페이지 요청을 즉시 시작하도록 트리거
    */
   @measure()
-  private kickIfReady(origin: 'bridge.start' | 'viewer.ready') {
+  private async kickIfReady(origin: 'bridge.start' | 'viewer.ready') {
     try {
       const warm = paginationService.isWarmupActive();
-      const total = warm ? paginationService.getWarmTotal() : paginationService.getFileTotal();
+      // 필터 활성 시에는 필터 총계를, 아니면 전체 총계를 보낸다.
+      const filteredTotal = await paginationService.getFilteredTotal();
+      const total = typeof filteredTotal === 'number'
+        ? filteredTotal
+        : (warm ? paginationService.getWarmTotal() : paginationService.getFileTotal());
       const version = paginationService.getVersion();
       const manifestDir = paginationService.getManifestDir();
 

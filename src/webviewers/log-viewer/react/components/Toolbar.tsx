@@ -74,26 +74,6 @@ export function Toolbar() {
 
   return (
     <>
-      <Popover className="tw-relative">
-        <Popover.Button className="tw-px-2 tw-py-1 tw-rounded-2xl tw-bg-[var(--accent)] tw-text-[var(--accent-fg)] hover:tw-bg-[var(--accent-hover)]">
-          하이라이트
-        </Popover.Button>
-        <Transition
-          enter="tw-transition tw-duration-100 tw-ease-out"
-          enterFrom="tw-opacity-0 tw-translate-y-1"
-          enterTo="tw-opacity-100 tw-translate-y-0"
-          leave="tw-transition tw-duration-75 tw-ease-in"
-          leaveFrom="tw-opacity-100 tw-translate-y-0"
-          leaveTo="tw-opacity-0 tw-translate-y-1"
-        >
-          <Popover.Panel className="tw-absolute tw-z-10 tw-mt-2 tw-w-[380px] tw-rounded-2xl tw-border tw-border-[var(--border)] tw-bg-[var(--panel)] tw-p-3 tw-shadow-xl">
-            <HighlightPopover />
-          </Popover.Panel>
-        </Transition>
-      </Popover>
-
-      <span className="tw-w-px tw-h-6 tw-bg-[var(--border)] tw-mx-2" />
-
       {(['time', 'proc', 'pid', 'src', 'msg'] as const).map((id) => (
         <label key={id} className="tw-inline-flex tw-items-center tw-gap-1">
           <input
@@ -164,7 +144,9 @@ export function Toolbar() {
         )}
       </div>
 
-      {/* 검색: 인라인 입력 제거 → 버튼 + 팝업 */}
+      <span className="tw-w-px tw-h-6 tw-bg-[var(--border)] tw-mx-2" />
+      {/* 오른쪽 버튼 그룹: 검색 → 필터 → 북마크 → 하이라이트 → 맨 아래로 */}
+      {/* 검색 */}
       <button
         className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
         onClick={() => {
@@ -188,6 +170,7 @@ export function Toolbar() {
         }}
       />
 
+      {/* 필터 */}
       <button
         className={[
           'tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-relative',
@@ -204,6 +187,47 @@ export function Toolbar() {
       >
         {`필터${activeCount > 0 ? `(${activeCount})` : ''}`}
       </button>
+
+      {/* 북마크 */}
+      <button
+        className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
+        onClick={() => {
+          toggleBookmarksPane();
+          vscode?.postMessage({
+            v: 1,
+            type: 'prefs.save',
+            payload: { prefs: { bookmarksOpen: !useLogStore.getState().showBookmarks } },
+          });
+        }}
+      >
+        북마크
+      </button>
+
+      {/* 하이라이트 (흰색 사각형 버튼 + 팝오버) */}
+      <Popover className="tw-relative">
+        <Popover.Button className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]">
+          하이라이트
+        </Popover.Button>
+        <Transition
+          enter="tw-transition tw-duration-100 tw-ease-out"
+          enterFrom="tw-opacity-0 tw-translate-y-1"
+          enterTo="tw-opacity-100 tw-translate-y-0"
+          leave="tw-transition tw-duration-75 tw-ease-in"
+          leaveFrom="tw-opacity-100 tw-translate-y-0"
+          leaveTo="tw-opacity-0 tw-translate-y-1"
+        >
+          {/*
+            버튼 이동에 상관없이 항상 버튼 '아래·오른쪽 정렬'로 표시
+            - top-full: 버튼 높이만큼 아래에 위치
+            - right-0 left-auto: 오른쪽 모서리에 맞춤(우측 넘침 방지)
+          */}
+          <Popover.Panel className="tw-absolute tw-z-10 tw-top-full tw-mt-2 tw-right-0 tw-left-auto tw-w-[380px] tw-max-w-[92vw] tw-rounded-2xl tw-border tw-border-[var(--border)] tw-bg-[var(--panel)] tw-p-3 tw-shadow-xl">
+            <HighlightPopover />
+          </Popover.Panel>
+        </Transition>
+      </Popover>
+
+      {/* 맨 아래로(팔로우 토글) */}
       <button
         className={[
           'tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)] tw-relative',
@@ -225,19 +249,6 @@ export function Toolbar() {
             {newSincePause > 99 ? '99+' : newSincePause}
           </span>
         )}
-      </button>
-      <button
-        className="tw-text-sm tw-px-2 tw-py-1 tw-rounded tw-border tw-border-[var(--border)]"
-        onClick={() => {
-          toggleBookmarksPane();
-          vscode?.postMessage({
-            v: 1,
-            type: 'prefs.save',
-            payload: { prefs: { bookmarksOpen: !useLogStore.getState().showBookmarks } },
-          });
-        }}
-      >
-        북마크
       </button>
       <FilterDialog
         open={filterOpen}

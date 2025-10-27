@@ -80,6 +80,10 @@ class PaginationService {
   isFilterActive() {
     return !!(this.filter && Object.values(this.filter).some((v) => !!(v && String(v).trim())));
   }
+  /** 현재 필터가 활성인지 외부에서 사용하기 쉽도록 boolean 반환 */
+  public get isActive(): boolean {
+    return this.isFilterActive();
+  }
   getFilter() {
     return this.filter;
   }
