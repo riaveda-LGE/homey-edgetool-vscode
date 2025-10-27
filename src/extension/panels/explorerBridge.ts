@@ -177,8 +177,7 @@ class WatcherManager {
     if (this.state.root) {
       try {
         this.state.root.dispose();
-      } catch (e) {
-      }
+      } catch (e) {}
       this.state.root = undefined;
     }
   }

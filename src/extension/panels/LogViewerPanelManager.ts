@@ -207,12 +207,21 @@ export class LogViewerPanelManager {
       onMetrics: (m) => this._send('metrics.update', m),
 
       // 정식 병합(T1) 완료 → UI 하드리프레시
-      onRefresh: ({ total, version }) => {
-        // quiet
+      onRefresh: ({
+        total,
+        version,
+        warm,
+      }: {
+        total?: number;
+        version?: number;
+        warm?: boolean;
+      }) => {
+        // warm=true면 “정식 병합 스킵(메모리 모드 완료)”을 명시로 알림
         this._send('logs.refresh', {
           reason: 'full-reindex',
           total,
           version,
+          warm: !!warm,
         });
       },
 
@@ -251,9 +260,33 @@ export class LogViewerPanelManager {
           this.progLastLogMs = 0;
         }
       },
-      onStage: (text, kind) => reporter?.onStage?.(text, kind),
+      // stage 신호 중 "정식 병합 스킵: ..." 완료를 감지하면 warm refresh를 보강 전송
+      onStage: (text, kind) => {
+        reporter?.onStage?.(text, kind);
+        this._handleStageAndMaybeWarmRefresh(text, kind);
+      },
     });
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: end');
+  }
+
+  /**
+   * 병합 단계(stage) 신호를 UI로 중계하면서, "스킵 완료"를 감지하면
+   * logs.refresh(warm=true)도 함께 보내 사후 처리를 통일한다.
+   * - 과거에는 Manager 경로에서 스킵을 조기 결정하여 완료 신호가 누락될 수 있었음.
+   * - 이제는 mergeDirectory에서 스킵을 결정하고 stage 'done'을 보내지만,
+   *   혹시 호출자 레이어에서 refresh를 놓쳐도 이 레이어가 보강한다.
+   */
+  private _handleStageAndMaybeWarmRefresh(text?: string, kind?: 'start' | 'done' | 'info') {
+    const t = String(text || '');
+    // 완료 시그널이면서 "정식 병합 스킵" 텍스트를 포함하면 warm 리프레시를 보낸다.
+    if (kind === 'done' && /정식\s*병합\s*스킵/.test(t)) {
+      const total = paginationService.getWarmTotal();
+      const version = paginationService.getVersion();
+      this.log.info(
+        `viewer: warm-skip detected → sending logs.refresh(warm=true) total=${total} v=${version}`,
+      );
+      this._send('logs.refresh', { reason: 'full-reindex', total, version, warm: true });
+    }
   }
 
   @measure()

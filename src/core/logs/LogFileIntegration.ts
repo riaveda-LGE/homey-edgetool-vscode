@@ -1,10 +1,15 @@
 // === src/core/logs/LogFileIntegration.ts ===
+// NOTE: 이 파일은 "스킵 로직의 단일 권위(Single Source of Truth)"를 가진다.
 import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import type { FileHandle } from 'fs/promises';
 import * as path from 'path';
 
-import { DEFAULT_BATCH_SIZE, MERGED_DIR_NAME } from '../../shared/const.js';
+import {
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_MEMORY_MODE_TRESHOLD,
+  MERGED_DIR_NAME,
+} from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measureBlock } from '../logging/perf.js';
@@ -114,8 +119,18 @@ class YearlessStitcher {
 // Manager 선행 웜업 호출을 위해 필요한 필드만 분리(+ whitelist 지원)
 export type WarmupOptions = Pick<
   MergeOptions,
-  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget' | 'whitelistGlobs' | 'parser'
+  'dir' | 'signal' | 'warmupPerTypeLimit' | 'memory_mode_threshold' | 'whitelistGlobs' | 'parser'
 >;
+
+// 웜업 결과(보수적 스킵 결정을 위해 fullyCovered 정보 포함)
+export type WarmupResult = {
+  /** 유효 라인만 포함된 웜업 결과 */
+  logs: LogEntry[];
+  /** 각 타입이 모두 소진되었는지 (남은 라인이 없는지) */
+  fullyCovered: boolean;
+  /** 타입별 유효 라인/소진 여부 (디버깅 및 메트릭) */
+  perType?: Record<string, { valid: number; exhausted: boolean }>;
+};
 
 export type MergeOptions = {
   dir: string;
@@ -136,8 +151,8 @@ export type MergeOptions = {
   onProgress?: (args: { done?: number; total?: number; active?: boolean }) => void;
   /** warmup 모드일 때 타입별 최대 선행 읽기 라인수 (기본: 500 등) */
   warmupPerTypeLimit?: number;
-  /** warmup 모드일 때 최초 즉시 방출 목표치 (기본: 500) */
-  warmupTarget?: number;
+  /** 웜업 목표치/메모리 모드 임계값 (기본: DEFAULT_MEMORY_MODE_TRESHOLD) */
+  memory_mode_threshold?: number;
   /** 커스텀 파서 설정에서 온 files 화이트리스트(glob). 지정되면 여기에 매칭되는 파일만 수집 */
   whitelistGlobs?: string[];
   parser?: import('./ParserEngine.js').ParserConfig;
@@ -147,6 +162,13 @@ export type MergeOptions = {
    * - 복원된 **헤더 기반**으로 parseTs 재적용(메시지 내부 ISO 타임스탬프 무시, 정렬 일관성 유지)
    */
   preserveFullText?: boolean;
+  /**
+   * (선택) 최종 완료 신호 — 파일 병합 완료 또는 메모리 모드 스킵 완료 시 한 번 호출.
+   * 호출자는 이 신호를 받아 UI 리프레시(logs.refresh 등)를 통일되게 처리할 수 있다.
+   * - mode: 'file' (정식 병합 완료) | 'memory' (스킵-메모리 모드 완료)
+   * - total: 알려진 총량(가능하면). memory 모드인 경우 warm 개수 또는 추정치.
+   */
+  onFinalize?: (r: { mode: 'file' | 'memory'; total?: number; reason?: string }) => void;
 };
 
 /**
@@ -159,8 +181,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
     // 파서 컴파일
 
-    // (참고) 전체 예상 총량 — 진행률 표시에 사용
-    let totalEstimated: number | undefined = undefined;
+    let totalEstimated: number | undefined = undefined; // 진행률 표시에 사용
 
     const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
     // 화이트리스트(files 토큰) → "베이스네임" 매칭 정규식 셋으로 변환
@@ -169,50 +190,131 @@ export async function mergeDirectory(opts: MergeOptions) {
       : undefined;
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 0) (호환) 워밍업 선행패스
-    //    Manager-선행 웜업 경로에서는 mergeDirectory를 warmup:false로 호출하므로 여기 미실행
-    if (
-      opts.warmup &&
-      (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')
-    ) {
-      opts.onStage?.('Warmup 병합 시작', 'start');
+    // configure.memory_mode_threshold 해석 (+ warmupTarget 기본값으로 사용)
+    //   - parser.configure.memory_mode_threshold 가 유효하면 warmupTarget 기본값으로 사용
+    //   - T1(SKIP) 사전 결정에 활용
+    const memoryModeThreshold = getMemoryModeThresholdFromParser(opts.parser);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 사전 총량 추정: SKIP 결정을 위해 선행 계산(가능한 경우)
+    //  - countTotalLinesInDir 는 빠르게 동작하도록 최적화되어 있음
+    //  - 실패해도 무시(추정 불가 시 warm.fullyCovered 로 보조 판단)
+    const preEstimate = await (async () => {
       try {
-        const warmLogs = await warmupTailPrepass({
-          dir: opts.dir,
-          signal: opts.signal,
-          warmupPerTypeLimit: opts.warmupPerTypeLimit,
-          warmupTarget: opts.warmupTarget,
-        });
-        if (warmLogs.length) {
-          if (opts.onWarmupBatch) opts.onWarmupBatch(warmLogs);
-          else opts.onBatch(warmLogs);
-          opts.onStage?.('초기 배치 전달', 'info');
-          opts.onProgress?.({ done: warmLogs?.length ?? 0, active: true });
-          log.info(`warmup: delivered initial batch (n=${warmLogs.length})`);
-        } else {
-          log.debug?.('warmup: skipped or not enough lines');
+        const estimated = await countTotalLinesInDir(opts.dir, allowPathRegexes);
+        const total = Math.max(0, Number(estimated?.total ?? 0));
+        return total;
+      } catch {
+        return undefined;
+      }
+    })();
+    if (typeof preEstimate === 'number' && preEstimate > 0) {
+      totalEstimated = preEstimate;
+      opts.onProgress?.({ total: totalEstimated, active: true });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 0) 단일 권위의 스킵 판단 + (필요 시) 초기 워밍업 배치 방출
+    //    - 이전에는 Manager/mergeDirectory 양쪽에서 스킵을 판단하여 사후 처리 누락 위험이 있었음
+    //    - 이제 스킵 판단은 mergeDirectory 한 곳에서만 수행한다.
+    {
+      const threshold =
+        opts.memory_mode_threshold ?? memoryModeThreshold ?? DEFAULT_MEMORY_MODE_TRESHOLD;
+
+      // 워밍업 프리패스는 (a) 명시적으로 warmup 요청이 있거나 (b) 스킵 결정을 위해 필요할 때 실행
+      const needWarmupForDecision = typeof preEstimate !== 'number';
+      const shouldRunWarmup = opts.warmup || needWarmupForDecision;
+
+      let warmLogs: LogEntry[] = [];
+      let warmFullyCovered = false;
+
+      if (shouldRunWarmup) {
+        opts.onStage?.('Warmup 병합 시작', 'start');
+        try {
+          const warm = await warmupTailPrepass({
+            dir: opts.dir,
+            signal: opts.signal,
+            warmupPerTypeLimit: opts.warmupPerTypeLimit,
+            memory_mode_threshold: threshold,
+            whitelistGlobs: opts.whitelistGlobs,
+            parser: opts.parser,
+          });
+          warmLogs = warm.logs || [];
+          warmFullyCovered = !!warm.fullyCovered;
+
+          // ⛳️ 시드(서버 메모리)와 UI 초기 배치를 분리한다.
+          //     - onWarmupBatch: 전체 warm 세트(시드 전용, 화면 미전송)
+          //     - onBatch:      화면을 즉시 채울 1차 배치(기본 200줄)
+          if (warmLogs.length) {
+            // 1) 시드 방출(항상) — PaginationService가 받아 warmBuffer에 심는다.
+            if (opts.onWarmupBatch) {
+              opts.onWarmupBatch(warmLogs);
+            }
+            // 2) 초기 배치(옵션) — 명시적 warmup 요청이 있을 때만 즉시 화면에 보낸다.
+            if (opts.warmup) {
+              const initial = warmLogs.slice(0, DEFAULT_BATCH_SIZE);
+              if (initial.length) {
+                opts.onBatch(initial);
+                opts.onStage?.('초기 배치 전달', 'info');
+                opts.onProgress?.({ done: initial.length, active: true });
+                log.info(`warmup: delivered initial UI batch (n=${initial.length})`);
+              }
+            }
+          } else {
+            log.debug?.('warmup: skipped or not enough lines');
+          }
+          opts.onStage?.('Warmup 병합 완료', 'done');
+        } catch (e: any) {
+          log.warn(`warmup: failed (${e?.message ?? e}) — fallback to full merge`);
+          warmLogs = [];
+          warmFullyCovered = false;
         }
-        opts.onStage?.('Warmup 병합 완료', 'done');
-      } catch (e: any) {
-        log.warn(`warmup: failed (${e?.message ?? e}) — fallback to full merge`);
+      }
+
+      const shouldSkipByPreEstimate =
+        typeof threshold === 'number' &&
+        typeof preEstimate === 'number' &&
+        preEstimate <= threshold;
+      const shouldSkipByWarmCover =
+        typeof threshold === 'number' && warmFullyCovered && warmLogs.length <= threshold;
+
+      if (shouldSkipByPreEstimate || shouldSkipByWarmCover) {
+        // 스킵 경로 — 메모리 모드로 종료(사후 처리 포함)
+        const reason = shouldSkipByPreEstimate ? 'pre-estimate' : 'warmup-covered';
+
+        log.info(
+          `mergeDirectory: SKIP T1 (memory-mode) reason=${reason} ` +
+            `(total=${preEstimate ?? warmLogs.length}, threshold=${threshold})`,
+        );
+        // 진행률 종료 신호
+        const doneTotal = typeof preEstimate === 'number' ? preEstimate : warmLogs.length;
+        opts.onProgress?.({ done: doneTotal, total: doneTotal, active: false });
+        // 최종 단계 알림 (메모리 모드)
+        opts.onStage?.('정식 병합 스킵: 메모리 모드로 완료', 'done');
+        // warmup이 아직 방출되지 않았다면(명시적 warmup=false) 여기서라도 방출해 초기 화면이 비지 않도록 한다.
+        if (warmLogs.length && !opts.warmup) {
+          // 스킵 경로에서도: 시드→초기배치 순으로 분리
+          if (opts.onWarmupBatch) {
+            opts.onWarmupBatch(warmLogs);
+          }
+          const initial = warmLogs.slice(0, DEFAULT_BATCH_SIZE);
+          if (initial.length) {
+            opts.onBatch(initial);
+            log.info(`warmup: delivered initial UI batch (implicit, n=${initial.length})`);
+          }
+        }
+        // 호출자에게 통합된 완료 신호 제공(선택)
+        try {
+          opts.onFinalize?.({ mode: 'memory', total: doneTotal, reason });
+        } catch {}
+        return; // ★ 여기서 조기 종료 → T1(디스크 병합) 생략
       }
     }
 
     // ── 2) 기존 k-way/표준 패스 그대로 ───────────────────────────────────
     // 입력 로그(.log/.log.N/.txt) 수집 (루트만/비재귀)
     const files = await listInputLogFiles(opts.dir, allowPathRegexes);
-    // start: quietened
-    try {
-      // 진행률 총량 추정(라인 수 총합). 큰 폴더에서도 빠르게 동작하도록 구현되어 있음.
-      const estimated = await countTotalLinesInDir(opts.dir, allowPathRegexes);
-      totalEstimated = Math.max(0, Number(estimated?.total ?? 0));
-      if (totalEstimated === 0) totalEstimated = undefined;
-      if (totalEstimated !== undefined) {
-        opts.onProgress?.({ total: totalEstimated, active: true });
-      }
-    } catch {
-      // 총량 추정 실패는 무시(진행률은 done-only로 동작)
-    }
+    // start: quietened — 위에서 이미 총량 추정을 시도했으므로 여기서는 중복 계산 생략
     if (!files.length) {
       log.warn('mergeDirectory: no log files to merge');
       return;
@@ -605,6 +707,9 @@ export async function mergeDirectory(opts: MergeOptions) {
     // quiet
     // 완료
     opts.onStage?.('로그병합 완료', 'done');
+    try {
+      opts.onFinalize?.({ mode: 'file', total: emitted, reason: 'file-merge' });
+    } catch {}
 
     if (emitted > 0) {
       opts.onProgress?.({ done: emitted, total: totalEstimated, active: false });
@@ -1252,28 +1357,35 @@ function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
 // - 타입별 버퍼는 최신→오래된 순으로 수집 후 타임존 보정, 보정 후 최신순(ts desc) 정렬
 // - 최종 k-way 병합으로 정확히 target개만 반환
 // ⬇️ Manager에서 직접 호출할 수 있도록 export + LogEntry[] 반환
-export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]> {
+export async function warmupTailPrepass(opts: WarmupOptions): Promise<WarmupResult> {
   return measureBlock('logs.warmupTailPrepass', async function () {
     const { dir, signal } = opts;
     log.debug?.(`warmupTailPrepass: start dir=${dir}`);
     const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
-    const target = Math.max(1, Number(opts.warmupTarget ?? 500));
+    const target = Math.max(
+      1,
+      Number(
+        opts.memory_mode_threshold ??
+          getMemoryModeThresholdFromParser(opts.parser) ??
+          DEFAULT_MEMORY_MODE_TRESHOLD,
+      ),
+    );
     const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
       ? Math.max(1, Number(opts.warmupPerTypeLimit))
       : Number.POSITIVE_INFINITY;
     const aborted = () => !!signal?.aborted;
-    if (aborted()) return [];
+    if (aborted()) return { logs: [], fullyCovered: false };
 
     // 1) 입력 로그 파일 수집(화이트리스트 반영) → 타입별 그룹화(회전 파일 포함)
     const allowPathRegexes = opts.whitelistGlobs?.length
       ? compileWhitelistPathRegexes(opts.whitelistGlobs)
       : undefined;
     const names = await listInputLogFiles(dir, allowPathRegexes);
-    if (!names.length) return [];
+    if (!names.length) return { logs: [], fullyCovered: true };
     const grouped = groupByType(names); // key: type, val: ['x.log', 'x.log.1', ...]
     const typeKeys = [...grouped.keys()];
     const T = typeKeys.length;
-    if (!T) return [];
+    if (!T) return { logs: [], fullyCovered: true };
 
     // 2) 균등 + remainder 분배 (cap 고려)
     const base = Math.floor(target / T);
@@ -1477,7 +1589,8 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
       // quiet
     }
 
-    if (total === 0) return [];
+    if (total === 0)
+      return { logs: [], fullyCovered: typeKeys.every((k) => walkers.get(k)!.isExhausted) };
 
     // quiet
     // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
@@ -1549,6 +1662,37 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]
     if (out.length < target) {
       // quiet
     }
-    return out;
+
+    // per-type 통계 및 소진 여부 집계
+    const perType: Record<string, { valid: number; exhausted: boolean }> = {};
+    for (const k of typeKeys) {
+      perType[k] = {
+        valid: buffers.get(k)!.length,
+        exhausted: walkers.get(k)!.isExhausted,
+      };
+    }
+    const fullyCovered = typeKeys.every((k) => walkers.get(k)!.isExhausted);
+
+    return {
+      logs: out,
+      fullyCovered,
+      perType,
+    };
   });
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * configure.memory_mode_threshold 추출기
+ *  - parser.configure.memory_mode_threshold 가 양의 정수면 반환
+ *  - 그 외에는 undefined
+ * ────────────────────────────────────────────────────────────────────────── */
+function getMemoryModeThresholdFromParser(
+  parser?: import('./ParserEngine.js').ParserConfig | any,
+): number | undefined {
+  try {
+    const raw = parser?.configure?.memory_mode_threshold;
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  } catch {}
+  return undefined;
 }

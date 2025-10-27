@@ -5,10 +5,10 @@ import * as path from 'path';
 import * as readline from 'readline';
 
 import { safeParseJson } from '../../shared/utils.js';
+import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import type { LogManifest } from './ManifestTypes.js';
 import { isLogManifest } from './ManifestTypes.js';
-import { getLogger } from '../logging/extension-logger.js';
 
 const log = getLogger('PagedReader');
 
@@ -38,9 +38,7 @@ export class PagedReader {
       const derived = last.start + last.lines;
       if (json.mergedLines !== derived) {
         // 파일에는 그대로 두고 메모리상으로만 보정해 사용
-        log.debug?.(
-          `manifest: mergedLines corrected in-memory ${json.mergedLines} -> ${derived}`,
-        );
+        log.debug?.(`manifest: mergedLines corrected in-memory ${json.mergedLines} -> ${derived}`);
         (json as any).mergedLines = derived;
       }
     }

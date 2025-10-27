@@ -57,7 +57,9 @@ export const MERGE_PROGRESS_THROTTLE_MS = 100;
 export const DEFAULT_BATCH_SIZE = 200;
 /** 테스트 및 외부 모듈에서 참조하는 공식 명칭(별칭). SSOT는 DEFAULT_BATCH_SIZE */
 export const FIRST_BATCH_SIZE = DEFAULT_BATCH_SIZE;
-
+// Memory-mode defaults
+/** 웜업 목표치 및 메모리 모드 임계값의 기본값 */
+export const DEFAULT_MEMORY_MODE_TRESHOLD = 10000;
 export const REALTIME_BUFFER_MAX = 1000;
 export const PERF_DATA_MAX = 1000;
 export const LOG_TOTAL_CALLS_THRESHOLD = 1000;

@@ -13,6 +13,9 @@
     "min_match_ratio": 0.8,
     "hard_skip_if_any_line_matches": ["^=+\\([^)]*\\)=+$", "^(WIFI|BT|CLIP)==>"]
   },
+  "configure": {
+    "memory_mode_threshold": 10000
+  },
   "parser": [
     {
       "file": "system.log.{n}",

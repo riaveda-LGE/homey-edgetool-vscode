@@ -8,7 +8,8 @@ import { vscode } from './ipc';
 import { postFilterUpdate } from './ipc';
 import type { BookmarkItem, ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
 
-const initial: Model = {
+// mergeMode/mergeStage는 Model에 없을 수 있으므로 교차 타입으로 선언
+const initial: Model & { mergeMode?: 'memory' | 'hybrid'; mergeStage?: string } = {
   rows: [],
   nextId: 1,
   bufferSize: 2000,
@@ -36,6 +37,7 @@ const initial: Model = {
   follow: true,
   newSincePause: 0,
   bookmarks: {},
+  mergeMode: 'memory',
 };
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -46,7 +48,7 @@ function stripCounterSuffix(s: string) {
     .replace(/\s*\(\d+\/\d+\)\s*$/, '')
     .trim();
 }
-function computeStageText(base: string, done: number, total: number) {
+function computeStageText(base: string, done?: number, total?: number) {
   const b = stripCounterSuffix(base);
   if (!b) return '';
   return b;
@@ -77,6 +79,7 @@ type Actions = {
     done?: number;
   }): void;
   setMergeStage(text: string): void;
+  setMergeMode(mode: 'memory' | 'hybrid'): void;
   measureUi: ReturnType<typeof createUiMeasure>;
   setFilterField(f: keyof Filter, v: string): void;
   applyFilter(next: Filter): void; // ← 디바운스 후 한 번만 전송
@@ -298,7 +301,8 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       }
       // 완료 시 단계 텍스트 정리(UX: 100% 막대 잔상 제거)
       if (!act) {
-        get().setMergeStage(''); // 완료 시 텍스트 클리어
+        // 완료 후에도 최신 알림을 유지: "병합 완료"
+        set({ ...(get() as any), mergeStage: '병합 완료' } as any);
       } else {
         // 진행 중일 때 현재 stage 텍스트를 진행률과 동기화
         const curStage = (get() as any).mergeStage || '';
@@ -318,6 +322,15 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       // Model 타입과의 충돌을 피하기 위해 any로 저장
       set({ ...(get() as any), mergeStage: synced } as any);
       (get() as any).__ui?.info?.(`merge.stage "${synced}"`);
+    });
+  },
+
+  // ── 모드 토글(웹뷰에서만 사용) ─────────────────────────────────────────
+  setMergeMode(mode) {
+    get().measureUi('store.setMergeMode', () => {
+      const next = (mode === 'hybrid' ? 'hybrid' : 'memory') as 'memory' | 'hybrid';
+      set({ ...(get() as any), mergeMode: next } as any);
+      (get() as any).__ui?.info?.(`store.setMergeMode ${next}`);
     });
   },
 

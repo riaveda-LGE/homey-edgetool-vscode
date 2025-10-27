@@ -47,6 +47,21 @@ function updateSessionVersion(next: number | undefined, origin: string) {
   // quiet
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// 추정치(total) 사용 게이트
+//  - 병합 전: 진행률 이벤트의 total(추정치)을 UI totalRows에 반영할 수 있음
+//  - 병합 완료/파일 기반 전환 후: 추정치 사용을 **금지** (정합성 유지)
+//    · 전환 트리거: logs.refresh / merge.stage(kind='done') / logmerge.saved
+// ────────────────────────────────────────────────────────────────────────────
+let ALLOW_ESTIMATED_TOTAL = true;
+function disallowEstimates(reason: string) {
+  if (!ALLOW_ESTIMATED_TOTAL) return;
+  ALLOW_ESTIMATED_TOTAL = false;
+  try {
+    console.debug(`[ipc] disable estimated totals: ${reason}`);
+  } catch {}
+}
+
 // 병합 진행 상태 게이트(완료 후 불필요한 후행 progress 무시)
 let MERGE_ACTIVE = false;
 
@@ -70,6 +85,10 @@ export function setupIpc() {
   vscode?.postMessage({ v: 1, type: 'prefs.load', payload: {} });
   // 2) 최신 브리지와의 핸드셰이크 (hostWebviewBridge가 viewer.ready를 대기)
   vscode?.postMessage({ v: 1, type: 'viewer.ready', payload: {} } as any);
+  // 3) 기본 모드 확정(명시적으로 '메모리')
+  try {
+    useLogStore.getState().setMergeMode('memory');
+  } catch {}
 
   window.addEventListener('message', (ev) => {
     const parsed = Env.safeParse(ev.data);
@@ -84,6 +103,7 @@ export function setupIpc() {
           const version = typeof payload?.version === 'number' ? payload.version : undefined;
           const warm = !!payload?.warm;
           updateSessionVersion(version, 'logs.state');
+          // 병합 전(워밍업 포함)에는 추정치 허용
           // 최초 1회만 info, 이후는 debug로 하향
           if ((setupIpc as any).__stateOnceLogged) {
             // quiet
@@ -158,10 +178,29 @@ export function setupIpc() {
           const version = typeof payload?.version === 'number' ? payload.version : undefined;
           const warm = !!payload?.warm;
           updateSessionVersion(version, 'logs.refresh');
+          // ✅ 파일 기반 인덱스로 전환된 경우에만 추정치 금지
+          // (kickIfReady에서 warm=false 또는 manifestDir 존재 시)
+          if (!warm) disallowEstimates('logs.refresh(file-index)');
           // quiet
           useLogStore.getState().setTotalRows(total);
+          // 확실히 진행바 닫기
+          useLogStore.getState().mergeProgress({ done: total, total, active: false });
           setReadyForFilter(); // 풀 리인덱스 이후에도 허용
           useLogStore.getState().receiveRows(1, []);
+          // 모드/스테이지 확정:
+          //  - warm=true  → 정식 병합 스킵(메모리 모드에서 완료)
+          //  - warm=false → 파일 기반 인덱스로 전환(하이브리드)
+          try {
+            if (warm) {
+              // 스킵 경로: 모드는 계속 'memory' 로 유지
+              useLogStore.getState().setMergeMode('memory');
+            } else {
+              // 정식 병합 완료(파일 인덱스 가용): 하이브리드로 전환
+              useLogStore.getState().setMergeMode('hybrid');
+            }
+            // 표시 스테이지는 공통적으로 '병합 완료'로 고정
+            useLogStore.getState().setMergeStage('병합 완료');
+          } catch {}
           // ✅ 표시 순서는 오름차순, 초기 관심은 최신 → "마지막 페이지"를 요청
           const size = useLogStore.getState().windowSize || 500;
           const endIdx = Math.max(1, total);
@@ -220,27 +259,27 @@ export function setupIpc() {
           const pInc = typeof payload?.inc === 'number' ? payload.inc : undefined;
           const pReset = payload?.reset === true;
 
-          // MERGE_ACTIVE 토글(시그널 우선)
+          // 닫는 신호 여부 판단
+          const isCloseSignal =
+            pActive === false || (pTotal && pDone !== undefined && pDone >= pTotal);
+          // MERGE_ACTIVE 토글
           if (pActive === true) MERGE_ACTIVE = true;
-          if (pActive === false) MERGE_ACTIVE = false;
-          if (pTotal && pDone !== undefined && pDone >= pTotal) MERGE_ACTIVE = false;
-
-          // 완료된 이후의 지연(progress) 신호는 무시(호스트 타이머는 active=false로 정리되어야 함)
-          if (!MERGE_ACTIVE && pActive !== true) {
-            // quiet
+          if (isCloseSignal) MERGE_ACTIVE = false;
+          // 완료 이후의 후행 progress는 드랍하되, 닫는 신호만은 반드시 전달
+          if (!MERGE_ACTIVE && pActive !== true && !isCloseSignal) {
             return;
           }
           useLogStore.getState().mergeProgress({
             inc: pInc,
             total: pTotal,
-            active: typeof payload?.active === 'boolean' ? payload.active : undefined,
+            active: typeof pActive === 'boolean' ? pActive : undefined,
             done: pDone,
             reset: pReset,
           });
-          // ⬇️ 총로그수(표시용)도 초기에만 추정값으로 세팅
+          // ⬇️ 총로그수(표시용)도 **병합 전(허용 상태)** 에만 추정값으로 세팅
           try {
             const st = useLogStore.getState();
-            if (typeof pTotal === 'number') {
+            if (ALLOW_ESTIMATED_TOTAL && typeof pTotal === 'number') {
               const cur = Number(st.totalRows ?? 0) || 0;
               if (cur === 0 || pTotal > cur) {
                 st.setTotalRows(pTotal);
@@ -254,22 +293,46 @@ export function setupIpc() {
           useLogStore.getState().setMergeStage(text);
           // stage 신호 기반으로도 게이트 토글
           const kind = String(payload?.kind || '');
-          if (kind === 'start') MERGE_ACTIVE = true;
-          if (kind === 'done') MERGE_ACTIVE = false;
+          if (kind === 'start') {
+            MERGE_ACTIVE = true;
+            // 새 병합 세션 시작 → 추정 total 재허용
+            ALLOW_ESTIMATED_TOTAL = true;
+          }
+          if (kind === 'done') {
+            MERGE_ACTIVE = false;
+            // 병합 완료 시점부터 추정치 금지
+            disallowEstimates('merge.stage(done)');
+          }
+          // ── 하이브리드 모드로의 전환 트리거 ──
+          //  - "파일 병합을 시작" / "로그병합 시작"
+          //  - "<type> 로그를 정렬중" (예: "system 로그를 정렬중")
+          try {
+            const t = text.trim();
+            const isHybridSignal =
+              t === '파일 병합을 시작' || t === '로그병합 시작' || /로그를\s*정렬중$/.test(t);
+            if (isHybridSignal) useLogStore.getState().setMergeMode('hybrid');
+          } catch {}
           return;
         }
         case 'logmerge.saved': {
+          disallowEstimates('logmerge.saved');
           const total =
             (typeof payload?.total === 'number' ? payload.total : undefined) ??
             (typeof payload?.merged === 'number' ? payload.merged : undefined);
           if (typeof total === 'number') {
-            const need = Math.max(0, total - useLogStore.getState().mergeDone);
-            useLogStore.getState().mergeProgress({ inc: need, total, active: false });
+            // 최종 수치로 진행률과 총행수를 확정
+            useLogStore.getState().mergeProgress({ done: total, total, active: false });
             useLogStore.getState().setTotalRows(total);
           } else {
-            useLogStore.getState().mergeProgress({ inc: 0, active: false });
+            // 총량 정보가 없으면 진행 상태만 종료
+            useLogStore.getState().mergeProgress({ active: false });
           }
           MERGE_ACTIVE = false;
+          // 완료 문구는 스티키하게 유지
+          try {
+            useLogStore.getState().setMergeStage('병합 완료');
+          } catch {}
+
           return;
         }
         case 'search.results': {

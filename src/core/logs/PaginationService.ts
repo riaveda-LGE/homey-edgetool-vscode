@@ -90,7 +90,9 @@ class PaginationService {
     const changed = prevKey !== nextKey;
     this.filter = norm;
     if (changed) {
-      this.log.debug?.(`pagination.filter.set changed=true prev=${prevKey ?? '∅'} next=${nextKey ?? '∅'}`);
+      this.log.debug?.(
+        `pagination.filter.set changed=true prev=${prevKey ?? '∅'} next=${nextKey ?? '∅'}`,
+      );
       this.invalidateFilterCache('filter.set');
       this.bump('filter.set'); // 실제 변경시에만 bump
     } else {
@@ -107,7 +109,9 @@ class PaginationService {
     const baseKey = JSON.stringify(this.filter);
     const key = `${baseKey}@v${this.version}${this.warmActive ? ':warm' : ':file'}`;
     if (this.filteredCacheKey === key && typeof this.filteredTotalCache === 'number') {
-      this.log.debug?.(`pagination.filter.total cache-hit key=${key} total=${this.filteredTotalCache}`);
+      this.log.debug?.(
+        `pagination.filter.total cache-hit key=${key} total=${this.filteredTotalCache}`,
+      );
       return this.filteredTotalCache;
     }
     // 1) 워밍업
@@ -227,7 +231,9 @@ class PaginationService {
     // placeholder를 유지하도록 한다. 곧 warm 또는 manifest가 준비되면 재요청됨.
     if (!this.reader) {
       if (!this.pendingWarned) {
-        this.log.debug?.('pagination: reader not ready yet (no warm buffer/manifest). returning empty slice.');
+        this.log.debug?.(
+          'pagination: reader not ready yet (no warm buffer/manifest). returning empty slice.',
+        );
         this.pendingWarned = true;
       }
       return [];
@@ -261,7 +267,7 @@ class PaginationService {
         const hint = mf?.totalLines;
         const last = mf?.chunks?.[mf?.chunks?.length - 1];
         this.log.warn(
-          `pagination: empty slice ${s}-${e} (need=${e - s + 1}) phys=${physStart}-${physEndExcl} total(effective)=${total} merged=${merged} hint(totalLines)=${hint} lastChunk=${last?.file || 'n/a'}@${last ? (last.start + '+' + last.lines) : 'n/a'}`,
+          `pagination: empty slice ${s}-${e} (need=${e - s + 1}) phys=${physStart}-${physEndExcl} total(effective)=${total} merged=${merged} hint(totalLines)=${hint} lastChunk=${last?.file || 'n/a'}@${last ? last.start + '+' + last.lines : 'n/a'}`,
         );
       } catch {}
     }

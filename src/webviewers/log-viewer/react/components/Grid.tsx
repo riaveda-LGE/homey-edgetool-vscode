@@ -428,7 +428,7 @@ export function Grid() {
     const hasRows = (m.rows?.length ?? 0) > 0;
     // rows가 비어있으면, 현재 총 행수 기준으로 하단을 계산한다(유효 totalRows가 없으면 앵커 생략).
     const fallbackEndIdx = Math.max(1, m.totalRows || 0);
-    const endIdx = hasRows ? (m.windowStart + m.rows.length - 1) : fallbackEndIdx;
+    const endIdx = hasRows ? m.windowStart + m.rows.length - 1 : fallbackEndIdx;
     if (!hasRows && endIdx <= 0) {
       // 총행수도 모르거나 0이면 아직 앵커링하지 않는다.
       return;
@@ -451,12 +451,19 @@ export function Grid() {
     //  - 총행수(totalRows)는 존재
     //  - 현재 로우는 비어 있음(리프레시 직후 과도기)
     //  - 바닥 팔로우가 켜져 있거나(보통 기본) 최초 앵커링 전
-    if ((m.totalRows ?? 0) > 0 && (m.rows?.length ?? 0) === 0 && (m.follow || !initialAnchoredRef.current)) {
+    if (
+      (m.totalRows ?? 0) > 0 &&
+      (m.rows?.length ?? 0) === 0 &&
+      (m.follow || !initialAnchoredRef.current)
+    ) {
       const endIdx = Math.max(1, m.totalRows);
       const startIdx = Math.max(1, endIdx - m.windowSize + 1);
       const payload = `refresh:auto start=${startIdx} end=${endIdx} total=${m.totalRows}`;
       // 리프레시 직후엔 스크롤 속도가 없으므로 기본 딜레이로 즉시 요청
-      schedulePageRequest(startIdx, endIdx, payload, { delayMs: BASE_DEBOUNCE_MS, isDragging: false });
+      schedulePageRequest(startIdx, endIdx, payload, {
+        delayMs: BASE_DEBOUNCE_MS,
+        isDragging: false,
+      });
     }
   }, [m.totalRows, m.rows?.length, m.follow, m.windowSize]);
 
@@ -691,8 +698,11 @@ export function Grid() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (typeof r.idx !== 'number') return; // 방어
+                      // NOTE: TS의 타입 내로잉은 중첩 콜백 경계를 넘지 않는다.
+                      //       measureUi 콜백 내부에서도 number로 보장되도록 별도 변수로 고정한다.
+                      const idx = r.idx;
                       measureUi('Grid.toggleBookmarkByIdx', () =>
-                        useLogStore.getState().toggleBookmarkByIdx(r.idx),
+                        useLogStore.getState().toggleBookmarkByIdx(idx),
                       );
                     }}
                   />

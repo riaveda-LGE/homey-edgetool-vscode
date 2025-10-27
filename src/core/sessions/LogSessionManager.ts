@@ -12,7 +12,6 @@ import {
   MERGED_MANIFEST_FILENAME,
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
-import { __setWarmupFlagsForTests, Flags as FF } from '../../shared/featureFlags.js';
 import type { ParserConfig } from '../config/schema.js';
 import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
@@ -51,7 +50,7 @@ export type SessionCallbacks = {
   /** 병합 단계 텍스트/상태 */
   onStage?: (text: string, kind?: 'start' | 'done' | 'info') => void;
   /** 정식 병합(T1) 완료 후 하드리프레시 지시 */
-  onRefresh?: (p: { total?: number; version?: number }) => void;
+  onRefresh?: (p: { total?: number; version?: number; warm?: boolean }) => void;
 };
 
 export class LogSessionManager {
@@ -89,6 +88,19 @@ export class LogSessionManager {
       this.lastProgressPercent = newPercent;
       this.lastProgressUpdate = now;
       opts.onProgress?.(current);
+    }
+  }
+
+  // -------------------- local helpers / env --------------------
+  @measure()
+  private readBooleanEnv(name: string, fallback: boolean): boolean {
+    try {
+      const v = (process as any)?.env?.[name];
+      if (typeof v !== 'string') return fallback;
+      const s = v.trim().toLowerCase();
+      return s === '1' || s === 'true' || s === 'yes' || s === 'on';
+    } catch {
+      return fallback;
     }
   }
 
@@ -268,9 +280,23 @@ export class LogSessionManager {
     let progressDone = 0;
     // 단계 텍스트
     opts.onStage?.('병합 세션 시작', 'info');
-    this.log.info(
-      `T*: flags warmupEnabled=${FF.warmupEnabled} warmupTarget=${FF.warmupTarget} perTypeCap=${FF.warmupPerTypeLimit} writeRaw=${FF.writeRaw}`,
+
+    // 파서 설정에서 conservative 메모리 모드 문턱 추출
+    const configuredThreshold = Number(
+      (opts.parserConfig as any)?.configure?.memory_mode_threshold,
     );
+    const DEFAULT_THRESHOLD = 10_000;
+    const threshold =
+      Number.isFinite(configuredThreshold) && configuredThreshold > 0
+        ? configuredThreshold
+        : DEFAULT_THRESHOLD;
+
+    // 테스트 오버라이드(있으면)
+    const warmupEnabled =
+      _testWarmupEnabledOverride === undefined ? true : _testWarmupEnabledOverride;
+    const perTypeLimit = Number.isFinite(_testWarmupPerTypeLimitOverride ?? NaN)
+      ? (_testWarmupPerTypeLimitOverride as number)
+      : Number.POSITIVE_INFINITY;
 
     // 총 라인 수 추정 (화이트리스트 반영; 실패 시 undefined)
     const total = await this.estimateTotalLinesSafe(opts.dir, opts.whitelistGlobs);
@@ -281,16 +307,19 @@ export class LogSessionManager {
     opts.onProgress?.({ done: 0, total, active: true, reset: true });
 
     // ── T0: Manager 선행 웜업 ───────────────────────────────────────────────
-    if (FF.warmupEnabled) {
+    if (warmupEnabled) {
       try {
-        const warmLogs = await warmupTailPrepass({
+        const warm = await warmupTailPrepass({
           dir: opts.dir,
           signal: opts.signal,
-          warmupPerTypeLimit: FF.warmupPerTypeLimit,
-          warmupTarget: FF.warmupTarget,
+          // 보수적 기준의 정확도를 높이기 위해 per-type cap 제거(무한)
+          warmupPerTypeLimit: perTypeLimit,
+          // 메모리 모드 문턱만큼만 웜업하여 UI 최초 화면 품질을 맞춤
+          memory_mode_threshold: threshold,
           whitelistGlobs: opts.whitelistGlobs,
           parser: opts.parserConfig, // ✅ T0에도 parser 적용
         });
+        const warmLogs = warm.logs;
         if (warmLogs.length) {
           // 메모리/웹뷰 준비
           paginationService.seedWarmupBuffer(warmLogs, warmLogs.length);
@@ -306,13 +335,28 @@ export class LogSessionManager {
             );
             opts.onBatch(lastPage, totalWarm, ++seq);
           }
-          // Short-circuit: 웜업 수가 총합 이상이면 T1 스킵
-          if (typeof total === 'number' && warmLogs.length >= total) {
-            opts.onProgress?.({ done: total, total, active: false });
+          // ⬇️ 진행률 보강: T0만으로도 사용자에게 "진행 중"임을 보여주기 위해
+          //    웜업으로 확보한 라인 수를 done으로 고정 전송한다.
+          //    (T1로 이어지면 이후 onBatch에서 증가분이, warm-skip이면 onFinalize에서
+          //     active:false가 내려와 진행바가 닫힌다)
+          const warmDone = Math.max(0, totalWarm);
+          if (warmDone > 0) {
+            const nextDone = warmDone;
+            const inc = nextDone - progressDone;
+            progressDone = nextDone;
+            this.throttledOnProgress(opts, {
+              inc,
+              done: nextDone,
+              total,
+              active: true,
+            });
+          }
+          // ⚠️ 스킵 결정의 단일 권위(SSOT)는 mergeDirectory에 있음.
+          // T0에서 스킵을 '제안'할 수는 있지만 여기서 조기 종료하지 않는다.
+          if (warm.fullyCovered && totalWarm <= threshold) {
             this.log.info(
-              `T*: short-circuit after warmup (warm=${warmLogs.length} >= total=${total}) — skip T1`,
+              `T*: warm suggests skip (warm=${totalWarm} ≤ threshold=${threshold}, fullyCovered) — deferring decision to mergeDirectory`,
             );
-            return;
           }
         } else {
           this.log.debug?.('warmup(T0): skipped or not enough lines');
@@ -329,6 +373,8 @@ export class LogSessionManager {
     const baseOut = opts.indexOutDir || path.join(opts.dir, MERGED_DIR_NAME);
     const outDir = await this.prepareCleanOutputDir(baseOut);
     this.log.info(`T1: outDir=${outDir}`);
+    // (이전 featureFlags.writeRaw 대체) — 환경변수로 RAW 기록 on/off
+    const writeRaw = this.readBooleanEnv('HOMEY_WRITE_RAW', false);
 
     // 파서 컴파일
     const compiledParser = opts.parserConfig ? compileParserConfig(opts.parserConfig) : undefined;
@@ -356,9 +402,11 @@ export class LogSessionManager {
     //  - __jsonl : 타입별 정렬된 JSONL (k-way 병합 입력)
     //  - __raw   : (옵션) 보정 전 RAW JSONL
     const jsonlDir = path.join(outDir, '__jsonl');
-    // 🔹 FF.writeRaw 가 true일 때만 RAW 스냅샷 경로 활성화
-    const rawDir = FF.writeRaw ? path.join(outDir, '__raw') : undefined;
+    // 🔹 환경변수(HOMEY_WRITE_RAW)가 true일 때만 RAW 스냅샷 경로 활성화
+    const rawDir = writeRaw ? path.join(outDir, '__raw') : undefined;
     this.log.debug?.(`T1: intermediates jsonlDir=${jsonlDir} rawDir=${rawDir ?? '(disabled)'}`);
+
+    let skippedToMemory = false;
 
     await mergeDirectory({
       dir: opts.dir,
@@ -367,7 +415,7 @@ export class LogSessionManager {
       batchSize: DEFAULT_BATCH_SIZE,
       mergedDirPath: jsonlDir,
       // RAW 기록은 플래그가 true일 때만 활성화
-      rawDirPath: FF.writeRaw ? rawDir : undefined,
+      rawDirPath: writeRaw ? rawDir : undefined,
       // Manager가 T0 웜업을 수행했으므로 여기서는 비활성화
       warmup: false,
       whitelistGlobs: opts.whitelistGlobs,
@@ -375,6 +423,42 @@ export class LogSessionManager {
       preserveFullText: true,
       // ⬇️ 타입별 정렬/병합 시작 등의 단계 신호를 그대로 위로 올려서 UI까지 전달
       onStage: (text, kind) => opts.onStage?.(text, kind),
+      // ⬇️ 진행률 이벤트 패스스루(사전 총량 추정/스킵 완료 신호 포함)
+      //    - mergeDirectory 내부 pre-estimate/skip 경로에서 내려오는 onProgress를
+      //      그대로 UI까지 끌어올린다.
+      onProgress: (r) => {
+        // total은 mergeDirectory가 알려주면 사용하고, 없으면 최초 estimate(total)를 유지
+        const nextDone = typeof r?.done === 'number' && r.done >= 0 ? r.done : progressDone;
+        const inc = typeof nextDone === 'number' ? nextDone - progressDone : undefined;
+        progressDone = typeof nextDone === 'number' ? nextDone : progressDone;
+        this.throttledOnProgress(opts, {
+          inc,
+          done: nextDone,
+          total: typeof r?.total === 'number' ? r.total : total,
+          active: r?.active,
+        });
+      },
+      // 스킵 경로에서도 warm 버퍼가 보장되도록(테스트/설정에 따라 T0가 비활성일 수 있음)
+      onWarmupBatch: (logs) => {
+        try {
+          if (!paginationService.isWarmupActive() && logs?.length) {
+            paginationService.seedWarmupBuffer(logs, logs.length);
+          }
+        } catch {}
+      },
+      // mergeDirectory가 최종 결론을 내리면 여기로 들어온다.
+      onFinalize: (r) => {
+        if (r.mode === 'memory') {
+          skippedToMemory = true;
+          const totalMem = r.total ?? paginationService.getWarmTotal();
+          opts.onProgress?.({ done: totalMem, total: totalMem, active: false });
+          opts.onRefresh?.({
+            total: totalMem,
+            version: paginationService.getVersion(),
+            warm: true,
+          });
+        }
+      },
       onBatch: async (logs: LogEntry[]) => {
         // 1) 메모리 버퍼 업데이트
         this.hb.addBatch(logs);
@@ -436,6 +520,13 @@ export class LogSessionManager {
         });
       },
     });
+    // mergeDirectory에서 메모리 모드 스킵으로 종료된 경우, 파일 기반 후처리를 건너뛴다.
+    if (skippedToMemory) {
+      this.log.info(
+        'T1: finalized via memory-mode skip (mergeDirectory). Exiting file-merge path.',
+      );
+      return;
+    }
 
     // 남은 버퍼 플러시
     const remainder = await chunkWriter.flushRemainder();
@@ -470,7 +561,7 @@ export class LogSessionManager {
     // 파일 기반 최신 head 재전송(정렬/보정 최종 결과로 UI 정합 맞춤)
     try {
       // ⚠️ tail 계산은 반드시 "실제 저장된 라인 수"를 우선 사용
-      const totalLines = (manifest.data.mergedLines ?? manifest.data.totalLines ?? total ?? 0);
+      const totalLines = manifest.data.mergedLines ?? manifest.data.totalLines ?? total ?? 0;
       const endIdx = Math.max(1, totalLines);
       const startIdx = Math.max(1, endIdx - LOG_WINDOW_SIZE + 1);
       const freshTail = await paginationService.readRangeByIdx(startIdx, endIdx);
@@ -504,7 +595,7 @@ export class LogSessionManager {
     // ✅ 웹뷰에 하드리프레시 지시(중복 제거/정렬 갱신 반영용)
     opts.onRefresh?.({
       // total은 mergedLines로 고정 (UI 스크롤/점프 총량 일치)
-      total: (manifest.data.mergedLines ?? manifest.data.totalLines),
+      total: manifest.data.mergedLines ?? manifest.data.totalLines,
       version: paginationService.getVersion(),
     });
     this.log.info(`[debug] LogSessionManager.startFileMergeSession: end`);
@@ -578,8 +669,18 @@ export class LogSessionManager {
   }
 }
 
-// ⬇️ 테스트에서만 사용: 런타임 모드/리밋 주입 API (제품 코드에서 호출 금지)
+// -------------------- tests only overrides (featureFlags 제거 대체) --------------------
+let _testWarmupEnabledOverride: boolean | undefined = undefined;
+let _testWarmupPerTypeLimitOverride: number | undefined = undefined;
+let _testWarmupTargetOverride: number | undefined = undefined;
+
+/** 테스트에서만 사용: 런타임 모드/리밋 주입 API (제품 코드에서 호출 금지) */
 export function __setLogMergeModeForTests(mode: 'warmup' | 'kway', limit?: number) {
-  const enabled = mode === 'warmup';
-  __setWarmupFlagsForTests({ warmupEnabled: enabled, warmupPerTypeLimit: limit });
+  _testWarmupEnabledOverride = mode === 'warmup';
+  _testWarmupPerTypeLimitOverride = typeof limit === 'number' ? limit : undefined;
+}
+
+/** 테스트에서만 사용: 메모리 모드 threshold 주입 */
+export function __setMemoryModeThresholdForTests(threshold?: number) {
+  _testWarmupTargetOverride = typeof threshold === 'number' ? threshold : undefined;
 }

@@ -36,7 +36,12 @@ export class ManifestWriter {
         const w = new ManifestWriter(outDir, json);
         // 유효하지 않은 청크 정리(file 비었거나 lines<=0)
         w.manifest.chunks = (w.manifest.chunks || []).filter(
-          (c) => c && typeof c.file === 'string' && c.file.trim() && typeof c.lines === 'number' && c.lines > 0,
+          (c) =>
+            c &&
+            typeof c.file === 'string' &&
+            c.file.trim() &&
+            typeof c.lines === 'number' &&
+            c.lines > 0,
         );
         // start 기준으로 정렬(보장되지 않은 경우를 대비)
         w.manifest.chunks.sort((a, b) => a.start - b.start);

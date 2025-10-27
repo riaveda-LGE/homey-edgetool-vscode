@@ -10,8 +10,10 @@ import { SearchDialog } from './SearchDialog';
 
 export function Toolbar() {
   const show = useLogStore((s) => s.showCols);
-  const totalRows = useLogStore((s) => s.totalRows);
   const mergeStage = useLogStore((s: any) => (s as any).mergeStage as string);
+  const mergeMode = useLogStore(
+    (s: any) => (s as any).mergeMode as 'memory' | 'hybrid' | undefined,
+  );
   const setCol = useLogStore((s) => s.toggleColumn);
   const setSearch = useLogStore((s) => s.setSearch);
   const openSearchPanel = useLogStore((s) => s.openSearchPanel);
@@ -102,22 +104,31 @@ export function Toolbar() {
       ))}
 
       <div className="tw-flex tw-items-center tw-gap-2 tw-ml-3 tw-flex-1">
-        {(progress.active ||
-          (progress.total > 0 && Math.min(progress.done, progress.total) < progress.total)) && (
-          <div className="tw-flex tw-items-center tw-gap-2 tw-min-w-[200px] tw-max-w-[440px]">
-            {/* 총 로그수 + 단계 텍스트 */}
-            <div className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-opacity-80 tw-min-w-[160px]">
-              <span>총로그수</span>
-              <span className="tw-tabular-nums">({totalRows})</span>
-              {mergeStage ? (
-                <>
-                  <span>·</span>
-                  <span className="tw-truncate tw-max-w-[220px]" title={mergeStage}>
-                    {mergeStage}
-                  </span>
-                </>
-              ) : null}
-            </div>
+        {/* === 병합 상태(모드 + 단계 텍스트) : 항상 표시 === */}
+        <div className="tw-flex tw-items-center tw-gap-2">
+          {mergeMode ? (
+            <span
+              className="tw-text-[11px] tw-opacity-80 tw-px-2 tw-py-0.5 tw-rounded-full tw-border tw-border-[var(--border)]"
+              title="현재 병합 모드"
+              data-testid="badge-merge-mode"
+            >
+              {`모드: ${mergeMode === 'hybrid' ? '하이브리드' : '메모리'}`}
+            </span>
+          ) : null}
+          {mergeStage ? (
+            <span
+              className="tw-text-xs tw-opacity-80 tw-truncate tw-max-w-[420px]"
+              title={mergeStage}
+              data-testid="text-merge-stage"
+            >
+              {mergeStage}
+            </span>
+          ) : null}
+        </div>
+
+        {/* === 진행 바 : 진행 중일 때만 표시 === */}
+        {progress.active && (
+          <div className="tw-flex tw-items-center tw-gap-2 tw-min-w-[200px] tw-max-w-[440px] tw-ml-3">
             <div className="tw-relative tw-flex-1 tw-h-2 tw-rounded tw-bg-[color-mix(in_oklab,var(--border)_70%,transparent_30%)] tw-shadow-[inset_0_0_0_1px_rgba(0,0,0,.08)]">
               <div
                 className="tw-absolute tw-left-0 tw-top-0 tw-bottom-0 tw-rounded tw-bg-[var(--accent)]"
@@ -126,9 +137,6 @@ export function Toolbar() {
                 }}
               />
             </div>
-            <span className="tw-text-xs tw-tabular-nums tw-opacity-80">
-              ({Math.min(progress.done, progress.total)}/{progress.total})
-            </span>
           </div>
         )}
       </div>
