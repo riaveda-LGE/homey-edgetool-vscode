@@ -111,23 +111,31 @@ export function Toolbar() {
       <div className="tw-flex tw-items-center tw-gap-2 tw-ml-3 tw-flex-1">
         {/* === 병합 상태(모드 + 단계 텍스트) : 항상 표시 === */}
         <div className="tw-flex tw-items-center tw-gap-2">
-          {mergeMode ? (
+          {/* 모드 + 메모리 배지를 한 그룹으로 묶고 그룹 내부 간격만 절반(gap-1) 적용 */}
+          {(mergeMode || hasAnyMem) && (
             <span
-              className="tw-text-[11px] tw-opacity-80 tw-px-2 tw-py-0.5 tw-rounded-full tw-border tw-border-[var(--border)]"
-              title="현재 병합 모드"
-              data-testid="badge-merge-mode"
+              className="tw-inline-flex tw-items-center tw-gap-0.5"
+              data-testid="group-mode-mem"
             >
-              {`모드: ${mergeMode === 'hybrid' ? '하이브리드' : '메모리'}`}
-            </span>
-          ) : null}
-          {/* ── 메모리 배지: 모드와 상태 사이에 [총MB], 툴팁으로 분해값 표시 ── */}
-          {hasAnyMem && (
-            <span
-              className="tw-text-[11px] tw-opacity-70 tw-px-1 -tw-ml-1"
-              title={`샘플링: 병합 중 2초 / 완료 후 60초 · Host ${typeof hostMB === 'number' ? hostMB : '?'}MB / Web ${typeof webMB === 'number' ? webMB : '?'}MB`}
-              data-testid="text-memory-total-mb"
-            >
-              {`[${totalMB}MB]`}
+              {mergeMode ? (
+                <span
+                  className="tw-text-[11px] tw-opacity-80 tw-px-2 tw-py-0.5 tw-rounded-full tw-border tw-border-[var(--border)]"
+                  title="현재 병합 모드"
+                  data-testid="badge-merge-mode"
+                >
+                  {`모드: ${mergeMode === 'hybrid' ? '하이브리드' : '메모리'}`}
+                </span>
+              ) : null}
+              {/* ── 메모리 배지: 모드와 상태 사이에 [총MB], 툴팁으로 분해값 표시 ── */}
+              {hasAnyMem && (
+                <span
+                  className="tw-text-[11px] tw-opacity-70 tw-px-1"
+                  title={`샘플링: 병합 중 2초 / 완료 후 60초 · Host ${typeof hostMB === 'number' ? hostMB : '?'}MB / Web ${typeof webMB === 'number' ? webMB : '?'}MB`}
+                  data-testid="text-memory-total-mb"
+                >
+                  {`[${totalMB}MB]`}
+                </span>
+              )}
             </span>
           )}
           {mergeStage ? (
