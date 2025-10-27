@@ -143,7 +143,10 @@ export class LogViewerPanelManager {
       });
       this.bridge.start();
       // ── Host 메모리 샘플러: 기본은 느리게(완료 주기) 시작 ──────────────
-      if (this.memTimer) { clearInterval(this.memTimer); this.memTimer = undefined; }
+      if (this.memTimer) {
+        clearInterval(this.memTimer);
+        this.memTimer = undefined;
+      }
       this._setMemPeriod(this.MEM_SLOW_MS);
       // quiet
       await vscode.commands.executeCommand('homey.logging.openViewer');
@@ -164,7 +167,7 @@ export class LogViewerPanelManager {
     this.session?.dispose();
     this.session = new LogSessionManager({ id: 'default', type: 'adb', timeoutMs: 15000 });
     // 실시간 모드는 병합이 없으므로 느리게
-+   this._setMemPeriod(this.MEM_SLOW_MS);
+    this._setMemPeriod(this.MEM_SLOW_MS);
 
     await this.session.startRealtimeSession({
       filter,

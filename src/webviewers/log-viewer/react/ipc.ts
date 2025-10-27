@@ -133,7 +133,8 @@ export function setupIpc() {
           // host RSS 등 메모리 정보
           const rss = typeof payload?.rssMB === 'number' ? payload.rssMB : undefined;
           const heap = typeof payload?.heapUsedMB === 'number' ? payload.heapUsedMB : undefined;
-          const hostMB = typeof rss === 'number' ? rss : typeof heap === 'number' ? heap : undefined;
+          const hostMB =
+            typeof rss === 'number' ? rss : typeof heap === 'number' ? heap : undefined;
           useLogStore.getState().setHostMemMB(hostMB);
           return;
         }
@@ -258,7 +259,7 @@ export function setupIpc() {
           // 요청/창 범위 산출
           const half = Math.floor(winSize / 2);
           let startIdx = Math.max(1, anchorIdx - half);
-          let endIdx = Math.min(total, startIdx + winSize - 1);
+          const endIdx = Math.min(total, startIdx + winSize - 1);
           // total이 windowSize보다 작은 경우 보정
           if (endIdx - startIdx + 1 < winSize) {
             startIdx = Math.max(1, endIdx - winSize + 1);

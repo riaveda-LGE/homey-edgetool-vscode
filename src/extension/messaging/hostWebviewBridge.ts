@@ -178,7 +178,9 @@ export class HostWebviewBridge {
             const filter = (msg.payload?.filter ?? null) as LogFilter | null;
             this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
             paginationService.setFilter(filter);
-            const total = warm ? paginationService.getWarmTotal() : paginationService.getFileTotal();
+            const total = warm
+              ? paginationService.getWarmTotal()
+              : paginationService.getFileTotal();
             const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
             const endIdx = Math.max(1, total ?? 0);
             const head = await paginationService.readRangeByIdx(startIdx, endIdx);
@@ -644,9 +646,9 @@ export class HostWebviewBridge {
         } as any);
         this.kickedOnce = true;
       }
-  } catch (e: any) {
-    this.log.warn(`bridge: kickIfReady failed: ${e?.message || e}`);
-  }
+    } catch (e: any) {
+      this.log.warn(`bridge: kickIfReady failed: ${e?.message || e}`);
+    }
   }
 
   /** 외부(예: extensionPanel/manager)에서 사용할 병합 리포터 생성기

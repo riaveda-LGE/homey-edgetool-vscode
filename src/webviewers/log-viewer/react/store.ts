@@ -387,10 +387,16 @@ export const useLogStore = create<Model & ExtraState & Actions>()((set, get) => 
 
   // ── 메모리 값 저장 (세션 스코프) ──────────────────────────────────────
   setHostMemMB(mb) {
-    set({ ...(get() as any), hostMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined } as any);
+    set({
+      ...(get() as any),
+      hostMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined,
+    } as any);
   },
   setWebMemMB(mb) {
-    set({ ...(get() as any), webMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined } as any);
+    set({
+      ...(get() as any),
+      webMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined,
+    } as any);
   },
 }));
 

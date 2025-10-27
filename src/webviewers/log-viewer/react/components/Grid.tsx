@@ -453,7 +453,10 @@ export function Grid() {
     if ((m.totalRows ?? 0) > 0 && (m.rows?.length ?? 0) === 0) {
       // logs.refresh가 미리 잡아둔 windowStart(anchor)를 우선
       const startIdxBase = Math.max(1, m.windowStart);
-      const startIdx = Math.max(1, Math.min(startIdxBase, Math.max(1, m.totalRows - m.windowSize + 1)));
+      const startIdx = Math.max(
+        1,
+        Math.min(startIdxBase, Math.max(1, m.totalRows - m.windowSize + 1)),
+      );
       const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
       const payload = `refresh:anchor start=${startIdx} end=${endIdx} total=${m.totalRows}`;
       // 리프레시 직후엔 스크롤 속도가 없으므로 기본 딜레이로 즉시 요청
