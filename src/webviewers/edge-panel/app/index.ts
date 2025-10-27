@@ -30,7 +30,8 @@ import { createStore } from './store.js';
   const store = createStore(createInitialState(), reducer);
   // 계측: store.dispatch
   const _dispatch = store.dispatch;
-  (store as any).dispatch = ((a: any) => m('Store.dispatch', () => _dispatch(a))) as typeof store.dispatch;
+  (store as any).dispatch = ((a: any) =>
+    m('Store.dispatch', () => _dispatch(a))) as typeof store.dispatch;
 
   // 계측: services/bridge
   const explorer = wrapAllUiMethods(new ExplorerService(host), measureUi, 'ExplorerService');
@@ -49,9 +50,13 @@ import { createStore } from './store.js';
     // ▶ 웹뷰 내부 전역 계측자 전달 (올바른 파라미터 순서로 이동)
     measureUi,
     // controls click
-    (id) => m('UI.button.click', () => hostProxy.post({ v: 1, type: 'button.click', payload: { id } })),
+    (id) =>
+      m('UI.button.click', () => hostProxy.post({ v: 1, type: 'button.click', payload: { id } })),
     // request buttons
-    () => m('UI.requestButtons', () => hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} })),
+    () =>
+      m('UI.requestButtons', () =>
+        hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} }),
+      ),
     // list
     (path) => m('Explorer.list', () => explorer.list(path)),
     // get/register
@@ -75,14 +80,24 @@ import { createStore } from './store.js';
       }
     },
 
-    (n, multi) => m('Explorer.select', () => store.dispatch({ type: 'EXPLORER_SELECT', node: n, multi } as any)),
-    (full, isFile) => m(isFile ? 'Explorer.createFile' : 'Explorer.createFolder', () =>
-      (isFile ? explorer.createFile(full) : explorer.createFolder(full))),
-    (nodes) => m('Explorer.delete(batch)', () =>
-      nodes.forEach((node) => explorer.delete(node.path, node.kind === 'folder', true))),
+    (n, multi) =>
+      m('Explorer.select', () =>
+        store.dispatch({ type: 'EXPLORER_SELECT', node: n, multi } as any),
+      ),
+    (full, isFile) =>
+      m(isFile ? 'Explorer.createFile' : 'Explorer.createFolder', () =>
+        isFile ? explorer.createFile(full) : explorer.createFolder(full),
+      ),
+    (nodes) =>
+      m('Explorer.delete(batch)', () =>
+        nodes.forEach((node) => explorer.delete(node.path, node.kind === 'folder', true)),
+      ),
     (p) => m('PanelState.save', () => persist.save(p)),
     // Debug Log Panel 콜백
-    () => m('DebugLog.loadOlder', () => hostProxy.post({ v: 1, type: 'debuglog.loadOlder', payload: {} })),
+    () =>
+      m('DebugLog.loadOlder', () =>
+        hostProxy.post({ v: 1, type: 'debuglog.loadOlder', payload: {} }),
+      ),
     () => m('DebugLog.clear', () => hostProxy.post({ v: 1, type: 'debuglog.clear', payload: {} })),
     () => m('DebugLog.copy', () => hostProxy.post({ v: 1, type: 'debuglog.copy', payload: {} })),
   );
@@ -269,7 +284,9 @@ import { createStore } from './store.js';
   // bootstrap
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () =>
-      m('UI.ready(DOMContentLoaded)', () => hostProxy.post({ v: 1, type: 'ui.ready', payload: {} })),
+      m('UI.ready(DOMContentLoaded)', () =>
+        hostProxy.post({ v: 1, type: 'ui.ready', payload: {} }),
+      ),
     );
   } else {
     m('UI.ready(immediate)', () => hostProxy.post({ v: 1, type: 'ui.ready', payload: {} }));
@@ -277,6 +294,8 @@ import { createStore } from './store.js';
   setTimeout(() => {
     m('Bootstrap.applyLayout', () => appView.applyLayout(store.getState()));
     m('Bootstrap.ensureCtrlContentFit', () => (appView as any).ensureCtrlContentFit?.());
-    m('Bootstrap.requestButtons', () => hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} }));
+    m('Bootstrap.requestButtons', () =>
+      hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} }),
+    );
   }, 0);
 })();

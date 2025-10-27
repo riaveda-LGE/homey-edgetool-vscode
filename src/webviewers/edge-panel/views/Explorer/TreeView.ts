@@ -110,57 +110,60 @@ export class TreeView {
   nodeLabel(node: TreeNode) {
     return this.measureUi('TreeView.nodeLabel', () => {
       const wrap = document.createElement('div');
-    wrap.className = 'tree-node';
-    wrap.dataset.path = node.path;
-    wrap.setAttribute('role', 'treeitem');
-    wrap.setAttribute('aria-expanded', node.kind === 'folder' ? String(!!node.expanded) : 'false');
+      wrap.className = 'tree-node';
+      wrap.dataset.path = node.path;
+      wrap.setAttribute('role', 'treeitem');
+      wrap.setAttribute(
+        'aria-expanded',
+        node.kind === 'folder' ? String(!!node.expanded) : 'false',
+      );
 
-    const line = document.createElement('div');
-    line.className = 'tn-line';
-    const chev = document.createElement('span');
-    chev.className = 'tn-chevron';
-    chev.setAttribute('aria-hidden', 'true');
-    const icon = document.createElement('span');
-    icon.className = 'tn-icon';
-    const label = document.createElement('span');
-    label.className = 'tn-label';
-    label.textContent = node.name;
+      const line = document.createElement('div');
+      line.className = 'tn-line';
+      const chev = document.createElement('span');
+      chev.className = 'tn-chevron';
+      chev.setAttribute('aria-hidden', 'true');
+      const icon = document.createElement('span');
+      icon.className = 'tn-icon';
+      const label = document.createElement('span');
+      label.className = 'tn-label';
+      label.textContent = node.name;
 
-    if (node.kind === 'folder') {
-      icon.textContent = '📁';
-      // ▶︎ 루트 토글 금지, 그 외엔 즉시 DOM 토글 + 상위(onToggle)로 데이터 로딩 요청
-      chev.addEventListener('click', (e) => {
-        this.measureUi('TreeView.chevron.click', () => {
-          e.stopPropagation();
-          if (node.path === '') return; // 루트는 항상 펼침
-          node.expanded = !node.expanded;
-          this.updateExpanded(node);
-          this.onToggle(node);
+      if (node.kind === 'folder') {
+        icon.textContent = '📁';
+        // ▶︎ 루트 토글 금지, 그 외엔 즉시 DOM 토글 + 상위(onToggle)로 데이터 로딩 요청
+        chev.addEventListener('click', (e) => {
+          this.measureUi('TreeView.chevron.click', () => {
+            e.stopPropagation();
+            if (node.path === '') return; // 루트는 항상 펼침
+            node.expanded = !node.expanded;
+            this.updateExpanded(node);
+            this.onToggle(node);
+          });
         });
-      });
-    } else {
-      icon.textContent = '📄';
-      chev.classList.add('tn-empty');
-    }
-    line.appendChild(chev);
-    line.appendChild(icon);
-    line.appendChild(label);
-    wrap.appendChild(line);
-
-    if (node.kind === 'folder') {
-      const group = document.createElement('div');
-      group.className = 'tn-children';
-      group.setAttribute('role', 'group');
-      if (!node.expanded && node.path !== '') {
-        // 루트는 항상 펼침
-        group.style.display = 'none';
+      } else {
+        icon.textContent = '📄';
+        chev.classList.add('tn-empty');
       }
-      wrap.appendChild(group);
-    }
+      line.appendChild(chev);
+      line.appendChild(icon);
+      line.appendChild(label);
+      wrap.appendChild(line);
 
-    if ((node as any).selected) {
-      this.setSelected(wrap);
-    }
+      if (node.kind === 'folder') {
+        const group = document.createElement('div');
+        group.className = 'tn-children';
+        group.setAttribute('role', 'group');
+        if (!node.expanded && node.path !== '') {
+          // 루트는 항상 펼침
+          group.style.display = 'none';
+        }
+        wrap.appendChild(group);
+      }
+
+      if ((node as any).selected) {
+        this.setSelected(wrap);
+      }
 
       return wrap;
     });

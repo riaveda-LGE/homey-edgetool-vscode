@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 
 import { LOG_OVERSCAN, LOG_ROW_HEIGHT, LOG_WINDOW_SIZE } from '../../../shared/const';
+// merge.stage 표시 텍스트 계산 유틸은 이 파일 내부에서 유지
 import { createUiMeasure } from '../../shared/utils';
-import { vscode } from './ipc';
 import { createUiLog } from '../../shared/utils';
+import { vscode } from './ipc';
 import { postFilterUpdate } from './ipc';
 import type { BookmarkItem, ColumnId, Filter, HighlightRule, LogRow, Model } from './types';
 
-const initial: Model = {
+// mergeMode/mergeStage는 Model에 없을 수 있으므로 교차 타입으로 선언
+const initial: Model & { mergeMode?: 'memory' | 'hybrid'; mergeStage?: string } = {
   rows: [],
   nextId: 1,
   bufferSize: 2000,
@@ -30,11 +32,28 @@ const initial: Model = {
   mergeActive: false,
   mergeDone: 0,
   mergeTotal: 0,
+  // NOTE: 타입 상 Model에 없을 수 있어 런타임 전용으로 취급(액션으로만 갱신)
   filter: { pid: '', src: '', proc: '', msg: '' },
   follow: true,
   newSincePause: 0,
   bookmarks: {},
+  mergeMode: 'memory',
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+// merge.stage 표시용 텍스트를 (진행률 숫자 포함해) 계산
+function stripCounterSuffix(s: string) {
+  // 뒤쪽의 " (123/456)" 패턴을 제거
+  return String(s || '')
+    .replace(/\s*\(\d+\/\d+\)\s*$/, '')
+    .trim();
+}
+function computeStageText(base: string, done?: number, total?: number) {
+  const b = stripCounterSuffix(base);
+  if (!b) return '';
+  return b;
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 type Actions = {
   setTotalRows(total: number): void;
@@ -53,8 +72,14 @@ type Actions = {
   jumpToIdx(idx: number): void;
   resizeColumn(col: 'time' | 'proc' | 'pid' | 'src', dx: number): void;
   mergeProgress(args: {
-    inc?: number; total?: number; reset?: boolean; active?: boolean; done?: number
+    inc?: number;
+    total?: number;
+    reset?: boolean;
+    active?: boolean;
+    done?: number;
   }): void;
+  setMergeStage(text: string): void;
+  setMergeMode(mode: 'memory' | 'hybrid'): void;
   measureUi: ReturnType<typeof createUiMeasure>;
   setFilterField(f: keyof Filter, v: string): void;
   applyFilter(next: Filter): void; // ← 디바운스 후 한 번만 전송
@@ -62,9 +87,14 @@ type Actions = {
   setFollow(follow: boolean): void;
   incNewSincePause(): void;
   clearNewSincePause(): void;
+  // ── 메모리 표시용 액션 ────────────────────────────────────────────────
+  setHostMemMB(mb?: number): void;
+  setWebMemMB(mb?: number): void;
 };
 
-export const useLogStore = create<Model & Actions>()((set, get) => ({
+type ExtraState = { hostMemMB?: number; webMemMB?: number };
+
+export const useLogStore = create<Model & ExtraState & Actions>()((set, get) => ({
   ...initial,
   // 로거: 스토어 변경 시점 추적
   __ui: createUiLog(vscode, 'log-viewer.store'),
@@ -92,16 +122,16 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       });
       // ── PROBE: 수신 버퍼 정합성
       const first = rowsWithBm[0]?.idx;
-      const last  = rowsWithBm.length ? rowsWithBm[rowsWithBm.length - 1]?.idx : undefined;
-      const asc   = rowsWithBm.every((r, i, arr) =>
-        i === 0 || ((arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity)));
-      (get() as any).__ui?.info?.(
-        `[probe:store] receive start=${startIdx} len=${rowsWithBm.length} idxAsc=${asc} first=${first} last=${last} nextId(before)=${state.nextId}`,
+      const last = rowsWithBm.length ? rowsWithBm[rowsWithBm.length - 1]?.idx : undefined;
+      const asc = rowsWithBm.every(
+        (r, i, arr) => i === 0 || (arr[i - 1]?.idx ?? -Infinity) <= (r?.idx ?? Infinity),
       );
       // 점프 대상이 이번에 수신된 버퍼 안에 있으면 즉시 선택 행을 갱신
       let selectedRowId = state.selectedRowId;
       if (state.pendingJumpIdx) {
-        const hit = rowsWithBm.find((r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx);
+        const hit = rowsWithBm.find(
+          (r) => typeof r.idx === 'number' && r.idx === state.pendingJumpIdx,
+        );
         if (hit) selectedRowId = hit.id;
       }
       set({
@@ -116,12 +146,9 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       // ── PROBE: 머지 후 창 범위/샘플
       const s2 = get();
       const winStart = s2.windowStart ?? 1;
-      const winEnd   = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
-      const sample   = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
+      const winEnd = Math.min((s2.windowStart ?? 1) + (s2.windowSize ?? 0) - 1, s2.totalRows ?? 0);
+      const sample = (s2.rows ?? []).slice(0, Math.min(10, s2.rows.length));
       const sampleStr = sample.map((r: any) => `${r.idx ?? '?'}|${r.time ?? '-'}`).join(', ');
-      (get() as any).__ui?.info?.(
-        `[probe:store] window=${winStart}-${winEnd} sample(top10)=${sampleStr} nextId(after)=${s2.nextId}`,
-      );
     });
   },
 
@@ -210,10 +237,12 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       }
       // 현재 로드된 행의 bookmarked 필드 업데이트
       const rows = st.rows.map((r) =>
-        r.idx === globalIdx ? { ...r, bookmarked: !!bookmarks[globalIdx] } : r
+        r.idx === globalIdx ? { ...r, bookmarked: !!bookmarks[globalIdx] } : r,
       );
       set({ bookmarks, rows });
-      (get() as any).__ui?.debug?.(`store.toggleBookmarkByIdx idx=${globalIdx} added=${!!bookmarks[globalIdx]}`);
+      (get() as any).__ui?.debug?.(
+        `store.toggleBookmarkByIdx idx=${globalIdx} added=${!!bookmarks[globalIdx]}`,
+      );
     });
   },
 
@@ -263,11 +292,9 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       const t = typeof total === 'number' ? Math.max(0, total) : cur.mergeTotal;
       // 우선순위: 명시 done → (reset?0:base)+inc
       const base = reset ? 0 : cur.mergeDone;
-      const doneVal = typeof done === 'number'
-        ? Math.max(0, done)
-        : Math.max(0, base + (inc ?? 0));
+      const doneVal = typeof done === 'number' ? Math.max(0, done) : Math.max(0, base + (inc ?? 0));
       let act = active ?? cur.mergeActive;
-      if (t > 0 && doneVal >= t) act = false;
+      if (t > 0 && doneVal >= t) act = false; // 총량이 있을 때 완료 판정
       set({ mergeTotal: t, mergeDone: doneVal, mergeActive: act });
       // 10% 단위 또는 완료 시에만 기록
       const pct = t > 0 ? Math.floor((doneVal / t) * 100) : 0;
@@ -277,6 +304,38 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
         (get() as any).__ui?.info?.(`merge.progress ${pct}% (${doneVal}/${t}) active=${act}`);
         (get() as any)[key] = pct;
       }
+      // 완료 시 단계 텍스트 정리(UX: 100% 막대 잔상 제거)
+      if (!act) {
+        // 완료 후에도 최신 알림을 유지: "병합 완료"
+        set({ ...(get() as any), mergeStage: '병합 완료' } as any);
+      } else {
+        // 진행 중일 때 현재 stage 텍스트를 진행률과 동기화
+        const curStage = (get() as any).mergeStage || '';
+        const synced = computeStageText(curStage, doneVal, t);
+        if (synced !== curStage) {
+          set({ ...(get() as any), mergeStage: synced } as any);
+        }
+      }
+    });
+  },
+
+  setMergeStage(text) {
+    get().measureUi('store.setMergeStage', () => {
+      const cur = get();
+      // 진행률과 동기화된 텍스트 계산
+      const synced = computeStageText(String(text || ''), cur.mergeDone, cur.mergeTotal);
+      // Model 타입과의 충돌을 피하기 위해 any로 저장
+      set({ ...(get() as any), mergeStage: synced } as any);
+      (get() as any).__ui?.info?.(`merge.stage "${synced}"`);
+    });
+  },
+
+  // ── 모드 토글(웹뷰에서만 사용) ─────────────────────────────────────────
+  setMergeMode(mode) {
+    get().measureUi('store.setMergeMode', () => {
+      const next = (mode === 'hybrid' ? 'hybrid' : 'memory') as 'memory' | 'hybrid';
+      set({ ...(get() as any), mergeMode: next } as any);
+      (get() as any).__ui?.info?.(`store.setMergeMode ${next}`);
     });
   },
 
@@ -324,6 +383,20 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       set({ newSincePause: 0 });
       (get() as any).__ui?.debug?.('store.clearNewSincePause');
     });
+  },
+
+  // ── 메모리 값 저장 (세션 스코프) ──────────────────────────────────────
+  setHostMemMB(mb) {
+    set({
+      ...(get() as any),
+      hostMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined,
+    } as any);
+  },
+  setWebMemMB(mb) {
+    set({
+      ...(get() as any),
+      webMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined,
+    } as any);
   },
 }));
 

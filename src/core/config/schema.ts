@@ -19,9 +19,15 @@ export const defaultConfig: AppConfig = {
 
 /* ─────────────────────────────────────────────────────────────
  * Custom Parser Config (workspace .config/custom_log_parser.json)
- *  - files: string[] (화이트리스트: "베이스네임 토큰" 또는 "^"로 시작하는 정규식)
- *      · 예: ["homey-pro.log", "clip.log", "^app-\\d+\\.log$"]
- *      · 경로/글롭(**\/*.log)은 지원하지 않고, 파일명(베이스네임)만 매칭합니다.
+ *  - file: string  (단일 "베이스네임 토큰 + {로테이션}" 지정)
+ *      · 예: "system.log.{n}", "clip.log.{:2}", "otbr-agent.{1}", "cpcd.log.{0}", "homey-pro.{n}"
+ *      · {} 지정자:
+ *          - {n}  : 베이스 및 모든 로테이션(.1, .2, …)
+ *          - {0}  : 베이스만(확장자 유무 무관)
+ *          - {k}  : 숫자 k 로테이션만
+ *          - {:k} : 베이스부터 .k 까지 포함
+ *      · "^"로 시작하면 정규식으로 간주(그대로 사용, 매칭 대상은 basename)
+ *  - need: boolean (true일 때만 파싱 대상에 포함)
  *  - regex: { time, process, pid, message } (각 항목 개별 캡처 정규식)
  * ───────────────────────────────────────────────────────────── */
 export type ParserFieldRegex = {
@@ -31,7 +37,9 @@ export type ParserFieldRegex = {
   message?: string;
 };
 export type ParserRule = {
-  files: string[];
+  /** 파일명 토큰: "<base>.{n|0|k|:k}" 또는 "^" 시작 정규식(베이스네임 기준) */
+  file: string;
+  need?: boolean;
   regex: ParserFieldRegex;
 };
 export type ParserRequirements = {

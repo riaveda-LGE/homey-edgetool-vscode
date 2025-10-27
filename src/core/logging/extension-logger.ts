@@ -7,10 +7,9 @@ import {
   LOG_IGNORE_KEYWORDS,
   LOG_MAX_BUFFER,
 } from '../../shared/const.js';
-
+import { getConsoleLogger } from './console-logger.js';
 // test 모드(npm run test)에서는 VS Code 로그 채널 대신 콘솔로 보냄
 import { isTestMode } from './test-mode.js';
-import { getConsoleLogger } from './console-logger.js';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Sink = (line: string) => void;

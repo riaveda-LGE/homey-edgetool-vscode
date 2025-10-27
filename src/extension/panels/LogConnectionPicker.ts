@@ -8,9 +8,9 @@ import {
   updateDeviceById,
 } from '../../core/config/userdata.js';
 import type { HostConfig } from '../../core/connection/ConnectionManager.js';
+import { measure } from '../../core/logging/perf.js';
 import { DEFAULT_SSH_PORT, MAX_SSH_PORT, MIN_SSH_PORT } from '../../shared/const.js';
 import { promptNumber, promptText } from '../../shared/ui-input.js';
-import { measure } from '../../core/logging/perf.js';
 
 export class LogConnectionPicker {
   constructor(private _context: vscode.ExtensionContext) {}

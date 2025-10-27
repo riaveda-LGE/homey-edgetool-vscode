@@ -3,7 +3,11 @@ import type { H2W } from '@ipc/messages';
 import * as vscode from 'vscode';
 
 import { getLogger } from '../../core/logging/extension-logger.js';
-import { globalProfiler, PerformanceProfiler, enableAutoFsIOMeasure } from '../../core/logging/perf.js';
+import {
+  enableAutoFsIOMeasure,
+  globalProfiler,
+  PerformanceProfiler,
+} from '../../core/logging/perf.js';
 import { PERF_UPDATE_INTERVAL_MS } from '../../shared/const.js';
 import type { IPerfMonitorCaptureManager, PerfData } from './IPerfMonitorPanelComponents.js';
 import { PerfMonitorHtmlGenerator } from './PerfMonitorHtmlGenerator.js';

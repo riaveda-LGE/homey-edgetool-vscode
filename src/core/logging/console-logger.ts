@@ -2,6 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { inspect } from 'util';
+
 import { LOG_LEVEL_DEFAULT } from '../../shared/const.js';
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
@@ -19,9 +20,7 @@ function enabled(lv: Level) {
 
 // Jest(테스트) 환경 감지
 const IS_TEST =
-  !!process.env.JEST_WORKER_ID ||
-  process.env.JEST === '1' ||
-  process.env.NODE_ENV === 'test';
+  !!process.env.JEST_WORKER_ID || process.env.JEST === '1' || process.env.NODE_ENV === 'test';
 
 // 테스트 시 파일로 로그를 모은다: src/__test__/out/console.log
 const TEST_LOG_PATH = path.join(process.cwd(), 'src', '__test__', 'out', 'console.log');
@@ -58,10 +57,12 @@ export function getConsoleLogger(name: string) /*: Logger*/ {
   const prefix = `[${name}]`;
   if (IS_TEST) {
     // ✅ 테스트 환경: 파일로 로그를 남긴다.
-    const mk = (lv: Level): Fn => (msg?: any, ...args: any[]) => {
-      if (!enabled(lv)) return;
-      fileSinkWrite(lv, [prefix, msg, ...args]);
-    };
+    const mk =
+      (lv: Level): Fn =>
+      (msg?: any, ...args: any[]) => {
+        if (!enabled(lv)) return;
+        fileSinkWrite(lv, [prefix, msg, ...args]);
+      };
     const logger: Logger = {
       info: mk('info'),
       warn: mk('warn'),
@@ -71,8 +72,10 @@ export function getConsoleLogger(name: string) /*: Logger*/ {
     return logger;
   } else {
     // 일반 실행 환경: 기존처럼 콘솔에 출력
-    const wrap = (fn: (...a: any[]) => void): Fn => (msg?: any, ...args: any[]) =>
-      fn(prefix, msg, ...args);
+    const wrap =
+      (fn: (...a: any[]) => void): Fn =>
+      (msg?: any, ...args: any[]) =>
+        fn(prefix, msg, ...args);
     const logger: Logger = {
       info: wrap(console.log.bind(console)),
       warn: wrap(console.warn.bind(console)),

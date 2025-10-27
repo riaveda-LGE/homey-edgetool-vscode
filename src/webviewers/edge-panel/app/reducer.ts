@@ -1,5 +1,5 @@
-import type { AppState, TreeNode } from '../types/model.js';
 import { DEBUG_LOG_MEMORY_MAX } from '../../../shared/const.js';
+import type { AppState, TreeNode } from '../types/model.js';
 import type { Action } from './actions.js';
 
 export function createInitialState(): AppState {
@@ -19,9 +19,10 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'INIT': {
       if (action.logs) {
-        state.logs = action.logs.length > DEBUG_LOG_MEMORY_MAX
-          ? action.logs.slice(-DEBUG_LOG_MEMORY_MAX)
-          : [...action.logs];
+        state.logs =
+          action.logs.length > DEBUG_LOG_MEMORY_MAX
+            ? action.logs.slice(-DEBUG_LOG_MEMORY_MAX)
+            : [...action.logs];
       }
       if (action.panelState) state.panel = action.panelState;
       return state;
@@ -47,9 +48,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return state;
     }
     case 'LOG_RESET': {
-      state.logs = action.lines
-        ? action.lines.slice(-DEBUG_LOG_MEMORY_MAX)
-        : [];
+      state.logs = action.lines ? action.lines.slice(-DEBUG_LOG_MEMORY_MAX) : [];
       return state;
     }
     case 'EXPLORER_SET_ROOT': {

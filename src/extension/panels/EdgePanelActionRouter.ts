@@ -1,6 +1,8 @@
 // === src/extension/panels/EdgePanelActionRouter.ts ===
 import * as vscode from 'vscode';
 
+import { getLogger } from '../../core/logging/extension-logger.js';
+import { measure } from '../../core/logging/perf.js';
 import { createCommandHandlers } from '../commands/commandHandlers.js';
 import {
   buildButtonContext,
@@ -12,8 +14,6 @@ import {
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import type { ExplorerBridge } from './explorerBridge.js';
 import type { EdgePanelProvider } from './extensionPanel.js';
-import { getLogger } from '../../core/logging/extension-logger.js';
-import { measure } from '../../core/logging/perf.js';
 
 const log = getLogger('EdgePanelActionRouter');
 
@@ -37,11 +37,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     private _explorer?: ExplorerBridge,
   ) {
     // 🔁 provider 주입된 commandHandlers
-    this._handlers = createCommandHandlers(
-      this._context,
-      this._extensionUri,
-      this._provider,
-    );
+    this._handlers = createCommandHandlers(this._context, this._extensionUri, this._provider);
   }
 
   @measure()

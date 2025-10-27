@@ -49,12 +49,17 @@ export const DEFAULT_COMMAND_TIMEOUT_MS = 30_000;
 export const MAX_SSH_PORT = 65535;
 export const MIN_SSH_PORT = 1;
 
+/** 병합 진행률(Host → Webview) 전송 스로틀 간격(ms) — Host 측 타이머 기준(문서용) */
+export const MERGE_PROGRESS_THROTTLE_MS = 100;
+
 // Logs & Buffers
 /** 기본 배치 크기(SSOT). 웜업/최초 방출 배치도 이 값을 사용한다. */
 export const DEFAULT_BATCH_SIZE = 200;
 /** 테스트 및 외부 모듈에서 참조하는 공식 명칭(별칭). SSOT는 DEFAULT_BATCH_SIZE */
 export const FIRST_BATCH_SIZE = DEFAULT_BATCH_SIZE;
-
+// Memory-mode defaults
+/** 웜업 목표치 및 메모리 모드 임계값의 기본값 */
+export const DEFAULT_MEMORY_MODE_TRESHOLD = 10000;
 export const REALTIME_BUFFER_MAX = 1000;
 export const PERF_DATA_MAX = 1000;
 export const LOG_TOTAL_CALLS_THRESHOLD = 1000;
@@ -62,7 +67,7 @@ export const LOG_TOTAL_CALLS_THRESHOLD = 1000;
 /** workspace 하위의 raw 디렉터리명 */
 export const RAW_DIR_NAME = 'raw';
 /** 병합 결과 저장 디렉터리명 (raw 하위에 생성) */
-export const MERGED_DIR_NAME = 'merge_log';
+export const MERGED_DIR_NAME = 'merged';
 /** 병합 manifest 파일명 */
 export const MERGED_MANIFEST_FILENAME = 'manifest.json';
 /** 병합 결과 한 청크의 최대 라인 수 */

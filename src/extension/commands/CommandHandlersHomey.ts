@@ -17,8 +17,7 @@ const defaultHostConfig: HostConfig = {
 };
 
 export class CommandHandlersHomey {
-  constructor(
-  ) {}
+  constructor() {}
 
   @measure()
   async homeyRestart() {

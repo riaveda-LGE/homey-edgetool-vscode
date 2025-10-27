@@ -1,21 +1,33 @@
 // === src/core/logs/LogFileIntegration.ts ===
+// NOTE: 이 파일은 "스킵 로직의 단일 권위(Single Source of Truth)"를 가진다.
 import type { LogEntry } from '@ipc/messages';
 import * as fs from 'fs';
 import type { FileHandle } from 'fs/promises';
 import * as path from 'path';
 
-import { DEFAULT_BATCH_SIZE } from '../../shared/const.js';
+import {
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_MEMORY_MODE_TRESHOLD,
+  MERGED_DIR_NAME,
+} from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { parseTs, extractHeaderTimeToken, isYearlessTimeToken } from './time/TimeParser.js';
-import { MonotonicCorrector } from './time/TimezoneHeuristics.js';
-import { compileParserConfig, shouldUseParserForFile, lineToEntryWithParser, isParsedHeaderAllMissing } from './ParserEngine.js';
 import { measureBlock } from '../logging/perf.js';
+import {
+  compileParserConfig,
+  isParsedHeaderAllMissing,
+  lineToEntryWithParser,
+  shouldUseParserForFile,
+} from './ParserEngine.js';
+import { extractHeaderTimeToken, isYearlessTimeToken, parseTs } from './time/TimeParser.js';
+import { MonotonicCorrector } from './time/TimezoneHeuristics.js';
 
 const log = getLogger('LogFileIntegration');
 // 파일 첫 문자 위치의 BOM 제거
 const BOM_RE = /^\uFEFF/;
-function stripBomStart(s: string): string { return s.replace(BOM_RE, ''); }
+function stripBomStart(s: string): string {
+  return s.replace(BOM_RE, '');
+}
 
 // ────────────────────────────────────────────────────────────────────────────
 // DESC 병합 검증 헬퍼(노이즈 억제형): 역전(inversion) 집계와 범위만 로그
@@ -30,10 +42,12 @@ function countDescInversions(arr: { ts: number }[]): number {
 }
 function tsRange(arr: { ts: number }[]): { max?: number; min?: number } {
   if (!arr.length) return {};
-  let mx = arr[0].ts, mn = arr[0].ts;
+  let mx = arr[0].ts,
+    mn = arr[0].ts;
   for (let i = 1; i < arr.length; i++) {
     const t = arr[i].ts;
-    if (t > mx) mx = t; if (t < mn) mn = t;
+    if (t > mx) mx = t;
+    if (t < mn) mn = t;
   }
   return { max: mx, min: mn };
 }
@@ -81,8 +95,7 @@ class YearlessStitcher {
     // 단조 위반이면 연(-1) 적용 전에 "미세 역전" 예외를 먼저 검사
     if (corrected > this.last) {
       const delta = corrected - this.last;
-      const sameSecond =
-        Math.floor(corrected / 1000) === Math.floor(this.last / 1000);
+      const sameSecond = Math.floor(corrected / 1000) === Math.floor(this.last / 1000);
       // ⬇️ 같은 초 또는 허용 지터 이내면: 연도 이동 금지, 라인만 1ms 내림
       if (sameSecond || delta <= this.JITTER_TOLERANCE_MS) {
         corrected = this.last - 1; // 로컬 1ms 클램프(표시 문자열은 원본 유지)
@@ -106,8 +119,18 @@ class YearlessStitcher {
 // Manager 선행 웜업 호출을 위해 필요한 필드만 분리(+ whitelist 지원)
 export type WarmupOptions = Pick<
   MergeOptions,
-  'dir' | 'signal' | 'warmupPerTypeLimit' | 'warmupTarget' | 'whitelistGlobs' | 'parser'
+  'dir' | 'signal' | 'warmupPerTypeLimit' | 'memory_mode_threshold' | 'whitelistGlobs' | 'parser'
 >;
+
+// 웜업 결과(보수적 스킵 결정을 위해 fullyCovered 정보 포함)
+export type WarmupResult = {
+  /** 유효 라인만 포함된 웜업 결과 */
+  logs: LogEntry[];
+  /** 각 타입이 모두 소진되었는지 (남은 라인이 없는지) */
+  fullyCovered: boolean;
+  /** 타입별 유효 라인/소진 여부 (디버깅 및 메트릭) */
+  perType?: Record<string, { valid: number; exhausted: boolean }>;
+};
 
 export type MergeOptions = {
   dir: string;
@@ -123,10 +146,13 @@ export type MergeOptions = {
   rawDirPath?: string; // (옵션) 보정 전 RAW 저장 위치
   /** warmup 선행패스 사용 여부 (기본: false, 상위 FeatureFlags로 채워짐) */
   warmup?: boolean;
+  /** 병합 단계 알림(예: "Warmup 병합 시작", "로그병합 완료") */
+  onStage?: (text: string, kind?: 'start' | 'done' | 'info') => void;
+  onProgress?: (args: { done?: number; total?: number; active?: boolean }) => void;
   /** warmup 모드일 때 타입별 최대 선행 읽기 라인수 (기본: 500 등) */
   warmupPerTypeLimit?: number;
-  /** warmup 모드일 때 최초 즉시 방출 목표치 (기본: 500) */
-  warmupTarget?: number;
+  /** 웜업 목표치/메모리 모드 임계값 (기본: DEFAULT_MEMORY_MODE_TRESHOLD) */
+  memory_mode_threshold?: number;
   /** 커스텀 파서 설정에서 온 files 화이트리스트(glob). 지정되면 여기에 매칭되는 파일만 수집 */
   whitelistGlobs?: string[];
   parser?: import('./ParserEngine.js').ParserConfig;
@@ -136,6 +162,13 @@ export type MergeOptions = {
    * - 복원된 **헤더 기반**으로 parseTs 재적용(메시지 내부 ISO 타임스탬프 무시, 정렬 일관성 유지)
    */
   preserveFullText?: boolean;
+  /**
+   * (선택) 최종 완료 신호 — 파일 병합 완료 또는 메모리 모드 스킵 완료 시 한 번 호출.
+   * 호출자는 이 신호를 받아 UI 리프레시(logs.refresh 등)를 통일되게 처리할 수 있다.
+   * - mode: 'file' (정식 병합 완료) | 'memory' (스킵-메모리 모드 완료)
+   * - total: 알려진 총량(가능하면). memory 모드인 경우 warm 개수 또는 추정치.
+   */
+  onFinalize?: (r: { mode: 'file' | 'memory'; total?: number; reason?: string }) => void;
 };
 
 /**
@@ -147,6 +180,9 @@ export async function mergeDirectory(opts: MergeOptions) {
   return measureBlock('logs.mergeDirectory', async function () {
     const batchSize = Math.max(1, opts.batchSize ?? DEFAULT_BATCH_SIZE);
     // 파서 컴파일
+
+    let totalEstimated: number | undefined = undefined; // 진행률 표시에 사용
+
     const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
     // 화이트리스트(files 토큰) → "베이스네임" 매칭 정규식 셋으로 변환
     const allowPathRegexes = opts.whitelistGlobs?.length
@@ -154,37 +190,131 @@ export async function mergeDirectory(opts: MergeOptions) {
       : undefined;
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 0) (호환) 워밍업 선행패스
-    //    Manager-선행 웜업 경로에서는 mergeDirectory를 warmup:false로 호출하므로 여기 미실행
-    if (
-      opts.warmup &&
-      (typeof opts.onWarmupBatch === 'function' || typeof opts.onBatch === 'function')
-    ) {
+    // configure.memory_mode_threshold 해석 (+ warmupTarget 기본값으로 사용)
+    //   - parser.configure.memory_mode_threshold 가 유효하면 warmupTarget 기본값으로 사용
+    //   - T1(SKIP) 사전 결정에 활용
+    const memoryModeThreshold = getMemoryModeThresholdFromParser(opts.parser);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 사전 총량 추정: SKIP 결정을 위해 선행 계산(가능한 경우)
+    //  - countTotalLinesInDir 는 빠르게 동작하도록 최적화되어 있음
+    //  - 실패해도 무시(추정 불가 시 warm.fullyCovered 로 보조 판단)
+    const preEstimate = await (async () => {
       try {
-        const warmLogs = await warmupTailPrepass({
-          dir: opts.dir,
-          signal: opts.signal,
-          warmupPerTypeLimit: opts.warmupPerTypeLimit,
-          warmupTarget: opts.warmupTarget,
-        });
-        if (warmLogs.length) {
-          if (opts.onWarmupBatch) opts.onWarmupBatch(warmLogs);
-          else opts.onBatch(warmLogs);
-          log.info(`warmup: delivered initial batch (n=${warmLogs.length})`);
-        } else {
-          log.debug?.('warmup: skipped or not enough lines');
+        const estimated = await countTotalLinesInDir(opts.dir, allowPathRegexes);
+        const total = Math.max(0, Number(estimated?.total ?? 0));
+        return total;
+      } catch {
+        return undefined;
+      }
+    })();
+    if (typeof preEstimate === 'number' && preEstimate > 0) {
+      totalEstimated = preEstimate;
+      opts.onProgress?.({ total: totalEstimated, active: true });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 0) 단일 권위의 스킵 판단 + (필요 시) 초기 워밍업 배치 방출
+    //    - 이전에는 Manager/mergeDirectory 양쪽에서 스킵을 판단하여 사후 처리 누락 위험이 있었음
+    //    - 이제 스킵 판단은 mergeDirectory 한 곳에서만 수행한다.
+    {
+      const threshold =
+        opts.memory_mode_threshold ?? memoryModeThreshold ?? DEFAULT_MEMORY_MODE_TRESHOLD;
+
+      // 워밍업 프리패스는 (a) 명시적으로 warmup 요청이 있거나 (b) 스킵 결정을 위해 필요할 때 실행
+      const needWarmupForDecision = typeof preEstimate !== 'number';
+      const shouldRunWarmup = opts.warmup || needWarmupForDecision;
+
+      let warmLogs: LogEntry[] = [];
+      let warmFullyCovered = false;
+
+      if (shouldRunWarmup) {
+        opts.onStage?.('Warmup 병합 시작', 'start');
+        try {
+          const warm = await warmupTailPrepass({
+            dir: opts.dir,
+            signal: opts.signal,
+            warmupPerTypeLimit: opts.warmupPerTypeLimit,
+            memory_mode_threshold: threshold,
+            whitelistGlobs: opts.whitelistGlobs,
+            parser: opts.parser,
+          });
+          warmLogs = warm.logs || [];
+          warmFullyCovered = !!warm.fullyCovered;
+
+          // ⛳️ 시드(서버 메모리)와 UI 초기 배치를 분리한다.
+          //     - onWarmupBatch: 전체 warm 세트(시드 전용, 화면 미전송)
+          //     - onBatch:      화면을 즉시 채울 1차 배치(기본 200줄)
+          if (warmLogs.length) {
+            // 1) 시드 방출(항상) — PaginationService가 받아 warmBuffer에 심는다.
+            if (opts.onWarmupBatch) {
+              opts.onWarmupBatch(warmLogs);
+            }
+            // 2) 초기 배치(옵션) — 명시적 warmup 요청이 있을 때만 즉시 화면에 보낸다.
+            if (opts.warmup) {
+              const initial = warmLogs.slice(0, DEFAULT_BATCH_SIZE);
+              if (initial.length) {
+                opts.onBatch(initial);
+                opts.onStage?.('초기 배치 전달', 'info');
+                opts.onProgress?.({ done: initial.length, active: true });
+                log.info(`warmup: delivered initial UI batch (n=${initial.length})`);
+              }
+            }
+          } else {
+            log.debug?.('warmup: skipped or not enough lines');
+          }
+          opts.onStage?.('Warmup 병합 완료', 'done');
+        } catch (e: any) {
+          log.warn(`warmup: failed (${e?.message ?? e}) — fallback to full merge`);
+          warmLogs = [];
+          warmFullyCovered = false;
         }
-      } catch (e: any) {
-        log.warn(`warmup: failed (${e?.message ?? e}) — fallback to full merge`);
+      }
+
+      const shouldSkipByPreEstimate =
+        typeof threshold === 'number' &&
+        typeof preEstimate === 'number' &&
+        preEstimate <= threshold;
+      const shouldSkipByWarmCover =
+        typeof threshold === 'number' && warmFullyCovered && warmLogs.length <= threshold;
+
+      if (shouldSkipByPreEstimate || shouldSkipByWarmCover) {
+        // 스킵 경로 — 메모리 모드로 종료(사후 처리 포함)
+        const reason = shouldSkipByPreEstimate ? 'pre-estimate' : 'warmup-covered';
+
+        log.info(
+          `mergeDirectory: SKIP T1 (memory-mode) reason=${reason} ` +
+            `(total=${preEstimate ?? warmLogs.length}, threshold=${threshold})`,
+        );
+        // 진행률 종료 신호
+        const doneTotal = typeof preEstimate === 'number' ? preEstimate : warmLogs.length;
+        opts.onProgress?.({ done: doneTotal, total: doneTotal, active: false });
+        // 최종 단계 알림 (메모리 모드)
+        opts.onStage?.('정식 병합 스킵: 메모리 모드로 완료', 'done');
+        // warmup이 아직 방출되지 않았다면(명시적 warmup=false) 여기서라도 방출해 초기 화면이 비지 않도록 한다.
+        if (warmLogs.length && !opts.warmup) {
+          // 스킵 경로에서도: 시드→초기배치 순으로 분리
+          if (opts.onWarmupBatch) {
+            opts.onWarmupBatch(warmLogs);
+          }
+          const initial = warmLogs.slice(0, DEFAULT_BATCH_SIZE);
+          if (initial.length) {
+            opts.onBatch(initial);
+            log.info(`warmup: delivered initial UI batch (implicit, n=${initial.length})`);
+          }
+        }
+        // 호출자에게 통합된 완료 신호 제공(선택)
+        try {
+          opts.onFinalize?.({ mode: 'memory', total: doneTotal, reason });
+        } catch {}
+        return; // ★ 여기서 조기 종료 → T1(디스크 병합) 생략
       }
     }
 
     // ── 2) 기존 k-way/표준 패스 그대로 ───────────────────────────────────
-    // 입력 로그(.log/.log.N/.txt) 수집 (재귀)
+    // 입력 로그(.log/.log.N/.txt) 수집 (루트만/비재귀)
     const files = await listInputLogFiles(opts.dir, allowPathRegexes);
-    log.info(
-      `T1: mergeDirectory start dir=${opts.dir} files=${files.length} reverse=${!!opts.reverse} batchSize=${batchSize}`,
-    );
+    // start: quietened — 위에서 이미 총량 추정을 시도했으므로 여기서는 중복 계산 생략
     if (!files.length) {
       log.warn('mergeDirectory: no log files to merge');
       return;
@@ -200,9 +330,7 @@ export async function mergeDirectory(opts: MergeOptions) {
         const arr = (grouped.get(k) ?? []).slice().sort(compareLogOrderAsc);
         all.push(...arr);
       }
-      log.info(
-        `mergeDirectory: reverse(ts-asc, global) files=${all.length} batchSize=${batchSize}`,
-      );
+      // quiet
 
       // 2) 각 파일에 대한 forward 커서 생성(+ parser 프리플라이트)
       const cursors: FileForwardCursor[] = [];
@@ -258,12 +386,12 @@ export async function mergeDirectory(opts: MergeOptions) {
       }
       // 자원 정리
       for (const c of cursors) await c.close();
-      log.info(`mergeDirectory: reverse(ts-asc) done emitted=${emitted}`);
+      // quiet
       return;
     }
 
     // 중간 산출물 디렉터리
-    const mergedDir = opts.mergedDirPath || path.join(opts.dir, 'merged');
+    const mergedDir = opts.mergedDirPath || path.join(opts.dir, MERGED_DIR_NAME);
     if (fs.existsSync(mergedDir)) fs.rmSync(mergedDir, { recursive: true, force: true });
     await fs.promises.mkdir(mergedDir, { recursive: true });
 
@@ -272,19 +400,29 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (fs.existsSync(rawDir)) fs.rmSync(rawDir, { recursive: true, force: true });
       await fs.promises.mkdir(rawDir, { recursive: true });
     }
-    log.info(`T1: created intermediates merged=${mergedDir}${rawDir ? ` raw=${rawDir}` : ''}`);
+    // quiet
 
     // 1) 타입 그룹화(.log 전용)
     const grouped = groupByType(files);
-    log.info(`T1: type groups=${grouped.size}`);
+    // quiet
 
     // 2) 타입별 메모리 로딩(최신→오래된), 타임존 보정(국소), merged(JSONL) 저장(최신순)
     for (const [typeKey, fileList] of grouped) {
       if (opts.signal?.aborted) break;
 
-      log.debug(`T1: processing type=${typeKey} files=${fileList.length}`);
+      // quiet
       const logs: LogEntry[] = [];
-      // 타입 단위 집계(파일 요약을 함께 찍기 위함)
+      // ── 진행 텍스트(타입별) 준비 ───────────────────────────────────────
+      const STAGE_UPDATE_MIN_MS = 600; // 전송 최소 간격(ms) — UI 스팸 방지
+      let lastStageAt = 0;
+      const updateStage = (force = false) => {
+        const now = Date.now();
+        if (!force && now - lastStageAt < STAGE_UPDATE_MIN_MS) return;
+        lastStageAt = now;
+        opts.onStage?.(`${typeKey} 로그를 정렬중`, 'info');
+      };
+      // 시작 시 표시
+      opts.onStage?.(`${typeKey} 로그를 정렬중`, 'info');
       const fileSummaries: Array<{
         file: string;
         lines: number;
@@ -312,9 +450,7 @@ export async function mergeDirectory(opts: MergeOptions) {
             useParserForThisFile = await shouldUseParserForFile(fullPath, rel, compiledParser);
           } catch {}
         }
-        log.info(
-          `[probe:file-open] type=${typeKey} file=${fileName} parser=${useParserForThisFile}`
-        );
+        // quiet
         // 파일별 집계용 카운터
         const sum = {
           file: fileName,
@@ -354,8 +490,15 @@ export async function mergeDirectory(opts: MergeOptions) {
           // ── ts 출처·품질 집계 ─────────────────────────────────────────
           // 여기서부터는 유효 라인만 집계
           sum.lines++;
+          // ⬇︎ 진행 텍스트 갱신(600ms 스로틀)
+          updateStage();
           const p = (entry as any)?.parsed as
-            | { time?: string | null; process?: string | null; pid?: string | number | null; message?: string | null }
+            | {
+                time?: string | null;
+                process?: string | null;
+                pid?: string | number | null;
+                message?: string | null;
+              }
             | undefined;
           if (p?.time) {
             sum.parsedTime++;
@@ -372,7 +515,8 @@ export async function mergeDirectory(opts: MergeOptions) {
           } else {
             sum.noParsedTime++;
           }
-          if (!(typeof entry.ts === 'number' && Number.isFinite(entry.ts) && entry.ts > 0)) sum.tsZero++;
+          if (!(typeof entry.ts === 'number' && Number.isFinite(entry.ts) && entry.ts > 0))
+            sum.tsZero++;
           // 테스트/골든 일관성: 파서가 message-only로 바꿨다면 헤더 복원(+ ts 재계산)
           restoreFullTextIfNeeded(entry, !!opts.preserveFullText);
           logs.push(entry); // 전체 logs가 최신→오래된 순
@@ -380,13 +524,13 @@ export async function mergeDirectory(opts: MergeOptions) {
         await rr.close();
         fileSummaries.push(sum);
       }
-      log.info(`T1: loaded ${logs.length} logs for type=${typeKey}`);
+      // quiet
       // 파일별 요약 출력(스팸 방지를 위해 info 1줄/파일)
       for (const s of fileSummaries) {
         log.info(
           `[probe:file-summary] type=${typeKey} file=${s.file} parser=${s.parserOn} lines=${s.lines} ` +
-          `parsed.time=${s.parsedTime}/${s.lines} no.parsed=${s.noParsedTime} tsZero=${s.tsZero} ` +
-          `hdrOK=${s.headerOk} hdr→full=${s.headerFallbackFullOk} hdrFail=${s.headerFailBoth}`
+            `parsed.time=${s.parsedTime}/${s.lines} no.parsed=${s.noParsedTime} tsZero=${s.tsZero} ` +
+            `hdrOK=${s.headerOk} hdr→full=${s.headerFallbackFullOk} hdrFail=${s.headerFailBoth}`,
         );
       }
 
@@ -394,8 +538,10 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (logs.length) {
         const r0 = tsRange(logs);
         const inv0 = countDescInversions(logs);
-        log.info(`[probe:merge-desc] type=${typeKey} beforeTZ len=${logs.length}` +
-          ` range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`);
+        log.info(
+          `[probe:merge-desc] type=${typeKey} beforeTZ len=${logs.length}` +
+            ` range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`,
+        );
       }
 
       // (옵션) RAW 저장 — 최신→오래된 그대로
@@ -429,8 +575,7 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (logs.length) {
         const r1 = tsRange(logs);
         const inv1 = countDescInversions(logs);
-        log.info(`[probe:merge-desc] type=${typeKey} afterTZ(beforeSort)` +
-          ` range=[${toIso(r1.max)}..${toIso(r1.min)}] inversions=${inv1}`);
+        // quiet
       }
 
       // ⬇️ JSONL 저장은 "최신→오래된(내림차순)"으로 저장
@@ -440,16 +585,24 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (logs.length) {
         const r2 = tsRange(logs);
         const inv2 = countDescInversions(logs);
-        const lvl = inv2 === 0 ? 'info' : 'error';
-        (log as any)[lvl](`[probe:merge-desc] type=${typeKey} afterSort(range ok)` +
-          ` range=[${toIso(r2.max)}..${toIso(r2.min)}] inversions=${inv2}`);
+        if (inv2 !== 0) {
+          log.error(
+            `[merge-desc] order violation after sort: inversions=${inv2} range=[${toIso(r2.max)}..${toIso(r2.min)}]`,
+          );
+        }
       }
       const mergedFile = path.join(mergedDir, `${typeKey}.jsonl`);
       for (const logEntry of logs) {
         await fs.promises.appendFile(mergedFile, JSON.stringify(logEntry) + '\n');
       }
-      log.info(`T1: saved ${logs.length} logs to ${mergedFile} (desc ts)`);
+      // quiet
+      // 타입별 최종 진행치로 한 번 더 고정
+      updateStage(true);
+      opts.onStage?.(`${typeKey} 타입 정렬 완료`, 'done');
     }
+
+    // 3) 타입별 정렬이 모두 끝나면, 이제 JSONL → k-way 단일 병합을 시작
+    opts.onStage?.('파일 병합을 시작', 'start');
 
     // 3) merged(JSONL)에서 타입별로 **순방향** 100줄씩 읽어 k-way 병합(최신→오래된)
     const mergedFiles = await listMergedJsonlFiles(mergedDir); // ← .jsonl 전용
@@ -465,9 +618,10 @@ export async function mergeDirectory(opts: MergeOptions) {
       const cursor = await MergedCursor.create(fullPath, typeKey);
       cursors.set(typeKey, cursor);
     }
-    log.info(`T1: cursors ready types=${cursors.size}`);
+    // quiet
 
     // k-way max-heap: ts 큰 것(최신) 우선
+    opts.onStage?.('로그병합 시작', 'start');
     const heap = new MaxHeap<HeapItem>((a, b) => {
       // ts desc
       if (a.ts !== b.ts) return a.ts - b.ts;
@@ -513,8 +667,10 @@ export async function mergeDirectory(opts: MergeOptions) {
         violations++;
         if (violSamples.length < 3) {
           violSamples.push({
-            ts: top.ts, typeKey: top.typeKey,
-            file: (top.entry as any).file, rev: (top.entry as any)._rev
+            ts: top.ts,
+            typeKey: top.typeKey,
+            file: (top.entry as any).file,
+            rev: (top.entry as any)._rev,
           });
         }
       }
@@ -523,6 +679,9 @@ export async function mergeDirectory(opts: MergeOptions) {
       if (outBatch.length >= batchSize) {
         emitted += outBatch.length;
         opts.onBatch(outBatch.splice(0, outBatch.length));
+        // 진행률 갱신(100ms 스로틀은 브리지에서 처리)
+        const d = emitted;
+        opts.onProgress?.({ done: d, total: totalEstimated, active: true });
       }
 
       // 같은 타입에서 계속 최신쪽을 이어서 읽어 옴
@@ -537,18 +696,27 @@ export async function mergeDirectory(opts: MergeOptions) {
     if (!opts.signal?.aborted && outBatch.length) {
       emitted += outBatch.length;
       opts.onBatch(outBatch);
+      const d = emitted;
+      opts.onProgress?.({ done: d, total: totalEstimated, active: true });
     }
 
     // Abort 시 열려 있는 리더 자원 정리
     if (opts.signal?.aborted) {
       for (const [, cursor] of cursors) await cursor.close();
     }
-    log.info(`T1: done emitted=${emitted}`);
+    // quiet
+    // 완료
+    opts.onStage?.('로그병합 완료', 'done');
+    try {
+      opts.onFinalize?.({ mode: 'file', total: emitted, reason: 'file-merge' });
+    } catch {}
+
     if (emitted > 0) {
+      opts.onProgress?.({ done: emitted, total: totalEstimated, active: false });
       const firstIso = toIso(lastEmittedTs); // 마지막 갱신값은 최종 최소(가장 오래된)
-      log.info(`[probe:kway-desc] emitted=${emitted} violations=${violations}` +
-        (violations ? ` samples=${violSamples.map(s=>`${s.typeKey}:${toIso(s.ts)}:${s.file ?? ''}#${s.rev ?? ''}`).join(',')}` : '') +
-        ` tail_min=${firstIso}`);
+      if (violations) {
+        log.warn(`[kway-desc] violations=${violations} tail_min=${firstIso}`);
+      }
     }
   });
 }
@@ -564,9 +732,7 @@ export async function listInputLogFiles(
 ): Promise<string[]> {
   try {
     const out: string[] = [];
-    log.debug?.(`listInputLogFiles: scanning dir=${dir} with ${allowPathRegexes?.length || 0} whitelist patterns`);
     await walk(dir, '', out, allowPathRegexes);
-    log.debug?.(`listInputLogFiles: found ${out.length} files`);
     if (allowPathRegexes?.length && out.length === 0) {
       log.warn('listInputLogFiles: whitelist present but no files matched');
     }
@@ -581,22 +747,14 @@ export async function listInputLogFiles(
 }
 
 /** 루트 디렉터리 워커(비재귀): 상대경로 기준으로 필터링 */
-async function walk(
-  root: string,
-  rel: string,
-  out: string[],
-  allowPathRegexes?: RegExp[],
-) {
+async function walk(root: string, rel: string, out: string[], allowPathRegexes?: RegExp[]) {
   const base = rel ? path.join(root, rel) : root;
-  log.debug?.(`walk: scanning dir=${base}`);
   let names: string[];
   try {
     names = await fs.promises.readdir(base);
   } catch (e) {
-    log.debug?.(`walk: failed to read dir=${base}: ${e}`);
     return;
   }
-  log.debug?.(`walk: found ${names.length} items in ${base}`);
   for (const name of names) {
     const relPath = rel ? path.join(rel, name) : name;
     const full = path.join(root, relPath);
@@ -604,31 +762,25 @@ async function walk(
     try {
       st = await fs.promises.lstat(full);
     } catch (e) {
-      log.debug?.(`walk: failed to stat ${full}: ${e}`);
       continue;
     }
     // ⬇︎ 비재귀: 디렉터리는 탐색하지 않음
     if (st.isDirectory()) {
-      log.debug?.(`walk: skipped dir ${relPath}`);
       continue;
     }
     if (!st.isFile()) {
-      log.debug?.(`walk: skipped non-file ${relPath}`);
       continue;
     }
     // 기본 허용: *.log / *.log.N / *.txt
     const bn = path.basename(relPath);
     const isLogLike = /\.log(\.\d+)?$/i.test(bn) || /\.txt$/i.test(bn);
     if (!allowPathRegexes?.length && !isLogLike) {
-      log.debug?.(`walk: skipped ${relPath} (not log-like)`);
       continue;
     }
     // 화이트리스트가 있으면 "상대경로"로 매칭
     if (allowPathRegexes?.length && !pathMatchesWhitelist(relPath, allowPathRegexes)) {
-      log.debug?.(`walk: skipped ${relPath} (whitelist mismatch)`);
       continue;
     }
-    log.debug?.(`walk: accepted ${relPath}`);
     out.push(relPath);
   }
 }
@@ -659,16 +811,17 @@ export async function countTotalLinesInDir(
  * ────────────────────────────────────────────────────────────────────────── */
 
 function compareLogOrderDesc(a: string, b: string) {
-  // homey-pro.log > .log.1 > .log.2 … (숫자 작을수록 최신)
+  // 베이스(회전번호 없음=-1) > .1 > .2 … (숫자 작을수록 최신)
   return numberSuffix(path.basename(a)) - numberSuffix(path.basename(b));
 }
 function compareLogOrderAsc(a: string, b: string) {
   return -compareLogOrderDesc(a, b);
 }
 function numberSuffix(name: string) {
-  const m = name.match(/\.log(?:\.(\d+))?$/);
-  if (!m) return 9999;
-  return m[1] ? parseInt(m[1], 10) : -1;
+  // 파일명 끝의 ".숫자"를 회전 번호로 간주(없으면 -1)
+  const bn = path.basename(name);
+  const m = bn.match(/^(.*)\.(\d+)$/);
+  return m ? parseInt(m[2], 10) : -1;
 }
 async function isRegularFile(p: string): Promise<boolean> {
   try {
@@ -700,11 +853,11 @@ async function countLinesInFile(filePath: string): Promise<number> {
   });
 }
 
-/** 타입키 추출: 'homey-pro.log.1' -> 'homey-pro' / 'clip.log' -> 'clip' */
+/** 타입키 추출(확장자 무관): 'system.log.1' -> 'system.log' / 'homey-pro.2' -> 'homey-pro' / 'clip.log' -> 'clip.log' */
 function typeKeyOf(name: string): string {
   const bn = path.basename(name);
-  const m = bn.match(/^(.*)\.log(?:\.\d+)?$/i);
-  return m ? m[1] : name;
+  const m = bn.match(/^(.+?)(?:\.(\d+))?$/);
+  return m ? m[1] : bn;
 }
 
 /** 파일 목록을 타입키별로 묶기(.log 전용) */
@@ -790,13 +943,13 @@ async function streamFileForward(
         filePath,
         line,
         useParserForThisFile ? compiledParser : undefined,
-        { fileRank, revIdx: revIdx++ }
+        { fileRank, revIdx: revIdx++ },
       );
       // 파서 적용 파일: time/process/pid 셋 모두 없으면 무효 라인으로 폐기
       if (useParserForThisFile && isParsedHeaderAllMissing((e as any)?.parsed)) {
         continue;
       }
-      await restoreFullTextIfNeeded(e, /*preserve*/ true);
+      restoreFullTextIfNeeded(e, /*preserve*/ true);
       batch.push(e);
       if (batch.length >= batchSize) emit(batch.splice(0, batch.length));
     }
@@ -996,7 +1149,7 @@ class FileForwardCursor {
         c.useParser = false;
       }
     }
-    log.info(`[probe:forward-cursor] file=${path.basename(filePath)} parser=${c.useParser}`);
+    // quiet
     return c;
   }
 
@@ -1020,13 +1173,18 @@ class FileForwardCursor {
       if (this.useParser && isParsedHeaderAllMissing((e as any)?.parsed)) {
         continue; // 무효 라인 건너뛰고 다음 라인 시도
       }
-      await restoreFullTextIfNeeded(e, /*preserve*/ true);
+      restoreFullTextIfNeeded(e, /*preserve*/ true);
       if (typeof e.ts === 'number' && Number.isFinite(e.ts) && e.ts > 0) this.prevTs = e.ts;
       return { ts: e.ts, entry: e };
     }
   }
 
-  async close() { try { await this.reader?.close(); } catch {} this.isExhausted = true; }
+  async close() {
+    try {
+      await this.reader?.close();
+    } catch {}
+    this.isExhausted = true;
+  }
 }
 
 /** JSONL에서 "앞에서부터" size줄 읽기 */
@@ -1084,13 +1242,14 @@ class MergedCursor {
       if (inv > 0) {
         const a = new Date(batch[0].ts).toISOString();
         const z = new Date(batch[batch.length - 1].ts).toISOString();
-        log.warn(`[probe:cursor-desc] type=${this.typeKey} batch inversions=${inv} range=[${a}..${z}]`);
+        log.warn(`[cursor-desc] ${this.typeKey}: inversions=${inv} range=[${a}..${z}]`);
       }
       // 배치 경계(desc) 유지 확인: 다음 배치의 첫 ts ≤ 이전 배치의 마지막 ts
       const curFirst = batch[0].ts;
       if (this.lastTsDesc !== undefined && curFirst > this.lastTsDesc) {
-        log.warn(`[probe:cursor-desc] type=${this.typeKey} cross-batch order violation: ` +
-          `cur_first=${toIso(curFirst)} prev_last=${toIso(this.lastTsDesc)}`);
+        log.warn(
+          `[cursor-desc] ${this.typeKey}: cross-batch order violation cur_first=${toIso(curFirst)} prev_last=${toIso(this.lastTsDesc)}`,
+        );
       }
       // 현재 배치의 마지막(ts가 가장 작은 값)을 보관
       this.lastTsDesc = batch[batch.length - 1].ts;
@@ -1164,7 +1323,12 @@ class MaxHeap<T> {
 function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
   if (!preserve) return;
   const p = (e as any)?.parsed as
-    | { time?: string | null; process?: string | null; pid?: string | number | null; message?: string | null }
+    | {
+        time?: string | null;
+        process?: string | null;
+        pid?: string | number | null;
+        message?: string | null;
+      }
     | undefined;
   if (!p) return;
   const time = (p.time ?? '').toString().trim();
@@ -1181,9 +1345,7 @@ function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
   const tFull = parseTs(full);
   const t = typeof tHeader === 'number' ? tHeader : tFull;
   // 로깅: tHeader가 사용되었는지 tFull이 사용되었는지 기록
-  if (typeof tHeader !== 'number') {
-    log.debug?.(`restoreFullTextIfNeeded: used tFull=${tFull} for full="${full}"`);
-  }
+  // quiet diagnostics
   if (typeof t === 'number') e.ts = t;
   e.text = full;
 }
@@ -1195,310 +1357,342 @@ function restoreFullTextIfNeeded(e: LogEntry, preserve: boolean) {
 // - 타입별 버퍼는 최신→오래된 순으로 수집 후 타임존 보정, 보정 후 최신순(ts desc) 정렬
 // - 최종 k-way 병합으로 정확히 target개만 반환
 // ⬇️ Manager에서 직접 호출할 수 있도록 export + LogEntry[] 반환
-export async function warmupTailPrepass(opts: WarmupOptions): Promise<LogEntry[]> {
+export async function warmupTailPrepass(opts: WarmupOptions): Promise<WarmupResult> {
   return measureBlock('logs.warmupTailPrepass', async function () {
-  const { dir, signal } = opts;
-  log.debug?.(`warmupTailPrepass: start dir=${dir}`);
-  const compiledParser =
-    opts.parser ? compileParserConfig(opts.parser) : undefined;
-  const target = Math.max(1, Number(opts.warmupTarget ?? 500));
-  const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
-    ? Math.max(1, Number(opts.warmupPerTypeLimit))
-    : Number.POSITIVE_INFINITY;
-  const aborted = () => !!signal?.aborted;
-  if (aborted()) return [];
+    const { dir, signal } = opts;
+    log.debug?.(`warmupTailPrepass: start dir=${dir}`);
+    const compiledParser = opts.parser ? compileParserConfig(opts.parser) : undefined;
+    const target = Math.max(
+      1,
+      Number(
+        opts.memory_mode_threshold ??
+          getMemoryModeThresholdFromParser(opts.parser) ??
+          DEFAULT_MEMORY_MODE_TRESHOLD,
+      ),
+    );
+    const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)
+      ? Math.max(1, Number(opts.warmupPerTypeLimit))
+      : Number.POSITIVE_INFINITY;
+    const aborted = () => !!signal?.aborted;
+    if (aborted()) return { logs: [], fullyCovered: false };
 
-  // 1) 입력 로그 파일 수집(화이트리스트 반영) → 타입별 그룹화(회전 파일 포함)
-  const allowPathRegexes =
-    opts.whitelistGlobs?.length ? compileWhitelistPathRegexes(opts.whitelistGlobs) : undefined;
-  const names = await listInputLogFiles(dir, allowPathRegexes);
-  if (!names.length) return [];
-  const grouped = groupByType(names); // key: type, val: ['x.log', 'x.log.1', ...]
-  const typeKeys = [...grouped.keys()];
-  const T = typeKeys.length;
-  if (!T) return [];
+    // 1) 입력 로그 파일 수집(화이트리스트 반영) → 타입별 그룹화(회전 파일 포함)
+    const allowPathRegexes = opts.whitelistGlobs?.length
+      ? compileWhitelistPathRegexes(opts.whitelistGlobs)
+      : undefined;
+    const names = await listInputLogFiles(dir, allowPathRegexes);
+    if (!names.length) return { logs: [], fullyCovered: true };
+    const grouped = groupByType(names); // key: type, val: ['x.log', 'x.log.1', ...]
+    const typeKeys = [...grouped.keys()];
+    const T = typeKeys.length;
+    if (!T) return { logs: [], fullyCovered: true };
 
-  // 2) 균등 + remainder 분배 (cap 고려)
-  const base = Math.floor(target / T);
-  let rem = target % T;
-  const alloc = new Map<string, number>();
-  for (let i = 0; i < T; i++) {
-    const k = typeKeys[i];
-    const want = base + (rem > 0 ? 1 : 0);
-    if (rem > 0) rem--;
-    alloc.set(k, Math.min(want, perTypeCap));
-  }
-  log.debug?.(
-    `warmupTailPrepass: plan target=${target} types=${T} base=${base} rem=${target % T} cap=${isFinite(perTypeCap) ? perTypeCap : 'INF'}`,
-  );
-  log.debug?.(
-    `warmup(T0): per-type allocation → ` + typeKeys.map((k) => `${k}:${alloc.get(k)}`).join(', '),
-  );
-
-  // 3) 타입별 tail walker 준비
-  class TypeTailWalker {
-    private idx = 0;
-    private rr: ReverseLineReader | null = null;
-    private exhausted = false;
-    private useParserForCurrentFile = false;
-    constructor(
-      private baseDir: string,
-      private files: string[],
-      private typeKey: string,
-    ) {}
-    get isExhausted() {
-      return this.exhausted;
+    // 2) 균등 + remainder 분배 (cap 고려)
+    const base = Math.floor(target / T);
+    let rem = target % T;
+    const alloc = new Map<string, number>();
+    for (let i = 0; i < T; i++) {
+      const k = typeKeys[i];
+      const want = base + (rem > 0 ? 1 : 0);
+      if (rem > 0) rem--;
+      alloc.set(k, Math.min(want, perTypeCap));
     }
-    private async ensureReader() {
-      while (!this.rr && this.idx < this.files.length) {
-        const fp = path.join(this.baseDir, this.files[this.idx]);
-        try {
-          this.rr = await ReverseLineReader.open(fp);
-          // file-scoped parser gate (once per file)
-          if (compiledParser) {
-            try {
-              const bn = path.basename(fp).replace(/\\/g, '/');
-              this.useParserForCurrentFile = await shouldUseParserForFile(fp, bn, compiledParser);
-            } catch {
+    // quiet
+
+    // 3) 타입별 tail walker 준비
+    class TypeTailWalker {
+      private idx = 0;
+      private rr: ReverseLineReader | null = null;
+      private exhausted = false;
+      private useParserForCurrentFile = false;
+      constructor(
+        private baseDir: string,
+        private files: string[],
+        private typeKey: string,
+      ) {}
+      get isExhausted() {
+        return this.exhausted;
+      }
+      private async ensureReader() {
+        while (!this.rr && this.idx < this.files.length) {
+          const fp = path.join(this.baseDir, this.files[this.idx]);
+          try {
+            this.rr = await ReverseLineReader.open(fp);
+            // file-scoped parser gate (once per file)
+            if (compiledParser) {
+              try {
+                const bn = path.basename(fp).replace(/\\/g, '/');
+                this.useParserForCurrentFile = await shouldUseParserForFile(fp, bn, compiledParser);
+              } catch {
+                this.useParserForCurrentFile = false;
+              }
+            } else {
               this.useParserForCurrentFile = false;
             }
-          } else {
-            this.useParserForCurrentFile = false;
+            // quiet
+          } catch {
+            // 파일 오픈 실패 시 다음 파일로
+            this.idx++;
           }
-          log.debug?.(
-            `warmup(T0): [${this.typeKey}] open file=${path.basename(fp)} (idx=${this.idx}/${this.files.length - 1})`,
-          );
-        } catch {
-          // 파일 오픈 실패 시 다음 파일로
-          this.idx++;
         }
+        if (!this.rr && this.idx >= this.files.length) this.exhausted = true;
       }
-      if (!this.rr && this.idx >= this.files.length) this.exhausted = true;
-    }
-    async next(n: number): Promise<{ line: string; file: string; useParser: boolean }[]> {
-      if (this.exhausted) return [];
-      await this.ensureReader();
-      const out: { line: string; file: string; useParser: boolean }[] = [];
-      while (out.length < n && !this.exhausted) {
-        if (!this.rr) {
-          this.exhausted = true;
-          break;
+      async next(n: number): Promise<{ line: string; file: string; useParser: boolean }[]> {
+        if (this.exhausted) return [];
+        await this.ensureReader();
+        const out: { line: string; file: string; useParser: boolean }[] = [];
+        while (out.length < n && !this.exhausted) {
+          if (!this.rr) {
+            this.exhausted = true;
+            break;
+          }
+          const line = await this.rr.nextLine();
+          if (line === null) {
+            // 현재 파일 끝 → 닫고 다음 파일
+            try {
+              await this.rr.close();
+            } catch {}
+            this.rr = null;
+            this.idx++;
+            // quiet
+            await this.ensureReader();
+            continue;
+          }
+          out.push({
+            line,
+            file: this.files[this.idx],
+            useParser: this.useParserForCurrentFile,
+          });
         }
-        const line = await this.rr.nextLine();
-        if (line === null) {
-          // 현재 파일 끝 → 닫고 다음 파일
-          try {
-            await this.rr.close();
-          } catch {}
-          this.rr = null;
-          this.idx++;
-          log.debug?.(
-            `warmup(T0): [${this.typeKey}] file exhausted, move next (idx=${this.idx}/${this.files.length})`,
-          );
-          await this.ensureReader();
+        return out;
+      }
+    }
+
+    // 타입별 워커/버퍼 초기화
+    const walkers = new Map<string, TypeTailWalker>();
+    const buffers = new Map<string, LogEntry[]>();
+    const prevTsMap = new Map<string, number | undefined>(); // 타입별 prevTs 폴백
+    for (const k of typeKeys) {
+      const files = grouped.get(k)!.slice().sort(compareLogOrderDesc);
+      walkers.set(k, new TypeTailWalker(dir, files, k));
+      buffers.set(k, []);
+      prevTsMap.set(k, undefined);
+    }
+    // quiet
+
+    // 헬퍼: 라인 -> LogEntry (파일명을 source로)
+    const toEntry = async (
+      fileName: string,
+      line: string,
+      useParser: boolean,
+      fallbackTs?: number,
+    ): Promise<LogEntry> => {
+      const full = path.join(dir, fileName);
+      const e = await lineToEntryWithParser(full, line, useParser ? compiledParser : undefined, {
+        fallbackTs,
+      });
+      // 테스트/골든/정렬 일관성: 헤더 복원 + 헤더 기반 ts 재계산
+      restoreFullTextIfNeeded(e, /*preserve*/ true);
+      return e;
+    };
+
+    // 4) 1차 수집: 균등 할당만큼 per-type 로딩
+    const batchRead = async (typeKey: string, need: number) => {
+      if (need <= 0) return 0;
+      const w = walkers.get(typeKey)!;
+      let got = 0; // ✅ 유효 엔트리(버퍼에 push된) 개수
+      let prevTs = prevTsMap.get(typeKey);
+      // 한 번에 너무 큰 I/O를 피하려고 소형 청크로 읽음
+      const CHUNK = 64;
+      while (got < need && !w.isExhausted && !aborted()) {
+        const n = Math.min(CHUNK, need - got);
+        const part = await w.next(n);
+        if (!part.length) break;
+        const buf = buffers.get(typeKey)!;
+        let pushedThisRound = 0;
+        for (const { line, file, useParser } of part) {
+          const e = await toEntry(file, line, useParser, prevTs);
+          if (useParser && isParsedHeaderAllMissing((e as any)?.parsed)) {
+            continue; // 무효 라인 폐기
+          }
+          if (typeof e.ts === 'number' && Number.isFinite(e.ts)) prevTs = e.ts;
+          buf.push(e);
+          pushedThisRound++;
+        }
+        // ⚠️ 단순 읽은 라인 개수가 아니라 "유효하게 추가된" 라인 수로 집계
+        got += pushedThisRound;
+      }
+      prevTsMap.set(typeKey, prevTs);
+      return got;
+    };
+
+    let total = 0;
+    for (const k of typeKeys) {
+      const want = alloc.get(k)!;
+      const gotK = await batchRead(k, want);
+      total += gotK;
+      // quiet
+    }
+
+    // 5) 재분배: target까지 부족하면 남은 타입에서 추가 로딩
+    // quiet
+    let deficit = Math.max(0, target - total);
+    if (deficit > 0) {
+      // 현재 각 타입이 cap에 도달했는지 계산
+      const room = () =>
+        typeKeys
+          .filter((k) => !walkers.get(k)!.isExhausted) // ❗ exhausted 제외
+          .map((k) => ({
+            k,
+            room: Math.max(
+              0,
+              (perTypeCap === Number.POSITIVE_INFINITY ? Number.MAX_SAFE_INTEGER : perTypeCap) -
+                buffers.get(k)!.length,
+            ),
+          }))
+          .filter((x) => x.room > 0);
+      let slots = room();
+      // 라운드로빈으로 1~CHUNK씩 분배
+      let i = 0;
+      const CHUNK = 64;
+      let lastProgressTotal = total;
+      while (deficit > 0 && slots.length && !aborted()) {
+        const { k, room: r } = slots[i % slots.length];
+        const w = walkers.get(k)!;
+        if (w.isExhausted) {
+          i++;
+          slots = room();
           continue;
         }
-        out.push({
-          line,
-          file: this.files[this.idx],
-          useParser: this.useParserForCurrentFile,
-        });
-      }
-      return out;
-    }
-  }
-
-  // 타입별 워커/버퍼 초기화
-  const walkers = new Map<string, TypeTailWalker>();
-  const buffers = new Map<string, LogEntry[]>();
-  const prevTsMap = new Map<string, number | undefined>(); // 타입별 prevTs 폴백
-  for (const k of typeKeys) {
-    const files = grouped.get(k)!.slice().sort(compareLogOrderDesc);
-    walkers.set(k, new TypeTailWalker(dir, files, k));
-    buffers.set(k, []);
-    prevTsMap.set(k, undefined);
-  }
-  log.debug?.(`warmupTailPrepass: walkers ready for ${typeKeys.length} types`);
-
-  // 헬퍼: 라인 -> LogEntry (파일명을 source로)
-  const toEntry = async (fileName: string, line: string, useParser: boolean, fallbackTs?: number): Promise<LogEntry> => {
-    const full = path.join(dir, fileName);
-    const e = await lineToEntryWithParser(full, line, useParser ? compiledParser : undefined, { fallbackTs });
-    // 테스트/골든/정렬 일관성: 헤더 복원 + 헤더 기반 ts 재계산
-    restoreFullTextIfNeeded(e, /*preserve*/ true);
-    return e;
-  };
-
-  // 4) 1차 수집: 균등 할당만큼 per-type 로딩
-  const batchRead = async (typeKey: string, need: number) => {
-    if (need <= 0) return 0;
-    const w = walkers.get(typeKey)!;
-    let got = 0;
-    let prevTs = prevTsMap.get(typeKey);
-    // 한 번에 너무 큰 I/O를 피하려고 소형 청크로 읽음
-    const CHUNK = 64;
-    while (got < need && !w.isExhausted && !aborted()) {
-      const n = Math.min(CHUNK, need - got);
-      const part = await w.next(n);
-      if (!part.length) break;
-      const buf = buffers.get(typeKey)!;
-      for (const { line, file, useParser } of part) {
-        const e = await toEntry(file, line, useParser, prevTs);
-        if (useParser && isParsedHeaderAllMissing((e as any)?.parsed)) {
-          continue; // 무효 라인 폐기
+        const take = Math.min(CHUNK, r, deficit);
+        if (take > 0) {
+          const before = buffers.get(k)!.length;
+          const got = await batchRead(k, take);
+          const after = buffers.get(k)!.length;
+          deficit -= got;
+          total += got;
+          // quiet
         }
-        if (typeof e.ts === 'number' && Number.isFinite(e.ts)) prevTs = e.ts;
-        buf.push(e);
-      }
-      got += part.length;
-    }
-    prevTsMap.set(typeKey, prevTs);
-    return got;
-  };
-
-  let total = 0;
-  for (const k of typeKeys) {
-    const want = alloc.get(k)!;
-    const gotK = await batchRead(k, want);
-    total += gotK;
-    log.debug?.(
-      `[debug] warmupTailPrepass: primary load type=${k} got=${gotK}/${want} exhausted=${walkers.get(k)!.isExhausted}`,
-    );
-  }
-
-  // 5) 재분배: target까지 부족하면 남은 타입에서 추가 로딩
-  log.debug?.(`warmup(T0): primary load total=${total}, target=${target}`);
-  let deficit = Math.max(0, target - total);
-  if (deficit > 0) {
-    // 현재 각 타입이 cap에 도달했는지 계산
-    const room = () =>
-      typeKeys
-        .filter((k) => !walkers.get(k)!.isExhausted) // ❗ exhausted 제외
-        .map((k) => ({
-          k,
-          room: Math.max(
-            0,
-            (perTypeCap === Number.POSITIVE_INFINITY ? Number.MAX_SAFE_INTEGER : perTypeCap) -
-              buffers.get(k)!.length,
-          ),
-        }))
-        .filter((x) => x.room > 0);
-    let slots = room();
-    // 라운드로빈으로 1~CHUNK씩 분배
-    let i = 0;
-    const CHUNK = 64;
-    let lastProgressTotal = total;
-    while (deficit > 0 && slots.length && !aborted()) {
-      const { k, room: r } = slots[i % slots.length];
-      const w = walkers.get(k)!;
-      if (w.isExhausted) {
+        // 정체(진전 없음) 탐지 → 모두 소진이면 탈출
+        if (total === lastProgressTotal) {
+          const anyActive = typeKeys.some((tk) => !walkers.get(tk)!.isExhausted);
+          if (!anyActive) {
+            log.warn(`warmup: all types exhausted; total=${total}, target=${target}`);
+            break;
+          }
+        } else {
+          lastProgressTotal = total;
+        }
         i++;
         slots = room();
-        continue;
       }
-      const take = Math.min(CHUNK, r, deficit);
-      if (take > 0) {
-        const before = buffers.get(k)!.length;
-        const got = await batchRead(k, take);
-        const after = buffers.get(k)!.length;
-        deficit -= got;
-        total += got;
-        log.debug?.(
-          `warmup(T0): rebalance type=${k} +${got} (buf ${before}->${after}), remain deficit=${deficit}`,
-        );
+      // quiet
+    }
+
+    if (total === 0)
+      return { logs: [], fullyCovered: typeKeys.every((k) => walkers.get(k)!.isExhausted) };
+
+    // quiet
+    // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
+    for (const k of typeKeys) {
+      const arr = buffers.get(k)!;
+      if (!arr.length) continue;
+      // before TZ: 역전/범위 요약 (warm 전용 프로브)
+      const r0 = tsRange(arr);
+      const inv0 = countDescInversions(arr);
+      log.info(
+        `[probe:warm-desc] type=${k} beforeTZ len=${arr.length} range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`,
+      );
+      // 연도 없는 포맷(syslog류) 롤오버 연결 (단조비증가 보장)
+      const yearlessStitcher = new YearlessStitcher();
+      for (const log of arr) {
+        const timeToken = extractHeaderTimeToken(log.text);
+        const isYearless = timeToken ? isYearlessTimeToken(timeToken) : false;
+        log.ts = yearlessStitcher.apply(log.ts, isYearless);
       }
-      // 정체(진전 없음) 탐지 → 모두 소진이면 탈출
-      if (total === lastProgressTotal) {
-        const anyActive = typeKeys.some((tk) => !walkers.get(tk)!.isExhausted);
-        if (!anyActive) {
-          log.warn(
-            `warmup(T0): rebalancing stalled — all types exhausted; total=${total}, target=${target}`,
-          );
-          break;
+      const tzc = new MonotonicCorrector(k, 1); // 1ms 단위 클램프
+      // warm 버퍼도 물리 배열은 최신→오래된. ✅ 앞→뒤(0..N-1)로 feed
+      for (let asc = 0; asc < arr.length; asc++) {
+        const corrected = tzc.adjust(arr[asc].ts);
+        arr[asc].ts = corrected;
+      }
+      // quiet summary
+      // after TZ(before sort)
+      const r1 = tsRange(arr);
+      const inv1 = countDescInversions(arr);
+      // quiet
+      arr.sort((a, b) => b.ts - a.ts); // 최신순
+      // after sort
+      const r2 = tsRange(arr);
+      const inv2 = countDescInversions(arr);
+      // quiet
+      // ⬇︎ 파일명은 그대로 유지. 구버전 엔트리엔 file을 보강.
+      for (const e of arr) {
+        if (!(e as any).file) {
+          const cand = (e as any).path || e.source || '';
+          (e as any).file = path.basename(String(cand));
         }
-      } else {
-        lastProgressTotal = total;
+        // source는 덮어쓰지 않음(표시·필터 모두 file/path 우선 사용)
       }
-      i++;
-      slots = room();
     }
-    log.debug?.(`warmupTailPrepass: after rebalance total=${total}, unmet=${Math.max(0, target - total)}`);
-  }
 
-  if (total === 0) return [];
-
-  log.debug?.(`warmupTailPrepass: collected total=${total} (before TZ correction)`);
-  // 6) 타입별 타임존 보정 + 최신순 정렬 + source 통일
-  for (const k of typeKeys) {
-    const arr = buffers.get(k)!;
-    if (!arr.length) continue;
-    // before TZ: 역전/범위 요약 (warm 전용 프로브)
-    const r0 = tsRange(arr);
-    const inv0 = countDescInversions(arr);
-    log.info(`[probe:warm-desc] type=${k} beforeTZ len=${arr.length} range=[${toIso(r0.max)}..${toIso(r0.min)}] inversions=${inv0}`);
-    // 연도 없는 포맷(syslog류) 롤오버 연결 (단조비증가 보장)
-    const yearlessStitcher = new YearlessStitcher();
-    for (const log of arr) {
-      const timeToken = extractHeaderTimeToken(log.text);
-      const isYearless = timeToken ? isYearlessTimeToken(timeToken) : false;
-      log.ts = yearlessStitcher.apply(log.ts, isYearless);
+    // 7) k-way 병합으로 정확히 target개만 추출
+    // quiet
+    type WarmItem = { ts: number; entry: LogEntry; typeKey: string; idx: number };
+    const heap = new MaxHeap<WarmItem>((a, b) => {
+      if (a.ts !== b.ts) return a.ts - b.ts; // 큰 ts 우선
+      if (a.typeKey !== b.typeKey) return a.typeKey < b.typeKey ? -1 : 1;
+      return b.idx - a.idx;
+    });
+    for (const k of typeKeys) {
+      const arr = buffers.get(k)!;
+      if (arr.length) heap.push({ ts: arr[0].ts, entry: arr[0], typeKey: k, idx: 0 });
     }
-    const tzc = new MonotonicCorrector(k, 1); // 1ms 단위 클램프
-    // warm 버퍼도 물리 배열은 최신→오래된. ✅ 앞→뒤(0..N-1)로 feed
-    for (let asc = 0; asc < arr.length; asc++) {
-      const corrected = tzc.adjust(arr[asc].ts);
-      arr[asc].ts = corrected;
-    }
-    // 요약 출력
-    tzc.summary();
-    // after TZ(before sort)
-    const r1 = tsRange(arr);
-    const inv1 = countDescInversions(arr);
-    log.info(`[probe:warm-desc] type=${k} afterTZ(beforeSort) range=[${toIso(r1.max)}..${toIso(r1.min)}] inversions=${inv1}`);
-    arr.sort((a, b) => b.ts - a.ts); // 최신순
-    // after sort
-    const r2 = tsRange(arr);
-    const inv2 = countDescInversions(arr);
-    log.info(`[probe:warm-desc] type=${k} afterSort(range ok) range=[${toIso(r2.max)}..${toIso(r2.min)}] inversions=${inv2}`);
-    // ⬇︎ 파일명은 그대로 유지. 구버전 엔트리엔 file을 보강.
-    for (const e of arr) {
-      if (!(e as any).file) {
-        const cand = (e as any).path || e.source || '';
-        (e as any).file = path.basename(String(cand));
+    const out: LogEntry[] = [];
+    while (!heap.isEmpty() && out.length < target && !aborted()) {
+      const top = heap.pop()!;
+      out.push(top.entry);
+      const arr = buffers.get(top.typeKey)!;
+      const nextIdx = top.idx + 1;
+      if (nextIdx < arr.length) {
+        heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
       }
-      // source는 덮어쓰지 않음(표시·필터 모두 file/path 우선 사용)
     }
-  }
+    // quiet
+    if (out.length < target) {
+      // quiet
+    }
 
-  // 7) k-way 병합으로 정확히 target개만 추출
-  log.debug?.(`warmupTailPrepass: k-way merge to emit=${target}`);
-  type WarmItem = { ts: number; entry: LogEntry; typeKey: string; idx: number };
-  const heap = new MaxHeap<WarmItem>((a, b) => {
-    if (a.ts !== b.ts) return a.ts - b.ts; // 큰 ts 우선
-    if (a.typeKey !== b.typeKey) return a.typeKey < b.typeKey ? -1 : 1;
-    return b.idx - a.idx;
-  });
-  for (const k of typeKeys) {
-    const arr = buffers.get(k)!;
-    if (arr.length) heap.push({ ts: arr[0].ts, entry: arr[0], typeKey: k, idx: 0 });
-  }
-  const out: LogEntry[] = [];
-  while (!heap.isEmpty() && out.length < target && !aborted()) {
-    const top = heap.pop()!;
-    out.push(top.entry);
-    const arr = buffers.get(top.typeKey)!;
-    const nextIdx = top.idx + 1;
-    if (nextIdx < arr.length) {
-      heap.push({ ts: arr[nextIdx].ts, entry: arr[nextIdx], typeKey: top.typeKey, idx: nextIdx });
+    // per-type 통계 및 소진 여부 집계
+    const perType: Record<string, { valid: number; exhausted: boolean }> = {};
+    for (const k of typeKeys) {
+      perType[k] = {
+        valid: buffers.get(k)!.length,
+        exhausted: walkers.get(k)!.isExhausted,
+      };
     }
-  }
-  log.debug?.(`warmupTailPrepass: prepared lines=${out.length}`);
-  if (out.length < target) {
-    log.debug?.(
-      `[debug] warmupTailPrepass: dataset smaller than target (out=${out.length} < target=${target}); ` +
-        `will short-circuit T1 if total is known and ≤ out`,
-    );
-  }
-  return out;
+    const fullyCovered = typeKeys.every((k) => walkers.get(k)!.isExhausted);
+
+    return {
+      logs: out,
+      fullyCovered,
+      perType,
+    };
   });
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * configure.memory_mode_threshold 추출기
+ *  - parser.configure.memory_mode_threshold 가 양의 정수면 반환
+ *  - 그 외에는 undefined
+ * ────────────────────────────────────────────────────────────────────────── */
+function getMemoryModeThresholdFromParser(
+  parser?: import('./ParserEngine.js').ParserConfig | any,
+): number | undefined {
+  try {
+    const raw = parser?.configure?.memory_mode_threshold;
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  } catch {}
+  return undefined;
 }

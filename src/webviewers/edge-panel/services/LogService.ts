@@ -96,14 +96,14 @@ export class LogService {
   reset(lines?: string[]) {
     this.m('LogService.reset', () => {
       this.ensureContainer();
-    // 세그먼트 상태 초기화
-    this.lastTs = undefined;
-    this.seg = 0;
+      // 세그먼트 상태 초기화
+      this.lastTs = undefined;
+      this.seg = 0;
 
-    if (this.body) this.body.innerHTML = '';
-    if (Array.isArray(lines)) lines.forEach((l) => this.append(l));
-    // 초기화 후 스크롤 하단 고정
-    if (this.container) this.container.scrollTop = this.container.scrollHeight;
+      if (this.body) this.body.innerHTML = '';
+      if (Array.isArray(lines)) lines.forEach((l) => this.append(l));
+      // 초기화 후 스크롤 하단 고정
+      if (this.container) this.container.scrollTop = this.container.scrollHeight;
     });
   }
 
@@ -111,22 +111,22 @@ export class LogService {
     this.m('LogService.append', () => {
       this.ensureContainer();
 
-    // 세그먼트 토글 계산
-    const seg = this.pickSegment(line);
+      // 세그먼트 토글 계산
+      const seg = this.pickSegment(line);
 
-    const div = document.createElement('div');
-    div.className = `log-line seg${seg}`;
+      const div = document.createElement('div');
+      div.className = `log-line seg${seg}`;
 
-    // 에러 힌트는 기존처럼 표시(토글과 무관)
-    if (/\[E\]/.test(line)) {
-      div.style.color = '#ff6b6b';
-    }
+      // 에러 힌트는 기존처럼 표시(토글과 무관)
+      if (/\[E\]/.test(line)) {
+        div.style.color = '#ff6b6b';
+      }
 
-    div.textContent = line;
-    (this.body as HTMLElement).appendChild(div);
+      div.textContent = line;
+      (this.body as HTMLElement).appendChild(div);
 
-    // 스크롤 맨 아래로
-    this.container!.scrollTop = this.container!.scrollHeight;
+      // 스크롤 맨 아래로
+      this.container!.scrollTop = this.container!.scrollHeight;
     });
   }
 
@@ -134,29 +134,29 @@ export class LogService {
   prepend(lines: string[]) {
     this.m('LogService.prepend', () => {
       this.ensureContainer();
-    if (!this.body || !lines.length) {
+      if (!this.body || !lines.length) {
+        this.loadingOlder = false;
+        return;
+      }
+      // 추가 전 현재 스크롤 높이 저장
+      const before = this.container!.scrollHeight;
+      // DocumentFragment로 배치 삽입
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const seg = this.pickSegment(line);
+        const div = document.createElement('div');
+        div.className = `log-line seg${seg}`;
+        if (/\[E\]/.test(line)) div.style.color = '#ff6b6b';
+        div.textContent = line;
+        frag.appendChild(div);
+      }
+      (this.body as HTMLElement).insertBefore(frag, this.body.firstChild);
+      // 증가한 높이만큼 스크롤 유지(점프 방지)
+      const after = this.container!.scrollHeight;
+      const delta = after - before;
+      this.container!.scrollTop = this.container!.scrollTop + delta;
       this.loadingOlder = false;
-      return;
-    }
-    // 추가 전 현재 스크롤 높이 저장
-    const before = this.container!.scrollHeight;
-    // DocumentFragment로 배치 삽입
-    const frag = document.createDocumentFragment();
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const seg = this.pickSegment(line);
-      const div = document.createElement('div');
-      div.className = `log-line seg${seg}`;
-      if (/\[E\]/.test(line)) div.style.color = '#ff6b6b';
-      div.textContent = line;
-      frag.appendChild(div);
-    }
-    (this.body as HTMLElement).insertBefore(frag, this.body.firstChild);
-    // 증가한 높이만큼 스크롤 유지(점프 방지)
-    const after = this.container!.scrollHeight;
-    const delta = after - before;
-    this.container!.scrollTop = this.container!.scrollTop + delta;
-    this.loadingOlder = false;
     });
   }
 

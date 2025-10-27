@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+
 import { createUiLog } from '../../../shared/utils';
 import { createUiMeasure } from '../../../shared/utils';
 import { vscode } from '../ipc';
@@ -29,27 +30,36 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (!open) return;
     // 살짝 지연 후 측정(Transition 적용 직후 레이아웃 안정화)
     const t = setTimeout(() => {
-      const overlay = measureUi('FilterDialog.dom.measure', () => document.querySelector(
-        '[data-testid="filter-overlay"]',
-      ) as HTMLElement | null);
+      const overlay = measureUi(
+        'FilterDialog.dom.measure',
+        () => document.querySelector('[data-testid="filter-overlay"]') as HTMLElement | null,
+      );
       const panel = document.querySelector('[data-testid="filter-panel"]') as HTMLElement | null;
       if (overlay) {
         const zi = getComputedStyle(overlay).zIndex;
         const r = overlay.getBoundingClientRect();
-        measureUi('FilterDialog.dom.overlay', () => ui.info(
-          `filterDialog.dom.overlay z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
-        ));
+        measureUi('FilterDialog.dom.overlay', () =>
+          ui.info(
+            `filterDialog.dom.overlay z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
+          ),
+        );
       } else {
-        measureUi('FilterDialog.dom.overlay.notFound', () => ui.warn('filterDialog.dom.overlay not found'));
+        measureUi('FilterDialog.dom.overlay.notFound', () =>
+          ui.warn('filterDialog.dom.overlay not found'),
+        );
       }
       if (panel) {
         const zi = getComputedStyle(panel).zIndex;
         const r = panel.getBoundingClientRect();
-        measureUi('FilterDialog.dom.panel', () => ui.info(
-          `filterDialog.dom.panel z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
-        ));
+        measureUi('FilterDialog.dom.panel', () =>
+          ui.info(
+            `filterDialog.dom.panel z=${zi} rect=(${Math.round(r.left)},${Math.round(r.top)}) ${Math.round(r.width)}x${Math.round(r.height)}`,
+          ),
+        );
       } else {
-        measureUi('FilterDialog.dom.panel.notFound', () => ui.warn('filterDialog.dom.panel not found'));
+        measureUi('FilterDialog.dom.panel.notFound', () =>
+          ui.warn('filterDialog.dom.panel not found'),
+        );
       }
     }, 30);
     return () => clearTimeout(t);
@@ -97,7 +107,9 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
       );
   };
   const serializeGroups = (groups: string[][]) => {
-    measureUi('FilterDialog.serializeGroups', () => ui.debug?.('[debug] FilterDialog: serializeGroups'));
+    measureUi('FilterDialog.serializeGroups', () =>
+      ui.debug?.('[debug] FilterDialog: serializeGroups'),
+    );
     return groups
       .map((g) => {
         const uniq: string[] = [];
@@ -182,7 +194,9 @@ export function FilterDialog({ open, onClose }: { open: boolean; onClose: () => 
               // 현재 입력값을 포함해 전 필드 정규화 후 즉시 적용
               const cur = { ...local, [k]: (e.currentTarget as HTMLInputElement).value };
               const cleaned = normalizeAll(cur);
-              measureUi('FilterDialog.apply.enter', () => ui.info(`filterDialog.apply.enter ${JSON.stringify(cleaned)}`));
+              measureUi('FilterDialog.apply.enter', () =>
+                ui.info(`filterDialog.apply.enter ${JSON.stringify(cleaned)}`),
+              );
               setLocal(cleaned);
               applyFilter(normalizeAll(cleaned));
               onClose();

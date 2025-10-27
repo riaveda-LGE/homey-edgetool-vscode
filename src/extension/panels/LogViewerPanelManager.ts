@@ -2,27 +2,31 @@
 // === src/extension/panels/LogViewerPanelManager.ts ===
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { measure, globalProfiler, perfNow } from '../../core/logging/perf.js';
 
 import {
   getCurrentWorkspacePathFs,
   readLogViewerPrefs,
   writeLogViewerPrefs,
 } from '../../core/config/userdata.js';
-import { getLogger } from '../../core/logging/extension-logger.js';
-import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
-import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
-import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
-import { paginationService } from '../../core/logs/PaginationService.js';
 import { readParserWhitelistGlobs } from '../../core/config/userdata.js';
 import { readParserConfigJson } from '../../core/config/userdata.js';
+import { getLogger } from '../../core/logging/extension-logger.js';
+import { globalProfiler, measure, perfNow } from '../../core/logging/perf.js';
+import { paginationService } from '../../core/logs/PaginationService.js';
+import { LogSessionManager } from '../../core/sessions/LogSessionManager.js';
+import { MERGED_DIR_NAME, RAW_DIR_NAME } from '../../shared/const.js';
 import type { MergeSavedInfo } from '../../shared/ipc/messages.js';
+import { HostWebviewBridge } from '../messaging/hostWebviewBridge.js';
 
 export class LogViewerPanelManager {
   private log = getLogger('LogViewerPanelManager');
   private panel?: vscode.WebviewPanel;
   private bridge?: HostWebviewBridge;
   private session?: LogSessionManager;
+  private memTimer?: NodeJS.Timeout;
+  private memPeriodMs = 60_000; // 기본: 느리게(완료 후)
+  private readonly MEM_FAST_MS = 2_000;
+  private readonly MEM_SLOW_MS = 60_000;
 
   private mode: 'idle' | 'realtime' | 'filemerge' = 'idle';
   private initialSent = false;
@@ -46,20 +50,47 @@ export class LogViewerPanelManager {
   ) {}
 
   dispose() {
-    this.log.debug('[debug] LogViewerPanelManager dispose: start');
+    // quiet
     try {
       this.session?.dispose();
     } catch {}
     this.session = undefined;
     if (this.panel) this.panel.dispose();
-    this.log.debug('[debug] LogViewerPanelManager dispose: end');
+    // quiet
   }
 
+  /** 메모리 샘플 1회 전송 */
+  private _postMemOnce() {
+    try {
+      const m = process.memoryUsage();
+      const rssMB = Math.round(m.rss / 1048576);
+      const heapUsedMB = Math.round(m.heapUsed / 1048576);
+      const externalMB = Math.round(m.external / 1048576);
+      const arrayBuffersMB = Math.round(((m as any).arrayBuffers || 0) / 1048576);
+      this._send('memory.usage', {
+        rssMB,
+        heapUsedMB,
+        externalMB,
+        arrayBuffersMB,
+        ts: Date.now(),
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  /** 샘플 주기 전환(즉시 1회 송신 포함) */
+  private _setMemPeriod(ms: number) {
+    if (this.memPeriodMs === ms) return;
+    if (this.memTimer) clearInterval(this.memTimer);
+    this.memPeriodMs = ms;
+    this._postMemOnce();
+    this.memTimer = setInterval(() => this._postMemOnce(), this.memPeriodMs);
+  }
   @measure()
   async handleHomeyLoggingCommand() {
     const already = !!this.panel;
-    this.log.debug(`[debug] LogViewerPanelManager.handleHomeyLoggingCommand: start panelExists=${already}`);
-    this.log.debug(`[debug] viewer: handleHomeyLoggingCommand (panelExists=${already})`);
+    // quiet
 
     // (중요) 뷰어 오픈 시 raw 삭제 금지 — 초기화는 워크스페이스 설정/보장 단계에서만 수행
 
@@ -78,79 +109,89 @@ export class LogViewerPanelManager {
         },
       );
       this.panel.onDidDispose(() => {
-        this.log.info('viewer: panel disposed');
+        // quiet
         try {
           this.bridge?.dispose?.();
         } catch {}
         this.bridge = undefined;
         this.panel = undefined;
+        if (this.memTimer) {
+          clearInterval(this.memTimer);
+          this.memTimer = undefined;
+        }
       });
 
       // 정식 Log Viewer UI 로드
       const uiRoot = vscode.Uri.joinPath(this.extensionUri, 'dist', 'webviewers', 'log-viewer');
-      this.log.debug('viewer: loading UI html…');
+      // quiet
       this.panel.webview.html = await this._getHtmlFromFiles(this.panel.webview, uiRoot);
-      this.log.info('viewer: UI html loaded');
+      // quiet
 
       // 메시지 라우팅을 bridge로 일원화
       this.bridge = new HostWebviewBridge(this.panel, {
         onUiLog: ({ level, text, source, line }) => {},
         readUserPrefs: async () => {
-          this.log.debug('viewer: getUserPrefs requested');
+          // quiet
           const prefs = await readLogViewerPrefs(this.context);
-          this.log.debug('viewer: getUserPrefs responded');
+          // quiet
           return prefs;
         },
         writeUserPrefs: async (patch: any) => {
           await writeLogViewerPrefs(this.context, patch ?? {});
-          this.log.debug('viewer: prefs saved');
+          // quiet
         },
       });
       this.bridge.start();
-      this.log.debug('viewer: host-webview bridge started');
-
-      this.log.info('Homey Log Viewer opened');
+      // ── Host 메모리 샘플러: 기본은 느리게(완료 주기) 시작 ──────────────
+      if (this.memTimer) {
+        clearInterval(this.memTimer);
+        this.memTimer = undefined;
+      }
+      this._setMemPeriod(this.MEM_SLOW_MS);
+      // quiet
       await vscode.commands.executeCommand('homey.logging.openViewer');
     }
     this.panel.reveal(undefined, true);
-    this.log.debug(`LogViewerPanelManager.handleHomeyLoggingCommand: end`);
+    // quiet
   }
 
   /** 실시간 세션 시작: 라인 들어오는 대로 즉시 UI 전송 */
   @measure()
   async startRealtime(filter?: string) {
-    this.log.debug('[debug] LogViewerPanelManager startRealtime: start');
+    // quiet
     if (!this.panel) await this.handleHomeyLoggingCommand();
     this.mode = 'realtime';
     this.initialSent = true; // 실시간은 제한 없음
-    this.log.info(`realtime: start (filter=${filter ?? ''})`);
+    // quiet
 
     this.session?.dispose();
     this.session = new LogSessionManager({ id: 'default', type: 'adb', timeoutMs: 15000 });
+    // 실시간 모드는 병합이 없으므로 느리게
+    this._setMemPeriod(this.MEM_SLOW_MS);
 
     await this.session.startRealtimeSession({
       filter,
       onBatch: (logs) => {
-        if ((logs?.length ?? 0) > 0) {
-          this.log.debug(`realtime: batch ${logs.length} lines`);
-        }
+        // quiet
         this._send('logs.batch', { logs });
       },
       onMetrics: (m) => {
         this._send('metrics.update', m);
       },
     });
-    this.log.debug('[debug] LogViewerPanelManager startRealtime: end');
+    // quiet
   }
 
   /** 파일 병합 세션 시작: 최초 최신 LOG_WINDOW_SIZE만 보내고, 이후는 스크롤 요청에 따른 페이지 읽기 */
   @measure()
   async startFileMerge(dir: string) {
-    this.log.debug('[debug] LogViewerPanelManager startFileMerge: start');
+    // quiet
     if (!this.panel) await this.handleHomeyLoggingCommand();
+    // 브리지 진행률 리포터(중앙 스로틀)
+    const reporter = this.bridge?.createMergeReporter();
     this.mode = 'filemerge';
     this.initialSent = false;
-    this.log.info(`merge: start (dir=${dir})`);
+    // quiet
 
     // 워크스페이스 준비는 확장 활성화/변경 단계에서 이미 보장됨
 
@@ -169,16 +210,14 @@ export class LogViewerPanelManager {
 
     this.session?.dispose();
     this.session = new LogSessionManager(undefined);
+    // 병합 시작: 빠르게 전환
+    this._setMemPeriod(this.MEM_FAST_MS);
 
     // ⬇️ 파서 설정(.config/custom_log_parser.json)에서 files 화이트리스트 추출
     let whitelistGlobs: string[] | undefined;
     try {
       whitelistGlobs = await readParserWhitelistGlobs(this.context);
-      if (whitelistGlobs?.length) {
-        this.log.info(`merge: applying whitelist globs (${whitelistGlobs.length})`);
-      } else {
-        this.log.info(`merge: no whitelist globs found; will fallback to default (*.log*/.txt)`);
-      }
+      // quiet
     } catch (e: any) {
       this.log.warn(`merge: failed to read parser whitelist globs (${e?.message ?? e})`);
     }
@@ -187,11 +226,7 @@ export class LogViewerPanelManager {
     let parserConfig: any;
     try {
       parserConfig = await readParserConfigJson(this.context);
-      if (parserConfig) {
-        this.log.info(`merge: parser config loaded`);
-      } else {
-        this.log.info(`merge: no parser config found`);
-      }
+      // quiet
     } catch (e: any) {
       this.log.warn(`merge: failed to read parser config (${e?.message ?? e})`);
     }
@@ -203,43 +238,50 @@ export class LogViewerPanelManager {
       parserConfig,
       onBatch: (logs, total, seq) => {
         if (this.initialSent) return;
-        this.log.info(
-          `merge: initial batch delivered (len=${logs.length}, total=${total ?? -1}, seq=${seq ?? -1})`,
-        );
+        // quiet
         // 초기 배치에도 현재 pagination 버전을 함께 전달(웹뷰 버전 동기화)
         const ver = paginationService.getVersion();
         this._send('logs.batch', { logs, total, seq, version: ver });
         this.initialSent = true;
       },
       onSaved: (info: MergeSavedInfo) => {
-        this.log.info(
-          `merge: saved outDir=${info.outDir} chunks=${info.chunkCount} total=${info.total ?? -1} merged=${info.merged}`,
-        );
+        // quiet
         this._send('logmerge.saved', info);
       },
       onMetrics: (m) => this._send('metrics.update', m),
 
       // 정식 병합(T1) 완료 → UI 하드리프레시
-      onRefresh: ({ total, version }) => {
-        this.log.info(
-          `merge: refresh requested (total=${total ?? '?'}, version=${version ?? '?'})`,
-        );
+      onRefresh: ({
+        total,
+        version,
+        warm,
+      }: {
+        total?: number;
+        version?: number;
+        warm?: boolean;
+      }) => {
+        // warm=true면 “정식 병합 스킵(메모리 모드 완료)”을 명시로 알림
         this._send('logs.refresh', {
           reason: 'full-reindex',
           total,
           version,
+          warm: !!warm,
         });
+        // 정식 병합 완료(스킵 포함): 느리게 전환
+        this._setMemPeriod(this.MEM_SLOW_MS);
       },
 
       // ── 진행률: 로그는 샘플링해서 출력, 메시지 전달은 매번 유지 ─────────
       onProgress: (p) => {
-        const { inc, total, done, active } = p ?? {};
-        // 항상 웹뷰에는 전달
-        this._send('merge.progress', { inc, total, done, active });
+        const { inc, total, done, active, reset } = p ?? {};
+        // 중앙 스로틀(브리지)로 전달
+        reporter?.onProgress?.({ inc, total, done, active, reset });
 
         // ─ 로그 노이즈 억제 ─
         const now = Date.now();
         if (active) {
+          // 병합 중: 빠르게
+          this._setMemPeriod(this.MEM_FAST_MS);
           if (typeof total === 'number') this.progTotal = total;
           const add = typeof inc === 'number' ? inc : 0;
           this.progAcc += add;
@@ -250,27 +292,17 @@ export class LogViewerPanelManager {
             this.progAcc >= this.PROG_LINES_THRESHOLD &&
             now - this.progLastLogMs >= this.PROG_LOG_INTERVAL_MS
           ) {
-            const pct =
-              this.progTotal && this.progTotal > 0
-                ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
-                : undefined;
-            this.log.debug(
-              `[debug] host→ui: merge.progress ~${pct ?? '?'}% (≈${this.progDoneAcc}/${this.progTotal ?? '?'})`,
-            );
+            // quiet
             this.progAcc = 0;
             this.progLastLogMs = now;
           }
         } else {
           // 완료 시에는 정확 수치 1회만 출력
+          // 병합 종료: 느리게
+          this._setMemPeriod(this.MEM_SLOW_MS);
           if (typeof total === 'number') this.progTotal = total;
           if (typeof done === 'number') this.progDoneAcc = done;
-          const pct =
-            this.progTotal && this.progTotal > 0
-              ? Math.floor((this.progDoneAcc / this.progTotal) * 100)
-              : 100;
-          this.log.debug(
-            `[debug] host→ui: merge.progress done=${this.progDoneAcc}/${this.progTotal ?? '?'} (${pct}%)`,
-          );
+          // quiet
           // 상태 초기화
           this.progAcc = 0;
           this.progDoneAcc = 0;
@@ -278,8 +310,35 @@ export class LogViewerPanelManager {
           this.progLastLogMs = 0;
         }
       },
+      // stage 신호 중 "정식 병합 스킵: ..." 완료를 감지하면 warm refresh를 보강 전송
+      onStage: (text, kind) => {
+        reporter?.onStage?.(text, kind);
+        this._handleStageAndMaybeWarmRefresh(text, kind);
+      },
     });
     this.log.debug('[debug] LogViewerPanelManager startFileMerge: end');
+  }
+
+  /**
+   * 병합 단계(stage) 신호를 UI로 중계하면서, "스킵 완료"를 감지하면
+   * logs.refresh(warm=true)도 함께 보내 사후 처리를 통일한다.
+   * - 과거에는 Manager 경로에서 스킵을 조기 결정하여 완료 신호가 누락될 수 있었음.
+   * - 이제는 mergeDirectory에서 스킵을 결정하고 stage 'done'을 보내지만,
+   *   혹시 호출자 레이어에서 refresh를 놓쳐도 이 레이어가 보강한다.
+   */
+  private _handleStageAndMaybeWarmRefresh(text?: string, kind?: 'start' | 'done' | 'info') {
+    const t = String(text || '');
+    // 완료 시그널이면서 "정식 병합 스킵" 텍스트를 포함하면 warm 리프레시를 보낸다.
+    if (kind === 'done' && /정식\s*병합\s*스킵/.test(t)) {
+      const total = paginationService.getWarmTotal();
+      const version = paginationService.getVersion();
+      this.log.info(
+        `viewer: warm-skip detected → sending logs.refresh(warm=true) total=${total} v=${version}`,
+      );
+      this._send('logs.refresh', { reason: 'full-reindex', total, version, warm: true });
+      // 완료로 간주 → 느리게
+      this._setMemPeriod(this.MEM_SLOW_MS);
+    }
   }
 
   @measure()
@@ -316,9 +375,11 @@ export class LogViewerPanelManager {
           this.lastPageLogMs = now;
         }
       } else if (type === 'logs.refresh') {
-        this.log.debug(`[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`);
+        this.log.debug(
+          `[debug] host→ui: logs.refresh (total=${payload?.total ?? ''}, v=${payload?.version ?? ''})`,
+        );
       }
-      this.bridge?.send({ v: 1, type, payload } as any);
+      this.bridge?.notify({ v: 1, type, payload } as any);
     } catch {
       // no-op: 전송 실패는 상위 브리지에서 추가 로깅됨
     } finally {

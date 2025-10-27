@@ -130,7 +130,14 @@ export function GridHeader() {
       <div className="tw-px-2 tw-py-1 tw-border-r tw-border-[var(--divider-strong)] tw-text-right tw-font-mono tw-tabular-nums">
         #
       </div>
-      {col('time', '시간', true, (dx) => measureUi('GridHeader.resize.time', () => resize('time', dx)), !show.time, lastVisible === 'time')}
+      {col(
+        'time',
+        '시간',
+        true,
+        (dx) => measureUi('GridHeader.resize.time', () => resize('time', dx)),
+        !show.time,
+        lastVisible === 'time',
+      )}
       {col(
         'proc',
         '프로세스',
@@ -139,8 +146,22 @@ export function GridHeader() {
         !show.proc,
         lastVisible === 'proc',
       )}
-      {col('pid', 'PID', true, (dx) => measureUi('GridHeader.resize.pid', () => resize('pid', dx)), !show.pid, lastVisible === 'pid')}
-      {col('src', '파일', true, (dx) => measureUi('GridHeader.resize.src', () => resize('src', dx)), !show.src, lastVisible === 'src')}
+      {col(
+        'pid',
+        'PID',
+        true,
+        (dx) => measureUi('GridHeader.resize.pid', () => resize('pid', dx)),
+        !show.pid,
+        lastVisible === 'pid',
+      )}
+      {col(
+        'src',
+        '파일',
+        true,
+        (dx) => measureUi('GridHeader.resize.src', () => resize('src', dx)),
+        !show.src,
+        lastVisible === 'src',
+      )}
       {col('msg', '메시지', false, () => {}, !show.msg, lastVisible === 'msg')}
     </div>
   );

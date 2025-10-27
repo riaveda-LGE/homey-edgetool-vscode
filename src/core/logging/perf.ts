@@ -2,7 +2,6 @@
 import * as fs from 'fs';
 
 // (removed unused import 'path')
-
 import { LOG_TOTAL_CALLS_THRESHOLD } from '../../shared/const.js';
 
 export function perfNow() {
@@ -20,7 +19,9 @@ function pathToString(p: any): string {
     if (p?.path) return String(p.path);
     if (p instanceof URL) return p.toString();
     return String(p);
-  } catch { return String(p); }
+  } catch {
+    return String(p);
+  }
 }
 
 export interface IOPerformanceMetrics {
@@ -62,7 +63,10 @@ export async function measureFileRead(filePath: string): Promise<IOPerformanceMe
   }
 }
 
-export async function measureFileWrite(filePath: string, data: Buffer | string): Promise<IOPerformanceMetrics> {
+export async function measureFileWrite(
+  filePath: string,
+  data: Buffer | string,
+): Promise<IOPerformanceMetrics> {
   const startTime = perfNow();
 
   try {
@@ -100,7 +104,9 @@ export async function withPerf<T>(
     return await fn();
   } finally {
     const t1 = perfNow();
-    try { onDone?.(t1 - t0); } catch {}
+    try {
+      onDone?.(t1 - t0);
+    } catch {}
   }
 }
 
@@ -124,7 +130,12 @@ export class PerformanceProfiler {
   private startTime = 0;
   private functionCalls: FunctionCall[] = [];
   private isEnabled = false;
-  private lastCaptureResult: { duration: number; samples: ProfileSample[]; functionCalls: FunctionCall[]; analysis: any } | null = null;
+  private lastCaptureResult: {
+    duration: number;
+    samples: ProfileSample[];
+    functionCalls: FunctionCall[];
+    analysis: any;
+  } | null = null;
   private ioMetrics: IOPerformanceMetrics[] = [];
 
   // ── I/O 후킹 원본 저장/상태 ─────────────────────────────
@@ -152,18 +163,16 @@ export class PerformanceProfiler {
     createWriteStream: fs.createWriteStream as typeof fs.createWriteStream,
   };
   private vscodeMod: VSCodeModule | null = null;
-  private origVscodeFs:
-    | {
-        readFile?: VSCodeModule['workspace']['fs']['readFile'];
-        writeFile?: VSCodeModule['workspace']['fs']['writeFile'];
-        stat?: VSCodeModule['workspace']['fs']['stat'];
-        readDirectory?: VSCodeModule['workspace']['fs']['readDirectory'];
-        createDirectory?: VSCodeModule['workspace']['fs']['createDirectory'];
-        delete?: VSCodeModule['workspace']['fs']['delete'];
-        copy?: VSCodeModule['workspace']['fs']['copy'];
-        rename?: VSCodeModule['workspace']['fs']['rename'];
-      }
-    | null = null;
+  private origVscodeFs: {
+    readFile?: VSCodeModule['workspace']['fs']['readFile'];
+    writeFile?: VSCodeModule['workspace']['fs']['writeFile'];
+    stat?: VSCodeModule['workspace']['fs']['stat'];
+    readDirectory?: VSCodeModule['workspace']['fs']['readDirectory'];
+    createDirectory?: VSCodeModule['workspace']['fs']['createDirectory'];
+    delete?: VSCodeModule['workspace']['fs']['delete'];
+    copy?: VSCodeModule['workspace']['fs']['copy'];
+    rename?: VSCodeModule['workspace']['fs']['rename'];
+  } | null = null;
 
   public enable() {
     this.isEnabled = true;
@@ -176,7 +185,9 @@ export class PerformanceProfiler {
   }
 
   /** 외부에서 OFF/ON 빠른 분기용 (측정 오버헤드 최소화) */
-  public isOn(): boolean { return this.isEnabled; }
+  public isOn(): boolean {
+    return this.isEnabled;
+  }
 
   /** 외부에서 동기 함수 계측 결과를 기록할 수 있도록 공개 메서드 추가 */
   public recordFunctionCall(name: string, start: number, duration: number) {
@@ -215,23 +226,32 @@ export class PerformanceProfiler {
   // ── 자동 I/O 후킹(ON 시 설치, OFF 시 원복) ────────────────────────────────
   private installHooks() {
     if (this.hooksInstalled) return;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     const fsAny: any = fs; // ESM 네임스페이스 보호 회피용(런타임에서 실패하면 try/catch)
 
     // ---- helpers ----
     const recOk = (operation: string, path: any, start: number, end: number, bytes?: number) =>
       self.recordIOMetrics({
-        operation, path: pathToString(path), startTime: start, endTime: end, duration: end - start,
+        operation,
+        path: pathToString(path),
+        startTime: start,
+        endTime: end,
+        duration: end - start,
         bytesTransferred: typeof bytes === 'number' ? bytes : undefined,
       });
     const recErr = (operation: string, path: any, start: number, end: number, err: unknown) =>
       self.recordIOMetrics({
-        operation, path: pathToString(path), startTime: start, endTime: end, duration: end - start,
+        operation,
+        path: pathToString(path),
+        startTime: start,
+        endTime: end,
+        duration: end - start,
         error: err instanceof Error ? err.message : String(err),
       });
 
     // ---- fs.promises 기본 I/O ----
-    const wrapP = <T extends Function>(op: string, orig: any) => {
+    const wrapP = <T extends (...args: any[]) => any>(op: string, orig: T) => {
       return async function patched(path: any, ...rest: any[]) {
         // 후킹은 enable()시에만 설치되므로, OFF일 때 여기로 들어오지 않음 (무부하 보장)
         const start = perfNow();
@@ -242,9 +262,11 @@ export class PerformanceProfiler {
           if (op === 'readFile' && (ret as any)?.length != null) bytes = (ret as any).length;
           if (op === 'writeFile' || op === 'appendFile') {
             const data = rest[0];
-            bytes = Buffer.isBuffer(data) ? data.length :
-                    typeof data === 'string' ? Buffer.byteLength(data, 'utf8') :
-                    (data?.length ?? data?.byteLength);
+            bytes = Buffer.isBuffer(data)
+              ? data.length
+              : typeof data === 'string'
+                ? Buffer.byteLength(data, 'utf8')
+                : (data?.length ?? data?.byteLength);
           }
           recOk(`fs.${op}`, path, start, end, typeof bytes === 'number' ? bytes : undefined);
           return ret;
@@ -262,8 +284,10 @@ export class PerformanceProfiler {
     fs.promises.stat = wrapP('stat', this.origFs.promisesStat) as any;
     fs.promises.unlink = wrapP('unlink', this.origFs.promisesUnlink) as any;
     fs.promises.mkdir = wrapP('mkdir', this.origFs.promisesMkdir) as any;
-    if (this.origFs.promisesRmdir) (fs.promises as any).rmdir = wrapP('rmdir', this.origFs.promisesRmdir) as any;
-    if (this.origFs.promisesRm) (fs.promises as any).rm = wrapP('rm', this.origFs.promisesRm) as any;
+    if (this.origFs.promisesRmdir)
+      (fs.promises as any).rmdir = wrapP('rmdir', this.origFs.promisesRmdir) as any;
+    if (this.origFs.promisesRm)
+      (fs.promises as any).rm = wrapP('rm', this.origFs.promisesRm) as any;
     fs.promises.copyFile = wrapP('copyFile', this.origFs.promisesCopyFile) as any;
     fs.promises.rename = wrapP('rename', this.origFs.promisesRename) as any;
 
@@ -286,14 +310,14 @@ export class PerformanceProfiler {
         );
       };
       this.patchedCbReadFile = true;
-    } catch { /* ESM 네임스페이스 등으로 패치 불가 → 무시 */ }
+    } catch {
+      /* ESM 네임스페이스 등으로 패치 불가 → 무시 */
+    }
 
     try {
       fsAny.writeFile = function patchedWriteFile(path: any, data: any, options: any, cb?: any) {
         const withOpts =
-          typeof options !== 'function'
-            ? { options, cb }
-            : { options: undefined, cb: options };
+          typeof options !== 'function' ? { options, cb } : { options: undefined, cb: options };
         const start = perfNow();
         return (self.origFs.cbWriteFile as any).call(
           fs,
@@ -302,10 +326,11 @@ export class PerformanceProfiler {
           withOpts.options,
           function onDone(err: any) {
             const end = perfNow();
-            const bytes =
-              Buffer.isBuffer(data) ? data.length :
-              typeof data === 'string' ? Buffer.byteLength(data, 'utf8') :
-              (data?.length ?? data?.byteLength);
+            const bytes = Buffer.isBuffer(data)
+              ? data.length
+              : typeof data === 'string'
+                ? Buffer.byteLength(data, 'utf8')
+                : (data?.length ?? data?.byteLength);
             if (err) recErr('fs.writeFile(cb)', path, start, end, err);
             else recOk('fs.writeFile(cb)', path, start, end, bytes);
             return withOpts.cb?.(err);
@@ -313,7 +338,9 @@ export class PerformanceProfiler {
         );
       };
       this.patchedCbWriteFile = true;
-    } catch { /* 패치 불가 → 무시 */ }
+    } catch {
+      /* 패치 불가 → 무시 */
+    }
 
     // ---- 스트림 read/write ----
     try {
@@ -329,14 +356,20 @@ export class PerformanceProfiler {
           if (err) recErr('fs.readStream', path, start, end, err);
           else recOk('fs.readStream', path, start, end, bytes);
         };
-        s.on('data', (chunk: any) => { try { bytes += chunk?.length ?? 0; } catch {} });
+        s.on('data', (chunk: any) => {
+          try {
+            bytes += chunk?.length ?? 0;
+          } catch {}
+        });
         s.on('end', finalize);
         s.on('close', finalize);
         s.on('error', (e: any) => finalize(e));
         return s;
       };
       this.patchedCreateReadStream = true;
-    } catch { /* 패치 불가 → 무시 */ }
+    } catch {
+      /* 패치 불가 → 무시 */
+    }
 
     try {
       fsAny.createWriteStream = function patchedCWS(path: any, options?: any) {
@@ -345,7 +378,9 @@ export class PerformanceProfiler {
         const s: any = (self.origFs.createWriteStream as any).call(fs, path, options);
         const origWrite = s.write;
         s.write = function patchedWrite(chunk: any, ...rest: any[]) {
-          try { bytes += chunk?.length ?? 0; } catch {}
+          try {
+            bytes += chunk?.length ?? 0;
+          } catch {}
           return origWrite.call(this, chunk, ...rest);
         };
         const finalize = (err?: any) => {
@@ -359,11 +394,13 @@ export class PerformanceProfiler {
         return s;
       };
       this.patchedCreateWriteStream = true;
-    } catch { /* 패치 불가 → 무시 */ }
+    } catch {
+      /* 패치 불가 → 무시 */
+    }
 
     // ---- vscode.workspace.fs ----
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       this.vscodeMod = require('vscode') as VSCodeModule;
       const vfs = this.vscodeMod.workspace?.fs;
       if (vfs) {
@@ -377,33 +414,43 @@ export class PerformanceProfiler {
           copy: vfs.copy?.bind(vfs),
           rename: vfs.rename?.bind(vfs),
         };
-        const wrapV = (op: string, orig?: Function) => orig ? (async (uri: any, ...rest: any[]) => {
-          // OFF일 땐 후킹이 제거되므로 이 경로가 호출되지 않음
-          const start = perfNow();
-          try {
-            const ret = await orig(uri, ...rest);
-            const end = perfNow();
-            let bytes: number | undefined;
-            if (op === 'readFile') bytes = (ret as Uint8Array)?.byteLength ?? undefined;
-            if (op === 'writeFile') bytes = (rest?.[0] as Uint8Array)?.byteLength ?? undefined;
-            recOk(`vscode.${op}`, uri, start, end, bytes);
-            return ret;
-          } catch (e) {
-            const end = perfNow();
-            recErr(`vscode.${op}`, uri, start, end, e);
-            throw e;
-          }
-        }) : undefined;
-        if (this.origVscodeFs.readFile) vfs.readFile = wrapV('readFile', this.origVscodeFs.readFile) as any;
-        if (this.origVscodeFs.writeFile) vfs.writeFile = wrapV('writeFile', this.origVscodeFs.writeFile) as any;
+        const wrapV = (op: string, orig?: (...args: any[]) => any) =>
+          orig
+            ? async (uri: any, ...rest: any[]) => {
+                // OFF일 땐 후킹이 제거되므로 이 경로가 호출되지 않음
+                const start = perfNow();
+                try {
+                  const ret = await orig(uri, ...rest);
+                  const end = perfNow();
+                  let bytes: number | undefined;
+                  if (op === 'readFile') bytes = (ret as Uint8Array)?.byteLength ?? undefined;
+                  if (op === 'writeFile')
+                    bytes = (rest?.[0] as Uint8Array)?.byteLength ?? undefined;
+                  recOk(`vscode.${op}`, uri, start, end, bytes);
+                  return ret;
+                } catch (e) {
+                  const end = perfNow();
+                  recErr(`vscode.${op}`, uri, start, end, e);
+                  throw e;
+                }
+              }
+            : undefined;
+        if (this.origVscodeFs.readFile)
+          vfs.readFile = wrapV('readFile', this.origVscodeFs.readFile) as any;
+        if (this.origVscodeFs.writeFile)
+          vfs.writeFile = wrapV('writeFile', this.origVscodeFs.writeFile) as any;
         if (this.origVscodeFs.stat) vfs.stat = wrapV('stat', this.origVscodeFs.stat) as any;
-        if (this.origVscodeFs.readDirectory) vfs.readDirectory = wrapV('readDirectory', this.origVscodeFs.readDirectory) as any;
-        if (this.origVscodeFs.createDirectory) vfs.createDirectory = wrapV('createDirectory', this.origVscodeFs.createDirectory) as any;
+        if (this.origVscodeFs.readDirectory)
+          vfs.readDirectory = wrapV('readDirectory', this.origVscodeFs.readDirectory) as any;
+        if (this.origVscodeFs.createDirectory)
+          vfs.createDirectory = wrapV('createDirectory', this.origVscodeFs.createDirectory) as any;
         if (this.origVscodeFs.delete) vfs.delete = wrapV('delete', this.origVscodeFs.delete) as any;
         if (this.origVscodeFs.copy) vfs.copy = wrapV('copy', this.origVscodeFs.copy) as any;
         if (this.origVscodeFs.rename) vfs.rename = wrapV('rename', this.origVscodeFs.rename) as any;
       }
-    } catch { /* vscode 없음(테스트) */ }
+    } catch {
+      /* vscode 없음(테스트) */
+    }
 
     this.hooksInstalled = true;
   }
@@ -423,10 +470,18 @@ export class PerformanceProfiler {
     fs.promises.copyFile = this.origFs.promisesCopyFile;
     fs.promises.rename = this.origFs.promisesRename;
     fs.promises.appendFile = this.origFs.promisesAppendFile;
-    try { if (this.patchedCbReadFile) fsAny.readFile = this.origFs.cbReadFile; } catch {}
-    try { if (this.patchedCbWriteFile) fsAny.writeFile = this.origFs.cbWriteFile; } catch {}
-    try { if (this.patchedCreateReadStream) fsAny.createReadStream = this.origFs.createReadStream; } catch {}
-    try { if (this.patchedCreateWriteStream) fsAny.createWriteStream = this.origFs.createWriteStream; } catch {}
+    try {
+      if (this.patchedCbReadFile) fsAny.readFile = this.origFs.cbReadFile;
+    } catch {}
+    try {
+      if (this.patchedCbWriteFile) fsAny.writeFile = this.origFs.cbWriteFile;
+    } catch {}
+    try {
+      if (this.patchedCreateReadStream) fsAny.createReadStream = this.origFs.createReadStream;
+    } catch {}
+    try {
+      if (this.patchedCreateWriteStream) fsAny.createWriteStream = this.origFs.createWriteStream;
+    } catch {}
     this.patchedCbReadFile = this.patchedCbWriteFile = false;
     this.patchedCreateReadStream = this.patchedCreateWriteStream = false;
 
@@ -437,8 +492,10 @@ export class PerformanceProfiler {
         if (this.origVscodeFs.readFile) vfs.readFile = this.origVscodeFs.readFile as any;
         if (this.origVscodeFs.writeFile) vfs.writeFile = this.origVscodeFs.writeFile as any;
         if (this.origVscodeFs.stat) vfs.stat = this.origVscodeFs.stat as any;
-        if (this.origVscodeFs.readDirectory) vfs.readDirectory = this.origVscodeFs.readDirectory as any;
-        if (this.origVscodeFs.createDirectory) vfs.createDirectory = this.origVscodeFs.createDirectory as any;
+        if (this.origVscodeFs.readDirectory)
+          vfs.readDirectory = this.origVscodeFs.readDirectory as any;
+        if (this.origVscodeFs.createDirectory)
+          vfs.createDirectory = this.origVscodeFs.createDirectory as any;
         if (this.origVscodeFs.delete) vfs.delete = this.origVscodeFs.delete as any;
         if (this.origVscodeFs.copy) vfs.copy = this.origVscodeFs.copy as any;
         if (this.origVscodeFs.rename) vfs.rename = this.origVscodeFs.rename as any;
@@ -447,8 +504,16 @@ export class PerformanceProfiler {
     this.hooksInstalled = false;
   }
 
-  public stopCapture(): { duration: number; samples: ProfileSample[]; functionCalls: FunctionCall[]; analysis: any } {
-    if (!this.isCapturing) return this.lastCaptureResult || { duration: 0, samples: [], functionCalls: [], analysis: {} };
+  public stopCapture(): {
+    duration: number;
+    samples: ProfileSample[];
+    functionCalls: FunctionCall[];
+    analysis: any;
+  } {
+    if (!this.isCapturing)
+      return (
+        this.lastCaptureResult || { duration: 0, samples: [], functionCalls: [], analysis: {} }
+      );
     this.isCapturing = false;
     if (this.interval) {
       clearInterval(this.interval);
@@ -461,7 +526,12 @@ export class PerformanceProfiler {
     return result;
   }
 
-  public getLastCaptureResult(): { duration: number; samples: ProfileSample[]; functionCalls: FunctionCall[]; analysis: any } {
+  public getLastCaptureResult(): {
+    duration: number;
+    samples: ProfileSample[];
+    functionCalls: FunctionCall[];
+    analysis: any;
+  } {
     return this.lastCaptureResult || { duration: 0, samples: [], functionCalls: [], analysis: {} };
   }
 
@@ -471,12 +541,8 @@ export class PerformanceProfiler {
     }
   }
 
-  public async measureIO<T>(
-    operation: string,
-    path: string,
-    fn: () => Promise<T>
-  ): Promise<T> {
-    if (!this.isEnabled) return fn();  // ✅ Off면 그냥 실행 (오버헤드 없음)
+  public async measureIO<T>(operation: string, path: string, fn: () => Promise<T>): Promise<T> {
+    if (!this.isEnabled) return fn(); // ✅ Off면 그냥 실행 (오버헤드 없음)
     const startTime = perfNow();
     try {
       const result = await fn();
@@ -514,21 +580,24 @@ export class PerformanceProfiler {
     // CPU: process.cpuUsage()는 누적값(µs) → 샘플 간 델타를 ms로 환산
     const cpuUserDeltaMs: number[] = [];
     const cpuSystemDeltaMs: number[] = [];
-    const memory = this.samples.map(s => s.memory.heapUsed);
+    const memory = this.samples.map((s) => s.memory.heapUsed);
     for (let i = 1; i < this.samples.length; i++) {
       const prev = this.samples[i - 1];
       const curr = this.samples[i];
       cpuUserDeltaMs.push((curr.cpu.user - prev.cpu.user) / 1000);
       cpuSystemDeltaMs.push((curr.cpu.system - prev.cpu.system) / 1000);
     }
-    const functionSummary = this.functionCalls.reduce((acc, call) => {
-      if (!acc[call.name]) acc[call.name] = { count: 0, totalTime: 0, avgTime: 0, maxTime: 0 };
-      acc[call.name].count++;
-      acc[call.name].totalTime += call.duration;
-      acc[call.name].maxTime = Math.max(acc[call.name].maxTime, call.duration);
-      acc[call.name].avgTime = acc[call.name].totalTime / acc[call.name].count;
-      return acc;
-    }, {} as Record<string, { count: number; totalTime: number; avgTime: number; maxTime: number }>);
+    const functionSummary = this.functionCalls.reduce(
+      (acc, call) => {
+        if (!acc[call.name]) acc[call.name] = { count: 0, totalTime: 0, avgTime: 0, maxTime: 0 };
+        acc[call.name].count++;
+        acc[call.name].totalTime += call.duration;
+        acc[call.name].maxTime = Math.max(acc[call.name].maxTime, call.duration);
+        acc[call.name].avgTime = acc[call.name].totalTime / acc[call.name].count;
+        return acc;
+      },
+      {} as Record<string, { count: number; totalTime: number; avgTime: number; maxTime: number }>,
+    );
 
     // I/O 성능 분석
     const ioAnalysis = this.analyzeIOMetrics();
@@ -542,8 +611,12 @@ export class PerformanceProfiler {
     return {
       totalSamples: this.samples.length,
       // 델타 기반(ms)
-      avgCpuUser: cpuUserDeltaMs.length ? cpuUserDeltaMs.reduce((a, b) => a + b, 0) / cpuUserDeltaMs.length : 0,
-      avgCpuSystem: cpuSystemDeltaMs.length ? cpuSystemDeltaMs.reduce((a, b) => a + b, 0) / cpuSystemDeltaMs.length : 0,
+      avgCpuUser: cpuUserDeltaMs.length
+        ? cpuUserDeltaMs.reduce((a, b) => a + b, 0) / cpuUserDeltaMs.length
+        : 0,
+      avgCpuSystem: cpuSystemDeltaMs.length
+        ? cpuSystemDeltaMs.reduce((a, b) => a + b, 0) / cpuSystemDeltaMs.length
+        : 0,
       maxCpuUser: cpuUserDeltaMs.length ? Math.max(...cpuUserDeltaMs) : 0,
       maxCpuSystem: cpuSystemDeltaMs.length ? Math.max(...cpuSystemDeltaMs) : 0,
       avgMemory: memory.reduce((a, b) => a + b, 0) / memory.length,
@@ -557,14 +630,20 @@ export class PerformanceProfiler {
     };
   }
 
-  private detectBottlenecks(functionSummary: Record<string, any>, memory: number[], ioAnalysis: any) {
+  private detectBottlenecks(
+    functionSummary: Record<string, any>,
+    memory: number[],
+    ioAnalysis: any,
+  ) {
     const bottlenecks = { slowFunctions: [] as string[], highMemoryUsage: false, slowIO: false };
     const avgMemory = memory.reduce((a, b) => a + b, 0) / memory.length;
     const maxMemory = Math.max(...memory);
 
     // 평균보다 2배 이상 느린 함수
     const allAvgTimes = Object.values(functionSummary).map((s: any) => s.avgTime);
-    const overallAvg = allAvgTimes.length ? (allAvgTimes.reduce((a, b) => a + b, 0) / allAvgTimes.length) : 0;
+    const overallAvg = allAvgTimes.length
+      ? allAvgTimes.reduce((a, b) => a + b, 0) / allAvgTimes.length
+      : 0;
     bottlenecks.slowFunctions = Object.entries(functionSummary)
       .filter(([_, stats]: [string, any]) => stats.avgTime > overallAvg * 2)
       .map(([name]) => name);
@@ -588,12 +667,12 @@ export class PerformanceProfiler {
       perOp.set(m.operation, arr);
     }
     const summarize = (ops: IOPerformanceMetrics[]) => {
-      const durations = ops.map(o => o.duration);
+      const durations = ops.map((o) => o.duration);
       const totalTime = durations.reduce((a, b) => a + b, 0);
-      const errors = ops.filter(o => o.error).length;
+      const errors = ops.filter((o) => o.error).length;
       const avgDuration = totalTime / (durations.length || 1);
       const maxDuration = Math.max(...durations);
-      const totalBytes = ops.map(o => o.bytesTransferred || 0).reduce((a, b) => a + b, 0);
+      const totalBytes = ops.map((o) => o.bytesTransferred || 0).reduce((a, b) => a + b, 0);
       return { count: ops.length, avgDuration, maxDuration, totalTime, errors, totalBytes };
     };
     const out: Record<string, any> = {};
@@ -603,20 +682,31 @@ export class PerformanceProfiler {
     return { perOp: out, totalOperations, totalIOTime };
   }
 
-  private generateInsights(functionSummary: Record<string, any>, bottlenecks: any, ioAnalysis: any) {
+  private generateInsights(
+    functionSummary: Record<string, any>,
+    bottlenecks: any,
+    ioAnalysis: any,
+  ) {
     const insights = [];
     // I/O 비중 안내
     if (ioAnalysis.totalOperations > 0) {
       const totalTime =
         this.samples.length > 0
           ? this.samples[this.samples.length - 1].timestamp - this.samples[0].timestamp
-          : (functionSummary ? Object.values(functionSummary).reduce((s: number, f: any) => s + (f.totalTime || 0), 0) : 0);
+          : functionSummary
+            ? Object.values(functionSummary).reduce(
+                (s: number, f: any) => s + (f.totalTime || 0),
+                0,
+              )
+            : 0;
       const ioPct = totalTime > 0 ? (ioAnalysis.totalIOTime / totalTime) * 100 : 0;
       insights.push(`I/O time share: ${ioPct.toFixed(1)}%`);
     }
     // 에러 요약
     if (ioAnalysis?.perOp) {
-      const errOps = Object.entries(ioAnalysis.perOp).filter(([, s]: any) => s.errors > 0).map(([k]) => k);
+      const errOps = Object.entries(ioAnalysis.perOp)
+        .filter(([, s]: any) => s.errors > 0)
+        .map(([k]) => k);
       if (errOps.length) insights.push(`I/O errors on: ${errOps.join(', ')}`);
     }
 
@@ -634,17 +724,19 @@ export class PerformanceProfiler {
     if (ioAnalysis?.perOp) {
       const slowOps = Object.entries(ioAnalysis.perOp)
         .filter(([, s]: any) => (s.avgDuration ?? 0) > 100)
-        .map(([k]) => `${k}(${(ioAnalysis.perOp[k].avgDuration).toFixed(1)}ms)`);
+        .map(([k]) => `${k}(${ioAnalysis.perOp[k].avgDuration.toFixed(1)}ms)`);
       if (slowOps.length) insights.push(`느린 I/O: ${slowOps.join(', ')}`);
     }
 
-    const totalCalls = Object.values(functionSummary).reduce((sum: number, s: any) => sum + s.count, 0);
+    const totalCalls = Object.values(functionSummary).reduce(
+      (sum: number, s: any) => sum + s.count,
+      0,
+    );
     if (totalCalls > LOG_TOTAL_CALLS_THRESHOLD) {
       insights.push('함수 호출 수가 많음 - 캐싱 고려');
     }
     return insights;
   }
-
 }
 
 export const globalProfiler = new PerformanceProfiler();
@@ -667,8 +759,11 @@ export function measure(name?: string) {
         if (!globalProfiler.isOn()) return originalMethod.apply(this, args);
         // 🟢 ON: 타이머 & 기록
         const t0 = perfNow();
-        try { return await originalMethod.apply(this, args); }
-        finally { globalProfiler.recordFunctionCall(funcName, t0, perfNow() - t0); }
+        try {
+          return await originalMethod.apply(this, args);
+        } finally {
+          globalProfiler.recordFunctionCall(funcName, t0, perfNow() - t0);
+        }
       };
     } else {
       descriptor.value = function (...args: any[]) {
@@ -677,8 +772,11 @@ export function measure(name?: string) {
         if (!globalProfiler.isOn()) return originalMethod.apply(this, args);
         // 🟢 ON: 타이머 & 기록
         const t0 = perfNow();
-        try { return originalMethod.apply(this, args); }
-        finally { globalProfiler.recordFunctionCall(funcName, t0, perfNow() - t0); }
+        try {
+          return originalMethod.apply(this, args);
+        } finally {
+          globalProfiler.recordFunctionCall(funcName, t0, perfNow() - t0);
+        }
       };
     }
     return descriptor;
@@ -707,6 +805,7 @@ export function takeMemorySnapshot(label?: string): MemorySnapshot {
 
   // V8 heap statistics if available
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const v8 = require('v8');
     const heapStats = v8.getHeapStatistics();
     snapshot.arrayBuffers = heapStats.total_array_buffer_size || 0;
@@ -739,11 +838,13 @@ export function measured<T extends (...args: any[]) => any>(name: string, fn: T)
     if (!globalProfiler.isOn()) return fn.apply(this, args);
     // 🟢 ON: 타이머 & 기록
     const t0 = perfNow();
-    try { return fn.apply(this, args); }
-    finally { globalProfiler.recordFunctionCall(name, t0, perfNow() - t0); }
+    try {
+      return fn.apply(this, args);
+    } finally {
+      globalProfiler.recordFunctionCall(name, t0, perfNow() - t0);
+    }
   };
-  // @ts-ignore
-  return wrapped;
+  return wrapped as unknown as T;
 }
 
 export function measuredAsync<T extends (...args: any[]) => Promise<any>>(name: string, fn: T): T {
@@ -752,11 +853,13 @@ export function measuredAsync<T extends (...args: any[]) => Promise<any>>(name: 
     if (!globalProfiler.isOn()) return fn.apply(this, args);
     // 🟢 ON: 타이머 & 기록
     const t0 = perfNow();
-    try { return await fn.apply(this, args); }
-    finally { globalProfiler.recordFunctionCall(name, t0, perfNow() - t0); }
+    try {
+      return await fn.apply(this, args);
+    } finally {
+      globalProfiler.recordFunctionCall(name, t0, perfNow() - t0);
+    }
   };
-  // @ts-ignore
-  return wrapped;
+  return wrapped as unknown as T;
 }
 
 // 오버로드: 동기 함수면 T, 비동기면 Promise<T>를 반환하도록 타입 보존
@@ -769,7 +872,7 @@ export function measureBlock<T>(name: string, fn: () => T | Promise<T>): T | Pro
     const r = fn();
     if (r && typeof (r as any).then === 'function') {
       return (r as Promise<T>).finally(() =>
-        globalProfiler.recordFunctionCall(name, t0, perfNow() - t0)
+        globalProfiler.recordFunctionCall(name, t0, perfNow() - t0),
       );
     }
     globalProfiler.recordFunctionCall(name, t0, perfNow() - t0);
@@ -793,8 +896,11 @@ export function measureAllMethods<T extends object>(obj: T, prefix?: string): T 
           if (!globalProfiler.isOn()) return v.apply(this, args);
           // 🟢 ON: 타이머 & 기록
           const t0 = perfNow();
-          try { return v.apply(this, args); }
-          finally { globalProfiler.recordFunctionCall(name, t0, perfNow() - t0); }
+          try {
+            return v.apply(this, args);
+          } finally {
+            globalProfiler.recordFunctionCall(name, t0, perfNow() - t0);
+          }
         };
       }
       return v;
@@ -812,9 +918,10 @@ export function measureAllExports(mod: any, prefix = 'module', exclude: string[]
       const v = (exp as any)[k];
       if (typeof v === 'function') {
         const name = `${prefix}.${k}`;
-        (exp as any)[k] = (v.constructor?.name === 'AsyncFunction')
-          ? measuredAsync(name, v as any)
-          : measured(name, v as any);
+        (exp as any)[k] =
+          v.constructor?.name === 'AsyncFunction'
+            ? measuredAsync(name, v as any)
+            : measured(name, v as any);
       }
     }
   } catch {
@@ -831,14 +938,27 @@ export function enableAutoFsIOMeasure() {
     if (typeof orig !== 'function') return;
     (fs.promises as any)[key] = async function (...args: any[]) {
       if (!globalProfiler.isOn()) return orig.apply(this, args);
-      const p = typeof args[0] === 'string' ? args[0] : (args[0]?.path || '');
+      const p = typeof args[0] === 'string' ? args[0] : args[0]?.path || '';
       const op = `fs.${key}`;
       return globalProfiler.measureIO(op, p, () => orig.apply(this, args));
     };
   };
   [
-    'readFile', 'writeFile', 'appendFile', 'readdir', 'stat', 'lstat',
-    'open', 'unlink', 'mkdir', 'rmdir', 'rm', 'copyFile', 'rename', 'readlink', 'symlink'
+    'readFile',
+    'writeFile',
+    'appendFile',
+    'readdir',
+    'stat',
+    'lstat',
+    'open',
+    'unlink',
+    'mkdir',
+    'rmdir',
+    'rm',
+    'copyFile',
+    'rename',
+    'readlink',
+    'symlink',
   ].forEach(wrap);
   _fsPatched = true;
 }

@@ -1,7 +1,8 @@
 /// <reference types="jest" />
 import * as fs from 'fs';
 import * as path from 'path';
-import { globalProfiler, enableAutoFsIOMeasure } from './src/core/logging/perf.js';
+
+import { enableAutoFsIOMeasure,globalProfiler } from './src/core/logging/perf.js';
 const __PERF_ON__ = process.env.PERF === '1';
 
 // ── vscode 모듈 전역 mock ─────────────────────────────────────────────

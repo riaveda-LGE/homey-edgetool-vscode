@@ -1,5 +1,6 @@
 // === src/core/logs/LogSearch.ts ===
 import type { LogEntry } from '@ipc/messages';
+
 import { measure } from '../logging/perf.js';
 
 export type SearchQuery = {
@@ -93,14 +94,21 @@ function primaryText(e: LogEntry): string {
   return msg.toLowerCase();
 }
 
-function extractFields(e: LogEntry): { proc: string; pid: string; msg: string; file: string; path: string; source: string } {
+function extractFields(e: LogEntry): {
+  proc: string;
+  pid: string;
+  msg: string;
+  file: string;
+  path: string;
+  source: string;
+} {
   const any = e as any;
   const p = any?.parsed;
   if (p && (p.process || p.pid || p.message || p.time)) {
     return {
       proc: String(p.process ?? '').toLowerCase(),
       pid: String(p.pid ?? '').toLowerCase(),
-      msg: String((p.message ?? e.text ?? '')).toLowerCase(),
+      msg: String(p.message ?? e.text ?? '').toLowerCase(),
       file: String(any.file ?? '').toLowerCase(),
       path: String(any.path ?? '').toLowerCase(),
       source: String(e.source ?? '').toLowerCase(),

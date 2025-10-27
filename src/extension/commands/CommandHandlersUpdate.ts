@@ -8,9 +8,7 @@ import { checkLatestVersion, downloadAndInstall } from '../update/updater.js';
 const log = getLogger('cmd.update');
 
 export class CommandHandlersUpdate {
-  constructor(
-    private extensionUri?: vscode.Uri,
-  ) {}
+  constructor(private extensionUri?: vscode.Uri) {}
 
   @measure()
   async updateNow() {

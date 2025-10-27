@@ -2,11 +2,8 @@
 import * as vscode from 'vscode';
 
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
-import { getLogger } from '../../core/logging/extension-logger.js';
-import { parentDir, relFromBase, toPosix } from '../../shared/utils.js';
 import { measure } from '../../core/logging/perf.js';
-
-const log = getLogger('explorerBridge');
+import { parentDir, relFromBase, toPosix } from '../../shared/utils.js';
 
 export type ExplorerBridge = {
   handleMessage(msg: any): Promise<boolean>;
@@ -30,7 +27,6 @@ function shouldHideEntry(name: string, kind: 'file' | 'folder') {
  *    150ms 윈도우 안에서 1회로 합치고, 진행 중이면 완료 후 마지막 요청만 1회 더 실행
  * ────────────────────────────────────────────────────────────────────── */
 class RefreshCoalescer {
-  private readonly log = getLogger('extension:panels:Coalescer');
   private readonly DEBOUNCE_MS = 150;
   private timers = new Map<string, NodeJS.Timeout>();
   private inflight = new Set<string>();
@@ -62,7 +58,6 @@ class RefreshCoalescer {
     try {
       await this.run(scope);
     } catch (e) {
-      this.log.warn(`list(${scope}) failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       this.inflight.delete(scope);
       if (this.pending.has(scope)) {
@@ -82,7 +77,6 @@ interface WatcherState {
 
 /** 워처 관리 클래스 */
 class WatcherManager {
-  private log = getLogger('extension:panels:WatcherManager');
   private state: WatcherState;
   private context: vscode.ExtensionContext;
   public info?: { wsDirUri: vscode.Uri };
@@ -135,7 +129,6 @@ class WatcherManager {
       /*ignoreDelete*/ false,
     );
     this.state.root = w;
-    this.log.info('[WatcherManager] adding root watcher for workspace');
     if (this.onFsHandler) {
       const onCreate = (uri: vscode.Uri) => this.onFsHandler!('', uri, 'create');
       const onDelete = (uri: vscode.Uri) => this.onFsHandler!('', uri, 'delete');
@@ -158,17 +151,14 @@ class WatcherManager {
     this.state.root = undefined;
     // 루트 워처만 재등록
     this.addRootWatcher(baseUri);
-    this.log.info('[WatcherManager] watchers initialized for workspace root:', toPosix(baseFsPath));
   }
 
   /** 주기적 정리 */
   @measure()
   async cleanup() {
     if (this.disposed || !this.info) return;
-    this.log.info('[WatcherManager] starting periodic watcher cleanup');
     // 루트만 관리하므로 보정 작업 없음. 워크스페이스 경로 변경만 재보장
     await this.ensureWatchers();
-    this.log.info('[WatcherManager] periodic watcher cleanup completed');
   }
 
   /** 타이머 시작 */
@@ -185,15 +175,11 @@ class WatcherManager {
       this.state.cleanupTimer = undefined;
     }
     if (this.state.root) {
-      this.log.info('[WatcherManager] disposing root watcher on dispose');
       try {
         this.state.root.dispose();
-      } catch (e) {
-        this.log.error('[WatcherManager] watcher dispose error', e);
-      }
+      } catch (e) {}
       this.state.root = undefined;
     }
-    this.log.info('[WatcherManager] all watchers disposed');
   }
 
   // 하위 호환(더 이상 사용하지 않음)
@@ -207,7 +193,6 @@ class WatcherManager {
 
 /** UI 관리 클래스 */
 class ExplorerUI {
-  private log = getLogger('extension:panels:ExplorerUI');
   private post: (msg: any) => void;
   private watcherManager: WatcherManager;
   private coalescer: RefreshCoalescer;
@@ -235,17 +220,6 @@ class ExplorerUI {
     const dir = parentDir(rel);
     const top = dir.split('/').filter(Boolean)[0] ?? rel.split('/').filter(Boolean)[0] ?? '';
     if (HIDE_DIRS.has(top)) return;
-
-    this.log.info(
-      '[ExplorerUI] fs event',
-      eventType,
-      'in folder',
-      relPath,
-      ':',
-      uri.fsPath,
-      'rel:',
-      rel,
-    );
     // create/delete → 해당 디렉터리 스코프만 갱신
     const scope = parentDir(rel);
     this.coalescer.schedule(scope);
@@ -258,31 +232,22 @@ class ExplorerUI {
   async handleMessage(msg: any): Promise<boolean> {
     switch (msg.type) {
       case 'explorer.list':
-        this.log.info('[ExplorerUI] <- list', msg.payload?.path);
         await this.list(String(msg.payload?.path || ''));
         return true;
       case 'explorer.refresh':
         // 수동 새로고침: 즉시 해당 스코프 list()
-        this.log.info('[ExplorerUI] <- refresh', msg.payload?.path);
         await this.list(String(msg.payload?.path || ''));
         return true;
       case 'explorer.open':
-        this.log.info('[ExplorerUI] <- open', msg.payload?.path);
         await this.open(String(msg.payload?.path || ''));
         return true;
       case 'explorer.createFile':
-        this.log.info('[ExplorerUI] <- createFile', msg.payload?.path);
         await this.createFile(String(msg.payload?.path || ''));
         return true;
       case 'explorer.createFolder':
-        this.log.info('[ExplorerUI] <- createFolder', msg.payload?.path);
         await this.createFolder(String(msg.payload?.path || ''));
         return true;
       case 'explorer.delete':
-        this.log.info('[ExplorerUI] <- delete', msg.payload?.path, {
-          recursive: !!msg.payload?.recursive,
-          useTrash: !!msg.payload?.useTrash,
-        });
         await this.remove(
           String(msg.payload?.path || ''),
           !!msg.payload?.recursive,
@@ -295,7 +260,6 @@ class ExplorerUI {
 
   @measure()
   private async list(rel: string) {
-    log.debug('[debug] ExplorerUI list: start');
     try {
       // 워크스페이스 정보가 없으면 초기화
       if (!this.watcherManager.wsDirUri) {
@@ -320,11 +284,8 @@ class ExplorerUI {
           name,
           kind: t === vscode.FileType.Directory ? 'folder' : ('file' as const),
         }));
-      this.log.info('[ExplorerUI] list', rel, '->', items.length, 'items');
       this.post({ v: 1, type: 'explorer.list.result', payload: { path: rel || '', items } });
-      log.debug('[debug] ExplorerUI list: end');
     } catch (e: any) {
-      this.log.error(`list error for ${rel}: ${e?.message || String(e)}`);
       this.post({
         v: 1,
         type: 'explorer.error',
@@ -335,7 +296,6 @@ class ExplorerUI {
 
   @measure()
   private async open(rel: string) {
-    log.debug('[debug] ExplorerUI open: start');
     try {
       // 워크스페이스 정보가 없으면 초기화
       if (!this.watcherManager.wsDirUri) {
@@ -345,11 +305,8 @@ class ExplorerUI {
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       const doc = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(doc, { preview: false });
-      this.log.info('[ExplorerUI] open', rel);
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'open', path: rel || '' } });
-      log.debug('[debug] ExplorerUI open: end');
     } catch (e: any) {
-      this.log.error(`open error for ${rel}: ${e?.message || String(e)}`);
       this.post({
         v: 1,
         type: 'explorer.error',
@@ -360,7 +317,6 @@ class ExplorerUI {
 
   @measure()
   private async createFile(rel: string) {
-    log.debug('[debug] ExplorerUI createFile: start');
     try {
       // 워크스페이스 정보가 없으면 초기화
       if (!this.watcherManager.wsDirUri) {
@@ -369,11 +325,8 @@ class ExplorerUI {
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.writeFile(uri, new Uint8Array());
-      this.log.info('[ExplorerUI] createFile', rel);
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'createFile', path: rel || '' } });
-      log.debug('[debug] ExplorerUI createFile: end');
     } catch (e: any) {
-      this.log.error(`createFile error for ${rel}: ${e?.message || String(e)}`);
       this.post({
         v: 1,
         type: 'explorer.error',
@@ -384,7 +337,6 @@ class ExplorerUI {
 
   @measure()
   private async createFolder(rel: string) {
-    log.debug('[debug] ExplorerUI createFolder: start');
     try {
       // 워크스페이스 정보가 없으면 초기화
       if (!this.watcherManager.wsDirUri) {
@@ -393,11 +345,8 @@ class ExplorerUI {
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.createDirectory(uri);
-      this.log.info('[ExplorerUI] createFolder', rel);
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'createFolder', path: rel || '' } });
-      log.debug('[debug] ExplorerUI createFolder: end');
     } catch (e: any) {
-      this.log.error(`createFolder error for ${rel}: ${e?.message || String(e)}`);
       this.post({
         v: 1,
         type: 'explorer.error',
@@ -408,7 +357,6 @@ class ExplorerUI {
 
   @measure()
   private async remove(rel: string, recursive: boolean, useTrash: boolean) {
-    log.debug('[debug] ExplorerUI remove: start');
     try {
       // 워크스페이스 정보가 없으면 초기화
       if (!this.watcherManager.wsDirUri) {
@@ -417,12 +365,9 @@ class ExplorerUI {
       const wsDirUri = this.watcherManager.wsDirUri!;
       const uri = this.watcherManager.toChildUri(wsDirUri, rel);
       await vscode.workspace.fs.delete(uri, { recursive, useTrash });
-      this.log.info('[ExplorerUI] delete', rel, { recursive, useTrash });
 
       this.post({ v: 1, type: 'explorer.ok', payload: { op: 'delete', path: rel || '' } });
-      log.debug('[debug] ExplorerUI remove: end');
     } catch (e: any) {
-      this.log.error(`delete error for ${rel}: ${e?.message || String(e)}`);
       this.post({
         v: 1,
         type: 'explorer.error',
@@ -434,11 +379,9 @@ class ExplorerUI {
   /** 워크스페이스 루트 변경 */
   @measure()
   async refreshWorkspaceRoot() {
-    log.debug('[debug] ExplorerUI refreshWorkspaceRoot: start');
     this.watcherManager.info = undefined;
     await this.watcherManager.ensureInfo();
     this.post({ v: 1, type: 'explorer.root.changed', payload: {} });
-    log.debug('[debug] ExplorerUI refreshWorkspaceRoot: end');
   }
 }
 
@@ -446,7 +389,6 @@ export function createExplorerBridge(
   context: vscode.ExtensionContext,
   post: (m: any) => void,
 ): ExplorerBridge {
-  const log = getLogger('extension:panels:explorerBridge');
   const watcherManager = new WatcherManager(context);
   const explorerUI = new ExplorerUI(post, watcherManager);
 

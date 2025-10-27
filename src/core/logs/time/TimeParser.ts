@@ -20,30 +20,20 @@ export function parseTs(line: string): number | undefined {
     if (!token) return undefined;
 
     // 1) ABS (ISO8601 + 오프셋/Z) — 토큰 전체가 정확히 매치되어야 함
-    const ABS_RX =
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+    const ABS_RX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
     if (ABS_RX.test(token)) {
       const t = Date.parse(token);
       return Number.isNaN(t) ? undefined : t;
     }
 
     // 2) NAIVE with YEAR but no offset: "YYYY-MM-DD[ T]HH:MM:SS(.sss)"
-    const YMD_RX =
-      /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+    const YMD_RX = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
     const ymd = token.match(YMD_RX);
     if (ymd) {
       const [, y, mo, d, hh, mm, ss, sss] = ymd;
       const ms = toMs3(sss);
       // UTC 해석
-      return Date.UTC(
-        toInt(y),
-        toInt(mo) - 1,
-        toInt(d),
-        toInt(hh),
-        toInt(mm),
-        toInt(ss),
-        ms,
-      );
+      return Date.UTC(toInt(y), toInt(mo) - 1, toInt(d), toInt(hh), toInt(mm), toInt(ss), ms);
     }
 
     // 3) NAIVE without year: "Mon DD HH:MM:SS(.sss)"
@@ -62,23 +52,14 @@ export function parseTs(line: string): number | undefined {
     }
 
     // 4) NAIVE without year: "MM-DD HH:MM:SS(.sss)"
-    const MD_RX =
-      /^(\d{1,2})-(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+    const MD_RX = /^(\d{1,2})-(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
     const md = token.match(MD_RX);
     if (md) {
       const [, mo, dd, hh, mm, ss, sss] = md;
       const year = new Date().getFullYear(); // ✅ 연도만 호스트에서 주입
       const ms = toMs3(sss);
       // UTC 해석
-      return Date.UTC(
-        year,
-        toInt(mo) - 1,
-        toInt(dd),
-        toInt(hh),
-        toInt(mm),
-        toInt(ss),
-        ms,
-      );
+      return Date.UTC(year, toInt(mo) - 1, toInt(dd), toInt(hh), toInt(mm), toInt(ss), ms);
     }
 
     return undefined;
@@ -97,19 +78,12 @@ export function extractHeaderTimeToken(line: string): string | null {
     return null; // 비정상 대괄호는 시간 아님
   }
   // 접두부에서 시간 헤더를 정밀 추출(전체 라인에서도 동작)
-  const ABS_PREFIX =
-    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))/;
-  const YMD_PREFIX =
-    /^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)/;
+  const ABS_PREFIX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))/;
+  const YMD_PREFIX = /^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)/;
   const MON_PREFIX =
     /^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/i;
-  const MD_PREFIX =
-    /^(\d{1,2}-\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/;
-  const m =
-    s.match(ABS_PREFIX) ||
-    s.match(YMD_PREFIX) ||
-    s.match(MON_PREFIX) ||
-    s.match(MD_PREFIX);
+  const MD_PREFIX = /^(\d{1,2}-\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/;
+  const m = s.match(ABS_PREFIX) || s.match(YMD_PREFIX) || s.match(MON_PREFIX) || s.match(MD_PREFIX);
   if (m) return (m[1] || '').trim();
   // 마지막 폴백: 첫 공백 전까지(ISO 날짜 단일 토큰 등)
   const sp = s.indexOf(' ');
@@ -123,14 +97,32 @@ export function isYearlessTimeToken(token: string | null | undefined): boolean {
   if (!s) return false;
   const ABS_RX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
   const YMD_RX = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
-  const MON_RX = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/i;
-  const MD_RX  = /^(\d{1,2})-(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+  const MON_RX =
+    /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?$/i;
+  const MD_RX = /^(\d{1,2})-(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
   if (ABS_RX.test(s) || YMD_RX.test(s)) return false;
   return MON_RX.test(s) || MD_RX.test(s);
 }
 function monthNameToIndex(m: string): number {
-  const names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-  const i = names.indexOf(String(m || '').slice(0,3).toLowerCase());
+  const names = [
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'may',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'oct',
+    'nov',
+    'dec',
+  ];
+  const i = names.indexOf(
+    String(m || '')
+      .slice(0, 3)
+      .toLowerCase(),
+  );
   return i;
 }
 function toInt(s: string | undefined): number {

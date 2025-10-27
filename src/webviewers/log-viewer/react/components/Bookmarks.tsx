@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { useLogStore } from '../../react/store';
-import { BookmarkSquare } from './BookmarkSquare';
+
 import { createUiLog } from '../../../shared/utils';
+import { useLogStore } from '../../react/store';
 import { vscode } from '../ipc';
+import { BookmarkSquare } from './BookmarkSquare';
 
 export function Bookmarks() {
   const bookmarks = useLogStore((s) => s.bookmarks);

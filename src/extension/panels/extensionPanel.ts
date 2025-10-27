@@ -9,11 +9,7 @@ import {
   setWebviewReady,
 } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import {
-  PANEL_VIEW_TYPE,
-  RANDOM_STRING_LENGTH,
-  DEBUG_LOG_MEMORY_MAX,
-} from '../../shared/const.js';
+import { DEBUG_LOG_MEMORY_MAX, PANEL_VIEW_TYPE, RANDOM_STRING_LENGTH } from '../../shared/const.js';
 import { readFileAsText } from '../../shared/utils.js';
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';
@@ -85,6 +81,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   async resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
+    // 단일 송신 경로(후속 스로틀/로깅을 위해 postMessage 직접 호출 금지)
+    const sendEdge = (m: any) => {
+      try {
+        webviewView.webview.postMessage(m);
+      } catch {}
+    };
+
     const uiRoot = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'edge-panel');
 
     webviewView.webview.options = {
@@ -112,20 +115,27 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     this._state.logs = this._ring.slice(-DEBUG_LOG_MEMORY_MAX);
 
     // Explorer 브리지
-    this._explorer = createExplorerBridge(this._context, (m) => {
-      try {
-        webviewView.webview.postMessage(m);
-      } catch {}
-    });
+    this._explorer = createExplorerBridge(this._context, (m) => sendEdge(m));
 
     // 로그 뷰어
     this._logViewer = new LogViewerPanelManager(this._context, this._extensionUri);
 
     // ── Debug Log sink 등록(한 번만) ─────────────────────────────────
     if (!this._sinkBound) {
+      // 50ms 마이크로 배치(로그 폭주 시 렌더 부하 완화)
+      const pending: string[] = [];
+      let t: NodeJS.Timeout | null = null;
+      const flush = () => {
+        const lines = pending.splice(0, pending.length);
+        for (const ln of lines) {
+          sendEdge({ v: 1, type: 'appendLog', payload: { text: ln } });
+        }
+        t = null;
+      };
       const sink = (line: string) => {
         try {
-          webviewView.webview.postMessage({ v: 1, type: 'appendLog', payload: { text: line } });
+          pending.push(line);
+          if (!t) t = setTimeout(flush, 50);
         } catch {}
         // 메모리 링버퍼 유지 (최대 DEBUG_LOG_MEMORY_MAX줄)
         this._ring.push(line);
@@ -156,6 +166,24 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
       this._explorer,
     );
 
+    // initState/버튼 섹션 전송의 중복 방지(예: ui.ready 직후 가시성 변동)
+    let _lastInitSentAt = 0;
+    const sendInitIfNotRecent = async (reason: string) => {
+      const now = Date.now();
+      if (now - _lastInitSentAt < 300) return null;
+      _lastInitSentAt = now;
+      const panelState = await readEdgePanelState(this._context);
+      const state = { ...this._state, logs: this._ring.slice(-DEBUG_LOG_MEMORY_MAX) };
+      sendEdge({ v: 1, type: 'initState', payload: { state, panelState } });
+      sendEdge({
+        v: 1,
+        type: 'setUpdateVisible',
+        payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) },
+      });
+      this._actionRouter?.sendButtonSections();
+      return panelState;
+    };
+
     // Webview → Extension
     const messageDisposable = webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
@@ -180,22 +208,9 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           return;
         } else if (msg?.type === 'ui.ready' && msg?.v === 1) {
           setWebviewReady(true);
-          const panelState = await readEdgePanelState(this._context);
-          // 링버퍼에서 초기 로그 제공
-          const state = { ...this._state, logs: this._ring.slice(-DEBUG_LOG_MEMORY_MAX) };
-          webviewView.webview.postMessage({
-            v: 1,
-            type: 'initState',
-            payload: { state, panelState },
-          });
-          webviewView.webview.postMessage({
-            v: 1,
-            type: 'setUpdateVisible',
-            payload: { visible: !!(this._state.updateAvailable && this._state.updateUrl) },
-          });
-          this._actionRouter?.sendButtonSections();
+          const panelState = await sendInitIfNotRecent('ui.ready');
 
-          if (panelState.showExplorer) {
+          if (panelState?.showExplorer) {
             await this._explorer?.refreshWorkspaceRoot();
           }
           return;
@@ -237,13 +252,13 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
         if (msg?.type === 'debuglog.clear' && msg?.v === 1) {
           this._ring = [];
           this._state.logs = [];
-          webviewView.webview.postMessage({ v: 1, type: 'debuglog.cleared', payload: {} });
+          sendEdge({ v: 1, type: 'debuglog.cleared', payload: {} });
           return;
         }
         if (msg?.type === 'debuglog.copy' && msg?.v === 1) {
           const text = this._ring.join('\n');
           await vscode.env.clipboard.writeText(text);
-          webviewView.webview.postMessage({
+          sendEdge({
             v: 1,
             type: 'debuglog.copy.done',
             payload: { bytes: Buffer.byteLength(text, 'utf8'), lines: this._ring.length },
@@ -260,19 +275,12 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     const visibilityDisposable = webviewView.onDidChangeVisibility(async () => {
       try {
         if (!webviewView.visible) {
-          webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+          sendEdge({ v: 1, type: 'ui.clearSelection' });
           return;
         }
-        // 가시성 복귀 시에도 스풀 기반 상태 유지
-        const state = { ...this._state, logs: this._ring.slice(-DEBUG_LOG_MEMORY_MAX) };
-        const panelState = await readEdgePanelState(this._context);
-        webviewView.webview.postMessage({
-          v: 1,
-          type: 'initState',
-          payload: { state, panelState },
-        });
-        this._actionRouter?.sendButtonSections();
-        if (panelState.showExplorer) {
+        // 가시성 복귀 시에도 스풀 기반 상태 유지 + 중복 가드
+        const panelState = await sendInitIfNotRecent('visibility');
+        if (panelState?.showExplorer) {
           await this._explorer?.refreshWorkspaceRoot();
         }
       } catch {}
@@ -281,14 +289,14 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
 
     const activeEditorDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
       try {
-        webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+        sendEdge({ v: 1, type: 'ui.clearSelection' });
       } catch {}
     });
     this._trackDisposable(() => activeEditorDisposable.dispose());
 
     const activeTerminalDisposable = vscode.window.onDidChangeActiveTerminal(() => {
       try {
-        webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+        sendEdge({ v: 1, type: 'ui.clearSelection' });
       } catch {}
     });
     this._trackDisposable(() => activeTerminalDisposable.dispose());
@@ -296,7 +304,7 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
     const winStateDisposable = vscode.window.onDidChangeWindowState((state) => {
       if (!state.focused) {
         try {
-          webviewView.webview.postMessage({ v: 1, type: 'ui.clearSelection' });
+          sendEdge({ v: 1, type: 'ui.clearSelection' });
         } catch {}
       }
     });

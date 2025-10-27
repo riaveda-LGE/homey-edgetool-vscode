@@ -22,10 +22,10 @@ export type SanitizeOptions = {
 export const DEFAULT_SANITIZE: SanitizeOptions = {
   stripBOMAtStart: true,
   stripTrailingCR: true,
-  stripAnsi: false,           // ← 기존과 동일: message에서만 제거
+  stripAnsi: false, // ← 기존과 동일: message에서만 제거
   dropControlExceptTab: false,
   normalizeNbsp: false,
-  dropIntralineBOM: true,     // 모바일 로그서 간헐 유입되는 FEFF 방지
+  dropIntralineBOM: true, // 모바일 로그서 간헐 유입되는 FEFF 방지
   unicodeNFC: false,
 };
 
@@ -33,10 +33,11 @@ export const DEFAULT_SANITIZE: SanitizeOptions = {
 const BOM_RE = /^\uFEFF/;
 
 // ANSI escape (표준 범위: 기존 ParserEngine과 동등 이상)
-const ANSI_RE =
-  /[\u001B\u009B][[\]()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g;
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /[\u001B\u009B][[\]()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PR-TZcf-ntqry=><~]/g;
 
 // 탭을 제외한 C0 제어 + DEL
+// eslint-disable-next-line no-control-regex
 const CTRL_EXCEPT_TAB_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 
 // 라인 내부의 U+FEFF (BOM이 아닌 zero-width no-break space 역할)

@@ -1,7 +1,7 @@
 // === src/ui/_shared/bridge.ts ===
 // Webview 런타임 공용 브리지 유틸 (post/request/ack/error/abortKey)
 
-import { measureBlock, globalProfiler, perfNow } from '../../core/logging/perf.js';
+import { globalProfiler, measureBlock, perfNow } from '../../core/logging/perf.js';
 
 type AnyMsg = { v: 1; type: string; id?: string; payload?: any; abortKey?: string };
 
@@ -125,9 +125,9 @@ export function makeBridge(api: any = getApi()) {
       return new Promise((resolve, reject) => {
         // 타임아웃 설정(필요 시 payload.__timeoutMs로 오버라이드 가능)
         const timeoutMs =
-          (payload && typeof payload.__timeoutMs === 'number' && payload.__timeoutMs > 0
+          payload && typeof payload.__timeoutMs === 'number' && payload.__timeoutMs > 0
             ? payload.__timeoutMs
-            : DEFAULT_TIMEOUT_MS);
+            : DEFAULT_TIMEOUT_MS;
 
         const timer = window.setTimeout(() => {
           const p = pend.get(id);
@@ -164,4 +164,3 @@ export function makeUiLogger(bridge: ReturnType<typeof makeBridge>, source?: str
     error: (t: string) => send('error', t),
   };
 }
-

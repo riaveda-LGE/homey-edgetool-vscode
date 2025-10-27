@@ -24,16 +24,16 @@ export function Grid() {
   const lastReqRef = useRef<{ s: number; e: number } | null>(null);
   // 빠른 스크롤의 과요청을 줄이기 위한 요청 스케줄러
   const debounceTimerRef = useRef<number | null>(null);
-  const maxWaitTimerRef  = useRef<number | null>(null);
+  const maxWaitTimerRef = useRef<number | null>(null);
   const pendingReqRef = useRef<{ s: number; e: number; payload: string } | null>(null);
   // 기본(debounce) / 드래그 추정 시 확장 / 드래그 중에도 너무 오래 비우지 않기 위한 주기
   // BASE_DEBOUNCE_MS ≤ DRAG_DEBOUNCE_MS ≤ MAX_WAIT_MS 관계 필수
-  const BASE_DEBOUNCE_MS = 48;   // 하나의 휠 burst를 잘 묶는 값(≈ 3프레임)
+  const BASE_DEBOUNCE_MS = 48; // 하나의 휠 burst를 잘 묶는 값(≈ 3프레임)
   const DRAG_DEBOUNCE_MS = 80;
-  const MAX_WAIT_MS      = 240;
+  const MAX_WAIT_MS = 240;
   // 스크롤 속도로 "드래그 추정"을 한다(행/초 기준). 빠르면 일정 시간 동안 드래그 상태로 간주.
   const DRAG_RPS_THRESHOLD = 120; // rows per second
-  const DRAG_IDLE_MS       = 140; // DRAG여부를 판단하는 변수. 해당값 이내에 DRAG가 발생해야 계속 DRAG로 판단.고속 스크롤 뒤 이 시간 동안 이벤트 없으면 드래그 종료.
+  const DRAG_IDLE_MS = 140; // DRAG여부를 판단하는 변수. 해당값 이내에 DRAG가 발생해야 계속 DRAG로 판단.고속 스크롤 뒤 이 시간 동안 이벤트 없으면 드래그 종료.
   const lastScrollSampleRef = useRef<{ top: number; t: number } | null>(null);
   const dragActiveUntilRef = useRef(0);
 
@@ -62,10 +62,21 @@ export function Grid() {
       ui.debug?.(`Grid.scroll → page.request (flush:${reason}) ${p.payload}`);
     }
     measureUi('Grid.page.request', () =>
-      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: p.s, endIdx: p.e } }));
+      vscode?.postMessage({
+        v: 1,
+        type: 'logs.page.request',
+        payload: { startIdx: p.s, endIdx: p.e },
+      }),
+    );
     // 한 번 보냈으면 타이머들은 정리
-    if (debounceTimerRef.current) { window.clearTimeout(debounceTimerRef.current); debounceTimerRef.current = null; }
-    if (maxWaitTimerRef.current)  { window.clearTimeout(maxWaitTimerRef.current);  maxWaitTimerRef.current  = null; }
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    if (maxWaitTimerRef.current) {
+      window.clearTimeout(maxWaitTimerRef.current);
+      maxWaitTimerRef.current = null;
+    }
   };
 
   const schedulePageRequest = (
@@ -75,7 +86,12 @@ export function Grid() {
     opts?: { delayMs?: number; isDragging?: boolean },
   ) => {
     // pending이 같으면 무시
-    if (pendingReqRef.current && pendingReqRef.current.s === startIdx && pendingReqRef.current.e === endIdx) return;
+    if (
+      pendingReqRef.current &&
+      pendingReqRef.current.s === startIdx &&
+      pendingReqRef.current.e === endIdx
+    )
+      return;
     pendingReqRef.current = { s: startIdx, e: endIdx, payload };
     if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
     const delay = Math.max(0, opts?.delayMs ?? BASE_DEBOUNCE_MS);
@@ -92,7 +108,10 @@ export function Grid() {
         flushScheduledRequest('max-wait');
       }, MAX_WAIT_MS);
     } else {
-      if (maxWaitTimerRef.current) { window.clearTimeout(maxWaitTimerRef.current); maxWaitTimerRef.current = null; }
+      if (maxWaitTimerRef.current) {
+        window.clearTimeout(maxWaitTimerRef.current);
+        maxWaitTimerRef.current = null;
+      }
     }
   };
 
@@ -127,7 +146,9 @@ export function Grid() {
 
   // mount/unmount 로그 + 기본 측정값
   useEffect(() => {
-    measureUi('Grid.mount', () => ui.info(`Grid.mount totalRows=${m.totalRows} windowStart=${m.windowStart}`));
+    measureUi('Grid.mount', () =>
+      ui.info(`Grid.mount totalRows=${m.totalRows} windowStart=${m.windowStart}`),
+    );
     // 컨테이너 측정(높이, DPR) — 스로틀
     const logMeasure = () => {
       const h = parentRef.current?.clientHeight ?? 0;
@@ -149,9 +170,8 @@ export function Grid() {
       measureUi('Grid.unmount', () => ui.info('Grid.unmount'));
       ro?.disconnect();
       if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
-      if (maxWaitTimerRef.current)  window.clearTimeout(maxWaitTimerRef.current);
+      if (maxWaitTimerRef.current) window.clearTimeout(maxWaitTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Host 페이지 요청 (가상 스크롤 이동시)
@@ -161,14 +181,16 @@ export function Grid() {
 
     const onScroll = () => {
       // 프로그램적 스크롤 보정 중에는 요청 차단
-      if (ignoreScrollRef.current || Date.now() - lastWindowStartChangeTimeRef.current < 100) return;
+      if (ignoreScrollRef.current || Date.now() - lastWindowStartChangeTimeRef.current < 100)
+        return;
 
       const cur = parentRef.current;
       if (!cur) return;
 
       const headerOffset = listRef.current?.offsetTop ?? 0;
       const viewportH = Math.max(0, (cur.clientHeight || 0) - headerOffset);
-      const estStart = Math.floor(Math.max(0, cur.scrollTop - headerOffset) / Math.max(1, m.rowH)) + 1;
+      const estStart =
+        Math.floor(Math.max(0, cur.scrollTop - headerOffset) / Math.max(1, m.rowH)) + 1;
 
       // ⚠️ 헤더 높이를 제외한 가시 영역 높이로 용량(capacity) 계산
       const capacity = Math.max(1, Math.floor(viewportH / Math.max(1, Math.round(m.rowH))));
@@ -194,8 +216,8 @@ export function Grid() {
       const last = lastScrollSampleRef.current;
       if (last) {
         const dt = Math.max(1, now - last.t);
-        const dy = Math.abs((cur.scrollTop - last.top));
-        const rowsPerSec = (dy / Math.max(1, m.rowH)) / (dt / 1000);
+        const dy = Math.abs(cur.scrollTop - last.top);
+        const rowsPerSec = dy / Math.max(1, m.rowH) / (dt / 1000);
         // 고속이면 일정 시간 동안 드래그 상태 유지
         if (rowsPerSec >= DRAG_RPS_THRESHOLD) {
           dragActiveUntilRef.current = now + DRAG_IDLE_MS;
@@ -211,7 +233,8 @@ export function Grid() {
 
       // ✅ FOLLOW 자동 해제: 사용자가 바닥 근처를 벗어나면 PAUSE로 전환
       const nearBottom =
-        cur.scrollTop + cur.clientHeight >= cur.scrollHeight - m.rowH * (AUTO_PAUSE_TOLERANCE_ROWS + 0.5);
+        cur.scrollTop + cur.clientHeight >=
+        cur.scrollHeight - m.rowH * (AUTO_PAUSE_TOLERANCE_ROWS + 0.5);
       if (m.follow && !nearBottom) {
         measureUi('Grid.setFollow', () => useLogStore.getState().setFollow(false));
         ui.info('Grid.scroll: auto-pause follow (scrolled away from bottom)');
@@ -224,7 +247,9 @@ export function Grid() {
 
   // 프리뷰 상태 변경 로그
   useEffect(() => {
-    measureUi('Grid.preview.state', () => ui.info(`Grid.preview state open=${preview.open} rowId=${preview.logRow?.id ?? 'none'}`));
+    measureUi('Grid.preview.state', () =>
+      ui.info(`Grid.preview state open=${preview.open} rowId=${preview.logRow?.id ?? 'none'}`),
+    );
   }, [preview.open, preview.logRow?.id]);
 
   // 마지막 보이는 컬럼이 항상 1fr이 되도록 그리드 트랙을 구성
@@ -253,10 +278,22 @@ export function Grid() {
       }
     }
     if (!tracks.some((t) => t !== '0px')) tracks[0] = '1fr';
-    measureUi('Grid.buildGridTemplate.end', () => ui.debug?.('[debug] Grid: buildGridTemplate end'));
+    measureUi('Grid.buildGridTemplate.end', () =>
+      ui.debug?.('[debug] Grid: buildGridTemplate end'),
+    );
     // 북마크 고정폭 열 + 인덱스 고정폭 열 + 본문 컬럼들
     return `var(--col-bm-w) var(--col-idx-w) ${tracks.join(' ')}`;
-  }, [m.showCols.time, m.showCols.proc, m.showCols.pid, m.showCols.src, m.showCols.msg, m.colW.time, m.colW.proc, m.colW.pid, m.colW.src]);
+  }, [
+    m.showCols.time,
+    m.showCols.proc,
+    m.showCols.pid,
+    m.showCols.src,
+    m.showCols.msg,
+    m.colW.time,
+    m.colW.proc,
+    m.colW.pid,
+    m.colW.src,
+  ]);
   const anyHidden = !(
     m.showCols.time &&
     m.showCols.proc &&
@@ -317,7 +354,10 @@ export function Grid() {
     } else if (mode === 'bottom') {
       targetScrollTop = headerOffset + m.totalRows * rowH - el.clientHeight;
     } else {
-      const startForView = Math.max(1, Math.min(Math.max(1, m.totalRows - cap + 1), idx - centerOffset));
+      const startForView = Math.max(
+        1,
+        Math.min(Math.max(1, m.totalRows - cap + 1), idx - centerOffset),
+      );
       targetScrollTop = headerOffset + (startForView - 1) * rowH;
     }
 
@@ -327,7 +367,9 @@ export function Grid() {
     const reqEnd = Math.min(m.totalRows, reqStart + m.windowSize - 1);
 
     measureUi('Grid.jumpToIdx', () =>
-      ui.info(`Grid.jumpToIdx idx=${idx} cap=${cap} centerTop=${centerTopIdx} centerBottom=${centerBottomIdx} mode=${mode} → request ${reqStart}-${reqEnd}`),
+      ui.info(
+        `Grid.jumpToIdx idx=${idx} cap=${cap} centerTop=${centerTopIdx} centerBottom=${centerBottomIdx} mode=${mode} → request ${reqStart}-${reqEnd}`,
+      ),
     );
 
     // 점프 시에만 프로그램적 스크롤 적용(+ onScroll 무시)
@@ -339,7 +381,11 @@ export function Grid() {
       ignoreScrollRef.current = false;
     });
     measureUi('Grid.page.request.jump', () =>
-      vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: reqStart, endIdx: reqEnd } }),
+      vscode?.postMessage({
+        v: 1,
+        type: 'logs.page.request',
+        payload: { startIdx: reqStart, endIdx: reqEnd },
+      }),
     );
   }, [m.pendingJumpIdx, m.windowSize, m.totalRows, m.rowH]);
 
@@ -349,7 +395,9 @@ export function Grid() {
     if (!target) return;
     const found = m.rows.find((r) => r.idx === target);
     if (found) {
-      measureUi('Grid.jump.resolve', () => ui.info(`Grid.jump.resolve idx=${target} → rowId=${found.id}`));
+      measureUi('Grid.jump.resolve', () =>
+        ui.info(`Grid.jump.resolve idx=${target} → rowId=${found.id}`),
+      );
       useLogStore.setState({ selectedRowId: found.id, pendingJumpIdx: undefined });
     }
   }, [m.pendingJumpIdx, m.rows]);
@@ -362,7 +410,9 @@ export function Grid() {
     const end = m.windowStart + Math.max(0, visibleRows.length) - 1;
     const cov = start <= end ? `${start}-${end}` : 'empty';
     if (cov !== lastCoverageRef.current && shouldLog('coverage', 400, cov)) {
-      measureUi('Grid.coverage', () => ui.info(`Grid.coverage loaded=${cov} len=${visibleRows.length}/${m.windowSize}`));
+      measureUi('Grid.coverage', () =>
+        ui.info(`Grid.coverage loaded=${cov} len=${visibleRows.length}/${m.windowSize}`),
+      );
       lastCoverageRef.current = cov;
     }
   }, [m.windowStart, visibleRows.length, m.windowSize, m.totalRows]);
@@ -373,7 +423,16 @@ export function Grid() {
     const list = listRef.current;
     if (!el || !list) return;
     const headerOffset = list.offsetTop || 0;
-    const endIdx = m.windowStart + m.rows.length - 1;
+    // ⚠️ 리프레시 직후 rows가 비어 있을 수 있다.
+    //    이 때 endIdx=0 앵커가 발생해 상단으로 튀는 현상을 방지한다.
+    const hasRows = (m.rows?.length ?? 0) > 0;
+    // rows가 비어있으면, 현재 총 행수 기준으로 하단을 계산한다(유효 totalRows가 없으면 앵커 생략).
+    const fallbackEndIdx = Math.max(1, m.totalRows || 0);
+    const endIdx = hasRows ? m.windowStart + m.rows.length - 1 : fallbackEndIdx;
+    if (!hasRows && endIdx <= 0) {
+      // 총행수도 모르거나 0이면 아직 앵커링하지 않는다.
+      return;
+    }
     const target = headerOffset + endIdx * Math.max(1, m.rowH) - el.clientHeight;
     ignoreScrollRef.current = true;
     lastWindowStartChangeTimeRef.current = Date.now();
@@ -381,8 +440,32 @@ export function Grid() {
     requestAnimationFrame(() => {
       ignoreScrollRef.current = false;
     });
-    measureUi('Grid.anchor', () => ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`));
+    measureUi('Grid.anchor', () =>
+      ui.info(`Grid.anchor(bottom): endIdx=${endIdx} scrollTop=${Math.round(el.scrollTop)}`),
+    );
   };
+
+  // ── 리프레시 직후 빈 화면 완화: totalRows만 갱신되고 rows는 비어있을 때, 현재 windowStart 기준으로 즉시 요청 ──
+  useEffect(() => {
+    // 조건:
+    //  - 총행수(totalRows)는 존재
+    //  - 현재 로우는 비어 있음(리프레시 직후 과도기)
+    if ((m.totalRows ?? 0) > 0 && (m.rows?.length ?? 0) === 0) {
+      // logs.refresh가 미리 잡아둔 windowStart(anchor)를 우선
+      const startIdxBase = Math.max(1, m.windowStart);
+      const startIdx = Math.max(
+        1,
+        Math.min(startIdxBase, Math.max(1, m.totalRows - m.windowSize + 1)),
+      );
+      const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
+      const payload = `refresh:anchor start=${startIdx} end=${endIdx} total=${m.totalRows}`;
+      // 리프레시 직후엔 스크롤 속도가 없으므로 기본 딜레이로 즉시 요청
+      schedulePageRequest(startIdx, endIdx, payload, {
+        delayMs: BASE_DEBOUNCE_MS,
+        isDragging: false,
+      });
+    }
+  }, [m.totalRows, m.rows?.length, m.windowSize, m.windowStart]);
 
   // (1) FOLLOW=true일 때 바닥으로 앵커링:
   //  - 현재 커버리지의 바닥이 전체 tail이 아니면 마지막 페이지를 요청
@@ -390,19 +473,32 @@ export function Grid() {
   useEffect(() => {
     // 명시적 점프(검색/북마크) 진행 중에는 tail로 강제 이동하지 않는다.
     if (!m.follow || m.pendingJumpIdx) return;
+    // 리프레시 직후 rows가 비어있을 때는, logs.refresh가 보낸 앵커 요청을 우선시한다.
+    if (m.rows.length === 0) return;
     const endIdx = m.windowStart + Math.max(0, m.rows.length) - 1;
     const atTail = m.totalRows > 0 && endIdx >= m.totalRows - 1; // 1줄 관용 오차
     if (!atTail && m.totalRows > 0) {
       const size = m.windowSize || 500;
       const tailEnd = Math.max(1, m.totalRows);
       const tailStart = Math.max(1, tailEnd - size + 1);
-      measureUi('Grid.follow.jump', () => ui.info(`Grid.follow: jump-to-tail request ${tailStart}-${tailEnd} (endIdx=${endIdx}, total=${m.totalRows})`));
+      measureUi('Grid.follow.jump', () =>
+        ui.info(
+          `Grid.follow: jump-to-tail request ${tailStart}-${tailEnd} (endIdx=${endIdx}, total=${m.totalRows})`,
+        ),
+      );
       // 프로그램적 이동 동안 스크롤 핸들러 무시(자동 PAUSE 방지)
       ignoreScrollRef.current = true;
       lastWindowStartChangeTimeRef.current = Date.now();
       measureUi('Grid.page.request.follow', () =>
-        vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx: tailStart, endIdx: tailEnd } }));
-      requestAnimationFrame(() => { ignoreScrollRef.current = false; });
+        vscode?.postMessage({
+          v: 1,
+          type: 'logs.page.request',
+          payload: { startIdx: tailStart, endIdx: tailEnd },
+        }),
+      );
+      requestAnimationFrame(() => {
+        ignoreScrollRef.current = false;
+      });
     }
     scrollToBottom();
   }, [m.follow, m.pendingJumpIdx, m.totalRows, m.windowSize, m.windowStart, m.rows.length]);
@@ -419,10 +515,13 @@ export function Grid() {
   const emittedThresholdRef = useRef<{ p80?: boolean; p90?: boolean; end?: boolean }>({});
   useEffect(() => {
     if (virtualItems.length === 0 || !m.totalRows) return;
-    const s = Math.min(...virtualItems.map(v => v.index)) + 1; // 1-based
-    const e = Math.max(...virtualItems.map(v => v.index)) + 1;
+    const s = Math.min(...virtualItems.map((v) => v.index)) + 1; // 1-based
+    const e = Math.max(...virtualItems.map((v) => v.index)) + 1;
     const prev = lastVisRef.current;
-    const movedALot = !prev || Math.abs(s - prev.s) >= Math.max(20, Math.floor(m.windowSize / 3)) || Math.abs(e - prev.e) >= Math.max(20, Math.floor(m.windowSize / 3));
+    const movedALot =
+      !prev ||
+      Math.abs(s - prev.s) >= Math.max(20, Math.floor(m.windowSize / 3)) ||
+      Math.abs(e - prev.e) >= Math.max(20, Math.floor(m.windowSize / 3));
 
     const ratio = e / m.totalRows;
     const flags = emittedThresholdRef.current;
@@ -432,7 +531,9 @@ export function Grid() {
 
     const payload = `visible=${s}-${e} items=${virtualItems.length}`;
     if ((movedALot && shouldLog('visible.range', 400)) || hit80 || hit90 || hitEnd) {
-      measureUi('Grid.visible.range', () => ui.info(`Grid.visible range: ${s}-${e} (total virtualItems=${virtualItems.length})`));
+      measureUi('Grid.visible.range', () =>
+        ui.info(`Grid.visible range: ${s}-${e} (total virtualItems=${virtualItems.length})`),
+      );
       lastVisRef.current = { s, e };
       if (hit80) flags.p80 = true;
       if (hit90) flags.p90 = true;
@@ -444,8 +545,8 @@ export function Grid() {
   useEffect(() => {
     if (!m.totalRows) return;
     // 가시구간
-    const visStart = virtualItems.length ? Math.min(...virtualItems.map(v => v.index)) + 1 : 0;
-    const visEnd = virtualItems.length ? Math.max(...virtualItems.map(v => v.index)) + 1 : 0;
+    const visStart = virtualItems.length ? Math.min(...virtualItems.map((v) => v.index)) + 1 : 0;
+    const visEnd = virtualItems.length ? Math.max(...virtualItems.map((v) => v.index)) + 1 : 0;
     // 커버리지
     const bufStart = m.windowStart;
     const bufEnd = m.windowStart + Math.max(0, visibleRows.length) - 1;
@@ -460,7 +561,9 @@ export function Grid() {
       if (inBuf) rendered++;
       else placeholders++;
     }
-    const phRatio = virtualItems.length ? Math.round((placeholders / virtualItems.length) * 100) : 0;
+    const phRatio = virtualItems.length
+      ? Math.round((placeholders / virtualItems.length) * 100)
+      : 0;
 
     const payload = `visible=${visStart}-${visEnd} coverage=${bufStart <= bufEnd ? `${bufStart}-${bufEnd}` : 'empty'} rendered=${rendered}/${virtualItems.length} placeholders=${phRatio}% needRange=${needRange}`;
     if (shouldLog('commit', 400, payload)) {
@@ -471,7 +574,7 @@ export function Grid() {
     try {
       const bufferStart0 = Math.max(0, m.windowStart - 1);
       const logical = virtualItems
-        .map(v => {
+        .map((v) => {
           const offset = v.index - bufferStart0;
           const r = offset >= 0 && offset < visibleRows.length ? visibleRows[offset] : undefined;
           return typeof r?.idx === 'number' ? r.idx : undefined;
@@ -484,13 +587,14 @@ export function Grid() {
         const probePayload = `asc=${asc} h=${head} t=${tail}`;
         if (shouldLog('probe.grid.paint', 400, probePayload)) {
           measureUi('Grid.probe.paint', () =>
-            ui.info(`[probe:grid] paint logical asc=${asc} head=[${head}] tail=[${tail}]`));
+            ui.info(`[probe:grid] paint logical asc=${asc} head=[${head}] tail=[${tail}]`),
+          );
         }
       }
       const cont = listRef.current;
       if (cont) {
         const nodes = Array.from(cont.querySelectorAll('[data-vidx]')).slice(0, 8);
-        const domSeq = nodes.map(n => (n as HTMLElement).dataset['vidx']).join(',');
+        const domSeq = nodes.map((n) => (n as HTMLElement).dataset['vidx']).join(',');
         if (shouldLog('probe.grid.dom', 400, domSeq)) {
           measureUi('Grid.probe.dom', () => ui.info(`[probe:grid] DOM order first8=[${domSeq}]`));
         }
@@ -578,9 +682,11 @@ export function Grid() {
                 onDoubleClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  measureUi('Grid.row.dblclick', () => ui.info(
-                    `Grid.row.dblclick id=${r.id} time="${r.time}" len=${r.raw?.length ?? r.msg.length} curOpen=${preview.open}`,
-                  ));
+                  measureUi('Grid.row.dblclick', () =>
+                    ui.info(
+                      `Grid.row.dblclick id=${r.id} time="${r.time}" len=${r.raw?.length ?? r.msg.length} curOpen=${preview.open}`,
+                    ),
+                  );
                   openPreview(r);
                 }}
               >
@@ -594,7 +700,12 @@ export function Grid() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (typeof r.idx !== 'number') return; // 방어
-                      measureUi('Grid.toggleBookmarkByIdx', () => useLogStore.getState().toggleBookmarkByIdx(r.idx));
+                      // NOTE: TS의 타입 내로잉은 중첩 콜백 경계를 넘지 않는다.
+                      //       measureUi 콜백 내부에서도 number로 보장되도록 별도 변수로 고정한다.
+                      const idx = r.idx;
+                      measureUi('Grid.toggleBookmarkByIdx', () =>
+                        useLogStore.getState().toggleBookmarkByIdx(idx),
+                      );
                     }}
                   />
                 </div>

@@ -12,7 +12,7 @@ const mergeDir = process.argv[3];
 
 const files = ['bt_player', 'clip', 'cpcd', 'kernel', 'matter', 'otbr-agent', 'system'];
 
-files.forEach(file => {
+files.forEach((file) => {
   try {
     const jsonPath = path.resolve(parcedDir, file + '.json');
     const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -20,7 +20,7 @@ files.forEach(file => {
 
     const logPath = path.resolve(mergeDir, file + '.log');
     const logContent = fs.readFileSync(logPath, 'utf8');
-    const logCount = logContent.split('\n').filter(line => line.trim()).length;
+    const logCount = logContent.split('\n').filter((line) => line.trim()).length;
 
     const match = jsonCount === logCount;
     console.log(file + ': JSON 항목수=' + jsonCount + ', LOG 행수=' + logCount + ', 일치=' + match);

@@ -108,13 +108,7 @@ export class PerfMonitorWebviewManager {
       vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'style.css'),
     );
     const chartUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(
-        this._extensionUri,
-        'dist',
-        'webviewers',
-        'perf-monitor',
-        'chart.umd.js',
-      ),
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webviewers', 'perf-monitor', 'chart.umd.js'),
     );
 
     const cspSource = webview.cspSource;
