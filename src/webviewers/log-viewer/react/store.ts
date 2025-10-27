@@ -87,9 +87,14 @@ type Actions = {
   setFollow(follow: boolean): void;
   incNewSincePause(): void;
   clearNewSincePause(): void;
+  // ── 메모리 표시용 액션 ────────────────────────────────────────────────
+  setHostMemMB(mb?: number): void;
+  setWebMemMB(mb?: number): void;
 };
 
-export const useLogStore = create<Model & Actions>()((set, get) => ({
+type ExtraState = { hostMemMB?: number; webMemMB?: number };
+
+export const useLogStore = create<Model & ExtraState & Actions>()((set, get) => ({
   ...initial,
   // 로거: 스토어 변경 시점 추적
   __ui: createUiLog(vscode, 'log-viewer.store'),
@@ -378,6 +383,14 @@ export const useLogStore = create<Model & Actions>()((set, get) => ({
       set({ newSincePause: 0 });
       (get() as any).__ui?.debug?.('store.clearNewSincePause');
     });
+  },
+
+  // ── 메모리 값 저장 (세션 스코프) ──────────────────────────────────────
+  setHostMemMB(mb) {
+    set({ ...(get() as any), hostMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined } as any);
+  },
+  setWebMemMB(mb) {
+    set({ ...(get() as any), webMemMB: typeof mb === 'number' ? Math.max(0, mb | 0) : undefined } as any);
   },
 }));
 

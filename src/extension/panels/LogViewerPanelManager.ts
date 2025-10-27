@@ -23,6 +23,10 @@ export class LogViewerPanelManager {
   private panel?: vscode.WebviewPanel;
   private bridge?: HostWebviewBridge;
   private session?: LogSessionManager;
+  private memTimer?: NodeJS.Timeout;
+  private memPeriodMs = 60_000; // 기본: 느리게(완료 후)
+  private readonly MEM_FAST_MS = 2_000;
+  private readonly MEM_SLOW_MS = 60_000;
 
   private mode: 'idle' | 'realtime' | 'filemerge' = 'idle';
   private initialSent = false;
@@ -55,6 +59,34 @@ export class LogViewerPanelManager {
     // quiet
   }
 
+  /** 메모리 샘플 1회 전송 */
+  private _postMemOnce() {
+    try {
+      const m = process.memoryUsage();
+      const rssMB = Math.round(m.rss / 1048576);
+      const heapUsedMB = Math.round(m.heapUsed / 1048576);
+      const externalMB = Math.round(m.external / 1048576);
+      const arrayBuffersMB = Math.round(((m as any).arrayBuffers || 0) / 1048576);
+      this._send('memory.usage', {
+        rssMB,
+        heapUsedMB,
+        externalMB,
+        arrayBuffersMB,
+        ts: Date.now(),
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  /** 샘플 주기 전환(즉시 1회 송신 포함) */
+  private _setMemPeriod(ms: number) {
+    if (this.memPeriodMs === ms) return;
+    if (this.memTimer) clearInterval(this.memTimer);
+    this.memPeriodMs = ms;
+    this._postMemOnce();
+    this.memTimer = setInterval(() => this._postMemOnce(), this.memPeriodMs);
+  }
   @measure()
   async handleHomeyLoggingCommand() {
     const already = !!this.panel;
@@ -83,6 +115,10 @@ export class LogViewerPanelManager {
         } catch {}
         this.bridge = undefined;
         this.panel = undefined;
+        if (this.memTimer) {
+          clearInterval(this.memTimer);
+          this.memTimer = undefined;
+        }
       });
 
       // 정식 Log Viewer UI 로드
@@ -106,8 +142,9 @@ export class LogViewerPanelManager {
         },
       });
       this.bridge.start();
-      // quiet
-
+      // ── Host 메모리 샘플러: 기본은 느리게(완료 주기) 시작 ──────────────
+      if (this.memTimer) { clearInterval(this.memTimer); this.memTimer = undefined; }
+      this._setMemPeriod(this.MEM_SLOW_MS);
       // quiet
       await vscode.commands.executeCommand('homey.logging.openViewer');
     }
@@ -126,6 +163,8 @@ export class LogViewerPanelManager {
 
     this.session?.dispose();
     this.session = new LogSessionManager({ id: 'default', type: 'adb', timeoutMs: 15000 });
+    // 실시간 모드는 병합이 없으므로 느리게
++   this._setMemPeriod(this.MEM_SLOW_MS);
 
     await this.session.startRealtimeSession({
       filter,
@@ -168,6 +207,8 @@ export class LogViewerPanelManager {
 
     this.session?.dispose();
     this.session = new LogSessionManager(undefined);
+    // 병합 시작: 빠르게 전환
+    this._setMemPeriod(this.MEM_FAST_MS);
 
     // ⬇️ 파서 설정(.config/custom_log_parser.json)에서 files 화이트리스트 추출
     let whitelistGlobs: string[] | undefined;
@@ -223,6 +264,8 @@ export class LogViewerPanelManager {
           version,
           warm: !!warm,
         });
+        // 정식 병합 완료(스킵 포함): 느리게 전환
+        this._setMemPeriod(this.MEM_SLOW_MS);
       },
 
       // ── 진행률: 로그는 샘플링해서 출력, 메시지 전달은 매번 유지 ─────────
@@ -234,6 +277,8 @@ export class LogViewerPanelManager {
         // ─ 로그 노이즈 억제 ─
         const now = Date.now();
         if (active) {
+          // 병합 중: 빠르게
+          this._setMemPeriod(this.MEM_FAST_MS);
           if (typeof total === 'number') this.progTotal = total;
           const add = typeof inc === 'number' ? inc : 0;
           this.progAcc += add;
@@ -250,6 +295,8 @@ export class LogViewerPanelManager {
           }
         } else {
           // 완료 시에는 정확 수치 1회만 출력
+          // 병합 종료: 느리게
+          this._setMemPeriod(this.MEM_SLOW_MS);
           if (typeof total === 'number') this.progTotal = total;
           if (typeof done === 'number') this.progDoneAcc = done;
           // quiet
@@ -286,6 +333,8 @@ export class LogViewerPanelManager {
         `viewer: warm-skip detected → sending logs.refresh(warm=true) total=${total} v=${version}`,
       );
       this._send('logs.refresh', { reason: 'full-reindex', total, version, warm: true });
+      // 완료로 간주 → 느리게
+      this._setMemPeriod(this.MEM_SLOW_MS);
     }
   }
 

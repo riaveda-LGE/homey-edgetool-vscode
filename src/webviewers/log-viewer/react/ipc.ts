@@ -89,6 +89,38 @@ export function setupIpc() {
   try {
     useLogStore.getState().setMergeMode('memory');
   } catch {}
+  // ── Webview 메모리 샘플러: 병합 중(2초) ↔ 완료(60초) ──────────────────
+  const MEM_FAST_MS = 2_000;
+  const MEM_SLOW_MS = 60_000;
+  const setWeb = useLogStore.getState().setWebMemMB;
+  let webMemTimer: number | undefined;
+  let webMemPeriod = MEM_SLOW_MS;
+  async function sampleWebMem() {
+    try {
+      let bytes: number | undefined;
+      const anyPerf: any = performance as any;
+      if (typeof anyPerf.measureUserAgentSpecificMemory === 'function') {
+        const r = await anyPerf.measureUserAgentSpecificMemory();
+        if (r && typeof r.bytes === 'number') bytes = r.bytes;
+      } else if (anyPerf?.memory && typeof anyPerf.memory.usedJSHeapSize === 'number') {
+        bytes = anyPerf.memory.usedJSHeapSize;
+      }
+      if (typeof bytes === 'number' && isFinite(bytes)) {
+        setWeb(Math.round(bytes / 1048576));
+      }
+    } catch {}
+  }
+  function setWebMemPeriod(ms: number) {
+    if (webMemPeriod === ms) return;
+    if (webMemTimer) window.clearInterval(webMemTimer);
+    webMemPeriod = ms;
+    sampleWebMem();
+    webMemTimer = window.setInterval(sampleWebMem, webMemPeriod);
+  }
+  setWebMemPeriod(MEM_SLOW_MS);
+  window.addEventListener('unload', () => {
+    if (webMemTimer) window.clearInterval(webMemTimer);
+  });
 
   window.addEventListener('message', (ev) => {
     const parsed = Env.safeParse(ev.data);
@@ -97,6 +129,14 @@ export function setupIpc() {
 
     return measureUi(`ipc.on:${type}`, () => {
       switch (type) {
+        case 'memory.usage': {
+          // host RSS 등 메모리 정보
+          const rss = typeof payload?.rssMB === 'number' ? payload.rssMB : undefined;
+          const heap = typeof payload?.heapUsedMB === 'number' ? payload.heapUsedMB : undefined;
+          const hostMB = typeof rss === 'number' ? rss : typeof heap === 'number' ? heap : undefined;
+          useLogStore.getState().setHostMemMB(hostMB);
+          return;
+        }
         case 'logs.state': {
           // host 쪽 pagination 상태 스냅샷(디버깅/초기 배너/프로그레스 용)
           const total = typeof payload?.total === 'number' ? payload.total : undefined;
@@ -189,6 +229,8 @@ export function setupIpc() {
           useLogStore.getState().setTotalRows(total);
           useLogStore.getState().mergeProgress({ done: total, total, active: false });
           setReadyForFilter(); // 풀 리인덱스 이후에도 허용
+          // 정식 병합 완료 → 느리게
+          setWebMemPeriod(MEM_SLOW_MS);
 
           // ── 뷰포트 유지용 앵커 계산 ─────────────────────────────────
           // 1) Jump 요청이 대기중이면 그 인덱스
@@ -301,6 +343,8 @@ export function setupIpc() {
           // MERGE_ACTIVE 토글
           if (pActive === true) MERGE_ACTIVE = true;
           if (isCloseSignal) MERGE_ACTIVE = false;
+          // 병합 중/완료에 따라 샘플 주기 전환
+          setWebMemPeriod(MERGE_ACTIVE ? MEM_FAST_MS : MEM_SLOW_MS);
           // 완료 이후의 후행 progress는 드랍하되, 닫는 신호만은 반드시 전달
           if (!MERGE_ACTIVE && pActive !== true && !isCloseSignal) {
             return;
@@ -333,11 +377,15 @@ export function setupIpc() {
             MERGE_ACTIVE = true;
             // 새 병합 세션 시작 → 추정 total 재허용
             ALLOW_ESTIMATED_TOTAL = true;
+            // 병합 시작 → 빠르게
+            setWebMemPeriod(MEM_FAST_MS);
           }
           if (kind === 'done') {
             MERGE_ACTIVE = false;
             // 병합 완료 시점부터 추정치 금지
             disallowEstimates('merge.stage(done)');
+            // 완료 → 느리게
+            setWebMemPeriod(MEM_SLOW_MS);
           }
           // ── 하이브리드 모드로의 전환 트리거 ──
           //  - "파일 병합을 시작" / "로그병합 시작"
@@ -368,6 +416,8 @@ export function setupIpc() {
           try {
             useLogStore.getState().setMergeStage('병합 완료');
           } catch {}
+          // 저장 완료 → 느리게
+          setWebMemPeriod(MEM_SLOW_MS);
 
           return;
         }

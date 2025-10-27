@@ -14,6 +14,11 @@ export function Toolbar() {
   const mergeMode = useLogStore(
     (s: any) => (s as any).mergeMode as 'memory' | 'hybrid' | undefined,
   );
+  const hostMB = useLogStore((s: any) => (s as any).hostMemMB as number | undefined);
+  const webMB = useLogStore((s: any) => (s as any).webMemMB as number | undefined);
+  const hasAnyMem = typeof hostMB === 'number' || typeof webMB === 'number';
+  const totalMB =
+    (typeof hostMB === 'number' ? hostMB : 0) + (typeof webMB === 'number' ? webMB : 0);
   const setCol = useLogStore((s) => s.toggleColumn);
   const setSearch = useLogStore((s) => s.setSearch);
   const openSearchPanel = useLogStore((s) => s.openSearchPanel);
@@ -115,6 +120,16 @@ export function Toolbar() {
               {`모드: ${mergeMode === 'hybrid' ? '하이브리드' : '메모리'}`}
             </span>
           ) : null}
+          {/* ── 메모리 배지: 모드와 상태 사이에 [총MB], 툴팁으로 분해값 표시 ── */}
+          {hasAnyMem && (
+            <span
+              className="tw-text-[11px] tw-opacity-70 tw-px-1 -tw-ml-1"
+              title={`샘플링: 병합 중 2초 / 완료 후 60초 · Host ${typeof hostMB === 'number' ? hostMB : '?'}MB / Web ${typeof webMB === 'number' ? webMB : '?'}MB`}
+              data-testid="text-memory-total-mb"
+            >
+              {`[${totalMB}MB]`}
+            </span>
+          )}
           {mergeStage ? (
             <span
               className="tw-text-xs tw-opacity-80 tw-truncate tw-max-w-[420px]"
