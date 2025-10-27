@@ -174,10 +174,11 @@ export class HostWebviewBridge {
         // ── 서버측 필터 설정(단일 API: null=해제) ──────────────────────────
         if (msg.type === 'logs.filter.set') {
           try {
+            const warm = paginationService.isWarmupActive();
             const filter = (msg.payload?.filter ?? null) as LogFilter | null;
             this.log.info(`bridge: logs.filter.set ${JSON.stringify(filter)}`);
             paginationService.setFilter(filter);
-            const total = await paginationService.getFilteredTotal();
+            const total = warm ? paginationService.getWarmTotal() : paginationService.getFileTotal();
             const startIdx = Math.max(1, (total ?? 0) - LOG_WINDOW_SIZE + 1);
             const endIdx = Math.max(1, total ?? 0);
             const head = await paginationService.readRangeByIdx(startIdx, endIdx);
@@ -198,7 +199,7 @@ export class HostWebviewBridge {
               payload: {
                 total,
                 version: paginationService.getVersion(),
-                warm: paginationService.isWarmupActive(),
+                warm,
                 manifestDir: paginationService.getManifestDir(),
               },
             } as any);
@@ -209,7 +210,7 @@ export class HostWebviewBridge {
                 reason: 'filter-changed',
                 total,
                 version: paginationService.getVersion(),
-                warm: paginationService.isWarmupActive(),
+                warm,
               },
             } as any);
           } catch (err: any) {
@@ -626,7 +627,7 @@ export class HostWebviewBridge {
 
       // 상태는 매번 보내도 무방(웹뷰가 최신값으로 덮어씀)
       this.log.info(
-        `bridge: kickIfReady origin=${origin} warm=${warm} total=${total ?? 'unknown'} version=${version} manifest=${manifestDir ?? '-'}`,
+        `bridge: kickIfReady origin=${origin} warm=${warm} total=${typeof total === 'number' ? total : 'unknown'} version=${version} manifest=${manifestDir ?? '-'}`,
       );
       this.send({
         v: 1,
@@ -642,13 +643,10 @@ export class HostWebviewBridge {
           payload: { reason: origin, total, version, warm },
         } as any);
         this.kickedOnce = true;
-        this.log.info(
-          `bridge: sent initial logs.refresh (origin=${origin}, warm=${warm}, total=${total ?? 'unknown'}, version=${version})`,
-        );
       }
-    } catch (e) {
-      this.log.warn(`bridge: kickIfReady failed: ${String(e)}`);
-    }
+  } catch (e: any) {
+    this.log.warn(`bridge: kickIfReady failed: ${e?.message || e}`);
+  }
   }
 
   /** 외부(예: extensionPanel/manager)에서 사용할 병합 리포터 생성기

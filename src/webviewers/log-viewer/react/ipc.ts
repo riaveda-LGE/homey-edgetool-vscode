@@ -171,6 +171,10 @@ export function setupIpc() {
             useLogStore.getState().incNewSincePause();
           }
           setReadyForFilter(); // 최초 배치 수신 시 필터 전송 허용
+          // ✅ Warmup 페이지가 화면에 그려지기 시작하면, 진행률 이벤트의 추정 total이
+          //    스크롤 최대치(totalRows)를 덮어쓰지 못하도록 즉시 봉인한다.
+          //    (요구사항: 병합 완료 전까지는 warmup 버퍼 크기=총 로그 수로 고정)
+          disallowEstimates('warm.visible');
           return;
         }
         case 'logs.refresh': {
@@ -181,32 +185,64 @@ export function setupIpc() {
           // ✅ 파일 기반 인덱스로 전환된 경우에만 추정치 금지
           // (kickIfReady에서 warm=false 또는 manifestDir 존재 시)
           if (!warm) disallowEstimates('logs.refresh(file-index)');
-          // quiet
+          // 총량/진행바 확정
           useLogStore.getState().setTotalRows(total);
-          // 확실히 진행바 닫기
           useLogStore.getState().mergeProgress({ done: total, total, active: false });
           setReadyForFilter(); // 풀 리인덱스 이후에도 허용
-          useLogStore.getState().receiveRows(1, []);
+
+          // ── 뷰포트 유지용 앵커 계산 ─────────────────────────────────
+          // 1) Jump 요청이 대기중이면 그 인덱스
+          // 2) FOLLOW 모드면 마지막 페이지(테일)
+          // 3) 그 외에는 현재 뷰포트 중앙 인덱스 유지
+          const st = useLogStore.getState() as any;
+          const winSize = (st.windowSize as number) || 500;
+          const prevStart = (st.windowStart as number) || 1;
+          const prevTotal = (st.totalRows as number) || 0;
+          const pendingJumpIdx =
+            typeof st.pendingJumpIdx === 'number' && st.pendingJumpIdx > 0
+              ? (st.pendingJumpIdx as number)
+              : undefined;
+
+          let anchorIdx: number;
+          if (typeof pendingJumpIdx === 'number') {
+            anchorIdx = pendingJumpIdx;
+          } else if (st.follow) {
+            anchorIdx = Math.max(1, total);
+          } else {
+            const prevMid = prevStart + Math.floor(winSize / 2);
+            anchorIdx = Math.max(1, Math.min(prevMid, Math.max(1, total)));
+          }
+
+          // 요청/창 범위 산출
+          const half = Math.floor(winSize / 2);
+          let startIdx = Math.max(1, anchorIdx - half);
+          let endIdx = Math.min(total, startIdx + winSize - 1);
+          // total이 windowSize보다 작은 경우 보정
+          if (endIdx - startIdx + 1 < winSize) {
+            startIdx = Math.max(1, endIdx - winSize + 1);
+          }
+
+          // ✅ 먼저 windowStart를 새 기준으로 이동(플레이스홀더가 현재 뷰포트와 정렬되도록)
+          useLogStore.getState().receiveRows(startIdx, []);
+
           // 모드/스테이지 확정:
           //  - warm=true  → 정식 병합 스킵(메모리 모드에서 완료)
           //  - warm=false → 파일 기반 인덱스로 전환(하이브리드)
           try {
             if (warm) {
-              // 스킵 경로: 모드는 계속 'memory' 로 유지
               useLogStore.getState().setMergeMode('memory');
             } else {
-              // 정식 병합 완료(파일 인덱스 가용): 하이브리드로 전환
               useLogStore.getState().setMergeMode('hybrid');
             }
-            // 표시 스테이지는 공통적으로 '병합 완료'로 고정
             useLogStore.getState().setMergeStage('병합 완료');
           } catch {}
-          // ✅ 표시 순서는 오름차순, 초기 관심은 최신 → "마지막 페이지"를 요청
-          const size = useLogStore.getState().windowSize || 500;
-          const endIdx = Math.max(1, total);
-          const startIdx = Math.max(1, endIdx - size + 1);
-          // quiet
-          vscode?.postMessage({ v: 1, type: 'logs.page.request', payload: { startIdx, endIdx } });
+
+          // ✅ 현재 뷰포트가 포함된 범위를 즉시 요청
+          vscode?.postMessage({
+            v: 1,
+            type: 'logs.page.request',
+            payload: { startIdx, endIdx },
+          });
           return;
         }
         case 'logs.page.response': {

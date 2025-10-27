@@ -445,27 +445,24 @@ export function Grid() {
     );
   };
 
-  // ── 리프레시 직후 빈 화면 완화: totalRows만 갱신되고 rows는 비어있을 때, 즉시 테일 구간 요청 ──
+  // ── 리프레시 직후 빈 화면 완화: totalRows만 갱신되고 rows는 비어있을 때, 현재 windowStart 기준으로 즉시 요청 ──
   useEffect(() => {
     // 조건:
     //  - 총행수(totalRows)는 존재
     //  - 현재 로우는 비어 있음(리프레시 직후 과도기)
-    //  - 바닥 팔로우가 켜져 있거나(보통 기본) 최초 앵커링 전
-    if (
-      (m.totalRows ?? 0) > 0 &&
-      (m.rows?.length ?? 0) === 0 &&
-      (m.follow || !initialAnchoredRef.current)
-    ) {
-      const endIdx = Math.max(1, m.totalRows);
-      const startIdx = Math.max(1, endIdx - m.windowSize + 1);
-      const payload = `refresh:auto start=${startIdx} end=${endIdx} total=${m.totalRows}`;
+    if ((m.totalRows ?? 0) > 0 && (m.rows?.length ?? 0) === 0) {
+      // logs.refresh가 미리 잡아둔 windowStart(anchor)를 우선
+      const startIdxBase = Math.max(1, m.windowStart);
+      const startIdx = Math.max(1, Math.min(startIdxBase, Math.max(1, m.totalRows - m.windowSize + 1)));
+      const endIdx = Math.min(m.totalRows, startIdx + m.windowSize - 1);
+      const payload = `refresh:anchor start=${startIdx} end=${endIdx} total=${m.totalRows}`;
       // 리프레시 직후엔 스크롤 속도가 없으므로 기본 딜레이로 즉시 요청
       schedulePageRequest(startIdx, endIdx, payload, {
         delayMs: BASE_DEBOUNCE_MS,
         isDragging: false,
       });
     }
-  }, [m.totalRows, m.rows?.length, m.follow, m.windowSize]);
+  }, [m.totalRows, m.rows?.length, m.windowSize, m.windowStart]);
 
   // (1) FOLLOW=true일 때 바닥으로 앵커링:
   //  - 현재 커버리지의 바닥이 전체 tail이 아니면 마지막 페이지를 요청
@@ -473,6 +470,8 @@ export function Grid() {
   useEffect(() => {
     // 명시적 점프(검색/북마크) 진행 중에는 tail로 강제 이동하지 않는다.
     if (!m.follow || m.pendingJumpIdx) return;
+    // 리프레시 직후 rows가 비어있을 때는, logs.refresh가 보낸 앵커 요청을 우선시한다.
+    if (m.rows.length === 0) return;
     const endIdx = m.windowStart + Math.max(0, m.rows.length) - 1;
     const atTail = m.totalRows > 0 && endIdx >= m.totalRows - 1; // 1줄 관용 오차
     if (!atTail && m.totalRows > 0) {

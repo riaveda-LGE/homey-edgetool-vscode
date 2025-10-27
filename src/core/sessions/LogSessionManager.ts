@@ -541,10 +541,15 @@ export class LogSessionManager {
 
     // ✅ T1: 최종 완료 시점에 최신 manifest로 리더 리로드
     try {
+      // (앞서 part 생성이 없어 아직 열지 못했다면 여기서 1회 오픈)
       if (!paginationOpened) {
-        // (앞서 part 생성이 없어 아직 열지 못했다면 여기서 1회 오픈)
         await paginationService.setManifestDir(outDir);
         paginationOpened = true;
+        // ※ 일부 환경에서 setManifestDir만 호출되고 reload가 누락되면
+        //    서비스가 계속 'warm' 모드에 머물러 페이징이 꼬일 수 있다.
+        //    (로그에서 관찰된 현상: out-of-range 요청이 항상 워밍업 꼬리로 clamp)
+        //    따라서 최종 완료 시점에는 무조건 reload를 수행해 파일 기반으로 전환한다.
+        await paginationService.reload();
       } else {
         await paginationService.reload();
       }

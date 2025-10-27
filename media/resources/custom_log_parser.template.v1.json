@@ -14,7 +14,7 @@
     "hard_skip_if_any_line_matches": ["^=+\\([^)]*\\)=+$", "^(WIFI|BT|CLIP)==>"]
   },
   "configure": {
-    "memory_mode_threshold": 10000
+    "memory_mode_threshold": 50000
   },
   "parser": [
     {

@@ -204,9 +204,18 @@ class PaginationService {
           } else {
             // 아직 파일 리더 준비 전이면 빈 응답으로 대기(잘못된 1줄 클램프 방지)
             this.log.debug?.(
-              `pagination(warm): out-of-range ${startIdx}-${endIdx} (N=${N}) with no reader → return empty`,
+              `pagination(warm): out-of-range ${startIdx}-${endIdx} (N=${N}) with no reader → clamp to warm tail`,
             );
-            return [];
+            const win = Math.max(1, (endIdx - startIdx + 1) | 0);
+            const s = Math.max(1, N - win + 1);
+            const e = N;
+            const { physStart, physEndExcl } = mapAscToDescRange(N, s, e);
+            const picked = buf.slice(physStart, physEndExcl).slice().reverse();
+            for (let i = 0; i < picked.length; i++) {
+              const eRow = picked[i] as any;
+              eRow.idx = s + i;
+            }
+            return picked as LogEntry[];
           }
         } else {
           // 부분 겹침(끝만 초과) 또는 정상 범위 → warm 슬라이스 제공
