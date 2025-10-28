@@ -91,6 +91,11 @@ export function getSections(): SectionDef[] {
       title: 'homey 조작',
       items: [
         {
+          id: 'cmd.connectDevice',
+          label: '기기 연결',
+          op: { kind: 'handler', name: 'connectDevice' },
+        },
+        {
           id: 'cmd.homeyLogging',
           label: '로그 보기',
           op: { kind: 'handler', name: 'openHomeyLogging' },

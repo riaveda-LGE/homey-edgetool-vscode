@@ -44,7 +44,7 @@ class CommandHandlers {
     this.loggingHandler = new CommandHandlersLogging(this.provider);
     this.hostHandler = new CommandHandlersHost();
     this.gitHandler = new CommandHandlersGit();
-    this.connectHandler = new CommandHandlersConnect();
+    this.connectHandler = new CommandHandlersConnect(this.context);
     this.parserHandler = new CommandHandlersParser(this.context);
   }
 
@@ -80,7 +80,6 @@ class CommandHandlers {
         return this.gitHandler.gitPassthrough(['pull']);
       case 'gitPush':
         return this.gitHandler.gitPassthrough(['push']);
-
       case 'updateNow':
         return this.updateHandler.updateNow();
       case 'openHelp':
@@ -88,12 +87,9 @@ class CommandHandlers {
 
       case 'initParser':
         return this.parserHandler.initParser();
-
-      // === 과거 라인 기반 명령들(가능한 쓰지 않음) ===
-      case 'connect_info':
-        return this.connectHandler.connectInfo();
-      case 'connect_change':
-        return this.connectHandler.connectChange();
+      // === 새로 추가: 웹뷰 버튼 진입점
+      case 'connectDevice':
+        return this.connectHandler.connectDevice();
 
       default:
         log.info(`[info] unknown command: ${raw}`);
