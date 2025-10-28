@@ -207,6 +207,8 @@ export function Grid() {
       const diff = desiredStart - m.windowStart;
       const smallMove = Math.abs(diff) < Math.max(10, halfOver);
       if (smallMove && diff >= 0) return;
+      // 가시 범위가 버퍼 밖이면(needRange=true) → 소이동이라도 요청 허용
+      if (smallMove && diff >= 0 && !needRangeRef.current) return;
 
       const startIdx = desiredStart;
       const endIdx = Math.min(m.totalRows, startIdx + requestSize - 1);
@@ -513,6 +515,8 @@ export function Grid() {
   // ── 보여지는 로그 범위 로그(스로틀 + 경계 구간만) ────────────────────
   const lastVisRef = useRef<{ s: number; e: number } | null>(null);
   const emittedThresholdRef = useRef<{ p80?: boolean; p90?: boolean; end?: boolean }>({});
+  // needRangeRef: 가시 구간이 버퍼 밖일 때 소이동 가드 우회
+  const needRangeRef = useRef(false);
   useEffect(() => {
     if (virtualItems.length === 0 || !m.totalRows) return;
     const s = Math.min(...virtualItems.map((v) => v.index)) + 1; // 1-based
@@ -551,6 +555,7 @@ export function Grid() {
     const bufStart = m.windowStart;
     const bufEnd = m.windowStart + Math.max(0, visibleRows.length) - 1;
     const needRange = !(visStart >= bufStart && visEnd <= bufEnd);
+    needRangeRef.current = needRange;
 
     // DOM 내 실제 렌더된 행 수(플레이스홀더 제외)
     let rendered = 0;
