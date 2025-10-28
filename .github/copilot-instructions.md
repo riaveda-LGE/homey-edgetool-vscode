@@ -177,8 +177,7 @@ homey-edgetool/
 │  └─ resources/
 │     ├─ custom_log_parser.template.v1.json # 커스텀 로그 파서 템플릿 JSON # custom_log_parser_설정 # 로그파싱
 │     ├─ edge-icon.svg                    # 확장 아이콘 SVG 파일
-│     ├─ help.md                          # 도움말 문서
-│     └─ user_testcase_list.template.txt   # 사용자 테스트 케이스 목록 템플릿
+│     └─ help.md                          # 도움말 문서
 ├─ scripts/                               # 빌드/배포 및 유틸리티 스크립트
 │  ├─ checking_count_between_json_to_log.js
 │  ├─ clean-reinstall.ps1                 # 클린 재설치 PowerShell 스크립트
@@ -273,7 +272,7 @@ homey-edgetool/
 │  │  │  ├─ EdgePanelActionRouter.ts      # 버튼 이벤트 → 액션 라우팅 로직 # 확장_초기화
 │  │  │  ├─ explorerBridge.ts             # 파일 탐색기 브리지 구현 # 확장_초기화
 │  │  │  ├─ extensionPanel.ts             # 메인 확장 패널 제공자 및 Webview 관리 # 확장_초기화
-│  │  │  ├─ LogConnectionPicker.ts        # 로그 연결 선택 QuickPick 구현
+│  │  │  ├─ LogConnectionPicker.ts        # 로그 연결 선택 QuickPick 구현 # 로그파싱
 │  │  │  └─ LogViewerPanelManager.ts      # 독립 로그 뷰어 패널 컨트롤러 # 로그파싱 # 로그병합 # 스크롤에_따른_로그_뷰_로드_갱신 # custom_log_parser_설정
 │  │  ├─ setup/
 │  │  │  └─ parserConfigSeeder.ts         # 파서 설정 초기화 및 시딩 로직 # custom_log_parser_설정
@@ -287,7 +286,7 @@ homey-edgetool/
 │  │  ├─ ipc/                             # IPC 메시지 관련
 │  │  │  └─ messages.ts                   # IPC 메시지 정의 및 타입 # 스크롤에_따른_로그_뷰_로드_갱신 # 로그병합 # 확장_초기화 # 로그파싱 # custom_log_parser_설정
 │  │  ├─ types.ts                         # 공용 타입 정의
-│  │  ├─ ui-input.ts                      # UI 입력 유틸리티 (입력창/선택창 표준화)
+│  │  ├─ ui-input.ts                      # UI 입력 유틸리티 (입력창/선택창 표준화) # 확장_초기화
 │  │  └─ utils.ts                         # 공용 유틸리티 함수들 # custom_log_parser_설정
 │  ├─ types/                              # 타입 정의 파일들
 │  │  ├─ style.d.ts                       # 스타일 관련 타입 정의
