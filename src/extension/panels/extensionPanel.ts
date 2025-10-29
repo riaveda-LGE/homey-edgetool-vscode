@@ -1,7 +1,7 @@
 // === src/extension/panels/extensionPanel.ts ===
 import * as vscode from 'vscode';
 
-import { readEdgePanelState, writeEdgePanelState } from '../../core/config/userdata.js';
+import { readEdgePanelState, writeEdgePanelState, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import {
   addLogSink,
   getLogger,
@@ -15,6 +15,7 @@ import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';
 import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
 import { LogViewerPanelManager } from './LogViewerPanelManager.js';
+import { getStatusLiteFromDir } from '../../core/controller/GitController.js';
 
 interface EdgePanelState {
   version: string;
@@ -198,7 +199,19 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
           this._actionRouter?.sendButtonSections();
           return;
         }
-
+        // ── Git 상태 요청 처리 ─────────────────────────────────────────
+        if (msg?.type === 'git.status.request' && msg?.v === 1) {
+          try {
+            const info = await resolveWorkspaceInfo(this._context);
+            const status = await getStatusLiteFromDir(info.wsDirFsPath);
+            sendEdge({ v: 1, type: 'git.status.response', payload: { status } });
+          } catch (e: any) {
+            const m = e?.message || String(e);
+            this.log.warn(`git.status.request failed: ${m}`);
+            sendEdge({ v: 1, type: 'git.status.error', payload: { message: m } });
+          }
+          return;
+        }
         if (msg?.type === 'ui.log' && msg?.v === 1) {
           const lvl = String(msg.payload?.level ?? 'info') as 'debug' | 'info' | 'warn' | 'error';
           const text = String(msg.payload?.text ?? '');

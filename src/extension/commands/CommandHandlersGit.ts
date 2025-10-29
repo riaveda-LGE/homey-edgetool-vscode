@@ -44,11 +44,12 @@ export class CommandHandlersGit {
 
     // ── Push ─────────────────────────────────────────────────
     if (pickOp.value === 'push') {
-      const arg = await vscode.window.showInputBox({
+      const raw = await vscode.window.showInputBox({
         prompt: 'push 대상: (비워두면 전체 변경) 커밋ID 또는 로컬 파일 경로',
         placeHolder: '예) 3f2a7b1 또는 .\\host_sync\\etc\\homey\\config.json',
         ignoreFocusOut: true,
       });
+      const arg = raw === undefined ? undefined : raw.trim(); // ''(전체 푸시) 보전
       const hostPath = await vscode.window.showInputBox({
         prompt: 'HostPath (선택) — host_sync 업로드 대상 절대경로를 직접 지정',
         placeHolder: '예) /etc/homey/config.json',
@@ -58,7 +59,7 @@ export class CommandHandlersGit {
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: 'Push', cancellable: false },
         async () => {
-          await git.push(arg || undefined, { hostPath: hostPath || undefined });
+          await git.push(arg, { hostPath: hostPath || undefined });
         },
       );
       return;

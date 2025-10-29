@@ -30,6 +30,18 @@
   --indent: 18px;
   --chev-w: 14px;
   --branch-x: calc(var(--chev-w) / 2 + 4px);
+
+  /* VS Code gitDecoration 색상 매핑(없으면 합리적 기본값) */
+  --git-added: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
+  --git-modified: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
+  --git-untracked: var(--vscode-gitDecoration-untrackedResourceForeground, #73c991);
+  --git-deleted: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
+  --git-renamed: var(--vscode-gitDecoration-renamedResourceForeground, #73c991);
+  --git-copied: var(--vscode-gitDecoration-renamedResourceForeground, #73c991);
+  --git-conflict: var(--vscode-gitDecoration-conflictingResourceForeground, #e4676b);
+
+  /* ✅ 스테이징 배지 색 (기본: 링크색 계열) */
+  --git-staged: var(--vscode-textLink-foreground, #4ea1ff);
 }
 
 /* 기본 전경/배경을 문서 루트에 보장 (포털 컴포넌트 포함) */

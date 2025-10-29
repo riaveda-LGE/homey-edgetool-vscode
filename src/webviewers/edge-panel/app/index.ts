@@ -1,3 +1,4 @@
+/// <reference path="../../../types/vscode-webview.d.ts" />
 import type { H2W } from '@ipc/messages';
 
 import { createUiLog, createUiMeasure, wrapAllUiMethods } from '../../shared/utils.js';
@@ -101,6 +102,104 @@ import { createStore } from './store.js';
     () => m('DebugLog.clear', () => hostProxy.post({ v: 1, type: 'debuglog.clear', payload: {} })),
     () => m('DebugLog.copy', () => hostProxy.post({ v: 1, type: 'debuglog.copy', payload: {} })),
   );
+
+  // ── Git 데코레이션(파일별) ────────────────────────────────────────────
+  type GitLiteItem = { path: string; code: 'A' | 'M' | 'D' | 'R' | 'C' | '??' };
+  type GitLite = {
+    staged: GitLiteItem[];
+    modified: GitLiteItem[];
+    untracked: GitLiteItem[];
+    conflicts?: number;
+    clean: boolean;
+    repo?: boolean;
+    branch?: string | null;
+  };
+
+  // ✅ 경로별 상태 + 스테이징 여부를 함께 저장
+  type GitEntry = { code: 'A' | 'M' | 'D' | 'R' | 'C' | 'U'; staged: boolean };
+  const gitStatusMap = new Map<string, GitEntry>();
+
+  // 우선순위: D > R > C > A > M > U (코드 색상 선택용)
+  const codeOrder = new Map([
+    ['D', 6],
+    ['R', 5],
+    ['C', 4],
+    ['A', 3],
+    ['M', 2],
+    ['U', 1],
+  ]);
+
+  const normalizeKey = (p: string) => {
+    // 'old → new' 형태라면 new 쪽만 사용
+    const arrow = p.indexOf('→');
+    return (arrow >= 0 ? p.slice(arrow + 1) : p).trim();
+  };
+
+  const applyGitDecorations = () => {
+    const nodes = nodesByPath();
+    nodes.forEach((node) => {
+      if (!node.el) return;
+
+      const entry = gitStatusMap.get(node.path) || null;
+      const label = node.el.querySelector('.tn-label') as HTMLElement | null;
+      const right = node.el.querySelector('.tn-right') as HTMLElement | null;
+      if (!label || !right) return;
+
+      // 라벨 색상 클래스 리셋
+      label.classList.remove('git-A', 'git-M', 'git-D', 'git-R', 'git-C', 'git-U');
+
+      // 배지 영역 초기화
+      right.innerHTML = '';
+      if (!entry) return;
+
+      // 라벨 색상은 코드 기준으로만
+      label.classList.add(`git-${entry.code}`);
+
+      // 1) 스테이징 배지 (파란색 S)
+      if (entry.staged) {
+        const s = document.createElement('span');
+        s.className = 'git-badge git-stage';
+        s.textContent = 'S';
+        right.appendChild(s);
+      }
+
+      // 2) 주 상태 배지 (U/M/D/A/R/C)
+      const badge = document.createElement('span');
+      badge.className = `git-badge git-${entry.code}`;
+      badge.textContent = entry.code; // 'U'는 이미 맵핑된 상태
+      right.appendChild(badge);
+    });
+  };
+
+  const updateGitStatusMap = (s: GitLite) => {
+    gitStatusMap.clear();
+
+    const put = (rawPath: string, codeRaw: GitLiteItem['code'], staged: boolean) => {
+      const key = normalizeKey(rawPath);
+      const code = (codeRaw === '??' ? 'U' : (codeRaw as any)) as GitEntry['code'];
+      const prev = gitStatusMap.get(key);
+
+      if (!prev) {
+        gitStatusMap.set(key, { code, staged });
+        return;
+      }
+      // 코드 우선순위 갱신
+      const prevRank = codeOrder.get(prev.code)!;
+      const nextRank = codeOrder.get(code)!;
+      if (nextRank > prevRank) prev.code = code;
+      // 스테이징 여부는 OR
+      prev.staged = prev.staged || staged;
+    };
+
+    // 인덱스(스테이징) → staged=true
+    s.staged.forEach((x) => put(x.path, x.code, true));
+    // 워킹트리 변경 → staged=false
+    s.modified.forEach((x) => put(x.path, x.code, false));
+    // 언트래킹 → U, staged=false
+    s.untracked.forEach((x) => put(x.path, '??', false));
+
+    applyGitDecorations();
+  };
 
   // =========================
   // 포커스 이탈 시 선택 해제 (웹뷰 쪽 즉시 처리)
@@ -211,6 +310,14 @@ import { createStore } from './store.js';
         );
         break;
       }
+      case 'git.status.response': {
+        m('Git.decorate(status)', () => updateGitStatusMap((msg as any).payload.status));
+        break;
+      }
+      case 'git.status.error': {
+        uiLog.warn('Git status error: ' + String((msg as any)?.payload?.message || 'unknown'));
+        break;
+      }
       case 'ui.toggleLogs': {
         m('Toggle.logs', () => {
           store.dispatch({ type: 'TOGGLE_LOGS' });
@@ -225,6 +332,7 @@ import { createStore } from './store.js';
             hostProxy.post({ v: 1, type: 'workspace.ensure', payload: {} });
             if (!store.getState().root) {
               (appView as any).resetExplorerTree?.();
+              store.getState().nodesByPath.clear();
               store.dispatch({ type: 'EXPLORER_SET_ROOT' });
             }
             explorer.list('');
@@ -243,6 +351,8 @@ import { createStore } from './store.js';
             store.dispatch({ type: 'EXPLORER_SELECT', node, multi: false } as any);
             appView.renderBreadcrumb(store.getState().explorerPath, nodesByPath());
           }
+          // 목록이 갱신될 때마다 현재 보이는 노드에 Git 데코레이션 재적용
+          applyGitDecorations();
         });
         break;
       }
@@ -271,6 +381,8 @@ import { createStore } from './store.js';
           store.dispatch({ type: 'EXPLORER_SET_ROOT' });
           appView.renderBreadcrumb('', nodesByPath());
           explorer.list('');
+          // 루트 재설정 후에도 데코레이션 유지
+          applyGitDecorations();
         });
         break;
       }
@@ -297,5 +409,16 @@ import { createStore } from './store.js';
     m('Bootstrap.requestButtons', () =>
       hostProxy.post({ v: 1, type: 'ui.requestButtons', payload: {} }),
     );
+    // 최초 1회 Git 상태 요청(옵션)
+    m('Bootstrap.gitStatus', () =>
+      hostProxy.post({ v: 1, type: 'git.status.request', payload: {} as any }),
+    );
   }, 0);
+
+  // ExplorerView에서 발생시키는 전역 이벤트(버튼 클릭)
+  window.addEventListener('edge:git.status', () =>
+    m('UI.gitStatus.click', () =>
+      hostProxy.post({ v: 1, type: 'git.status.request', payload: {} as any }),
+    ),
+  );
 })();

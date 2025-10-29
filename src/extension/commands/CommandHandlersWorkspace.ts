@@ -7,7 +7,14 @@ import * as vscode from 'vscode';
 import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { RAW_DIR_NAME } from '../../shared/const.js';
+import {
+  RAW_DIR_NAME,
+  PARSER_CONFIG_REL,
+  PARSER_README_REL,
+  PARSER_README_TEMPLATE_REL,
+  PARSER_TEMPLATE_REL,
+  GITIGNORE_TEMPLATE_REL,
+} from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 import { migrateParserConfigIfNeeded } from '../setup/parserConfigSeeder.js';
@@ -21,6 +28,15 @@ export class CommandHandlersWorkspace {
   private readonly CACHE_DURATION = 30000; // 30초 캐시
 
   constructor(private context?: vscode.ExtensionContext) {}
+
+  /** 확장 패키지 내부 리소스를 읽어 문자열 반환 */
+  @measure()
+  private async readEmbedded(rel: string): Promise<string> {
+    if (!this.context) throw new XError(ErrorCategory.Permission, 'no extension context');
+    const uri = vscode.Uri.joinPath(this.context.extensionUri, ...rel.split('/'));
+    const buf = await vscode.workspace.fs.readFile(uri);
+    return new TextDecoder('utf-8').decode(buf);
+  }
 
   // === 안내 팝업 없이 바로 폴더 선택(패널 버튼 전용)
   @measure()
@@ -201,5 +217,82 @@ export class CommandHandlersWorkspace {
     const panel = new PerfMonitorPanel(extensionUri, this.context);
     panel.createPanel();
     log.debug('[debug] CommandHandlersWorkspace togglePerformanceMonitoring: end');
+  }
+
+    @measure()
+  async initWorkspace() {
+    log.debug('[debug] CommandHandlersWorkspace initWorkspace: start');
+    if (!this.context) return log.error('[error] internal: no extension context');
+    try {
+      const info = await resolveWorkspaceInfo(this.context);
+      const cfgDir = vscode.Uri.joinPath(info.wsDirUri, '.config');
+      const cfgFile = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_CONFIG_REL.split('/'));
+      const readmeFile = vscode.Uri.joinPath(info.wsDirUri, ...PARSER_README_REL.split('/'));
+      const gitignoreFile = vscode.Uri.joinPath(info.wsDirUri, '.gitignore');
+
+      // .config 폴더 보장
+      try {
+        await vscode.workspace.fs.createDirectory(cfgDir);
+      } catch {}
+
+      // 무조건 덮어쓰기: 템플릿(JSON) + README(MD)
+      const json = await this.readEmbedded(PARSER_TEMPLATE_REL);
+      const data = new TextEncoder().encode(json);
+      await vscode.workspace.fs.writeFile(cfgFile, data);
+
+      const md = await this.readEmbedded(PARSER_README_TEMPLATE_REL);
+      const mdbuf = new TextEncoder().encode(md);
+      await vscode.workspace.fs.writeFile(readmeFile, mdbuf);
+      // .gitignore: 없을 때만 템플릿으로 생성
+      let createdGitignore = false;
+      try {
+        await vscode.workspace.fs.stat(gitignoreFile);
+      } catch {
+        try {
+          const gi = await this.readEmbedded(GITIGNORE_TEMPLATE_REL);
+          await vscode.workspace.fs.writeFile(gitignoreFile, new TextEncoder().encode(gi));
+          createdGitignore = true;
+        } catch {}
+      }
+
+      // git 초기화/커밋 보조(.gitignore를 새로 만든 경우)
+      try {
+        // 워크스페이스 루트에 git repo 없으면 생성
+        await this.ensureGitInitAsync(info.wsDirFsPath);
+        if (createdGitignore) {
+          await execFile('git', ['add', '.gitignore'], { cwd: info.wsDirFsPath });
+          try {
+            await execFile('git', ['commit', '-m', '[Do not push] add gitignore'], {
+              cwd: info.wsDirFsPath,
+            });
+          } catch {
+            // 커밋할 변경 없음 → 무시
+          }
+        }
+      } catch (e: any) {
+        log.warn(`git bootstrap skipped: ${e?.message ?? e}`);
+      }
+
+      // 에디터로 열기 (JSON을 먼저, README는 옆창)
+      const doc1 = await vscode.workspace.openTextDocument(cfgFile);
+      await vscode.window.showTextDocument(doc1, { preview: false });
+      try {
+        const doc2 = await vscode.workspace.openTextDocument(readmeFile);
+        await vscode.window.showTextDocument(doc2, {
+          preview: false,
+          viewColumn: vscode.ViewColumn.Beside,
+        });
+      } catch {}
+
+      log.info(`parser artifacts written: ${cfgFile.fsPath}, ${readmeFile.fsPath}`);
+      vscode.window.showInformationMessage(
+        'Parser 템플릿/README가 재생성되었습니다 (.config/custom_log_parser.json, custom_log_parser_readme.md).',
+      );
+    } catch (e: any) {
+      log.error('initWorkspace failed', e);
+      vscode.window.showErrorMessage('Workspace 초기화 실패: ' + (e?.message ?? String(e)));
+    } finally {
+      log.debug('[debug] CommandHandlersWorkspace initWorkspace: end');
+    }
   }
 }

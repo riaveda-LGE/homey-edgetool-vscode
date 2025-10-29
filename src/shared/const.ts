@@ -98,3 +98,6 @@ export const PARSER_README_REL = '.config/custom_log_parser_readme.md';
 // 확장 내 내장 템플릿/문서 경로
 export const PARSER_TEMPLATE_REL = 'media/resources/custom_log_parser.template.v1.json';
 export const PARSER_README_TEMPLATE_REL = 'doc/logging-0-parser.md';
+// Workspace scaffold
+/** .gitignore 템플릿(확장 패키지 내 상대경로) */
+export const GITIGNORE_TEMPLATE_REL = 'media/resources/.gitignore.template';

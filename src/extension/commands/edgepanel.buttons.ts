@@ -146,10 +146,10 @@ export function getSections(): SectionDef[] {
           op: { kind: 'handler', name: 'openWorkspaceShell' },
         },
         {
-          id: 'cmd.initParser',
-          label: 'Parser 초기화',
+          id: 'cmd.initWorkspace',
+          label: 'Workspace 설정 초기화',
           desc: '.config/custom_log_parser.json + README 재생성',
-          op: { kind: 'handler', name: 'initParser' },
+          op: { kind: 'handler', name: 'initWorkspace' },
         },
       ],
     },

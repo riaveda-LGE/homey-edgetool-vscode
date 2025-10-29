@@ -50,6 +50,18 @@ export type EdgePanelState = {
   logs?: string[];
 };
 
+// ── Git Lite types (Explorer에서 표시용 요약) ────────────────────────────
+export type GitLiteItem = { path: string; code: 'A' | 'M' | 'D' | 'R' | 'C' | '??' };
+export type GitLite = {
+  staged: GitLiteItem[];
+  modified: GitLiteItem[];
+  untracked: GitLiteItem[];
+  conflicts?: number;
+  clean: boolean;
+  repo?: boolean;
+  branch?: string | null;
+};
+
 export type Envelope<TType extends string, TPayload> = {
   v: 1;
   id?: string; // 요청-응답 상관관계용(선택)
@@ -149,6 +161,10 @@ export type H2W =
   | Envelope<'prefs.data', { prefs: any }>
   /** 단순 확인 응답(예: saveUserPrefs ack) */
   | Envelope<'ack', { inReplyTo?: string }>
+  /** Git 상태 응답 (Explorer 간단 요약) */
+  | Envelope<'git.status.response', { status: GitLite }>
+  /** Git 상태 에러 알림 */
+  | Envelope<'git.status.error', { message: string }>
   /** 정식 병합 완료 후 UI 하드리프레시 트리거(중복/정렬 반영) */
   | Envelope<
       'logs.refresh',
@@ -202,6 +218,8 @@ export type W2H =
   | Envelope<'explorer.createFile', { path: string }>
   | Envelope<'explorer.createFolder', { path: string }>
   | Envelope<'explorer.delete', { path: string; recursive?: boolean; useTrash?: boolean }>
+  /** Git 상태 요청 */
+  | Envelope<'git.status.request', Empty>
   | Envelope<'ui.toggleExplorer', Empty>
   | Envelope<'ui.toggleLogs', Empty>
   | Envelope<'ui.requestButtons', Empty>

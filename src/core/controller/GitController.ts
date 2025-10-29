@@ -7,6 +7,7 @@ import { promisify } from 'util';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { HostController } from './HostController.js';
+import type { GitLite, GitLiteItem } from '../../shared/ipc/messages.js';
 
 const exec = promisify(execCb);
 const log = getLogger('GitController');
@@ -16,6 +17,10 @@ export type PullOptions = {
 };
 export type PushOptions = {
   hostPath?: string;
+  /** UI 호출 시 ESC로 입력창이 취소되면 arg가 undefined가 되므로,
+   *  이 경우를 '취소'로 간주하도록 의도를 명시할 수 있는 옵션(향후 호환용).
+   *  현재 구현은 ui 여부와 무관하게 undefined를 취소로 처리한다. */
+  ui?: boolean;
 };
 
 const DEFAULT_PULL_MESSAGE: Record<string, string> = {
@@ -79,8 +84,16 @@ export class GitController {
 
   @measure()
   async push(arg?: string, opts?: PushOptions) {
-    log.debug('[debug] push:start', { arg, opts });
-    const files = !arg ? await this.getAllCommitFiles() : await this._inferFilesFromArg(arg);
+    log.debug('[debug] push:start', { arg: typeof arg === 'undefined' ? '(undefined)' : arg, opts });
+    // ESC/취소 안전망:
+    // - 입력창에서 ESC를 누르면 showInputBox가 undefined를 반환한다.
+    // - 기존 코드는 !arg 분기로 전체 push가 되어 사고가 발생했다.
+    // - 명시적 전체 push는 빈 문자열('')로 처리하고, undefined는 '취소'로 간주한다.
+    if (typeof arg === 'undefined') {
+      log.info('push: cancelled (arg is undefined)');
+      return;
+    }
+    const files = arg === '' ? await this.getAllCommitFiles() : await this._inferFilesFromArg(arg);
     log.debug('[debug] push:files', { count: files.length });
     if (files.length === 0) {
       log.info('push: 변경 파일이 없습니다.');
@@ -114,19 +127,6 @@ export class GitController {
       log.info(`[UNTRACKED] (${untracked.length})\n  - ${untracked.join('\n  - ')}`);
     if (!lines.length) log.info('clean working tree');
   }
-
-  @measure()
-  async amend() {
-    const { stdout } = await exec('git log --oneline -1', { cwd: this.workspaceFs });
-    if (!stdout.trim()) {
-      log.info('amend: 최근 커밋이 없습니다.');
-      return;
-    }
-    const escaped = 'git commit --amend';
-    const ps = `Start-Process -FilePath 'cmd' -ArgumentList '/k','${escaped}' -WindowStyle Normal`;
-    await exec(`powershell -NoProfile -NonInteractive -Command "${ps}"`);
-  }
-
   // ── Internals ───────────────────────────────────────────────
   private async _inferFilesFromArg(arg: string): Promise<string[]> {
     // 커밋ID처럼 보이면: <arg>..HEAD 범위
@@ -229,5 +229,110 @@ export class GitController {
     );
     const files = stdout.split(/\r?\n/).filter(Boolean);
     return { fileCount: files.length, durationMs: Date.now() - start };
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Git status (lightweight) helpers
+// ────────────────────────────────────────────────────────────
+export async function getStatusLiteFromDir(workspaceFs: string): Promise<GitLite> {
+  // 기본값 (레포가 아니거나 오류 시)
+  const EMPTY: GitLite = {
+    staged: [],
+    modified: [],
+    untracked: [],
+    conflicts: 0,
+    clean: true,
+    repo: false,
+    branch: null,
+  };
+  try {
+    const { stdout: isRepoOut } = await exec('git rev-parse --is-inside-work-tree', {
+      cwd: workspaceFs,
+    });
+    if (!/^true/i.test(String(isRepoOut).trim())) return EMPTY;
+  } catch {
+    return EMPTY;
+  }
+
+  const result: GitLite = {
+    staged: [],
+    modified: [],
+    untracked: [],
+    conflicts: 0,
+    clean: true,
+    repo: true,
+    branch: null,
+  };
+
+  try {
+    const { stdout: b } = await exec('git rev-parse --abbrev-ref HEAD', { cwd: workspaceFs });
+    result.branch = String(b || '').trim() || null;
+  } catch {}
+
+  try {
+    // -z 포맷은 NUL(\0)로 구분됨. JS에서는 반드시 '\0' 로 split 해야 함.
+    const { stdout } = await exec('git status --porcelain=v1 -z -uall', { cwd: workspaceFs });
+    const parts = stdout.split('\0').filter((s) => s.length > 0);
+    for (let i = 0; i < parts.length; i++) {
+      const rec = parts[i];
+      if (rec.length < 3) continue;
+      const X = rec[0];
+      const Y = rec[1];
+      const rest = rec.slice(3); // "XY <path>"
+      let displayPath = rest;
+
+      const isRenameOrCopy = X === 'R' || X === 'C' || Y === 'R' || Y === 'C';
+      if (isRenameOrCopy) {
+        // 다음 토큰이 old path
+        const oldPath = parts[i + 1] ?? '';
+        if (oldPath) {
+          displayPath = `${oldPath} → ${rest}`;
+          i++; // 소비
+        }
+      }
+
+      // ignored (!!) 무시
+      if (X === '!' && Y === '!') continue;
+
+      // 충돌 케이스(U*, *U, AA, DD 등) 대략 계수
+      if (
+        X === 'U' ||
+        Y === 'U' ||
+        (X === 'A' && Y === 'A') ||
+        (X === 'D' && Y === 'D') ||
+        (X === 'A' && Y === 'D') ||
+        (X === 'D' && Y === 'A')
+      ) {
+        result.conflicts = (result.conflicts || 0) + 1;
+        continue; // 목록엔 별도 표시하지 않음(단순화)
+      }
+
+      const push = (arr: GitLiteItem[], code: GitLiteItem['code']) =>
+        arr.push({ path: displayPath, code });
+
+      if (X !== ' ' && X !== '?') {
+        // 인덱스(스테이지드)
+        const code: GitLiteItem['code'] = (X as any) in { A: 1, M: 1, D: 1, R: 1, C: 1 } ? (X as any) : 'M';
+        push(result.staged, code);
+      } else if (X === '?' && Y === '?') {
+        push(result.untracked, '??');
+      } else if (Y !== ' ' && Y !== '?') {
+        // 작업 트리(언스테이지드)
+        const code: GitLiteItem['code'] = (Y as any) in { A: 1, M: 1, D: 1, R: 1, C: 1 } ? (Y as any) : 'M';
+        push(result.modified, code);
+      }
+    }
+
+    result.clean =
+      (result.staged?.length || 0) === 0 &&
+      (result.modified?.length || 0) === 0 &&
+      (result.untracked?.length || 0) === 0 &&
+      (result.conflicts || 0) === 0;
+
+    return result;
+  } catch (e) {
+    log.warn(`getStatusLiteFromDir failed: ${e}`);
+    return EMPTY;
   }
 }

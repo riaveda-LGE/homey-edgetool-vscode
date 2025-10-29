@@ -86,8 +86,8 @@ class CommandHandlers {
       case 'openHelp':
         return this.updateHandler.openHelp();
 
-      case 'initParser':
-        return this.parserHandler.initParser();
+      case 'initWorkspace':
+        return this.workspaceHandler.initWorkspace();
       // === 새로 추가: 웹뷰 버튼 진입점
       case 'connectDevice':
         return this.connectHandler.connectDevice();

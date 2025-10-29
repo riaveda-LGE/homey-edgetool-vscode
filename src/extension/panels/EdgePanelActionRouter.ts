@@ -73,9 +73,11 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
           break;
         case 'handler':
           await this._handlers!.route(op.name);
-          // 워크스페이스 관련 후처리: 변경/열기 때만 갱신
+          // 워크스페이스 관련 후처리: 변경/열기 → 루트 갱신 + 스캐폴드 보장 + (필요 시) 커밋
           if (op.name === 'changeWorkspaceQuick' || op.name === 'openWorkspace') {
             await this._explorer?.refreshWorkspaceRoot?.();
+            // ✅ .gitignore를 새로 만들었으면 add/commit까지 수행(변경 없으면 조용히 통과)
+            await this._explorer?.ensureWorkspaceScaffoldAndCommit?.();
           }
           break;
       }

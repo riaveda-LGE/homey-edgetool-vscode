@@ -137,7 +137,7 @@ export class ConnectionManager implements IConnectionManager {
   @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
     const via = this.active?.type ?? 'NONE';
-    this.log.debug(`[debug] ConnectionManager.run: start`, { via, cmd, args });
+    this.log.debug(`[debug] ConnectionManager.run: start`);
     try {
       const full = [cmd, ...args].join(' ').trim();
       if (!this.active) {
@@ -150,15 +150,8 @@ export class ConnectionManager implements IConnectionManager {
       if (cfg.type === 'adb') {
         this.log.debug('[debug] run(ADB) exec', { serial: cfg.serial, full });
         const res = await adbShell(full, { serial: cfg.serial, timeoutMs: cfg.timeoutMs });
-        this.log.debug('[debug] run(ADB) end', { code: res.code });
         return { code: res.code };
       }
-      this.log.debug('[debug] run(SSH) exec', {
-        host: (cfg as any).host,
-        user: (cfg as any).user,
-        port: (cfg as any).port,
-        full,
-      });
       const code = await sshRun(full, {
         host: (cfg as any).host,
         port: (cfg as any).port,
@@ -166,7 +159,6 @@ export class ConnectionManager implements IConnectionManager {
         password: (cfg as any).password,
         timeoutMs: (cfg as any).timeoutMs,
       });
-      this.log.debug('[debug] run(SSH) end', { code });
       return { code };
     } catch (e) {
       this.log.error(`[debug] ConnectionManager.run: error`, {
@@ -183,7 +175,7 @@ export class ConnectionManager implements IConnectionManager {
   @measure()
   async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
     const via = this.active?.type ?? 'NONE';
-    this.log.debug(`[debug] ConnectionManager.stream: start`, { via, cmd });
+    this.log.debug(`[debug] ConnectionManager.stream: start`);
     try {
       if (!this.active)
         throw new XError(
@@ -192,13 +184,12 @@ export class ConnectionManager implements IConnectionManager {
         );
       const cfg = this.toHostConfig(this.active);
       if (cfg.type === 'adb') {
-        this.log.debug('[debug] stream(ADB) exec', { serial: cfg.serial, cmd });
+        this.log.debug('[debug] stream(ADB) exec');
         await adbStream(
           cmd,
           { serial: cfg.serial, timeoutMs: cfg.timeoutMs, signal: abort },
           onLine,
         );
-        this.log.debug('[debug] stream(ADB) end');
         return;
       }
       this.log.debug('[debug] stream(SSH) exec', {
@@ -219,7 +210,6 @@ export class ConnectionManager implements IConnectionManager {
         },
         onLine,
       );
-      this.log.debug('[debug] stream(SSH) end');
     } catch (e) {
       this.log.error(`[debug] ConnectionManager.stream: error`, {
         message: e instanceof Error ? e.message : String(e),
