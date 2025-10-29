@@ -1,10 +1,11 @@
 // src/core/controller/HostController.ts
-import * as path from 'path';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as os from 'os';
+import * as path from 'path';
+
+import type { HostConfig, IConnectionManager } from '../connection/ConnectionManager.js';
 import { connectionManager } from '../connection/ConnectionManager.js';
-import type { IConnectionManager, HostConfig } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { FileTransferService } from '../transfer/FileTransferService.js';
@@ -12,7 +13,10 @@ import { FileTransferService } from '../transfer/FileTransferService.js';
 const log = getLogger('HostController');
 
 export class HostController {
-  constructor(private cm: IConnectionManager = connectionManager, private workspaceFs: string) {}
+  constructor(
+    private cm: IConnectionManager = connectionManager,
+    private workspaceFs: string,
+  ) {}
 
   // ── Utils ──────────────────────────────────────────────────
   private sq(s: string) {
@@ -23,11 +27,15 @@ export class HostController {
     // go 프로젝트와 동일하게: ADB에서는 -l 금지(로그인 쉘 이슈)
     const flat = cmd.replace(/\n/g, ' ').trim();
     const t = this.cm.getSnapshot()?.active?.type;
-    if (t === 'ADB') return `sh -c '${this.sq(flat)}'`;        // ✅ ADB
-    return `sh -lc '${this.sq(flat)}'`;                         // ✅ SSH
+    if (t === 'ADB') return `sh -c '${this.sq(flat)}'`; // ✅ ADB
+    return `sh -lc '${this.sq(flat)}'`; // ✅ SSH
   }
-  private normLocal(p: string) { return p.replace(/\\/g, '/'); }
-  private async ensureLocalDir(dir: string) { await fsp.mkdir(dir, { recursive: true }); }
+  private normLocal(p: string) {
+    return p.replace(/\\/g, '/');
+  }
+  private async ensureLocalDir(dir: string) {
+    await fsp.mkdir(dir, { recursive: true });
+  }
 
   // ── Remote Exec helpers ─────────────────────────────────────
   @measure()
@@ -45,9 +53,13 @@ export class HostController {
       `if [ -d "${absPath}" ]; then echo DIR; ` +
       `elif [ -e "${absPath}" ]; then echo FILE; else echo NONE; fi`;
     const wrapped = this.wrap(script);
-    log.debug('[debug] statType: request', { path: absPath, transport: this.cm.getSnapshot()?.active?.type, wrapped });
+    log.debug('[debug] statType: request', {
+      path: absPath,
+      transport: this.cm.getSnapshot()?.active?.type,
+      wrapped,
+    });
 
-    let kind: 'FILE'|'DIR'|'NONE' = 'NONE';
+    let kind: 'FILE' | 'DIR' | 'NONE' = 'NONE';
     await this.cm.stream(wrapped, (line) => {
       const t = String(line).trim();
       if (t === 'FILE' || t === 'DIR' || t === 'NONE') {
@@ -80,13 +92,19 @@ export class HostController {
   }
 
   @measure()
-  async resolveHomeyPath(kind: 'pro'|'core'|'sdk'|'bridge'): Promise<string> {
+  async resolveHomeyPath(kind: 'pro' | 'core' | 'sdk' | 'bridge'): Promise<string> {
     const dockerRoot = await this.getDockerRoot();
     let p: string;
-    if (kind === 'pro')   p = path.posix.join(dockerRoot, 'volumes/homey-app/_data');
-    else if (kind === 'core')  p = path.posix.join(dockerRoot, 'volumes/homey-node/_data/@athombv/homey-core/dist');
-    else if (kind === 'sdk')   p = path.posix.join(dockerRoot, 'volumes/homey-node/_data/@athombv/homey-apps-sdk-v3');
-    else /* bridge */          p = path.posix.join(dockerRoot, 'volumes/homey-node/_data/@athombv/homey-bridge');
+    if (kind === 'pro') p = path.posix.join(dockerRoot, 'volumes/homey-app/_data');
+    else if (kind === 'core')
+      p = path.posix.join(dockerRoot, 'volumes/homey-node/_data/@athombv/homey-core/dist');
+    else if (kind === 'sdk')
+      p = path.posix.join(dockerRoot, 'volumes/homey-node/_data/@athombv/homey-apps-sdk-v3');
+    else
+      /* bridge */ p = path.posix.join(
+        dockerRoot,
+        'volumes/homey-node/_data/@athombv/homey-bridge',
+      );
     log.debug('[debug] resolveHomeyPath', { kind, path: p });
     return p;
   }
@@ -101,7 +119,10 @@ export class HostController {
   toHostFromLocalHostSync(localPath: string): string {
     const norm = localPath.replace(/\\/g, '/');
     const idx = norm.indexOf('/host_sync/');
-    const host = idx >= 0 ? '/' + norm.substring(idx + '/host_sync/'.length) : '/' + norm.replace(/^\.?\/*/, '');
+    const host =
+      idx >= 0
+        ? '/' + norm.substring(idx + '/host_sync/'.length)
+        : '/' + norm.replace(/^\.?\/*/, '');
     log.debug('[debug] toHostFromLocalHostSync', { localPath, host });
     return host;
   }
@@ -115,9 +136,18 @@ export class HostController {
       return { id: active.id, type: 'adb', serial, timeoutMs: 15000 };
     }
     const d = active.details as any;
-    return { id: active.id, type: 'ssh', host: d.host, port: d.port, user: d.user, timeoutMs: 15000 };
+    return {
+      id: active.id,
+      type: 'ssh',
+      host: d.host,
+      port: d.port,
+      user: d.user,
+      timeoutMs: 15000,
+    };
   }
-  private getFT(): FileTransferService { return new FileTransferService(this.getHostConfigFromActive()); }
+  private getFT(): FileTransferService {
+    return new FileTransferService(this.getHostConfigFromActive());
+  }
 
   @measure()
   async pullFile(absHost: string, localFs: string) {

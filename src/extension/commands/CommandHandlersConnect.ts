@@ -1,19 +1,22 @@
 // === src/extension/commands/CommandHandlersConnect.ts ===
 import * as vscode from 'vscode';
 
-import { getCurrentWorkspacePathFs } from '../../core/config/userdata.js';
 import {
+  type ConnectionInfo,
+  markRecent,
   readConnectionConfig,
   saveConnectionConfig,
   upsertConnection,
-  markRecent,
-  type ConnectionInfo,
 } from '../../core/config/connection-config.js';
-import { listDevices as adbListDevices, getState as adbGetState } from '../../core/connection/adbClient.js';
+import { getCurrentWorkspacePathFs } from '../../core/config/userdata.js';
+import {
+  getState as adbGetState,
+  listDevices as adbListDevices,
+} from '../../core/connection/adbClient.js';
+import { connectionManager } from '../../core/connection/ConnectionManager.js';
 import { execQuickCheck as sshQuickCheck } from '../../core/connection/sshClient.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { connectionManager } from '../../core/connection/ConnectionManager.js';
 
 const log = getLogger('cmd.connect');
 
@@ -26,7 +29,7 @@ export class CommandHandlersConnect {
           const base = await getCurrentWorkspacePathFs(this.context!);
           const cfg = await readConnectionConfig(base);
           if (!cfg.recent) return undefined;
-          return cfg.connections.find(c => c.id === cfg.recent);
+          return cfg.connections.find((c) => c.id === cfg.recent);
         } catch {
           return undefined;
         }
@@ -83,22 +86,34 @@ export class CommandHandlersConnect {
     const items = await Promise.all(
       cfg.connections.map(async (c: any) => {
         const label = c.alias ? c.alias : c.id;
-        let ok = false, status = '';
+        let ok = false,
+          status = '';
         if (c.type === 'ADB') {
           ok = (await adbGetState((c.details as any).deviceID)) === 'device';
           status = ok ? '정상(ADB)' : '오프라인/미인증(ADB)';
         } else {
           const d = c.details as any;
           ok = await sshQuickCheck({
-            host: d.host, user: d.user, port: d.port, password: d.password, timeoutMs: 5000
+            host: d.host,
+            user: d.user,
+            port: d.port,
+            password: d.password,
+            timeoutMs: 5000,
           });
-          status = ok ? '정상(SSH)' : (d.password ? '오프라인/인증실패(SSH)' : '비밀번호 없음');
-         }
-        return { label, description: `${c.type} · ${status}`, detail: c.id, picked: cfg.recent === c.id } as vscode.QuickPickItem & { detail: string };
+          status = ok ? '정상(SSH)' : d.password ? '오프라인/인증실패(SSH)' : '비밀번호 없음';
+        }
+        return {
+          label,
+          description: `${c.type} · ${status}`,
+          detail: c.id,
+          picked: cfg.recent === c.id,
+        } as vscode.QuickPickItem & { detail: string };
       }),
     );
 
-    const chosen = await vscode.window.showQuickPick(items, { placeHolder: '연결할 항목을 선택하세요' });
+    const chosen = await vscode.window.showQuickPick(items, {
+      placeHolder: '연결할 항목을 선택하세요',
+    });
     if (!chosen) return;
     const selected = cfg.connections.find((c: any) => c.id === (chosen as any).detail);
     if (!selected) return;
@@ -108,7 +123,9 @@ export class CommandHandlersConnect {
     else ok = await sshQuickCheck(selected.details);
 
     if (!ok) {
-      vscode.window.showWarningMessage('연결할 수 없습니다. 장치 상태 또는 인증(ID/Password)을 확인하세요.');
+      vscode.window.showWarningMessage(
+        '연결할 수 없습니다. 장치 상태 또는 인증(ID/Password)을 확인하세요.',
+      );
       return;
     }
 
@@ -119,8 +136,10 @@ export class CommandHandlersConnect {
     connectionManager.setActive(selected);
     // 3) optional health update (비동기)
     connectionManager.checkHealth().catch(() => {});
-    vscode.window.showInformationMessage(`연결됨: ${selected.type} · ${(selected.alias || selected.id)} (활성화)`);
-   }
+    vscode.window.showInformationMessage(
+      `연결됨: ${selected.type} · ${selected.alias || selected.id} (활성화)`,
+    );
+  }
 
   private async _pickNew(base: string, cfg: any) {
     const branch = await vscode.window.showQuickPick(
@@ -135,18 +154,22 @@ export class CommandHandlersConnect {
   private async _newAdb(base: string, cfg: any) {
     try {
       const list = await adbListDevices({});
-      const candidates = list.filter(d => d.state === 'device');
+      const candidates = list.filter((d) => d.state === 'device');
       if (candidates.length === 0) {
         vscode.window.showWarningMessage('연결 가능한 ADB 장치가 없습니다. (adb devices 확인)');
         return;
       }
       const pick = await vscode.window.showQuickPick(
-        candidates.map(d => ({ label: d.id, description: 'ADB device' })),
+        candidates.map((d) => ({ label: d.id, description: 'ADB device' })),
         { placeHolder: 'ADB 장치를 선택하세요' },
       );
       if (!pick) return;
       const deviceID = pick.label;
-      const alias = await vscode.window.showInputBox({ prompt: '별칭(선택)', placeHolder: '예) Homey-Dev-01', ignoreFocusOut: true });
+      const alias = await vscode.window.showInputBox({
+        prompt: '별칭(선택)',
+        placeHolder: '예) Homey-Dev-01',
+        ignoreFocusOut: true,
+      });
 
       const entry: ConnectionInfo = {
         id: `adb:${deviceID}`,
@@ -168,15 +191,26 @@ export class CommandHandlersConnect {
   }
 
   private async _newSsh(base: string, cfg: any) {
-    const host = await vscode.window.showInputBox({ prompt: 'SSH Host', placeHolder: '예) 192.168.0.10 또는 homey.local', ignoreFocusOut: true });
+    const host = await vscode.window.showInputBox({
+      prompt: 'SSH Host',
+      placeHolder: '예) 192.168.0.10 또는 homey.local',
+      ignoreFocusOut: true,
+    });
     if (!host) return;
-    const user = await vscode.window.showInputBox({ prompt: 'SSH User', placeHolder: '예) root', ignoreFocusOut: true });
+    const user = await vscode.window.showInputBox({
+      prompt: 'SSH User',
+      placeHolder: '예) root',
+      ignoreFocusOut: true,
+    });
     if (!user) return;
     const portStr = await vscode.window.showInputBox({
       prompt: 'SSH Port',
       value: '22',
       ignoreFocusOut: true,
-      validateInput(v) { const n = Number(v); return (!Number.isInteger(n) || n < 1 || n > 65535) ? '1~65535 숫자' : undefined; },
+      validateInput(v) {
+        const n = Number(v);
+        return !Number.isInteger(n) || n < 1 || n > 65535 ? '1~65535 숫자' : undefined;
+      },
     });
     if (!portStr) return;
     const port = Number(portStr);
@@ -187,7 +221,11 @@ export class CommandHandlersConnect {
       placeHolder: '개발용: 평문 저장(로컬) — 운영환경 금지',
     });
     if (password === undefined) return; // 취소
-    const alias = await vscode.window.showInputBox({ prompt: '별칭(선택)', placeHolder: '예) Homey-SSH', ignoreFocusOut: true });
+    const alias = await vscode.window.showInputBox({
+      prompt: '별칭(선택)',
+      placeHolder: '예) Homey-SSH',
+      ignoreFocusOut: true,
+    });
 
     const ok = await sshQuickCheck({ host, user, port, password, timeoutMs: 5000 });
     if (!ok) {

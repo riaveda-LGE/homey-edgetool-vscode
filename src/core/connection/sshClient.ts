@@ -1,6 +1,7 @@
 // === src/core/connection/sshClient.ts ===
-import { getLogger } from '../logging/extension-logger.js';
 import { Client } from 'ssh2';
+
+import { getLogger } from '../logging/extension-logger.js';
 import { measureBlock } from '../logging/perf.js';
 
 export type SshOptions = {
@@ -55,7 +56,9 @@ export async function sshRun(cmd: string, opts: SshOptions): Promise<number | nu
       return code;
     } finally {
       // 안전 종료
-      try { conn.end(); } catch {}
+      try {
+        conn.end();
+      } catch {}
     }
   });
 }
@@ -66,7 +69,9 @@ export async function sshStream(cmd: string, opts: SshOptions, onLine: (line: st
     const conn = await connectOnce(opts);
     let residual = '';
     const abort = () => {
-      try { conn.end(); } catch {}
+      try {
+        conn.end();
+      } catch {}
     };
     if (opts.signal) opts.signal.addEventListener('abort', abort, { once: true });
     await new Promise<void>((resolve, reject) => {
@@ -76,7 +81,9 @@ export async function sshStream(cmd: string, opts: SshOptions, onLine: (line: st
           .on('close', () => {
             if (opts.signal) opts.signal.removeEventListener('abort', abort);
             resolve();
-            try { conn.end(); } catch {}
+            try {
+              conn.end();
+            } catch {}
           })
           .on('data', (b: Buffer) => {
             const all = residual + b.toString('utf8');
@@ -91,13 +98,18 @@ export async function sshStream(cmd: string, opts: SshOptions, onLine: (line: st
   });
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // 추가: 연결 헬스체크(경량)
 // ─────────────────────────────────────────────────────────────
-export async function execQuickCheck(
-  t: { host: string; user?: string; port?: number; keyPath?: string; password?: string; timeoutMs?: number; signal?: AbortSignal },
-): Promise<boolean> {
+export async function execQuickCheck(t: {
+  host: string;
+  user?: string;
+  port?: number;
+  keyPath?: string;
+  password?: string;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}): Promise<boolean> {
   try {
     const code = await sshRun('true', t);
     return code === 0;

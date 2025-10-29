@@ -1,10 +1,10 @@
 // === src/extension/commands/CommandHandlersHost.ts ===
-import * as vscode from 'vscode';
 import { spawn } from 'child_process';
+import * as vscode from 'vscode';
 
+import { connectionManager } from '../../core/connection/ConnectionManager.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { connectionManager } from '../../core/connection/ConnectionManager.js';
 
 const log = getLogger('cmd.host');
 
@@ -45,20 +45,20 @@ export class CommandHandlersHost {
         ' -o GlobalKnownHostsFile=NUL' +
         ' -o PreferredAuthentications=password' +
         ' -o PubkeyAuthentication=no';
-      command = (d?.user && d?.host) ? `ssh${p}${sshOpts} ${d.user}@${d.host}` : `ssh${p}${sshOpts}`;
+      command = d?.user && d?.host ? `ssh${p}${sshOpts} ${d.user}@${d.host}` : `ssh${p}${sshOpts}`;
       title = `Host Shell (ssh:${d?.user || '?'}@${d?.host || '?'}${d?.port ? ':' + d.port : ''})`;
     }
 
-// 외부 CMD 팝업으로 실행 (비추적)
-      const escaped = command.replace(/'/g, "''");
-      const ps = `Start-Process -FilePath 'cmd' -ArgumentList '/k','${escaped}' -WindowStyle Normal`;
-      try {
-        spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { windowsHide: true });
-        vscode.window.showInformationMessage(`장치 셸을 새 CMD 창으로 열었습니다: ${title}`);
-        log.info('openHostShell(win):', { title, command });
-      } catch (e: any) {
-        log.error('openHostShell(win) failed', e);
-        vscode.window.showErrorMessage(`셸 실행 실패: ${e?.message || e}`);
-      }
+    // 외부 CMD 팝업으로 실행 (비추적)
+    const escaped = command.replace(/'/g, "''");
+    const ps = `Start-Process -FilePath 'cmd' -ArgumentList '/k','${escaped}' -WindowStyle Normal`;
+    try {
+      spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { windowsHide: true });
+      vscode.window.showInformationMessage(`장치 셸을 새 CMD 창으로 열었습니다: ${title}`);
+      log.info('openHostShell(win):', { title, command });
+    } catch (e: any) {
+      log.error('openHostShell(win) failed', e);
+      vscode.window.showErrorMessage(`셸 실행 실패: ${e?.message || e}`);
+    }
   }
 }

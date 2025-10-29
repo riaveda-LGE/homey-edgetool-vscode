@@ -37,9 +37,8 @@ export class FileTransferService implements IFileTransferService {
     try {
       const timeoutMs = opts?.timeoutMs ?? DEFAULT_TRANSFER_TIMEOUT_MS;
       // tar 대상으로: 지정 경로가 있으면 그 목록, 없으면 . (전체)
-      const list = (opts?.paths && opts.paths.length)
-        ? opts.paths.map(p => `'${escapeQ(p)}'`).join(' ')
-        : '.';
+      const list =
+        opts?.paths && opts.paths.length ? opts.paths.map((p) => `'${escapeQ(p)}'`).join(' ') : '.';
 
       if (this.target.type === 'ssh') {
         const ssh = buildSshPrefix(this.target);
@@ -76,9 +75,8 @@ export class FileTransferService implements IFileTransferService {
     try {
       const timeoutMs = opts?.timeoutMs ?? DEFAULT_TRANSFER_TIMEOUT_MS;
       // tar 대상으로: 지정 경로가 있으면 그 목록, 없으면 . (전체)
-      const list = (opts?.paths && opts.paths.length)
-        ? opts.paths.map(p => `'${escapeQ(p)}'`).join(' ')
-        : '.';
+      const list =
+        opts?.paths && opts.paths.length ? opts.paths.map((p) => `'${escapeQ(p)}'`).join(' ') : '.';
 
       if (this.target.type === 'ssh') {
         const ssh = buildSshPrefix(this.target);

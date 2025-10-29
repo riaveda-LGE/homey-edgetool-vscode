@@ -1,7 +1,7 @@
+import { ErrorCategory, XError } from '../../shared/errors.js';
+import { connectionManager } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
-import { connectionManager } from '../connection/ConnectionManager.js';
-import { XError, ErrorCategory } from '../../shared/errors.js';
 
 const log = getLogger('HomeyController');
 
@@ -13,7 +13,10 @@ export class HomeyController {
     log.debug('[debug] HomeyController restart: start');
     await connectionManager.connect(); // 자동 recent 활성화 + 헬스체크
     if (!connectionManager.isConnected()) {
-      throw new XError(ErrorCategory.Connection, '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.');
+      throw new XError(
+        ErrorCategory.Connection,
+        '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.',
+      );
     }
     // 유닛명은 환경마다 다를 수 있어, homey-pro@ 로 시작하는 유닛을 찾아 재시작
     const cmd = `sh -lc 'unit=$(systemctl list-units --type=service --all | awk "/homey-pro@/{print \\$1; exit}"); if [ -n "$unit" ]; then sudo systemctl restart "$unit"; else echo "no homey-pro@ unit"; fi'`;
@@ -27,7 +30,10 @@ export class HomeyController {
     log.debug('[debug] HomeyController mount: start');
     await connectionManager.connect();
     if (!connectionManager.isConnected()) {
-      throw new XError(ErrorCategory.Connection, '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.');
+      throw new XError(
+        ErrorCategory.Connection,
+        '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.',
+      );
     }
     // 여기서는 최소: 도커 상태 출력으로 대체 (후속 단계에서 서비스 파일 수정 로직 추가)
     const cmd = `sh -lc 'docker ps --format "{{.Names}} {{.Status}}"'`;
@@ -41,7 +47,10 @@ export class HomeyController {
     log.debug('[debug] HomeyController unmount: start');
     await connectionManager.connect();
     if (!connectionManager.isConnected()) {
-      throw new XError(ErrorCategory.Connection, '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.');
+      throw new XError(
+        ErrorCategory.Connection,
+        '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.',
+      );
     }
     // 안전한 stop/rm + daemon-reload 시퀀스(있는 경우만)
     const script = `
@@ -61,7 +70,10 @@ docker ps -a --format '{{.Names}}' | awk '/homey/ {print}' | xargs -r -n1 sh -c 
     log.debug('[debug] HomeyController gitPull: start');
     await connectionManager.connect();
     if (!connectionManager.isConnected()) {
-      throw new XError(ErrorCategory.Connection, '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.');
+      throw new XError(
+        ErrorCategory.Connection,
+        '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.',
+      );
     }
     const p = path || '/etc/homey';
     await connectionManager.run(`sh -lc 'cd "${p}" && git pull --ff-only || true'`);
@@ -73,7 +85,10 @@ docker ps -a --format '{{.Names}}' | awk '/homey/ {print}' | xargs -r -n1 sh -c 
     log.debug('[debug] HomeyController gitPush: start');
     await connectionManager.connect();
     if (!connectionManager.isConnected()) {
-      throw new XError(ErrorCategory.Connection, '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.');
+      throw new XError(
+        ErrorCategory.Connection,
+        '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.',
+      );
     }
     const p = path || '/etc/homey';
     await connectionManager.run(

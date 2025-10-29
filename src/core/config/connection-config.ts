@@ -17,15 +17,15 @@ export interface SshDetails {
 }
 
 export interface ConnectionInfo {
-  id: string;                 // e.g. "adb:<serial>" or "ssh:<user>@<host>:<port>"
+  id: string; // e.g. "adb:<serial>" or "ssh:<user>@<host>:<port>"
   alias?: string;
   type: ConnectionType;
   details: AdbDetails | SshDetails;
-  lastUsed: string;           // ISO string
+  lastUsed: string; // ISO string
 }
 
 export interface ConnectionConfigFile {
-  recent?: string;            // id of last used
+  recent?: string; // id of last used
   connections: ConnectionInfo[];
   defaultLoggingConfig?: {
     configured?: boolean;
@@ -68,14 +68,20 @@ export async function readConnectionConfig(workspacePath: string): Promise<Conne
   }
 }
 
-export async function saveConnectionConfig(workspacePath: string, cfg: ConnectionConfigFile): Promise<void> {
+export async function saveConnectionConfig(
+  workspacePath: string,
+  cfg: ConnectionConfigFile,
+): Promise<void> {
   ensureConfigDir(workspacePath);
   const filePath = getConfigFilePath(workspacePath);
   await fs.promises.writeFile(filePath, JSON.stringify(cfg, null, 2), 'utf8');
 }
 
-export function upsertConnection(cfg: ConnectionConfigFile, entry: ConnectionInfo): ConnectionConfigFile {
-  const existingIdx = cfg.connections.findIndex(c => c.id === entry.id);
+export function upsertConnection(
+  cfg: ConnectionConfigFile,
+  entry: ConnectionInfo,
+): ConnectionConfigFile {
+  const existingIdx = cfg.connections.findIndex((c) => c.id === entry.id);
   if (existingIdx >= 0) {
     // Update fields but keep id/type
     const prev = cfg.connections[existingIdx];
@@ -94,7 +100,7 @@ export function upsertConnection(cfg: ConnectionConfigFile, entry: ConnectionInf
 }
 
 export function markRecent(cfg: ConnectionConfigFile, id: string): ConnectionConfigFile {
-  const idx = cfg.connections.findIndex(c => c.id === id);
+  const idx = cfg.connections.findIndex((c) => c.id === id);
   if (idx >= 0) {
     cfg.connections[idx].lastUsed = new Date().toISOString();
     cfg.recent = id;

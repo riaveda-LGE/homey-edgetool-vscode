@@ -624,9 +624,12 @@ export class HostWebviewBridge {
       const warm = paginationService.isWarmupActive();
       // 필터 활성 시에는 필터 총계를, 아니면 전체 총계를 보낸다.
       const filteredTotal = await paginationService.getFilteredTotal();
-      const total = typeof filteredTotal === 'number'
-        ? filteredTotal
-        : (warm ? paginationService.getWarmTotal() : paginationService.getFileTotal());
+      const total =
+        typeof filteredTotal === 'number'
+          ? filteredTotal
+          : warm
+            ? paginationService.getWarmTotal()
+            : paginationService.getFileTotal();
       const version = paginationService.getVersion();
       const manifestDir = paginationService.getManifestDir();
 

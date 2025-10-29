@@ -1,9 +1,9 @@
 import { ErrorCategory, XError } from '../../shared/errors.js';
+import type { ConnectionInfo } from '../config/connection-config.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { adbShell, adbStream, getState as adbGetState } from './adbClient.js';
-import { sshRun, sshStream, execQuickCheck as sshQuickCheck } from './sshClient.js';
-import type { ConnectionInfo } from '../config/connection-config.js';
+import { execQuickCheck as sshQuickCheck, sshRun, sshStream } from './sshClient.js';
 export type HostConfig =
   | {
       id: string;
@@ -49,12 +49,17 @@ export class ConnectionManager implements IConnectionManager {
       try {
         const recent = await this.recentLoader();
         if (recent) this.setActive(recent);
-      } catch { /* noop: 로더 실패는 치명적 아님 */ }
+      } catch {
+        /* noop: 로더 실패는 치명적 아님 */
+      }
     }
     // 2) active 있으면 헬스체크
     if (this.active) {
-      try { this.healthy = await this.checkHealth(); }
-      catch { this.healthy = false; }
+      try {
+        this.healthy = await this.checkHealth();
+      } catch {
+        this.healthy = false;
+      }
       this.connected = true;
     } else {
       this.connected = false; // 여전히 없으면 연결 불가 상태
@@ -136,7 +141,10 @@ export class ConnectionManager implements IConnectionManager {
     try {
       const full = [cmd, ...args].join(' ').trim();
       if (!this.active) {
-        throw new XError(ErrorCategory.Connection, 'No active connection. Please connect a device.');
+        throw new XError(
+          ErrorCategory.Connection,
+          'No active connection. Please connect a device.',
+        );
       }
       const cfg = this.toHostConfig(this.active);
       if (cfg.type === 'adb') {
@@ -145,16 +153,30 @@ export class ConnectionManager implements IConnectionManager {
         this.log.debug('[debug] run(ADB) end', { code: res.code });
         return { code: res.code };
       }
-      this.log.debug('[debug] run(SSH) exec', { host: (cfg as any).host, user: (cfg as any).user, port: (cfg as any).port, full });
+      this.log.debug('[debug] run(SSH) exec', {
+        host: (cfg as any).host,
+        user: (cfg as any).user,
+        port: (cfg as any).port,
+        full,
+      });
       const code = await sshRun(full, {
-        host: (cfg as any).host, port: (cfg as any).port, user: (cfg as any).user,
-        password: (cfg as any).password, timeoutMs: (cfg as any).timeoutMs,
+        host: (cfg as any).host,
+        port: (cfg as any).port,
+        user: (cfg as any).user,
+        password: (cfg as any).password,
+        timeoutMs: (cfg as any).timeoutMs,
       });
       this.log.debug('[debug] run(SSH) end', { code });
       return { code };
     } catch (e) {
-      this.log.error(`[debug] ConnectionManager.run: error`, { message: e instanceof Error ? e.message : String(e) });
-      throw new XError(ErrorCategory.Connection, `Command failed: ${e instanceof Error ? e.message : String(e)}`, e);
+      this.log.error(`[debug] ConnectionManager.run: error`, {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      throw new XError(
+        ErrorCategory.Connection,
+        `Command failed: ${e instanceof Error ? e.message : String(e)}`,
+        e,
+      );
     }
   }
 
@@ -163,23 +185,50 @@ export class ConnectionManager implements IConnectionManager {
     const via = this.active?.type ?? 'NONE';
     this.log.debug(`[debug] ConnectionManager.stream: start`, { via, cmd });
     try {
-      if (!this.active) throw new XError(ErrorCategory.Connection, 'No active connection. Please connect a device.');
+      if (!this.active)
+        throw new XError(
+          ErrorCategory.Connection,
+          'No active connection. Please connect a device.',
+        );
       const cfg = this.toHostConfig(this.active);
       if (cfg.type === 'adb') {
         this.log.debug('[debug] stream(ADB) exec', { serial: cfg.serial, cmd });
-        await adbStream(cmd, { serial: cfg.serial, timeoutMs: cfg.timeoutMs, signal: abort }, onLine);
+        await adbStream(
+          cmd,
+          { serial: cfg.serial, timeoutMs: cfg.timeoutMs, signal: abort },
+          onLine,
+        );
         this.log.debug('[debug] stream(ADB) end');
         return;
       }
-      this.log.debug('[debug] stream(SSH) exec', { host: (cfg as any).host, user: (cfg as any).user, port: (cfg as any).port, cmd });
-      await sshStream(cmd, {
-        host: (cfg as any).host, port: (cfg as any).port, user: (cfg as any).user,
-        password: (cfg as any).password, timeoutMs: (cfg as any).timeoutMs, signal: abort,
-      }, onLine);
+      this.log.debug('[debug] stream(SSH) exec', {
+        host: (cfg as any).host,
+        user: (cfg as any).user,
+        port: (cfg as any).port,
+        cmd,
+      });
+      await sshStream(
+        cmd,
+        {
+          host: (cfg as any).host,
+          port: (cfg as any).port,
+          user: (cfg as any).user,
+          password: (cfg as any).password,
+          timeoutMs: (cfg as any).timeoutMs,
+          signal: abort,
+        },
+        onLine,
+      );
       this.log.debug('[debug] stream(SSH) end');
     } catch (e) {
-      this.log.error(`[debug] ConnectionManager.stream: error`, { message: e instanceof Error ? e.message : String(e) });
-      throw new XError(ErrorCategory.Connection, `Stream failed: ${e instanceof Error ? e.message : String(e)}`, e);
+      this.log.error(`[debug] ConnectionManager.stream: error`, {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      throw new XError(
+        ErrorCategory.Connection,
+        `Stream failed: ${e instanceof Error ? e.message : String(e)}`,
+        e,
+      );
     }
   }
 
