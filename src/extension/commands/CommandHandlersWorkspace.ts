@@ -111,6 +111,26 @@ export class CommandHandlersWorkspace {
   }
 
   @measure()
+  async openWorkspaceShell() {
+    log.debug('[debug] CommandHandlersWorkspace openWorkspaceShell: start');
+    if (!this.context) {
+      return log.error('[error] internal: no extension context');
+    }
+    try {
+      const info = await resolveWorkspaceInfo(this.context);
+      const t = vscode.window.createTerminal({
+        name: 'Workspace Shell',
+        cwd: info.wsDirFsPath,
+      });
+      t.show();
+      log.info(`Workspace Shell opened at ${info.wsDirFsPath}`);
+    } catch (e: any) {
+      log.error(`openWorkspaceShell failed: ${e?.message || String(e)}`);
+      vscode.window.showErrorMessage('작업폴더를 확인할 수 없습니다.');
+    }
+  }
+
+  @measure()
   // (옵션) 현재 상태 확인용
   async showWorkspace() {
     log.debug('[debug] CommandHandlersWorkspace showWorkspace: start');

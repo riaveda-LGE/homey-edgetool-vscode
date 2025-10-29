@@ -75,6 +75,8 @@ class CommandHandlers {
         return this.workspaceHandler.changeWorkspaceQuick();
       case 'openWorkspace':
         return this.workspaceHandler.openWorkspace();
+      case 'openWorkspaceShell':
+        return this.workspaceHandler.openWorkspaceShell();
       case 'togglePerformanceMonitoring':
         return this.workspaceHandler.togglePerformanceMonitoring(this.extensionUri);
       case 'gitFlow':

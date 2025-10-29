@@ -4,7 +4,7 @@ import * as fsp from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 
-import type { HostConfig, IConnectionManager } from '../connection/ConnectionManager.js';
+import type { IConnectionManager } from '../connection/ConnectionManager.js';
 import { connectionManager } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
@@ -127,26 +127,10 @@ export class HostController {
     return host;
   }
 
-  // ── Transfer hooks (tar|base64 단일 세션) ─
-  private getHostConfigFromActive(): HostConfig {
-    const active = this.cm.getSnapshot()?.active;
-    if (!active) throw new Error('No active connection');
-    if (active.type === 'ADB') {
-      const serial = (active.details as any)?.deviceID;
-      return { id: active.id, type: 'adb', serial, timeoutMs: 15000 };
-    }
-    const d = active.details as any;
-    return {
-      id: active.id,
-      type: 'ssh',
-      host: d.host,
-      port: d.port,
-      user: d.user,
-      timeoutMs: 15000,
-    };
-  }
+  // ── Transfer hooks (ConnectionManager 기반 단일 인증 경로) ─
   private getFT(): FileTransferService {
-    return new FileTransferService(this.getHostConfigFromActive());
+    // FileTransferService가 ConnectionManager(stream/run, ssh2/adb) 를 직접 사용하도록 변경
+    return new FileTransferService(this.cm);
   }
 
   @measure()

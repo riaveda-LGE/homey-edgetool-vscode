@@ -140,6 +140,12 @@ export function getSections(): SectionDef[] {
           op: { kind: 'handler', name: 'openWorkspace' },
         },
         {
+          id: 'cmd.openWorkspaceShell',
+          label: '작업폴더 Shell',
+          desc: '작업폴더 경로에서 로컬 터미널 열기',
+          op: { kind: 'handler', name: 'openWorkspaceShell' },
+        },
+        {
           id: 'cmd.initParser',
           label: 'Parser 초기화',
           desc: '.config/custom_log_parser.json + README 재생성',

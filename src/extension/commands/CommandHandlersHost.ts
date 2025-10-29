@@ -1,10 +1,11 @@
 // === src/extension/commands/CommandHandlersHost.ts ===
-import { spawn } from 'child_process';
 import * as vscode from 'vscode';
 
 import { connectionManager } from '../../core/connection/ConnectionManager.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
+import { createSshTerminal } from '../terminals/SshTerminal.js';
+import { createAdbTerminal } from '../terminals/AdbTerminal.js';
 
 const log = getLogger('cmd.host');
 
@@ -28,37 +29,24 @@ export class CommandHandlersHost {
       return;
     }
 
-    let title = 'Host Shell';
-    let command = '';
+    // ADB: VS Code Pseudoterminal로 통일
     if (active.type === 'ADB') {
       const serial = (active.details as any)?.deviceID;
-      command = serial ? `adb -s ${serial} shell` : 'adb shell';
-      title = `Host Shell (adb:${serial || 'default'})`;
-    } else {
-      const d = active.details as any;
-      const p = d?.port && Number(d.port) !== 22 ? ` -p ${d.port}` : '';
-      // 개발/테스트 편의: known_hosts를 완전히 우회해 호스트키 경고/충돌을 피한다.
-      // (운영 전환 시 이 옵션 제거 권장)
-      const sshOpts =
-        ' -o StrictHostKeyChecking=no' +
-        ' -o UserKnownHostsFile=NUL' +
-        ' -o GlobalKnownHostsFile=NUL' +
-        ' -o PreferredAuthentications=password' +
-        ' -o PubkeyAuthentication=no';
-      command = d?.user && d?.host ? `ssh${p}${sshOpts} ${d.user}@${d.host}` : `ssh${p}${sshOpts}`;
-      title = `Host Shell (ssh:${d?.user || '?'}@${d?.host || '?'}${d?.port ? ':' + d.port : ''})`;
+      const tty = createAdbTerminal(serial);
+      const t = vscode.window.createTerminal({ name: tty.title, pty: tty.pty });
+      t.show();
+      log.info('openHostShell(adb): pty terminal opened', { title: tty.title });
+      return;
     }
 
-    // 외부 CMD 팝업으로 실행 (비추적)
-    const escaped = command.replace(/'/g, "''");
-    const ps = `Start-Process -FilePath 'cmd' -ArgumentList '/k','${escaped}' -WindowStyle Normal`;
-    try {
-      spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { windowsHide: true });
-      vscode.window.showInformationMessage(`장치 셸을 새 CMD 창으로 열었습니다: ${title}`);
-      log.info('openHostShell(win):', { title, command });
-    } catch (e: any) {
-      log.error('openHostShell(win) failed', e);
-      vscode.window.showErrorMessage(`셸 실행 실패: ${e?.message || e}`);
+    // SSH: ssh2 + Pseudoterminal(비밀번호/키 입력 필요 없음)
+    const tty = createSshTerminal();
+    if (!tty) {
+      vscode.window.showErrorMessage('SSH 연결 정보를 확인할 수 없습니다.');
+      return;
     }
+    const t = vscode.window.createTerminal({ name: tty.title, pty: tty.pty });
+    t.show();
+    log.info('openHostShell(ssh): pty terminal opened', { title: tty.title });
   }
 }
