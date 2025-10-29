@@ -13,7 +13,7 @@ import {
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import type { ParserConfig } from '../config/schema.js';
-import { ConnectionManager, type HostConfig } from '../connection/ConnectionManager.js';
+import { connectionManager } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { ChunkWriter } from '../logs/ChunkWriter.js';
@@ -59,7 +59,6 @@ export class LogSessionManager {
   private seq = 0;
   private rtAbort?: AbortController;
   private rtFlushTimer?: NodeJS.Timeout;
-  private cm?: ConnectionManager;
 
   // 진행률 스로틀 관련
   private lastProgressUpdate = 0;
@@ -67,7 +66,7 @@ export class LogSessionManager {
   private readonly PROGRESS_THROTTLE_MS = 250; // 250ms 간격
   private readonly PROGRESS_PERCENT_THRESHOLD = 1; // 1% 변화
 
-  constructor(private conn?: HostConfig) {}
+  constructor() {}
 
   // 진행률 스로틀 메서드
   private throttledOnProgress(
@@ -109,10 +108,17 @@ export class LogSessionManager {
     opts: { signal?: AbortSignal; filter?: string; indexOutDir?: string } & SessionCallbacks,
   ) {
     this.log.info('realtime: start (file-backed + pagination)');
-    if (!this.conn) throw new XError(ErrorCategory.Connection, 'No connection configured');
-
-    this.cm = new ConnectionManager(this.conn);
-    await this.cm.connect();
+    // 활성 연결 확보(없으면 recent 로더로 자동 시도)
+    await connectionManager.connect();
+    if (!connectionManager.isConnected()) {
+      throw new XError(
+        ErrorCategory.Connection,
+        '활성 연결이 없습니다. 먼저 "기기 연결"을 수행하세요.',
+      );
+    }
+    const snap = connectionManager.getSnapshot();
+    const active = snap.active;
+    const sourceType = active?.type ?? 'unknown';
 
     this.rtAbort = new AbortController();
     if (opts.signal) opts.signal.addEventListener('abort', () => this.rtAbort?.abort());
@@ -206,12 +212,12 @@ export class LogSessionManager {
     };
 
     const cmd =
-      this.conn.type === 'adb'
+      active?.type === 'ADB'
         ? `logcat -v time`
         : `sh -lc 'journalctl -f -o short-iso -n 0 -u "homey*" 2>/dev/null || docker ps --format "{{.Names}}" | awk "/homey/{print}" | xargs -r -n1 docker logs -f --since 0s'`;
 
     this.log.debug?.(`realtime: streaming cmd="${cmd}"`);
-    await this.cm.stream(
+    await connectionManager.stream(
       cmd,
       (line: string) => {
         // 실시간은 "전체 라인"을 파일에 보존(필터는 PaginationService 경로에서 처리)
@@ -220,7 +226,7 @@ export class LogSessionManager {
           ts: Date.now(),
           level: 'I',
           type: 'system',
-          source: this.conn!.type,
+          source: sourceType,
           text: line,
         };
         pending.push(e);
@@ -615,13 +621,11 @@ export class LogSessionManager {
       this.rtFlushTimer = undefined;
     }
     this.rtAbort?.abort();
-    this.cm?.dispose();
   }
 
   @measure()
   dispose() {
     this.stopAll();
-    this.cm?.dispose();
     this.hb?.clear();
   }
 

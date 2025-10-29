@@ -9,6 +9,7 @@ export class ExplorerView {
   private ctx!: ContextMenu;
   private actionsEl!: HTMLElement;
   private refreshBtn!: HTMLButtonElement;
+  private gitBtn!: HTMLButtonElement;
   private busyEl!: HTMLElement;
   private currentPath = '';
 
@@ -29,15 +30,18 @@ export class ExplorerView {
         <div id="explorerTitle">Explorer</div>
         <div id="explorerPath"></div>
         <div id="explorerActions" aria-label="explorer actions">
+          <button id="gitStatus" title="Git Status" aria-label="Git Status"></button>
           <button id="explorerRefresh" title="Refresh (F5)" aria-label="Refresh"></button>
           <span id="explorerBusy" aria-hidden="true"></span>
         </div>
       </div>
       <div id="explorerTree" role="tree" tabindex="0"></div>
+      <div id="gitLite" class="git-lite" hidden></div>
     `;
     this.pathEl = this.container.querySelector('#explorerPath')!;
     this.actionsEl = this.container.querySelector('#explorerActions')!;
     this.refreshBtn = this.container.querySelector('#explorerRefresh') as HTMLButtonElement;
+    this.gitBtn = this.container.querySelector('#gitStatus') as HTMLButtonElement;
     this.busyEl = this.container.querySelector('#explorerBusy')!;
     this.treeEl = this.container.querySelector('#explorerTree')!;
     // ✅ TreeView에 onDelete 전달 (Delete 키 처리)
@@ -64,6 +68,12 @@ export class ExplorerView {
       this.measureUi('ExplorerView.refresh', () => {
         this.setRefreshing(true);
         this.onList(this.currentPath);
+      });
+    });
+    // Git 상태 버튼: 웹뷰 전역 이벤트로 브리지를 타도록 신호
+    this.gitBtn.addEventListener('click', () => {
+      this.measureUi('ExplorerView.gitStatus', () => {
+        window.dispatchEvent(new CustomEvent('edge:git.status'));
       });
     });
     // F5 단축키(웹뷰 포커스 시)

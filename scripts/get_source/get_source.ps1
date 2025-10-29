@@ -1,18 +1,21 @@
 # scripts/get_source/get_source.ps1
 param(
     # 목록 파일 경로(없으면 프로젝트 루트의 source_list.txt 사용)
-    [string]$ListPath = (Join-Path $PSScriptRoot "source_list.txt"),
+    [string]$ListPath = (Join-Path (Join-Path $PSScriptRoot "..\..") "source_list.txt"),
     # 출력 파일 경로
-    [string]$OutPath  = (Join-Path $PSScriptRoot "source.tmp"),
+    [string]$OutPath  = (Join-Path $PSScriptRoot "sample.tmp"),
     # 프로젝트 루트 (scripts\get_source\.. \..)
-    [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+    [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
+    # 모든 파일을 하나의 파일로 만들기 (기본: 분할)
+    # scripts/get_source/get_source.ps1 -All
+    [switch]$All
 )
 
 $ErrorActionPreference = 'Stop'
 
-# 목록 파일 찾기 (스크립트 폴더 → 프로젝트 루트)
+# 목록 파일 찾기 (프로젝트 루트 → 스크립트 폴더)
 if (-not (Test-Path -LiteralPath $ListPath)) {
-    $alt = Join-Path $ProjectRoot "source_list.txt"
+    $alt = Join-Path $PSScriptRoot "source_list.txt"
     if (Test-Path -LiteralPath $alt) { $ListPath = $alt }
     else {
         Write-Host "source_list.txt not found at $ListPath or $alt"
@@ -42,7 +45,11 @@ foreach ($line in $lines) {
 $lines = $uniqueLines
 
 $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-$maxLinesPerFile = 5000
+if ($All) {
+    $maxLinesPerFile = [int]::MaxValue
+} else {
+    $maxLinesPerFile = 5000
+}
 
 # Phase 1: 총 라인 수 계산 및 총 파일 개수 결정
 $totalLines = 0
@@ -77,7 +84,11 @@ foreach ($relPath in $lines) {
 }
 
 # 총 파일 개수 계산
-$totalFiles = [Math]::Ceiling($totalLines / $maxLinesPerFile)
+if ($All) {
+    $totalFiles = 1
+} else {
+    $totalFiles = [Math]::Ceiling($totalLines / $maxLinesPerFile)
+}
 Write-Host "Total lines: $totalLines, Total files: $totalFiles"
 
 # Phase 2: 실제 파일 생성 (파트 정보 포함)
@@ -92,16 +103,23 @@ function SaveCurrentBuffer {
     $currentOutPath = if ($fileIndex -eq 1) { $OutPath } else { "$OutPath.$fileIndex" }
 
     # 파트 정보 추가 (시작)
-    $partHeader = "--- PART $fileIndex/$totalFiles ---`n"
-    $partFooter = "`n--- END PART $fileIndex/$totalFiles ---"
-
-    $finalContent = $partHeader + $sb.ToString() + $partFooter
+    if ($All) {
+        $finalContent = $sb.ToString()
+    } else {
+        $partHeader = "--- PART $fileIndex/$totalFiles ---`n"
+        $partFooter = "`n--- END PART $fileIndex/$totalFiles ---"
+        $finalContent = $partHeader + $sb.ToString() + $partFooter
+    }
 
     # UTF-8 with BOM으로 저장(메모장 등에서도 한글 안전)
     $utf8Bom = New-Object System.Text.UTF8Encoding($true)
     [System.IO.File]::WriteAllText($currentOutPath, $finalContent, $utf8Bom)
 
-    Write-Host "Created $currentOutPath with $currentLineCount lines (PART $fileIndex/$totalFiles)"
+    if ($All) {
+        Write-Host "Created $currentOutPath with $currentLineCount lines"
+    } else {
+        Write-Host "Created $currentOutPath with $currentLineCount lines (PART $fileIndex/$totalFiles)"
+    }
 
     # 다음 파일 준비
     $sb.Clear()
@@ -134,7 +152,7 @@ foreach ($relPath in $lines) {
 
                 # 줄 수 계산 및 파일 분할 체크
                 $linesInFile = ($text -split '\r?\n').Count
-                if ($currentLineCount + $linesInFile + 2 -gt $maxLinesPerFile -and $currentLineCount -gt 0) {
+                if (-not $All -and $currentLineCount + $linesInFile + 2 -gt $maxLinesPerFile -and $currentLineCount -gt 0) {
                     SaveCurrentBuffer
                 }
 
@@ -172,7 +190,7 @@ foreach ($relPath in $lines) {
 
         # 줄 수 계산 및 파일 분할 체크
         $linesInFile = ($text -split '\r?\n').Count
-        if ($currentLineCount + $linesInFile + 1 -gt $maxLinesPerFile -and $currentLineCount -gt 0) {
+        if (-not $All -and $currentLineCount + $linesInFile + 1 -gt $maxLinesPerFile -and $currentLineCount -gt 0) {
             SaveCurrentBuffer
         }
 

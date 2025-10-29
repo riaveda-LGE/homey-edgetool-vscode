@@ -66,12 +66,8 @@
 }
 
 /* 10초 간격 세그먼트별 글자색 (의미 없는 중립색 2가지) */
-.log-line.seg0 {
-  color: #e6e6e6;
-} /* 아주 연한 회색 */
-.log-line.seg1 {
-  color: #a8b2d1;
-} /* 푸른 기운의 회색(시각적 구분) */
+.log-line.seg0 { color: #e6e6e6; } /* 아주 연한 회색 */
+.log-line.seg1 { color: #a8b2d1; } /* 푸른 기운의 회색(시각적 구분) */
 
 /* ── Explorer ─────────────────────────────────────────────────────────── */
 #explorer {
@@ -90,22 +86,22 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 3px 10px;
+  /* 오른쪽을 살짝만 띄우고 거의 붙도록 조정 */
+  padding: 3px 6px 3px 10px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   z-index: 1;
 }
-#explorerTitle {
-  font-weight: 700;
-  opacity: 0.9;
-}
+#explorerTitle { font-weight: 700; opacity: 0.9; }
 #explorerActions {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin-right: 2px;
 }
-#explorerRefresh {
+#explorerRefresh,
+#gitStatus {
   width: 26px;
   height: 26px;
   border: 1px solid var(--border);
@@ -115,15 +111,14 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center; /* 아이콘 수직/수평 중앙정렬 */
+  justify-content: center;
   box-sizing: border-box;
 }
 #explorerRefresh::before {
-  /* refresh 아이콘 (폰트 의존 없이 SVG 마스크) */
   content: '';
   display: block;
   width: 18px;
-  height: 18px; /* 버튼 커진 만큼 아이콘도 확대 */
+  height: 18px;
   margin: 0;
   background-color: var(--vscode-foreground);
   -webkit-mask: url("data:image/svg+xml;utf8,\
@@ -135,12 +130,26 @@
    <path d='M17.65 6.35A7.95 7.95 0 0 0 12 4 8 8 0 1 0 20 12h-2a6 6 0 1 1-6-6c1.48 0 2.83.54 3.87 1.43L13 10h7V3l-2.35 3.35z' fill='black'/></svg>")
     center/contain no-repeat;
 }
-#explorerRefresh:hover {
-  background: rgba(255, 255, 255, 0.06);
+#gitStatus::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  background-color: var(--vscode-foreground);
+  -webkit-mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+   <path d='M16 3a3 3 0 0 0-2.816 4H11a3 3 0 0 0-2 5.236V19a3 3 0 1 0 2 0v-6.764A3 3 0 0 0 13 9h.184A3 3 0 1 0 16 3zM8 21a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm8-16a1 1 0 1 1 0 2 1 1 0 0 1 0-2z' fill='black'/></svg>")
+    center/contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+   <path d='M16 3a3 3 0 0 0-2.816 4H11a3 3 0 0 0-2 5.236V19a3 3 0 1 0 2 0v-6.764A3 3 0 0 0 13 9h.184A3 3 0 1 0 16 3zM8 21a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm8-16a1 1 0 1 1 0 2 1 1 0 0 1 0-2z' fill='black'/></svg>")
+    center/contain no-repeat;
 }
-#explorerRefresh:active {
-  transform: translateY(1px);
-}
+#explorerRefresh:hover,
+#gitStatus:hover { background: rgba(255, 255, 255, 0.06); }
+#explorerRefresh:active,
+#gitStatus:active { transform: translateY(1px); }
 #explorerRefresh:disabled {
   opacity: 0.5;
   cursor: default;
@@ -156,15 +165,9 @@
   opacity: 0;
   transform: scale(0.9);
 }
-#explorerBusy.spinning {
-  opacity: 1;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+#explorerBusy.spinning { opacity: 1; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 #explorerPath {
   color: var(--muted);
   flex: 1 1 auto; /* 타이틀 옆에서 확장 */
@@ -175,27 +178,21 @@
   display: inline-flex; /* crumb 정렬 */
   align-items: center;
 }
-#explorerPath .crumb {
-  color: var(--link);
-  cursor: pointer;
-}
-#explorerPath .sep {
-  opacity: 0.6;
-  margin: 0 6px;
-}
+#explorerPath .crumb { color: var(--link); cursor: pointer; }
+#explorerPath .sep { opacity: 0.6; margin: 0 6px; }
+
 #explorerTree {
   padding: 6px 8px 12px 6px;
   outline: none;
   font-size: 13px;
 }
 
+/* ── Git Lite Panel ─────────────────────────────────────────── */
+/* 요약 패널은 요구에 따라 숨김 */
+#gitLite, .git-lite { display: none !important; }
+
 /* 트리 라인 */
-.tree-node {
-  position: relative;
-  border-radius: 6px;
-  padding: 0;
-  margin: 0;
-}
+.tree-node { position: relative; border-radius: 6px; padding: 0; margin: 0; }
 .tree-node .tn-line {
   position: relative;
   display: flex;
@@ -206,27 +203,49 @@
   user-select: none;
   transition: background-color 0.12s ease;
 }
-.tree-node .tn-line:hover {
-  background: var(--row-hover);
-}
-.tree-node.selected > .tn-line {
-  background: var(--row-selected);
-  color: var(--row-selected-fg);
-}
-.tn-icon {
-  width: 18px;
-  text-align: center;
-  opacity: 0.85;
-}
-.tn-label {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tree-node .tn-line:hover { background: var(--row-hover); }
+.tree-node.selected > .tn-line { background: var(--row-selected); color: var(--row-selected-fg); }
+.tn-icon { width: 18px; text-align: center; opacity: 0.85; }
+.tn-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 파일 상태 우측 배지 영역 */
+.tn-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 40px; /* ▶ 두 개 배지(S + 코드) 대비 살짝 확대 */
+  justify-content: flex-end;
 }
 
+.git-badge {
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  opacity: 0.95;
+}
+
+/* 라벨 색상: VS Code 테마의 gitDecoration 컬러 사용 */
+.tn-label.git-A { color: var(--git-added); }
+.tn-label.git-M { color: var(--git-modified); }
+.tn-label.git-D { color: var(--git-deleted); }
+.tn-label.git-R { color: var(--git-renamed); }
+.tn-label.git-C { color: var(--git-copied); }
+.tn-label.git-U { color: var(--git-untracked); }
+
+.git-badge.git-A { color: var(--git-added); }
+.git-badge.git-M { color: var(--git-modified); }
+.git-badge.git-D { color: var(--git-deleted); }
+.git-badge.git-R { color: var(--git-renamed); }
+.git-badge.git-C { color: var(--git-copied); }
+.git-badge.git-U { color: var(--git-untracked); }
+
+/* ✅ 스테이징(S) 배지 — 파란색 계열로 명확히 구분 */
+.git-badge.git-stage { color: var(--git-staged); }
+
 /* === VS Code Explorer 느낌의 꺾쇠 아이콘 ============================== */
-/* 데이터 URI SVG를 마스크로 사용 → 선 두께가 균일하고 폰트 의존 X */
 :root {
   /* 오른쪽 화살표 (chevron-right) */
   --chev-mask-right: url("data:image/svg+xml;utf8,\
@@ -254,7 +273,7 @@
 .tn-chevron::before {
   content: '';
   display: block;
-  width: 12px; /* 실제 아이콘 크기 */
+  width: 12px;
   height: 12px;
   background-color: currentColor;
   -webkit-mask-image: var(--chev-mask-right);
@@ -272,15 +291,10 @@
   mask-image: var(--chev-mask-down);
 }
 /* 자식 없음이면 감추기 */
-.tn-chevron.tn-empty::before {
-  display: none;
-}
+.tn-chevron.tn-empty::before { display: none; }
 
 /* 가지 라인 */
-.tn-children {
-  margin-left: var(--indent);
-  position: relative;
-}
+.tn-children { margin-left: var(--indent); position: relative; }
 .tn-children::before {
   content: '';
   position: absolute;
@@ -315,9 +329,7 @@
   padding: 6px;
   z-index: 9999;
 }
-#ctxMenu[hidden] {
-  display: none;
-}
+#ctxMenu[hidden] { display: none; }
 #ctxMenu .menu-item {
   width: 100%;
   text-align: left;
@@ -328,23 +340,10 @@
   border-radius: 6px;
   cursor: pointer;
 }
-#ctxMenu .menu-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-#ctxMenu hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 6px 0;
-}
-#ctxMenu .menu-form,
-#ctxMenu .menu-confirm {
-  padding: 6px 4px 4px 4px;
-}
-#ctxMenu .menu-form-title {
-  font-size: 12px;
-  opacity: 0.9;
-  margin-bottom: 6px;
-}
+#ctxMenu .menu-item:hover { background: rgba(255, 255, 255, 0.08); }
+#ctxMenu hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+#ctxMenu .menu-form, #ctxMenu .menu-confirm { padding: 6px 4px 4px 4px; }
+#ctxMenu .menu-form-title { font-size: 12px; opacity: 0.9; margin-bottom: 6px; }
 #ctxMenu input#ctxInput {
   width: 100%;
   background: var(--bg);
@@ -355,18 +354,6 @@
   font: inherit;
   outline: none;
 }
-#ctxMenu input#ctxInput:focus {
-  border-color: var(--focus);
-}
-#ctxMenu .menu-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-#ctxMenu .menu-confirm-text {
-  white-space: pre-wrap;
-  line-height: 1.35;
-  font-size: 12px;
-  opacity: 0.95;
-}
+#ctxMenu input#ctxInput:focus { border-color: var(--focus); }
+#ctxMenu .menu-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+#ctxMenu .menu-confirm-text { white-space: pre-wrap; line-height: 1.35; font-size: 12px; opacity: 0.95; }

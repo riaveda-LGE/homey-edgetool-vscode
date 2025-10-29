@@ -1,20 +1,11 @@
 // === src/extension/commands/CommandHandlersHomey.ts ===
 import * as vscode from 'vscode';
 
-import type { HostConfig } from '../../core/connection/ConnectionManager.js';
-import { HomeyController } from '../../core/connection/HomeyController.js';
+import { HomeyController } from '../../core/controller/HomeyController.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 
 const log = getLogger('cmd.homey');
-
-// 기본 HostConfig (ADB)
-const defaultHostConfig: HostConfig = {
-  id: 'default',
-  type: 'adb',
-  serial: undefined,
-  timeoutMs: 15000,
-};
 
 export class CommandHandlersHomey {
   constructor() {}
@@ -23,7 +14,7 @@ export class CommandHandlersHomey {
   async homeyRestart() {
     log.debug('[debug] CommandHandlersHomey homeyRestart: start');
     try {
-      const controller = new HomeyController(defaultHostConfig);
+      const controller = new HomeyController();
       await controller.restart();
       log.debug('[debug] CommandHandlersHomey homeyRestart: end');
     } catch (e) {
@@ -35,7 +26,7 @@ export class CommandHandlersHomey {
   async homeyMount() {
     log.debug('[debug] CommandHandlersHomey homeyMount: start');
     try {
-      const controller = new HomeyController(defaultHostConfig);
+      const controller = new HomeyController();
       await controller.mount();
       log.debug('[debug] CommandHandlersHomey homeyMount: end');
     } catch (e) {
@@ -47,7 +38,7 @@ export class CommandHandlersHomey {
   async homeyUnmount() {
     log.debug('[debug] CommandHandlersHomey homeyUnmount: start');
     try {
-      const controller = new HomeyController(defaultHostConfig);
+      const controller = new HomeyController();
       await controller.unmount();
       log.debug('[debug] CommandHandlersHomey homeyUnmount: end');
     } catch (e) {

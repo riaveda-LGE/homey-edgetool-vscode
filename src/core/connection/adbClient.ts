@@ -50,3 +50,48 @@ export async function adbStream(cmd: string, opts: AdbOptions, onLine: (line: st
     log.debug('[debug] adbStream: end');
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// 추가: 연결 후보 탐색 / 헬스체크(경량)
+// ─────────────────────────────────────────────────────────────
+export type AdbDevice = { id: string; state: 'device' | 'unauthorized' | 'offline' | string };
+
+export async function listDevices(opts?: {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}): Promise<AdbDevice[]> {
+  let out = '';
+  await runCommandLine('adb devices', {
+    timeoutMs: opts?.timeoutMs,
+    signal: opts?.signal,
+    onStdout: (b) => {
+      out += b.toString('utf8');
+    },
+  });
+  const lines = out
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const devices: AdbDevice[] = [];
+  for (const line of lines) {
+    if (line.startsWith('List of devices')) continue;
+    const [id, state] = line.split(/\s+/);
+    if (id) devices.push({ id, state: (state as any) || 'unknown' });
+  }
+  return devices;
+}
+
+export async function getState(
+  serial: string,
+  opts?: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<string> {
+  let out = '';
+  await runCommandLine(`adb -s ${serial} get-state`, {
+    timeoutMs: opts?.timeoutMs,
+    signal: opts?.signal,
+    onStdout: (b) => {
+      out += b.toString('utf8');
+    },
+  });
+  return out.trim();
+}

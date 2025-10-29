@@ -148,6 +148,10 @@ export class TreeView {
       line.appendChild(chev);
       line.appendChild(icon);
       line.appendChild(label);
+      // ▶ 파일 상태 배지를 표시할 우측 영역
+      const right = document.createElement('span');
+      right.className = 'tn-right';
+      line.appendChild(right);
       wrap.appendChild(line);
 
       if (node.kind === 'folder') {

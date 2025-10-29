@@ -165,7 +165,7 @@ export class LogViewerPanelManager {
     // quiet
 
     this.session?.dispose();
-    this.session = new LogSessionManager({ id: 'default', type: 'adb', timeoutMs: 15000 });
+    this.session = new LogSessionManager();
     // 실시간 모드는 병합이 없으므로 느리게
     this._setMemPeriod(this.MEM_SLOW_MS);
 
@@ -209,7 +209,7 @@ export class LogViewerPanelManager {
     }
 
     this.session?.dispose();
-    this.session = new LogSessionManager(undefined);
+    this.session = new LogSessionManager();
     // 병합 시작: 빠르게 전환
     this._setMemPeriod(this.MEM_FAST_MS);
 

@@ -44,6 +44,7 @@ export function Toolbar() {
 
   // ── 활성 필드 개수 표시(버튼의 필터(x) 용) ───────────────────────────
   const activeCount = (() => {
+    ui.debug?.('[debug] Toolbar: activeCount');
     const t = (v?: string) => String(v ?? '').trim();
     return ['pid', 'src', 'proc', 'msg'].reduce((n, k) => n + (t((filter as any)[k]) ? 1 : 0), 0);
   })();

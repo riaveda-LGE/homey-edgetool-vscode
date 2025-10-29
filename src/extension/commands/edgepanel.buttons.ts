@@ -87,9 +87,26 @@ export function getSections(): SectionDef[] {
 
     // homey
     {
-      id: 'homey',
-      title: 'homey 조작',
+      id: 'device',
+      title: 'Device 조작',
       items: [
+        {
+          id: 'cmd.connectDevice',
+          label: '기기 연결',
+          op: { kind: 'handler', name: 'connectDevice' },
+        },
+        {
+          id: 'cmd.openHostShell',
+          label: 'Host Shell 열기',
+          desc: '현재 활성 연결(ADB/SSH)로 셸을 실행',
+          op: { kind: 'handler', name: 'openHostShell' },
+        },
+        {
+          id: 'cmd.gitFlow',
+          label: 'pull / push',
+          desc: 'Host/Homey pull 또는 push',
+          op: { kind: 'handler', name: 'gitFlow' },
+        },
         {
           id: 'cmd.homeyLogging',
           label: '로그 보기',
@@ -122,13 +139,17 @@ export function getSections(): SectionDef[] {
           desc: '현재 작업폴더 폴더 열기',
           op: { kind: 'handler', name: 'openWorkspace' },
         },
-        { id: 'cmd.gitPull', label: 'git pull', op: { kind: 'handler', name: 'gitPull' } },
-        { id: 'cmd.gitPush', label: 'git push', op: { kind: 'handler', name: 'gitPush' } },
         {
-          id: 'cmd.initParser',
-          label: 'Parser 초기화',
+          id: 'cmd.openWorkspaceShell',
+          label: '작업폴더 Shell',
+          desc: '작업폴더 경로에서 로컬 터미널 열기',
+          op: { kind: 'handler', name: 'openWorkspaceShell' },
+        },
+        {
+          id: 'cmd.initWorkspace',
+          label: 'Workspace 설정 초기화',
           desc: '.config/custom_log_parser.json + README 재생성',
-          op: { kind: 'handler', name: 'initParser' },
+          op: { kind: 'handler', name: 'initWorkspace' },
         },
       ],
     },

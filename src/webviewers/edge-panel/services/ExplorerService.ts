@@ -21,4 +21,7 @@ export class ExplorerService {
   delete(path: string, recursive = false, useTrash = true) {
     this.host.post({ v: 1, type: 'explorer.delete', payload: { path, recursive, useTrash } });
   }
+  gitStatus() {
+    this.host.post({ v: 1, type: 'git.status.request', payload: {} as any });
+  }
 }

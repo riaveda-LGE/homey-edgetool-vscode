@@ -1,9 +1,9 @@
 import { ErrorCategory, XError } from '../../shared/errors.js';
+import type { ConnectionInfo } from '../config/connection-config.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
-import { adbShell, adbStream } from './adbClient.js';
-import { sshRun, sshStream } from './sshClient.js';
-
+import { adbShell, adbStream, getState as adbGetState } from './adbClient.js';
+import { execQuickCheck as sshQuickCheck, sshRun, sshStream } from './sshClient.js';
 export type HostConfig =
   | {
       id: string;
@@ -20,8 +20,12 @@ export type HostConfig =
 export type RunResult = { code: number | null };
 
 export interface IConnectionManager {
-  connect(): Promise<void>;
+  connect(): Promise<void>; // 유지: (호환) 경량 프리체크
   isConnected(): boolean;
+  getSnapshot(): { active?: ConnectionInfo; healthy?: boolean; lastCheckedAt?: number };
+  setActive(info: ConnectionInfo): void;
+  setRecentLoader(loader: () => Promise<ConnectionInfo | undefined>): void;
+  checkHealth(info?: ConnectionInfo, abort?: AbortSignal): Promise<boolean>;
   run(cmd: string, args?: string[]): Promise<RunResult>;
   stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal): Promise<void>;
   dispose(): void;
@@ -30,49 +34,136 @@ export interface IConnectionManager {
 export class ConnectionManager implements IConnectionManager {
   private log = getLogger('ConnectionManager');
   private connected = false;
-  constructor(private cfg: HostConfig) {}
+  private active?: ConnectionInfo;
+  private healthy?: boolean;
+  private lastCheckedAt?: number;
+  private recentLoader?: () => Promise<ConnectionInfo | undefined>;
+
+  // 싱글톤 사용을 위해 기본 생성자
+  constructor() {}
 
   @measure()
   async connect() {
-    this.log.info(
-      `[debug] ConnectionManager.connect: start type=${this.cfg.type} id=${this.cfg.id}`,
-    );
-    // 가벼운 프리체크 정도만: 실제 연결은 실행 시점에 테스트됨
-    this.connected = true;
+    // 1) active 없으면 recent 로더로 자동 활성화 시도
+    if (!this.active && this.recentLoader) {
+      try {
+        const recent = await this.recentLoader();
+        if (recent) this.setActive(recent);
+      } catch {
+        /* noop: 로더 실패는 치명적 아님 */
+      }
+    }
+    // 2) active 있으면 헬스체크
+    if (this.active) {
+      try {
+        this.healthy = await this.checkHealth();
+      } catch {
+        this.healthy = false;
+      }
+      this.connected = true;
+    } else {
+      this.connected = false; // 여전히 없으면 연결 불가 상태
+    }
     this.log.info(`[debug] ConnectionManager.connect: end`);
   }
 
   @measure()
   isConnected() {
-    return this.connected;
+    return !!this.active;
+  }
+
+  @measure()
+  getSnapshot() {
+    return { active: this.active, healthy: this.healthy, lastCheckedAt: this.lastCheckedAt };
+  }
+
+  @measure()
+  setActive(info: ConnectionInfo) {
+    this.active = info;
+    this.connected = true;
+    this.healthy = undefined;
+    this.lastCheckedAt = undefined;
+    this.log.info(`[info] active connection set: ${info.id}`);
+  }
+
+  @measure()
+  setRecentLoader(loader: () => Promise<ConnectionInfo | undefined>) {
+    this.recentLoader = loader;
+    this.log.debug('[debug] recentLoader registered');
+  }
+
+  private toHostConfig(info: ConnectionInfo): HostConfig {
+    if (info.type === 'ADB') {
+      const serial = (info.details as any)?.deviceID;
+      return { id: info.id, type: 'adb', serial, timeoutMs: 15000 };
+    } else {
+      const d = info.details as any;
+      return {
+        id: info.id,
+        type: 'ssh',
+        host: d.host,
+        port: d.port,
+        user: d.user,
+        password: d.password,
+        timeoutMs: 15000,
+      };
+    }
+  }
+
+  @measure()
+  async checkHealth(info?: ConnectionInfo, abort?: AbortSignal): Promise<boolean> {
+    const target = info ?? this.active;
+    if (!target) return false;
+    let ok = false;
+    if (target.type === 'ADB') {
+      const serial = (target.details as any)?.deviceID;
+      ok = serial ? (await adbGetState(serial, { signal: abort })) === 'device' : false;
+    } else {
+      const d = target.details as any;
+      ok = await sshQuickCheck({
+        host: d.host,
+        user: d.user,
+        port: d.port,
+        password: d.password,
+        timeoutMs: 5000,
+        signal: abort,
+      });
+    }
+    this.healthy = ok;
+    this.lastCheckedAt = Date.now();
+    return ok;
   }
 
   @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
-    this.log.debug(`[debug] ConnectionManager.run: start cmd=${cmd}`);
+    const via = this.active?.type ?? 'NONE';
+    this.log.debug(`[debug] ConnectionManager.run: start`);
     try {
       const full = [cmd, ...args].join(' ').trim();
-      this.log.debug(`run: ${full}`);
-      if (this.cfg.type === 'adb') {
-        return {
-          code: (await adbShell(full, { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs }))
-            .code,
-        };
+      if (!this.active) {
+        throw new XError(
+          ErrorCategory.Connection,
+          'No active connection. Please connect a device.',
+        );
+      }
+      const cfg = this.toHostConfig(this.active);
+      if (cfg.type === 'adb') {
+        this.log.debug('[debug] run(ADB) exec', { serial: cfg.serial, full });
+        const res = await adbShell(full, { serial: cfg.serial, timeoutMs: cfg.timeoutMs });
+        return { code: res.code };
       }
       const code = await sshRun(full, {
-        host: this.cfg.host,
-        port: this.cfg.port,
-        user: this.cfg.user,
-        keyPath: this.cfg.keyPath,
-        password: this.cfg.password,
-        timeoutMs: this.cfg.timeoutMs,
+        host: (cfg as any).host,
+        port: (cfg as any).port,
+        user: (cfg as any).user,
+        password: (cfg as any).password,
+        timeoutMs: (cfg as any).timeoutMs,
       });
-      this.log.debug(`[debug] ConnectionManager.run: end code=${code}`);
       return { code };
     } catch (e) {
-      this.log.error(
-        `[debug] ConnectionManager.run: error ${e instanceof Error ? e.message : String(e)}`,
-      );
+      this.log.error(`[debug] ConnectionManager.run: error`, {
+        message: e instanceof Error ? e.message : String(e),
+      });
       throw new XError(
         ErrorCategory.Connection,
         `Command failed: ${e instanceof Error ? e.message : String(e)}`,
@@ -83,34 +174,46 @@ export class ConnectionManager implements IConnectionManager {
 
   @measure()
   async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
-    this.log.debug(`[debug] ConnectionManager.stream: start cmd=${cmd}`);
+    const via = this.active?.type ?? 'NONE';
+    this.log.debug(`[debug] ConnectionManager.stream: start`);
     try {
-      if (this.cfg.type === 'adb') {
+      if (!this.active)
+        throw new XError(
+          ErrorCategory.Connection,
+          'No active connection. Please connect a device.',
+        );
+      const cfg = this.toHostConfig(this.active);
+      if (cfg.type === 'adb') {
+        this.log.debug('[debug] stream(ADB) exec');
         await adbStream(
           cmd,
-          { serial: this.cfg.serial, timeoutMs: this.cfg.timeoutMs, signal: abort },
+          { serial: cfg.serial, timeoutMs: cfg.timeoutMs, signal: abort },
           onLine,
         );
         return;
       }
+      this.log.debug('[debug] stream(SSH) exec', {
+        host: (cfg as any).host,
+        user: (cfg as any).user,
+        port: (cfg as any).port,
+        cmd,
+      });
       await sshStream(
         cmd,
         {
-          host: this.cfg.host,
-          port: this.cfg.port,
-          user: this.cfg.user,
-          keyPath: this.cfg.keyPath,
-          password: this.cfg.password,
-          timeoutMs: this.cfg.timeoutMs,
+          host: (cfg as any).host,
+          port: (cfg as any).port,
+          user: (cfg as any).user,
+          password: (cfg as any).password,
+          timeoutMs: (cfg as any).timeoutMs,
           signal: abort,
         },
         onLine,
       );
-      this.log.debug(`[debug] ConnectionManager.stream: end`);
     } catch (e) {
-      this.log.error(
-        `[debug] ConnectionManager.stream: error ${e instanceof Error ? e.message : String(e)}`,
-      );
+      this.log.error(`[debug] ConnectionManager.stream: error`, {
+        message: e instanceof Error ? e.message : String(e),
+      });
       throw new XError(
         ErrorCategory.Connection,
         `Stream failed: ${e instanceof Error ? e.message : String(e)}`,
@@ -121,8 +224,12 @@ export class ConnectionManager implements IConnectionManager {
 
   @measure()
   dispose() {
-    this.log.info(`[debug] ConnectionManager.dispose: start`);
     this.connected = false;
-    this.log.info(`[debug] ConnectionManager.dispose: end`);
+    this.active = undefined;
+    this.healthy = undefined;
+    this.lastCheckedAt = undefined;
+    this.log.info(`[debug] ConnectionManager.disposed`);
   }
 }
+// 🔁 싱글톤 인스턴스: 확장 전역에서 공유
+export const connectionManager = new ConnectionManager();
