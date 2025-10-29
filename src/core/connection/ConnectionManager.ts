@@ -131,79 +131,55 @@ export class ConnectionManager implements IConnectionManager {
 
   @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
-    this.log.debug(`[debug] ConnectionManager.run: start cmd=${cmd}`);
+    const via = this.active?.type ?? 'NONE';
+    this.log.debug(`[debug] ConnectionManager.run: start`, { via, cmd, args });
     try {
       const full = [cmd, ...args].join(' ').trim();
-      this.log.debug(`run: ${full}`);
       if (!this.active) {
         throw new XError(ErrorCategory.Connection, 'No active connection. Please connect a device.');
       }
       const cfg = this.toHostConfig(this.active);
       if (cfg.type === 'adb') {
-        return {
-          code: (await adbShell(full, { serial: cfg.serial, timeoutMs: cfg.timeoutMs }))
-            .code,
-        };
+        this.log.debug('[debug] run(ADB) exec', { serial: cfg.serial, full });
+        const res = await adbShell(full, { serial: cfg.serial, timeoutMs: cfg.timeoutMs });
+        this.log.debug('[debug] run(ADB) end', { code: res.code });
+        return { code: res.code };
       }
+      this.log.debug('[debug] run(SSH) exec', { host: (cfg as any).host, user: (cfg as any).user, port: (cfg as any).port, full });
       const code = await sshRun(full, {
-        host: (cfg as any).host,
-        port: (cfg as any).port,
-        user: (cfg as any).user,
-        password: (cfg as any).password,
-        timeoutMs: (cfg as any).timeoutMs,
+        host: (cfg as any).host, port: (cfg as any).port, user: (cfg as any).user,
+        password: (cfg as any).password, timeoutMs: (cfg as any).timeoutMs,
       });
-      this.log.debug(`[debug] ConnectionManager.run: end code=${code}`);
+      this.log.debug('[debug] run(SSH) end', { code });
       return { code };
     } catch (e) {
-      this.log.error(
-        `[debug] ConnectionManager.run: error ${e instanceof Error ? e.message : String(e)}`,
-      );
-      throw new XError(
-        ErrorCategory.Connection,
-        `Command failed: ${e instanceof Error ? e.message : String(e)}`,
-        e,
-      );
+      this.log.error(`[debug] ConnectionManager.run: error`, { message: e instanceof Error ? e.message : String(e) });
+      throw new XError(ErrorCategory.Connection, `Command failed: ${e instanceof Error ? e.message : String(e)}`, e);
     }
   }
 
   @measure()
   async stream(cmd: string, onLine: (line: string) => void, abort?: AbortSignal) {
-    this.log.debug(`[debug] ConnectionManager.stream: start cmd=${cmd}`);
+    const via = this.active?.type ?? 'NONE';
+    this.log.debug(`[debug] ConnectionManager.stream: start`, { via, cmd });
     try {
-      if (!this.active) {
-        throw new XError(ErrorCategory.Connection, 'No active connection. Please connect a device.');
-      }
+      if (!this.active) throw new XError(ErrorCategory.Connection, 'No active connection. Please connect a device.');
       const cfg = this.toHostConfig(this.active);
       if (cfg.type === 'adb') {
-        await adbStream(
-          cmd,
-          { serial: cfg.serial, timeoutMs: cfg.timeoutMs, signal: abort },
-          onLine,
-        );
+        this.log.debug('[debug] stream(ADB) exec', { serial: cfg.serial, cmd });
+        await adbStream(cmd, { serial: cfg.serial, timeoutMs: cfg.timeoutMs, signal: abort }, onLine);
+        this.log.debug('[debug] stream(ADB) end');
         return;
       }
-      await sshStream(
-        cmd,
-        {
-          host: (cfg as any).host,
-          port: (cfg as any).port,
-          user: (cfg as any).user,
-          password: (cfg as any).password,
-          timeoutMs: (cfg as any).timeoutMs,
-          signal: abort,
-        },
-        onLine,
-      );
-      this.log.debug(`[debug] ConnectionManager.stream: end`);
+      this.log.debug('[debug] stream(SSH) exec', { host: (cfg as any).host, user: (cfg as any).user, port: (cfg as any).port, cmd });
+      await sshStream(cmd, {
+        host: (cfg as any).host, port: (cfg as any).port, user: (cfg as any).user,
+        password: (cfg as any).password, timeoutMs: (cfg as any).timeoutMs, signal: abort,
+      }, onLine);
+      this.log.debug('[debug] stream(SSH) end');
     } catch (e) {
-      this.log.error(
-        `[debug] ConnectionManager.stream: error ${e instanceof Error ? e.message : String(e)}`,
-      );
-      throw new XError(
-        ErrorCategory.Connection,
-        `Stream failed: ${e instanceof Error ? e.message : String(e)}`,
-        e,
-      );
+      this.log.error(`[debug] ConnectionManager.stream: error`, { message: e instanceof Error ? e.message : String(e) });
+      throw new XError(ErrorCategory.Connection, `Stream failed: ${e instanceof Error ? e.message : String(e)}`, e);
     }
   }
 

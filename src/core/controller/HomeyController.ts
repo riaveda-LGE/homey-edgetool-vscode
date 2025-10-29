@@ -1,6 +1,6 @@
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
-import { connectionManager } from './ConnectionManager.js';
+import { connectionManager } from '../connection/ConnectionManager.js';
 import { XError, ErrorCategory } from '../../shared/errors.js';
 
 const log = getLogger('HomeyController');

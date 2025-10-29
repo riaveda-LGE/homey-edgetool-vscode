@@ -43,7 +43,7 @@ class CommandHandlers {
     this.homeyHandler = new CommandHandlersHomey();
     this.loggingHandler = new CommandHandlersLogging(this.provider);
     this.hostHandler = new CommandHandlersHost();
-    this.gitHandler = new CommandHandlersGit();
+    this.gitHandler = new CommandHandlersGit(this.context);
     this.connectHandler = new CommandHandlersConnect(this.context);
     this.parserHandler = new CommandHandlersParser(this.context);
   }
@@ -68,6 +68,8 @@ class CommandHandlers {
         return this.homeyHandler.homeyMount();
       case 'homeyUnmount':
         return this.homeyHandler.homeyUnmount();
+      case 'openHostShell':
+        return this.hostHandler.openHostShell();
 
       case 'changeWorkspaceQuick':
         return this.workspaceHandler.changeWorkspaceQuick();
@@ -75,11 +77,8 @@ class CommandHandlers {
         return this.workspaceHandler.openWorkspace();
       case 'togglePerformanceMonitoring':
         return this.workspaceHandler.togglePerformanceMonitoring(this.extensionUri);
-
-      case 'gitPull':
-        return this.gitHandler.gitPassthrough(['pull']);
-      case 'gitPush':
-        return this.gitHandler.gitPassthrough(['push']);
+      case 'gitFlow':
+        return this.gitHandler.gitFlow();
       case 'updateNow':
         return this.updateHandler.updateNow();
       case 'openHelp':
@@ -102,7 +101,7 @@ class CommandHandlers {
   openHomeyLogging
   homeyRestart | homeyMount | homeyUnmount
   changeWorkspaceQuick | openWorkspace
-  gitPull | gitPush
+  gitFlow (pull / push)
   updateNow | openHelp`);
   }
 }

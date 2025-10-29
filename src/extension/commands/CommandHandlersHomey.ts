@@ -1,6 +1,6 @@
 // === src/extension/commands/CommandHandlersHomey.ts ===
 import * as vscode from 'vscode';
-import { HomeyController } from '../../core/connection/HomeyController.js';
+import { HomeyController } from '../../core/controller/HomeyController.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 
