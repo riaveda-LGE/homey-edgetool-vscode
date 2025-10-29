@@ -134,52 +134,10 @@ export const useLogStore = create<Model & ExtraState & Actions>()((set, get) => 
         );
         if (hit) selectedRowId = hit.id;
       }
-      // ─────────────────────────────────────────────────────────────
-      // A) 합집합(Union) 병합 + 하단 고정(head-only eviction)
-      //    - 응답 순서 뒤섞여도 tail(coverageEnd) 회귀 금지
-      const curRows = Array.isArray(state.rows) ? state.rows : [];
-      const hasCur = curRows.length > 0;
-      const curStart = Math.max(1, (state.windowStart as number) | 0);
-      const curEnd = hasCur ? curStart + curRows.length - 1 : 0;
-
-      const incStart = Math.max(1, startIdx | 0);
-      const incLen = rowsWithBm.length;
-      const incEnd = incLen ? incStart + incLen - 1 : incStart - 1;
-
-      // 새 커버리지 경계(단조 증가: 하단 회귀 금지)
-      let newStart = hasCur ? Math.min(curStart, incStart) : incStart;
-      let newEnd = hasCur ? Math.max(curEnd, incEnd) : incEnd;
-      if (newEnd < newStart) {
-        newStart = incStart;
-        newEnd = incEnd;
-      }
-
-      // 병합 버퍼 구성(연속 페이지 가정)
-      const total = Math.max(0, newEnd - newStart + 1);
-      let merged: LogRow[] = total ? new Array(total) as unknown as LogRow[] : [];
-      // 기존 복사
-      if (hasCur) {
-        const off = curStart - newStart;
-        for (let i = 0; i < curRows.length; i++) merged[off + i] = curRows[i];
-      }
-      // 신규 복사(중복 구간은 신규로 갱신)
-      {
-        const off = incStart - newStart;
-        for (let i = 0; i < incLen; i++) merged[off + i] = rowsWithBm[i];
-      }
-
-      // cap: windowSize 기준(뷰 윈도우와 동일 크기 유지). 초과 시 상단만 축출하여 tail 보존
-      const cap = Math.max(1, (state.windowSize as number) | 0);
-      if (merged.length > cap) {
-        const cut = merged.length - cap;   // 앞에서 자를 양
-        merged = merged.slice(cut);        // head-only eviction
-        newStart = newStart + cut;
-      }
-
       set({
-        rows: merged,
+        rows: rowsWithBm,
         nextId: maxId,
-        windowStart: Math.max(1, newStart | 0),
+        windowStart: Math.max(1, startIdx | 0),
         selectedRowId,
       });
       // 과도한 로그 방지: 범위 바뀔 때만 간단 요약
