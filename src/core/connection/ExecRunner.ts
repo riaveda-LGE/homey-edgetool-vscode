@@ -51,7 +51,7 @@ const log = getLogger('ExecRunner');
 export async function runCommandLine(
   cmd: string,
   opts: ExecOptions = {},
-): Promise<{ code: number | null }> {
+): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return measureBlock('ExecRunner.runCommandLine', async () => {
     log.debug('[debug] runCommandLine: start');
     const isWin = process.platform === 'win32';
@@ -74,6 +74,8 @@ export async function runCommandLine(
       const child = spawn(sh, args, { cwd: opts.cwd, env: opts.env });
 
       let finished = false;
+      let stdoutBuf = '';
+      let stderrBuf = '';
       let timeoutTimer: NodeJS.Timeout | undefined;
       let termGraceTimer: NodeJS.Timeout | undefined;
 
@@ -96,13 +98,19 @@ export async function runCommandLine(
         if (finished) return;
         finished = true;
         cleanup();
-        resolve({ code });
+        resolve({ code, stdout: stdoutBuf, stderr: stderrBuf });
         log.debug('[debug] runCommandLine settle: end');
       };
 
       // --- stdout/stderr 파이프
-      child.stdout?.on('data', (b) => opts.onStdout?.(b));
-      child.stderr?.on('data', (b) => opts.onStderr?.(b));
+      child.stdout?.on('data', (b) => {
+        stdoutBuf += b.toString('utf8');
+        opts.onStdout?.(b);
+      });
+      child.stderr?.on('data', (b) => {
+        stderrBuf += b.toString('utf8');
+        opts.onStderr?.(b);
+      });
 
       child.on('error', (e) => {
         log.debug('[debug] runCommandLine on error');

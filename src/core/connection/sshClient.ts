@@ -35,25 +35,40 @@ function connectOnce(opts: SshOptions): Promise<Client> {
   });
 }
 
-export async function sshRun(cmd: string, opts: SshOptions): Promise<number | null> {
+export async function sshRun(
+  cmd: string,
+  opts: SshOptions,
+): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return measureBlock('ssh.sshRun', async () => {
     log.debug('[debug] sshRun: start');
     const conn = await connectOnce(opts);
     try {
-      const code = await new Promise<number | null>((resolve, reject) => {
+      const out: { code: number | null; stdout: string; stderr: string } = {
+        code: 0,
+        stdout: '',
+        stderr: '',
+      };
+      await new Promise<void>((resolve, reject) => {
         conn.exec(cmd, (err: Error | undefined, stream: any) => {
           if (err) return reject(err);
           stream
             .on('close', (code: number | null) => {
-              resolve(code ?? 0);
+              out.code = code ?? 0;
+              resolve();
               conn.end();
             })
-            .on('data', (b: Buffer) => process.stdout.write(b));
-          (stream.stderr as any).on('data', (b: Buffer) => process.stderr.write(b));
+            .on('data', (b: Buffer) => {
+              out.stdout += b.toString('utf8');
+              process.stdout.write(b);
+            });
+          (stream.stderr as any).on('data', (b: Buffer) => {
+            out.stderr += b.toString('utf8');
+            process.stderr.write(b);
+          });
         });
       });
       log.debug('[debug] sshRun: end');
-      return code;
+      return out;
     } finally {
       // 안전 종료
       try {
@@ -111,8 +126,8 @@ export async function execQuickCheck(t: {
   signal?: AbortSignal;
 }): Promise<boolean> {
   try {
-    const code = await sshRun('true', t);
-    return code === 0;
+    const { code } = await sshRun('true', t);
+    return (code ?? 0) === 0;
   } catch {
     return false;
   }

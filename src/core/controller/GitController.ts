@@ -60,8 +60,8 @@ export class GitController {
       if (kind === 'FILE') await this.host.pullFile(remoteBase, localBase);
       else if (kind === 'DIR') await this.host.pullDir(remoteBase, localBase);
       else {
-        log.error('[error] pull:path-not-found', { target, remoteBase });
-        throw new Error(`path not found on host: ${remoteBase}`);
+        log.error('[error] pull:path-not-found', { target, remoteBase, note: 'statType returned NONE' });
+        throw new Error(`path not found on host: ${remoteBase} (statType returned NONE)`);
       }
     } else {
       remoteBase = await this.host.resolveHomeyPath(target);
