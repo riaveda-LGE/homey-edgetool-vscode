@@ -1,0 +1,30 @@
+// === src/core/tasks/RestartTaskRunner.ts ===
+import { WorkflowEngine } from './workflow/workflowEngine.js';
+import { HostStateGuard } from './guards/HostStateGuard.js';
+import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { resolveHomeyUnit } from '../service/serviceDiscovery.js';
+
+export class RestartTaskRunner {
+  private guard = new HostStateGuard();
+
+  async run() {
+    const unit = await resolveHomeyUnit();
+    const svc = new ServiceFilePatcher(unit);
+    const steps: any[] = [];
+
+    steps.push({ name: 'INIT', run: async () => 'ok' });
+    steps.push({
+      name: 'RESTART_SERVICE',
+      run: async () => {
+        await svc.restart();
+        const ok = await this.guard.waitForUnitActive(unit, 30_000, 1500);
+        return ok ? 'ok' : 'retry';
+      },
+      maxIterations: 3,
+    });
+    steps.push({ name: 'POST_VERIFY', run: async () => 'ok' });
+
+    const wf = new WorkflowEngine(steps);
+    await wf.runAll(`restart-${Date.now()}`);
+  }
+}

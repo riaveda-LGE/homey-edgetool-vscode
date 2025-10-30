@@ -75,8 +75,6 @@ export const MERGED_CHUNK_MAX_LINES = 5000;
 /** PagedReader 기본 페이지 크기(웹뷰가 별도 지정하지 않으면) */
 export const PAGED_READER_DEFAULT_PAGE_SIZE = 500;
 
-// (warmup 관련 플래그/리밋은 featureFlags.ts로 일원화)
-
 /* ──────────────────────────────────────────────────────────────
  * Log Viewer 공통 상수(Host/Webview 공용) — 가상 스크롤 윈도우
  * ────────────────────────────────────────────────────────────── */
@@ -101,3 +99,9 @@ export const PARSER_README_TEMPLATE_REL = 'doc/logging-0-parser.md';
 // Workspace scaffold
 /** .gitignore 템플릿(확장 패키지 내 상대경로) */
 export const GITIGNORE_TEMPLATE_REL = 'media/resources/.gitignore.template';
+
+// ─────────────────────────────────────────────────────────────
+// ✅ 사용자 Homey 서비스 구성(SSOT) 경로
+// ─────────────────────────────────────────────────────────────
+export const USERCFG_REL = '.config/custom_user_config.json';
+export const USERCFG_TEMPLATE_REL = 'media/resources/custom_user_config.template.json';
