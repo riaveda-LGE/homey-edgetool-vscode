@@ -94,9 +94,17 @@ export class ServiceFilePatcher {
       const afterHash  = await this.computeHash(origFile).catch(() => '');
       log.debug(`[SvcPatcher] replace: hash before=${beforeHash} work=${workHash} after=${afterHash}`);
     } catch (e) {
-      // 마지막 수단: mv 시도
-      await connectionManager.run(`sh -lc 'mv -f ${q(workFile)} ${q(origFile)}'`);
-      throw e;
+      // 마지막 수단: mv 재시도 성공 시에는 오류를 전파하지 않는다.
+      try {
+        await connectionManager.run(`sh -lc 'mv -f ${q(workFile)} ${q(origFile)}'`);
+        log.warn(
+          `[SvcPatcher] replace: fallback mv succeeded after error: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      } catch (e2) {
+        throw e2;
+      }
     }
   }
 

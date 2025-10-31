@@ -118,8 +118,15 @@ export type H2W =
   | Envelope<'update.available', { version: string }>
   | Envelope<
       'buttons.set',
-      { sections: { title: string; items: { id: string; label: string; desc?: string }[] }[] }
+      {
+        sections: {
+          title: string;
+          items: { id: string; label: string; desc?: string; disabled?: boolean }[];
+        }[];
+      }
     >
+  | Envelope<'buttons.lock', { ids: string[] }>
+  | Envelope<'buttons.unlock', { ids: string[] }>
   | Envelope<'ui.toggleMode', { toggle?: boolean; mode?: 'mode-normal' | 'mode-debug' }>
   | Envelope<'error', { code: string; message: string; detail?: any; inReplyTo?: string }>
   | Envelope<'perf.updateData', { data: any[] }>

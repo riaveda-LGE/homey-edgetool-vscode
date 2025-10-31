@@ -141,7 +141,6 @@ export class ConnectionManager implements IConnectionManager {
   @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
     const via = this.active?.type ?? 'NONE';
-    this.log.debug(`[debug] ConnectionManager.run: start`);
     try {
       const full = [cmd, ...args].join(' ').trim();
       if (!this.active) {

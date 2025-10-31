@@ -58,12 +58,6 @@ export async function checkServiceFileExists(
   return measureBlock('svc.checkServiceFileExists', async () => {
     let pathCur = pathGuess;
     let fileCur = fileGuess;
-    const exists = async () => {
-      const { code } = await connectionManager.run(
-        `sh -lc '[ -f "${pathCur.replace(/'/g, `"'"'`)}${pathCur.endsWith('/') ? '' : '/'}${fileCur.replace(/'/g, `"'"'`)}" ] && echo OK || echo NO'`,
-      );
-      return (code ?? 0) === 0; // run()은 echo 결과와 무관하게 code를 0으로 반환할 수 있음 → 아래에서 문자열 체크로 보강해도 됨
-    };
 
     for (;;) {
       const { stdout } = await connectionManager.run(

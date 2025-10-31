@@ -360,14 +360,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
   @measure()
   public async startFileMerge(dir: string) {
-    this.log.debug('[debug] EdgePanelProvider startFileMerge: start');
     await this._logViewer?.startFileMerge(dir);
-    this.log.debug('[debug] EdgePanelProvider startFileMerge: end');
   }
   public stopLogging() {
-    this.log.debug('[debug] EdgePanelProvider stopLogging: start');
     this._logViewer?.stop();
-    this.log.debug('[debug] EdgePanelProvider stopLogging: end');
   }
 
   @measure()

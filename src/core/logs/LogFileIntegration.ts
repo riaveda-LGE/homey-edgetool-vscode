@@ -7,7 +7,7 @@ import * as path from 'path';
 
 import {
   DEFAULT_BATCH_SIZE,
-  DEFAULT_MEMORY_MODE_TRESHOLD,
+  DEFAULT_MEMORY_MODE_THRESHOLD,
   MERGED_DIR_NAME,
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
@@ -151,7 +151,7 @@ export type MergeOptions = {
   onProgress?: (args: { done?: number; total?: number; active?: boolean }) => void;
   /** warmup 모드일 때 타입별 최대 선행 읽기 라인수 (기본: 500 등) */
   warmupPerTypeLimit?: number;
-  /** 웜업 목표치/메모리 모드 임계값 (기본: DEFAULT_MEMORY_MODE_TRESHOLD) */
+  /** 웜업 목표치/메모리 모드 임계값 (기본: DEFAULT_MEMORY_MODE_THRESHOLD) */
   memory_mode_threshold?: number;
   /** 커스텀 파서 설정에서 온 files 화이트리스트(glob). 지정되면 여기에 매칭되는 파일만 수집 */
   whitelistGlobs?: string[];
@@ -219,7 +219,7 @@ export async function mergeDirectory(opts: MergeOptions) {
     //    - 이제 스킵 판단은 mergeDirectory 한 곳에서만 수행한다.
     {
       const threshold =
-        opts.memory_mode_threshold ?? memoryModeThreshold ?? DEFAULT_MEMORY_MODE_TRESHOLD;
+        opts.memory_mode_threshold ?? memoryModeThreshold ?? DEFAULT_MEMORY_MODE_THRESHOLD;
 
       // 워밍업 프리패스는 (a) 명시적으로 warmup 요청이 있거나 (b) 스킵 결정을 위해 필요할 때 실행
       const needWarmupForDecision = typeof preEstimate !== 'number';
@@ -1367,7 +1367,7 @@ export async function warmupTailPrepass(opts: WarmupOptions): Promise<WarmupResu
       Number(
         opts.memory_mode_threshold ??
           getMemoryModeThresholdFromParser(opts.parser) ??
-          DEFAULT_MEMORY_MODE_TRESHOLD,
+          DEFAULT_MEMORY_MODE_THRESHOLD,
       ),
     );
     const perTypeCap = Number.isFinite(opts.warmupPerTypeLimit ?? NaN)

@@ -63,6 +63,14 @@ body {
   color: #fff;
 }
 
+/* disabled 상태 공통 스타일 */
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  filter: grayscale(0.15);
+  box-shadow: none;
+}
+
 @media (forced-colors: active) {
   .btn {
     border: 1px solid ButtonText;

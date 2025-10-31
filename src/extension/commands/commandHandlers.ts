@@ -59,15 +59,19 @@ class CommandHandlers {
         return this.help();
 
       // === 버튼 → handler 진입점들 ===
-      case 'openHomeyLogging':
-        return this.loggingHandler.openHomeyLogging();
+      case 'homeyLoggingLive':
+        return this.loggingHandler.startRealtime();
+      case 'homeyLoggingFile':
+        return this.loggingHandler.startFileMerge();
 
       case 'homeyRestart':
         return this.homeyHandler.homeyRestart();
-      case 'homeyMount':
-        return this.homeyHandler.homeyMount();
-      case 'homeyUnmount':
-        return this.homeyHandler.homeyUnmount();
+      case 'homeyVolumeToggle':
+        return this.homeyHandler.homeyVolumeToggle();
+      case 'homeyAppLogToggle':
+        return this.homeyHandler.homeyAppLogToggle();
+      case 'homeyDevTokenToggle':
+        return this.homeyHandler.homeyDevTokenToggle();
       case 'openHostShell':
         return this.hostHandler.openHostShell();
 
@@ -100,8 +104,8 @@ class CommandHandlers {
   @measure()
   async help() {
     log.info(`Commands:
-  openHomeyLogging
-  homeyRestart | homeyMount | homeyUnmount
+  homeyRestart
+  homeyVolumeToggle | homeyAppLogToggle | homeyDevTokenToggle
   changeWorkspaceQuick | openWorkspace
   gitFlow (pull / push)
   updateNow | openHelp`);

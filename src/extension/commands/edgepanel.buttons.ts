@@ -1,9 +1,18 @@
 // === src/extension/commands/edgepanel.buttons.ts ===
 import { measureBlock } from '../../core/logging/perf.js';
+import { UI_STR, UI_DESC } from '../../shared/const.js';
 
 export type ButtonContext = {
   updateAvailable?: boolean;
   updateUrl?: string;
+  busyLock?: boolean;
+  /** 현재 활성 연결(ADB/SSH)이 존재하는가 */
+  isConnected?: boolean;
+  /** 홈이 볼륨 마운트 상태 */
+  mountState?: 'mounted' | 'unmounted' | 'unknown';
+  /** App Log / DevToken 현재 상태 */
+  appLogEnabled?: boolean;
+  devTokenEnabled?: boolean;
 };
 
 export type ButtonOp =
@@ -22,27 +31,56 @@ export type ButtonDef = {
 export type SectionDef = { id: string; title: string; items: ButtonDef[] };
 export type SectionDTO = {
   title: string;
-  items: { id: string; label: string; desc?: string }[];
+  items: { id: string; label: string; desc?: string; disabled?: boolean }[]; // ← disabled 추가
 };
 
 export function buildButtonContext(opts: {
   updateAvailable?: boolean;
   updateUrl?: string;
+  busyLock?: boolean;
+  isConnected?: boolean;
+  mountState?: 'mounted' | 'unmounted' | 'unknown';
+  appLogEnabled?: boolean;
+  devTokenEnabled?: boolean;
 }): ButtonContext {
-  return { updateAvailable: !!opts.updateAvailable, updateUrl: opts.updateUrl };
+  return {
+    updateAvailable: !!opts.updateAvailable,
+    updateUrl: opts.updateUrl,
+    busyLock: !!opts.busyLock,
+    isConnected: !!opts.isConnected,
+    mountState: opts.mountState ?? 'unknown',
+    appLogEnabled: !!opts.appLogEnabled,
+    devTokenEnabled: !!opts.devTokenEnabled,
+  };
 }
 
 export function toSectionDTO(sections: SectionDef[], ctx: ButtonContext): SectionDTO[] {
   return measureBlock('edgepanel.toSectionDTO', () => {
     return sections
-      .map((sec) => ({
-        title: sec.title,
-        items: sec.items
+      .map((sec) => {
+        const items = sec.items
           .filter((b) => !b.when || b.when(ctx))
-          .map((b) => ({ id: b.id, label: b.label, desc: b.desc })),
-      }))
+          .map((b) => ({
+            id: b.id,
+            label: b.label,
+            desc: b.desc,
+            // disabled 규칙:
+            // 1) busyLock 대상은 작업 중 비활성화
+            // 2) 연결 없으면 Device 버튼 일괄 비활성화("기기 연결" 제외)
+            // 3) 토글 버튼 상태별 비활성화 조건
+            disabled: (() => {
+              // busy/연결 우선
+              if ((BUSY_LOCK_BUTTON_IDS as readonly string[]).includes(b.id) && !!ctx.busyLock) return true;
+              if (!ctx.isConnected && (DEVICE_BUTTON_IDS as readonly string[]).includes(b.id)) return true;
+
+              // 토글류는 추가 제약 없음(연결만 체크). 라벨은 아래에서 상태로 분기.
+              return false;
+            })(),
+          }));
+        return { title: sec.title, items };
+      })
       .filter((sec) => sec.items.length > 0);
-  });
+ });
 }
 
 export function findButtonById(sections: SectionDef[], id: string): ButtonDef | undefined {
@@ -59,14 +97,14 @@ export function getSections(): SectionDef[] {
   return [
     {
       id: 'panel',
-      title: '패널 조작',
+      title: UI_STR.SECTION_PANEL_TITLE,
       items: [
-        { id: 'panel.toggleExplorer', label: '작업패널', op: { kind: 'post', event: 'ui.toggleExplorer' } },
-        { id: 'panel.toggleLogs', label: '디버깅패널', op: { kind: 'post', event: 'ui.toggleLogs' } },
+        { id: 'panel.toggleExplorer', label: UI_STR.BTN_PANEL_TOGGLE_EXPLORER, op: { kind: 'post', event: 'ui.toggleExplorer' } },
+        { id: 'panel.toggleLogs', label: UI_STR.BTN_PANEL_TOGGLE_LOGS, op: { kind: 'post', event: 'ui.toggleLogs' } },
         {
           id: 'panel.updateNow',
-          label: 'Update Now',
-          desc: '확장 업데이트 확인/설치',
+          label: UI_STR.BTN_UPDATE_NOW,
+          desc: UI_DESC.UPDATE_NOW,
           op: { kind: 'handler', name: 'updateNow' },
           when: (ctx) => !!ctx.updateAvailable && !!ctx.updateUrl,
         },
@@ -75,42 +113,60 @@ export function getSections(): SectionDef[] {
 
     {
       id: 'device',
-      title: 'Device 조작',
+      title: UI_STR.SECTION_DEVICE_TITLE,
       items: [
-        { id: 'cmd.connectDevice', label: '기기 연결', op: { kind: 'handler', name: 'connectDevice' } },
-        { id: 'cmd.openHostShell', label: 'Host Shell 열기', desc: '현재 활성 연결(ADB/SSH)로 셸을 실행', op: { kind: 'handler', name: 'openHostShell' } },
-        { id: 'cmd.gitFlow', label: 'pull / push', desc: 'Host/Homey pull 또는 push', op: { kind: 'handler', name: 'gitFlow' } },
-        { id: 'cmd.homeyLogging', label: '로그 보기', op: { kind: 'handler', name: 'openHomeyLogging' } },
-        { id: 'cmd.homeyRestart', label: '재시작', op: { kind: 'handler', name: 'homeyRestart' } },
-        { id: 'cmd.homeyMount', label: '볼륨 마운트', op: { kind: 'handler', name: 'homeyMount' } },
-        { id: 'cmd.homeyUnmount', label: '볼륨 언마운트', op: { kind: 'handler', name: 'homeyUnmount' } },
-        { id: 'cmd.homeyConsoleToggle', label: 'App Log 토글', desc: 'HOMEY_APP_LOG=1 On/Off', op: { kind: 'handler', name: 'homeyConsoleToggle' } },
-        { id: 'cmd.homeyDevToken', label: 'DevToken 토글', desc: 'HOMEY_DEV_TOKEN=1 On/Off', op: { kind: 'handler', name: 'homeyDevToken' } },
-        // ⬇️ 신규 2개
-        { id: 'cmd.homeyDetectServiceNow', label: '서비스 탐지', desc: 'homey-(pro|bridge)@*.service 감지/저장', op: { kind: 'handler', name: 'homeyDetectServiceNow' } },
-        { id: 'cmd.homeyEditServiceConfig', label: '서비스 구성 편집', desc: '.config/custom_user_config.json 열기', op: { kind: 'handler', name: 'homeyEditServiceConfig' } },
+        { id: 'cmd.connectDevice', label: UI_STR.BTN_CONNECT_DEVICE, op: { kind: 'handler', name: 'connectDevice' } },
+        { id: 'cmd.openHostShell', label: UI_STR.BTN_OPEN_HOST_SHELL, desc: UI_DESC.OPEN_HOST_SHELL, op: { kind: 'handler', name: 'openHostShell' } },
+        { id: 'cmd.gitFlow', label: UI_STR.BTN_GIT_FLOW, desc: UI_DESC.GIT_FLOW, op: { kind: 'handler', name: 'gitFlow' } },
+        { id: 'cmd.homeyLoggingLive', label: UI_STR.BTN_LOGGING_LIVE, desc: UI_DESC.LOGGING_LIVE, op: { kind: 'handler', name: 'homeyLoggingLive' } },
+        { id: 'cmd.homeyLoggingFile', label: UI_STR.BTN_LOGGING_FILE, desc: UI_DESC.LOGGING_FILE, op: { kind: 'handler', name: 'homeyLoggingFile' } },
+        { id: 'cmd.homeyRestart', label: UI_STR.BTN_HOMEY_RESTART, op: { kind: 'handler', name: 'homeyRestart' } },
+        // ⬇️ 토글류는 기본(초기) 라벨만 배치 — 실제 표시 라벨은 Router에서 상태로 결정
+        { id: 'cmd.volumeToggle',  label: UI_STR.BTN_VOLUME_MOUNT, op: { kind: 'handler', name: 'homeyVolumeToggle' } },
+        { id: 'cmd.appLogToggle',  label: UI_STR.BTN_APPLOG_ENABLE,  desc: UI_DESC.APPLOG,  op: { kind: 'handler', name: 'homeyAppLogToggle' } },
+        { id: 'cmd.devTokenToggle',label: UI_STR.BTN_DEVTOKEN_ENABLE, desc: UI_DESC.DEVTOKEN, op: { kind: 'handler', name: 'homeyDevTokenToggle' } },
       ],
     },
 
     {
       id: 'workspace',
-      title: '작업폴더',
+      title: UI_STR.SECTION_WORKSPACE_TITLE,
       items: [
-        { id: 'cmd.changeWorkspace', label: '작업폴더 변경', desc: '작업폴더 베이스 폴더 변경', op: { kind: 'handler', name: 'changeWorkspaceQuick' } },
-        { id: 'cmd.openWorkspace', label: '작업폴더 열기', desc: '현재 작업폴더 폴더 열기', op: { kind: 'handler', name: 'openWorkspace' } },
-        { id: 'cmd.openWorkspaceShell', label: '작업폴더 Shell', desc: '작업폴더 경로에서 로컬 터미널 열기', op: { kind: 'handler', name: 'openWorkspaceShell' } },
-        { id: 'cmd.initWorkspace', label: 'Workspace 설정 초기화', desc: '.config/custom_log_parser.json + README 재생성', op: { kind: 'handler', name: 'initWorkspace' } },
+        { id: 'cmd.changeWorkspace', label: UI_STR.BTN_WORKSPACE_CHANGE, desc: UI_DESC.WORKSPACE_CHANGE, op: { kind: 'handler', name: 'changeWorkspaceQuick' } },
+        { id: 'cmd.openWorkspace', label: UI_STR.BTN_OPEN_WORKSPACE, desc: UI_DESC.OPEN_WORKSPACE, op: { kind: 'handler', name: 'openWorkspace' } },
+        { id: 'cmd.openWorkspaceShell', label: UI_STR.BTN_OPEN_WORKSPACE_SHELL, desc: UI_DESC.OPEN_WORKSPACE_SHELL, op: { kind: 'handler', name: 'openWorkspaceShell' } },
+        { id: 'cmd.initWorkspace', label: UI_STR.BTN_INIT_WORKSPACE, desc: UI_DESC.INIT_WORKSPACE, op: { kind: 'handler', name: 'initWorkspace' } },
       ],
     },
 
     {
       id: 'help',
-      title: '기타',
+      title: UI_STR.SECTION_HELP_TITLE,
       items: [
-        { id: 'cmd.performanceMonitor', label: '성능측정', desc: 'Performance Monitor 토글', op: { kind: 'handler', name: 'togglePerformanceMonitoring' } },
-        { id: 'panel.reload', label: 'VS Code 재시작', desc: 'VS Code 창 새로고침', op: { kind: 'vscode', command: 'workbench.action.reloadWindow' } },
-        { id: 'cmd.help', label: '도움말', op: { kind: 'handler', name: 'openHelp' } },
+        { id: 'cmd.performanceMonitor', label: UI_STR.BTN_PERF_MONITOR, desc: 'Performance Monitor 토글', op: { kind: 'handler', name: 'togglePerformanceMonitoring' } },
+        { id: 'panel.reload', label: UI_STR.BTN_RELOAD_VSCODE, desc: UI_DESC.RELOAD, op: { kind: 'vscode', command: 'workbench.action.reloadWindow' } },
+        { id: 'cmd.help', label: UI_STR.BTN_HELP, op: { kind: 'handler', name: 'openHelp' } },
       ],
     },
   ];
 }
+
+// 바쁜 동안 잠글 대상(토글 3개) — 확장/웹뷰 양쪽 공통 관점에서 식별자만 사용
+export const BUSY_LOCK_BUTTON_IDS = [
+  'cmd.volumeToggle',
+  'cmd.appLogToggle',
+  'cmd.devTokenToggle',
+] as const;
+export type BusyLockButtonId = typeof BUSY_LOCK_BUTTON_IDS[number];
+
+
+// 🔌 연결이 없을 때 비활성화할 Device 섹션 버튼(“기기 연결” 제외)
+export const DEVICE_BUTTON_IDS = [
+  'cmd.openHostShell',
+  'cmd.gitFlow',
+  'cmd.homeyLoggingLive',
+  'cmd.homeyRestart',
+  'cmd.volumeToggle',
+  'cmd.appLogToggle',
+  'cmd.devTokenToggle',
+] as const;

@@ -245,6 +245,14 @@ import { createStore } from './store.js';
 
   // Host messages
   host.listen((msg: H2W) => {
+    const setButtonsDisabled = (ids: string[], disabled: boolean) => {
+      ids.forEach((id) => {
+        const el = document.querySelector(
+          `button[data-btn-id="${id}"]`,
+        ) as HTMLButtonElement | null;
+        if (el) el.disabled = disabled;
+      });
+    };
     // 확장에서 오는 안전망 메시지: 선택 해제
     if ((msg as any)?.type === 'ui.clearSelection') {
       m('Host.ui.clearSelection', () => {
@@ -255,6 +263,16 @@ import { createStore } from './store.js';
     }
 
     switch (msg.type) {
+      case 'buttons.lock': {
+        m('Controls.buttons.lock', () => setButtonsDisabled((msg as any).payload.ids || [], true));
+        break;
+      }
+      case 'buttons.unlock': {
+        m('Controls.buttons.unlock', () =>
+          setButtonsDisabled((msg as any).payload.ids || [], false),
+        );
+        break;
+      }
       case 'initState': {
         m('Host.initState', () => {
           const logs = msg.payload.state?.logs || [];

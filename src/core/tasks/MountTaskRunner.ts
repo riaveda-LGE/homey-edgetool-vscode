@@ -136,7 +136,7 @@ export function buildLines(modes: Mode[]): string[] {
   // homey-app 매핑
   out.push(`--volume="homey-app:/app:rw"`);
   // homey-node 매핑 (core/sdk/bridge 공통)
-  out.push(`--volume="homey-node:/node_module:rw"`);
+  out.push(`--volume="homey-node:/node_modules:rw"`);
   return out;
 }
 

@@ -148,8 +148,6 @@ export class LogViewerPanelManager {
         this.memTimer = undefined;
       }
       this._setMemPeriod(this.MEM_SLOW_MS);
-      // quiet
-      await vscode.commands.executeCommand('homey.logging.openViewer');
     }
     this.panel.reveal(undefined, true);
     // quiet

@@ -12,7 +12,7 @@ export type TreeNode = {
   selected?: boolean;
 };
 
-export type SectionItem = { id: string; label: string; desc?: string };
+export type SectionItem = { id: string; label: string; desc?: string; disabled?: boolean };
 export type SectionDTO = { title: string; items: SectionItem[] };
 
 export type PanelStatePersist = {

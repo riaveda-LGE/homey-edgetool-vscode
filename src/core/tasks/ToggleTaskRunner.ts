@@ -13,7 +13,7 @@ export class ToggleTaskRunner {
 
   constructor(private varName: 'HOMEY_APP_LOG' | 'HOMEY_DEV_TOKEN', private enable: boolean) {
     // ✅ 토글 존재 체크/삭제는 "중간 문구" 기준(값/백슬래시 등은 무시)
-    this.line = `-e ${varName}=1`;
+    this.line = `--env="${varName}=1"`;
     this.rx = varName; // grep -E 로 중간 포함 매칭
   }
 
