@@ -24,11 +24,12 @@ export class HostController {
     return String(s).replace(/'/g, `'\\''`);
   }
   private wrap(cmd: string) {
-    // go 프로젝트와 동일하게: ADB에서는 -l 금지(로그인 쉘 이슈)
+    // ✅ ADB: 여기서는 절대 감싸지 않는다(이중 래핑 방지). adbClient.adbShell()이 단 한 번만 감쌈.
+    // ✅ SSH: 기존대로 로그인 셸(-lc)로 감싼다.
     const flat = cmd.replace(/\n/g, ' ').trim();
     const t = this.cm.getSnapshot()?.active?.type;
-    if (t === 'ADB') return `sh -c '${this.sq(flat)}'`; // ✅ ADB
-    return `sh -lc '${this.sq(flat)}'`; // ✅ SSH
+    if (t === 'ADB') return flat;
+    return `sh -lc '${this.sq(flat)}'`;
   }
   private normLocal(p: string) {
     return p.replace(/\\/g, '/');
@@ -42,31 +43,30 @@ export class HostController {
   async execOut(cmd: string) {
     const wrapped = this.wrap(cmd);
     log.debug('[debug] execOut', { transport: this.cm.getSnapshot()?.active?.type, wrapped });
-    const { code } = await this.cm.run(wrapped);
-    return { code, stdout: '', stderr: '' };
+    const { code, stdout, stderr } = await this.cm.run(wrapped);
+    return { code, stdout, stderr };
   }
 
   @measure()
   async statType(absPath: string): Promise<'FILE' | 'DIR' | 'NONE'> {
-    // -d 우선 → 나머지는 -e(파일/링크 포함)로 FILE 취급
+    // BusyBox/임베디드 안전: -e 대신 세부 타입(-f/-L/-h/-c/-b/-p/-S) 사용
+    const rp = absPath;
     const script =
-      `if [ -d "${absPath}" ]; then echo DIR; ` +
-      `elif [ -e "${absPath}" ]; then echo FILE; else echo NONE; fi`;
+      `if [ -d "${rp}" ]; then echo DIR; ` +
+      `elif [ -f "${rp}" ] || [ -L "${rp}" ] || [ -h "${rp}" ] || [ -c "${rp}" ] || [ -b "${rp}" ] || [ -p "${rp}" ] || [ -S "${rp}" ]; then echo FILE; ` +
+      `else echo NONE; fi`;
     const wrapped = this.wrap(script);
     log.debug('[debug] statType: request', {
       path: absPath,
+      resolved: rp,
       transport: this.cm.getSnapshot()?.active?.type,
       wrapped,
     });
-
-    let kind: 'FILE' | 'DIR' | 'NONE' = 'NONE';
-    await this.cm.stream(wrapped, (line) => {
-      const t = String(line).trim();
-      if (t === 'FILE' || t === 'DIR' || t === 'NONE') {
-        kind = t;
-        log.debug('[debug] statType: response', { path: absPath, kind: t });
-      }
-    });
+    const { stdout, stderr } = await this.cm.run(wrapped);
+    const out = String(stdout || '').trim();
+    const kind: 'FILE' | 'DIR' | 'NONE' =
+      out === 'FILE' || out === 'DIR' || out === 'NONE' ? (out as any) : 'NONE';
+    log.debug('[debug] statType: response', { stdout: out, stderr, kind });
     return kind;
   }
 
@@ -83,10 +83,12 @@ export class HostController {
     let root = '/lg_rw/var/lib/docker';
     const wrapped = this.wrap(`docker info -f "{{.DockerRootDir}}" 2>/dev/null || true`);
     log.debug('[debug] getDockerRoot: request', { wrapped });
-    await this.cm.stream(wrapped, (line) => {
-      const t = String(line).trim();
-      if (t && t !== 'null') root = t;
-    });
+    const { stdout } = await this.cm.run(wrapped);
+    const t = String(stdout || '')
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .find(Boolean);
+    if (t && t !== 'null') root = t;
     log.debug('[debug] getDockerRoot: resolved', { root });
     return root;
   }

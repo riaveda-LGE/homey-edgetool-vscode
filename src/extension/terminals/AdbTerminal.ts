@@ -24,8 +24,12 @@ export class AdbPtyTerminal implements vscode.Pseudoterminal {
 
     try {
       this.proc = child_process.spawn(exe, args, { stdio: 'pipe', windowsHide: true });
+      // 입력 인코딩 명시
+      this.proc.stdin.setDefaultEncoding('utf8');
     } catch (e) {
-      this.writeEmitter.fire(`\r\n[ADB] spawn 실패: ${e instanceof Error ? e.message : String(e)}\r\n`);
+      this.writeEmitter.fire(
+        `\r\n[ADB] spawn 실패: ${e instanceof Error ? e.message : String(e)}\r\n`,
+      );
       this.close();
       return;
     }
@@ -62,7 +66,13 @@ export class AdbPtyTerminal implements vscode.Pseudoterminal {
 
   handleInput(data: string): void {
     try {
-      this.proc?.stdin.write(data);
+      // VS Code는 Enter를 보통 '\r'로 보냄 → 셸은 '\n'을 요구
+      // '\r\n' → '\n', 단일 '\r' → '\n' 로 정규화
+      const normalized = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      // 기본 제어키 전달 (필요 시 확장 가능)
+      // - Ctrl+C: \x03,  Backspace: \x7f or \b  등은 그대로 패스
+      this.proc?.stdin.write(normalized, 'utf8');
     } catch {}
   }
 

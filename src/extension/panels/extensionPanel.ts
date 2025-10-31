@@ -1,7 +1,12 @@
 // === src/extension/panels/extensionPanel.ts ===
 import * as vscode from 'vscode';
 
-import { readEdgePanelState, writeEdgePanelState, resolveWorkspaceInfo } from '../../core/config/userdata.js';
+import {
+  readEdgePanelState,
+  resolveWorkspaceInfo,
+  writeEdgePanelState,
+} from '../../core/config/userdata.js';
+import { getStatusLiteFromDir } from '../../core/controller/GitController.js';
 import {
   addLogSink,
   getLogger,
@@ -15,7 +20,6 @@ import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import { EdgePanelActionRouter, type IEdgePanelActionRouter } from './EdgePanelActionRouter.js';
 import { createExplorerBridge, type ExplorerBridge } from './explorerBridge.js';
 import { LogViewerPanelManager } from './LogViewerPanelManager.js';
-import { getStatusLiteFromDir } from '../../core/controller/GitController.js';
 
 interface EdgePanelState {
   version: string;
@@ -360,14 +364,10 @@ export class EdgePanelProvider implements vscode.WebviewViewProvider {
   }
   @measure()
   public async startFileMerge(dir: string) {
-    this.log.debug('[debug] EdgePanelProvider startFileMerge: start');
     await this._logViewer?.startFileMerge(dir);
-    this.log.debug('[debug] EdgePanelProvider startFileMerge: end');
   }
   public stopLogging() {
-    this.log.debug('[debug] EdgePanelProvider stopLogging: start');
     this._logViewer?.stop();
-    this.log.debug('[debug] EdgePanelProvider stopLogging: end');
   }
 
   @measure()

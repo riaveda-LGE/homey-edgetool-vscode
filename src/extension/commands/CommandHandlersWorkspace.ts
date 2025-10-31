@@ -8,16 +8,17 @@ import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 import {
-  RAW_DIR_NAME,
+  GITIGNORE_TEMPLATE_REL,
   PARSER_CONFIG_REL,
   PARSER_README_REL,
   PARSER_README_TEMPLATE_REL,
   PARSER_TEMPLATE_REL,
-  GITIGNORE_TEMPLATE_REL,
+  RAW_DIR_NAME,
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 import { migrateParserConfigIfNeeded } from '../setup/parserConfigSeeder.js';
+import { ensureUserConfigExists, migrateUserConfigIfNeeded } from '../setup/userConfigSeeder.js';
 
 const log = getLogger('cmd.workspace');
 const execFile = promisify(execFileCb);
@@ -92,7 +93,18 @@ export class CommandHandlersWorkspace {
         log.debug('no raw folder to remove in new workspace');
       }
 
-      // .config 마이그레이션(새 ws에 없으면 이전 ws의 .config 복사, 둘 다 없으면 템플릿 시드)
+      // .config 마이그레이션
+      //   1) 사용자 구성(custom_user_config.json) 먼저 복사/시드
+      //   2) 파서 설정(custom_log_parser.json, README) 복사/시드(+이전 .config 정리)
+      try {
+        await migrateUserConfigIfNeeded(
+          prevInfo.wsDirUri,
+          nextInfo.wsDirUri,
+          this.context!.extensionUri,
+        );
+      } catch (e: any) {
+        log.warn(`user config migrate skipped: ${e?.message ?? e}`);
+      }
       try {
         await migrateParserConfigIfNeeded(
           prevInfo.wsDirUri,
@@ -219,7 +231,7 @@ export class CommandHandlersWorkspace {
     log.debug('[debug] CommandHandlersWorkspace togglePerformanceMonitoring: end');
   }
 
-    @measure()
+  @measure()
   async initWorkspace() {
     log.debug('[debug] CommandHandlersWorkspace initWorkspace: start');
     if (!this.context) return log.error('[error] internal: no extension context');
@@ -288,6 +300,13 @@ export class CommandHandlersWorkspace {
       vscode.window.showInformationMessage(
         'Parser 템플릿/README가 재생성되었습니다 (.config/custom_log_parser.json, custom_log_parser_readme.md).',
       );
+
+      // 사용자 구성 파일 보장(.config/custom_user_config.json) — 이미 있으면 건너뜀
+      try {
+        await ensureUserConfigExists(this.context, this.context.extensionUri);
+      } catch (e: any) {
+        log.warn(`ensureUserConfigExists skipped: ${e?.message ?? e}`);
+      }
     } catch (e: any) {
       log.error('initWorkspace failed', e);
       vscode.window.showErrorMessage('Workspace 초기화 실패: ' + (e?.message ?? String(e)));

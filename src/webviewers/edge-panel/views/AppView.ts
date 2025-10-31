@@ -118,6 +118,9 @@ export class AppView {
           b.className = 'btn';
           b.title = it.desc || it.label;
           b.textContent = it.label;
+          // Busy-lock 메시지 처리를 위해 식별자 data 속성 부여
+          b.dataset.btnId = it.id;
+          if (it.disabled) b.disabled = true; // ← disabled 반영
           if (it.id === 'panel.toggleLogs' && toggles.showLogs) b.classList.add('btn-on');
           if (it.id === 'panel.toggleExplorer' && toggles.showExplorer) b.classList.add('btn-on');
           b.addEventListener('click', () => this.onControlsClick(it.id));

@@ -1,9 +1,17 @@
-import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
+
 import { DEFAULT_TRANSFER_TIMEOUT_MS } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
+// ✅ ADB 전송 경로에서 사용하는 헬퍼들 가져오기
+import {
+  adbListFilesRec,
+  adbMkdirP,
+  type AdbOptions,
+  adbPullFile,
+  adbPushFile,
+} from '../connection/adbClient.js';
 import type { IConnectionManager } from '../connection/ConnectionManager.js';
 import { runCommandLine } from '../connection/ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
@@ -42,10 +50,11 @@ export class FileTransferService implements IFileTransferService {
     return String(s).replace(/'/g, `'\\''`);
   }
   private wrap(cmd: string) {
-    // ConnectionManager.run/stream 과 동일한 규칙 적용(ADB: login shell 금지)
+    // ADB: 이 레벨에선 감싸지 않음(이중 래핑 방지). ConnectionManager.run → adbShell()에서 한 번만 감쌈.
+    // SSH: 로그인 셸(-lc)
     const flat = cmd.replace(/\n/g, ' ').trim();
     const t = this.cm.getSnapshot()?.active?.type;
-    if (t === 'ADB') return `sh -c '${this.sq(flat)}'`;
+    if (t === 'ADB') return flat;
     return `sh -lc '${this.sq(flat)}'`;
   }
   private async remoteRun(cmd: string) {
@@ -151,7 +160,83 @@ export class FileTransferService implements IFileTransferService {
     // 로컬 runCommandLine용: 이스케이프 후 큰따옴표로 감쌈
     return list.map((p) => `"${String(p).replace(/"/g, '\\"')}"`).join(' ');
   }
+  // ───────────────────────────────────────────────────────────
+  // ADB 분기 헬퍼
+  // ───────────────────────────────────────────────────────────
+  private isAdb(): boolean {
+    return (this.cm.getSnapshot()?.active?.type ?? '') === 'ADB';
+  }
+  private getAdbOpts(): AdbOptions {
+    const active = this.cm.getSnapshot()?.active as any;
+    const serial = active?.details?.deviceID as string | undefined;
+    return { serial, timeoutMs: DEFAULT_TRANSFER_TIMEOUT_MS };
+  }
 
+  // ───────────────── ADB 업로드(파일 단위) ────────────────────
+  private async uploadViaAdb(localDir: string, remoteDir: string, paths?: string[]) {
+    const safeList = this.buildLocalTarList(localDir, paths); // 상대경로만
+    // '.' 이면 전체 walk
+    const relFiles: string[] = [];
+    const walk = async (absDir: string, base: string) => {
+      const ents = await fsp.readdir(absDir, { withFileTypes: true });
+      for (const e of ents) {
+        const abs = path.join(absDir, e.name);
+        const rel = this.toPosix(path.relative(base, abs));
+        if (e.isDirectory()) await walk(abs, base);
+        else if (e.isFile()) relFiles.push(rel);
+      }
+    };
+    if (safeList.length === 1 && safeList[0] === '.') {
+      await walk(localDir, localDir);
+    } else {
+      for (const rel of safeList) {
+        const abs = path.join(localDir, rel);
+        const st = await fsp.stat(abs);
+        if (st.isDirectory()) await walk(abs, abs.replace(/[\\/]+$/, ''));
+        else if (st.isFile()) relFiles.push(rel);
+      }
+    }
+    const adbOpts = this.getAdbOpts();
+    await this.remoteRun(`mkdir -p '${this.sq(remoteDir)}'`);
+    for (const rel of relFiles) {
+      const localFs = path.join(localDir, rel);
+      const remoteFs = path.posix.join(remoteDir, rel);
+      await adbMkdirP(path.posix.dirname(remoteFs), adbOpts);
+      await adbPushFile(localFs, remoteFs, adbOpts);
+    }
+  }
+
+  // ───────────────── ADB 다운로드(파일 단위) ──────────────────
+  private async downloadViaAdb(remoteDir: string, localDir: string, paths?: string[]) {
+    const adbOpts = this.getAdbOpts();
+    let relFiles: string[] = [];
+    const safe = this.buildRemoteTarList(paths);
+    if (safe.length === 1 && safe[0] === '.') {
+      relFiles = await adbListFilesRec(remoteDir, adbOpts);
+    } else {
+      const expanded: string[] = [];
+      for (const rel of safe) {
+        const rp = `${remoteDir.replace(/\/+$/, '')}/${rel}`;
+        const { stdout } = await this.cm.run(
+          this.wrap(`[ -d "${rp}" ] && echo DIR || { [ -f "${rp}" ] && echo FILE || echo NONE; }`),
+        );
+        const kind = (stdout || '').trim();
+        if (kind === 'FILE') expanded.push(rel);
+        else if (kind === 'DIR') {
+          const subs = await adbListFilesRec(rp, adbOpts);
+          for (const s of subs) expanded.push(this.toPosix(path.posix.join(rel, s)));
+        }
+      }
+      relFiles = expanded;
+    }
+    await fsp.mkdir(localDir, { recursive: true });
+    for (const rel of relFiles) {
+      const remoteFs = path.posix.join(remoteDir, rel);
+      const localFs = path.join(localDir, rel);
+      await fsp.mkdir(path.dirname(localFs), { recursive: true });
+      await adbPullFile(remoteFs, localFs, adbOpts);
+    }
+  }
   // ───────────────────────────────────────────────────────────
 
   @measure()
@@ -161,6 +246,12 @@ export class FileTransferService implements IFileTransferService {
     opts?: { timeoutMs?: number; signal?: AbortSignal; paths?: string[] },
   ) {
     this.log.debug('[debug] FileTransferService uploadViaTarBase64: start');
+    // ADB면 tar/base64 경로를 쓰지 않고 adbkit 스트림으로 전환
+    if (this.isAdb()) {
+      await this.uploadViaAdb(localDir, remoteDir, opts?.paths);
+      this.log.info(`upload(adb): ${localDir} -> ${remoteDir}`);
+      return;
+    }
     const timeoutMs = opts?.timeoutMs ?? DEFAULT_TRANSFER_TIMEOUT_MS;
     try {
       // 1) tar 생성 (로컬)
@@ -169,7 +260,10 @@ export class FileTransferService implements IFileTransferService {
       const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'edge-up-'));
       const tarPath = path.join(tmpDir, 'payload.tar');
       try {
-        await runCommandLine(`tar -C "${localDir}" -cf "${tarPath}" ${list}`, { timeoutMs, signal: opts?.signal });
+        await runCommandLine(`tar -C "${localDir}" -cf "${tarPath}" ${list}`, {
+          timeoutMs,
+          signal: opts?.signal,
+        });
         const buf = await fsp.readFile(tarPath);
         const b64 = buf.toString('base64');
         const chunks = this.chunkString(b64, 48 * 1024);
@@ -184,10 +278,14 @@ export class FileTransferService implements IFileTransferService {
           await this.remoteRun(this.printfAppendCmd(remoteTmp, ch));
         }
         // 3) decode & extract
-        await this.remoteRun(`base64 -d '${this.sq(remoteTmp)}' | tar -C '${this.sq(remoteDir)}' -xpf - && rm -f '${this.sq(remoteTmp)}'`);
+        await this.remoteRun(
+          `base64 -d '${this.sq(remoteTmp)}' | tar -C '${this.sq(remoteDir)}' -xpf - && rm -f '${this.sq(remoteTmp)}'`,
+        );
         this.log.info(`upload: ${localDir} -> ${remoteDir} (${safeList.join(', ') || '.'})`);
       } finally {
-        try { await fsp.rm(tmpDir, { recursive: true, force: true }); } catch {}
+        try {
+          await fsp.rm(tmpDir, { recursive: true, force: true });
+        } catch {}
       }
       this.log.debug('[debug] FileTransferService uploadViaTarBase64: end');
     } catch (e) {
@@ -206,6 +304,12 @@ export class FileTransferService implements IFileTransferService {
     opts?: { timeoutMs?: number; signal?: AbortSignal; paths?: string[] },
   ) {
     this.log.debug('[debug] FileTransferService downloadViaTarBase64: start');
+    //  ADB면 tar/base64 경로 대신 adbkit 스트림
+    if (this.isAdb()) {
+      await this.downloadViaAdb(remoteDir, localDir, opts?.paths);
+      this.log.info(`download(adb): ${remoteDir} -> ${localDir}`);
+      return;
+    }
     try {
       const timeoutMs = opts?.timeoutMs ?? DEFAULT_TRANSFER_TIMEOUT_MS;
 
@@ -231,10 +335,15 @@ export class FileTransferService implements IFileTransferService {
       try {
         await fsp.writeFile(tarPath, Buffer.from(b64, 'base64'));
         await fsp.mkdir(localDir, { recursive: true });
-        await runCommandLine(`tar -C "${localDir}" -xpf "${tarPath}"`, { timeoutMs, signal: opts?.signal });
+        await runCommandLine(`tar -C "${localDir}" -xpf "${tarPath}"`, {
+          timeoutMs,
+          signal: opts?.signal,
+        });
         this.log.info(`[download] ${remoteDir} -> ${localDir} (${safeList.join(', ') || '.'})`);
       } finally {
-        try { await fsp.rm(tmpDir, { recursive: true, force: true }); } catch {}
+        try {
+          await fsp.rm(tmpDir, { recursive: true, force: true });
+        } catch {}
       }
       this.log.debug('[debug] FileTransferService downloadViaTarBase64: end');
     } catch (e) {

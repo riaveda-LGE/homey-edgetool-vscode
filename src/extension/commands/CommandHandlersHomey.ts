@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { HomeyController } from '../../core/controller/HomeyController.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
+import { getEnvToggleEnabled, getMountState } from '../../core/state/DeviceState.js';
 
 const log = getLogger('cmd.homey');
 
@@ -22,49 +23,47 @@ export class CommandHandlersHomey {
     }
   }
 
+  // ── 새 토글 핸들러들 ──────────────────────────────────────────────
   @measure()
-  async homeyMount() {
-    log.debug('[debug] CommandHandlersHomey homeyMount: start');
+  async homeyVolumeToggle() {
+    log.debug('[debug] CommandHandlersHomey homeyVolumeToggle: start');
     try {
+      const state = await getMountState();
       const controller = new HomeyController();
-      await controller.mount();
-      log.debug('[debug] CommandHandlersHomey homeyMount: end');
+      if (state === 'mounted') {
+        await controller.unmount();
+      } else {
+        await controller.mount();
+      }
+      log.debug('[debug] CommandHandlersHomey homeyVolumeToggle: end');
     } catch (e) {
-      log.error('homeyMount failed', e as any);
+      log.error('homeyVolumeToggle failed', e as any);
     }
   }
 
   @measure()
-  async homeyUnmount() {
-    log.debug('[debug] CommandHandlersHomey homeyUnmount: start');
+  async homeyAppLogToggle() {
+    log.debug('[debug] CommandHandlersHomey homeyAppLogToggle: start');
     try {
+      const enabled = await getEnvToggleEnabled('HOMEY_APP_LOG');
       const controller = new HomeyController();
-      await controller.unmount();
-      log.debug('[debug] CommandHandlersHomey homeyUnmount: end');
+      await controller.toggleAppLog(!enabled);
+      log.debug('[debug] CommandHandlersHomey homeyAppLogToggle: end');
     } catch (e) {
-      log.error('homeyUnmount failed', e as any);
+      log.error('homeyAppLogToggle failed', e as any);
     }
   }
 
   @measure()
-  async homeyDevToken() {
-    log.debug('[debug] CommandHandlersHomey homeyDevToken: start');
+  async homeyDevTokenToggle() {
+    log.debug('[debug] CommandHandlersHomey homeyDevTokenToggle: start');
     try {
-      // DevToken은 아직 구현되지 않음 - stub
-      log.debug('[debug] CommandHandlersHomey homeyDevToken: end');
+      const enabled = await getEnvToggleEnabled('HOMEY_DEV_TOKEN');
+      const controller = new HomeyController();
+      await controller.toggleDevToken(!enabled);
+      log.debug('[debug] CommandHandlersHomey homeyDevTokenToggle: end');
     } catch (e) {
-      log.error('homeyDevToken failed', e as any);
-    }
-  }
-
-  @measure()
-  async homeyConsoleToggle() {
-    log.debug('[debug] CommandHandlersHomey homeyConsoleToggle: start');
-    try {
-      // Console toggle은 아직 구현되지 않음 - stub
-      log.debug('[debug] CommandHandlersHomey homeyConsoleToggle: end');
-    } catch (e) {
-      log.error('homeyConsoleToggle failed', e as any);
+      log.error('homeyDevTokenToggle failed', e as any);
     }
   }
 
@@ -72,7 +71,6 @@ export class CommandHandlersHomey {
   async homeyDockerUpdate() {
     log.debug('[debug] CommandHandlersHomey homeyDockerUpdate: start');
     try {
-      // Docker update는 아직 구현되지 않음 - stub
       log.debug('[debug] CommandHandlersHomey homeyDockerUpdate: end');
     } catch (e) {
       log.error('homeyDockerUpdate failed', e as any);

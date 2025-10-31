@@ -17,7 +17,11 @@ export type HostConfig =
     }
   | { id: string; type: 'adb'; serial?: string; timeoutMs?: number };
 
-export type RunResult = { code: number | null };
+export type RunResult = {
+  code: number | null;
+  stdout: string;
+  stderr: string;
+};
 
 export interface IConnectionManager {
   connect(): Promise<void>; // 유지: (호환) 경량 프리체크
@@ -137,7 +141,6 @@ export class ConnectionManager implements IConnectionManager {
   @measure()
   async run(cmd: string, args: string[] = []): Promise<RunResult> {
     const via = this.active?.type ?? 'NONE';
-    this.log.debug(`[debug] ConnectionManager.run: start`);
     try {
       const full = [cmd, ...args].join(' ').trim();
       if (!this.active) {
@@ -150,16 +153,16 @@ export class ConnectionManager implements IConnectionManager {
       if (cfg.type === 'adb') {
         this.log.debug('[debug] run(ADB) exec', { serial: cfg.serial, full });
         const res = await adbShell(full, { serial: cfg.serial, timeoutMs: cfg.timeoutMs });
-        return { code: res.code };
+        return { code: res.code, stdout: res.stdout, stderr: res.stderr };
       }
-      const code = await sshRun(full, {
+      const { code, stdout, stderr } = await sshRun(full, {
         host: (cfg as any).host,
         port: (cfg as any).port,
         user: (cfg as any).user,
         password: (cfg as any).password,
         timeoutMs: (cfg as any).timeoutMs,
       });
-      return { code };
+      return { code, stdout, stderr };
     } catch (e) {
       this.log.error(`[debug] ConnectionManager.run: error`, {
         message: e instanceof Error ? e.message : String(e),
