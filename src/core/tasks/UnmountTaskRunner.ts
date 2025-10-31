@@ -22,8 +22,13 @@ export class UnmountTaskRunner {
     steps.push({
       name: 'READ_SERVICE_FILE',
       run: async (ctx: any) => {
-        ctx.bag.svcPath = await svc.resolveServicePath();
+        const p = await svc.resolveServicePath();
+        ctx.bag.svcPath = p;
+        ctx.bag.workPath = await svc.stageToWorkCopy(p);
+        this.log.info(`[unmount] unit=${unit} file=${ctx.bag.svcPath}`);
         ctx.bag.hashBefore = await svc.computeHash(ctx.bag.svcPath);
+        // 볼륨 삭제 대상 (서비스 파일에서 제거하는 토큰과 동일)
+        ctx.bag.volumes = [...this.deletePatterns];
         return 'ok';
       },
     });
@@ -31,10 +36,11 @@ export class UnmountTaskRunner {
     steps.push({
       name: 'DRY_RUN_DIFF',
       run: async (ctx: any) => {
-        // 미리 어떤 라인이 지워질지 미리보기(정규식 매칭 라인 출력)
-        const path = ctx.bag.svcPath as string;
+        // BusyBox 호환: nl/sed 조합 대신 grep -nE 로 미리보기
+        const path = ctx.bag.workPath as string;
         const patterns = this.deletePatterns;
-        const cmd = `sh -lc 'nl -ba "${path}" | sed -n -E ${patterns.map((p) => q(`/${p}/p`)).join(' ')}'`;
+        const cmd =
+          `sh -lc 'grep -nE ${patterns.map((p) => `-e ${q(p)}`).join(' ')} -- ${q(path)} 2>/dev/null || true'`;
         const { stdout } = await connectionManager.run(cmd);
         const lines = String(stdout || '').split(/\r?\n/).filter(Boolean);
         lines.forEach((ln) => this.log.info('[unmount.dryrun] ' + ln));
@@ -43,10 +49,17 @@ export class UnmountTaskRunner {
       },
     });
 
-    steps.push({ name: 'BACKUP', run: async (ctx: any) => { ctx.bag.backup = await svc.backup(ctx.bag.svcPath); return 'ok'; } });
+    steps.push({
+      name: 'BACKUP',
+      run: async (ctx: any) => {
+        await this.guard.ensureFsRemountRW('/');
+        ctx.bag.backup = await svc.backup(ctx.bag.svcPath);
+        return 'ok';
+      }
+    });
 
     steps.push({
-      name: 'STOP_CONTAINERS',
+      name: 'STOP_AND_REMOVE_CONTAINERS',
       run: async () => {
         await this.guard.stopContainersByMatch('homey', 3, 2000);
         const ok = await this.guard.waitForNoContainers('homey', 15_000, 1000);
@@ -59,10 +72,26 @@ export class UnmountTaskRunner {
       name: 'APPLY_PATCH',
       run: async (ctx: any) => {
         await this.guard.ensureFsRemountRW('/');
-        await svc.deleteByRegexPatterns(ctx.bag.svcPath, this.deletePatterns);
-        await this.guard.waitForServiceFileChange(ctx.bag.svcPath, 8000, 500);
+        await svc.deleteByRegexPatterns(ctx.bag.workPath, this.deletePatterns);
+        await svc.replaceOriginalWith(ctx.bag.svcPath, ctx.bag.workPath);
+        const changed = await this.guard.waitForServiceFileChange(ctx.bag.svcPath, 8000, 500, ctx.bag.hashBefore);
+        if (!changed) {
+          this.log.error(`[unmount] service file did not change: ${ctx.bag.svcPath}`);
+          //throw new Error('patch not applied (no file change detected)');
+        }
         return 'ok';
       },
+    });
+    // 서비스 파일 패치 후 실제 Docker 볼륨을 제거
+    steps.push({
+      name: 'REMOVE_VOLUMES',
+      run: async (ctx: any) => {
+        const vols = (ctx.bag.volumes as string[]).filter(Boolean);
+        if (!vols.length) return 'ok';
+        const ok = await this.guard.removeVolumesByNames(vols, 3, 1500);
+        return ok ? 'ok' : 'retry';
+      },
+      maxIterations: 2,
     });
 
     steps.push({ name: 'DAEMON_RELOAD', run: async () => { await svc.daemonReload(); return 'ok'; } });
@@ -80,27 +109,30 @@ export class UnmountTaskRunner {
       name: 'POST_VERIFY',
       run: async (ctx: any) => {
         const path = ctx.bag.svcPath as string;
-        // 삭제 패턴이 더 이상 존재하지 않아야 함
+        // ✅ 검증: homey-app, homey-node "중간 문구"가 더 이상 존재하면 실패
         for (const rx of this.deletePatterns) {
           const ok = await svc.contains(path, rx);
-          if (ok) return 'fail';
+          if (ok) {
+            this.log.error(`[unmount.verify] token still exists: ${rx}`);
+            throw new Error('verification failed (token still present)');
+          }
         }
         return 'ok';
       },
     });
 
-    steps.push({ name: 'CLEANUP', run: async () => 'ok' });
+    steps.push({ name: 'CLEANUP', run: async () => { await svc.cleanupWorkdir(); return 'ok'; } });
 
     const wf = new WorkflowEngine(steps);
     await wf.runAll(`unmount-${Date.now()}`);
   }
 }
 
+// ✅ 삭제 패턴은 mount 대상 2개만: env 토글(-e ...)은 여기서 건드리지 않음
 const DEFAULT_PATTERNS = [
-  String.raw`^\s*--volume="homey-app:[^"]+:[^"]+"\s*\\?\s*$`,
-  String.raw`^\s*--volume="homey-node:[^"]+:[^"]+"\s*\\?\s*$`,
-  String.raw`^\s*-e\s+HOMEY_APP_LOG=1\s*\\?\s*$`,
-  String.raw`^\s*-e\s+HOMEY_DEV_TOKEN=1\s*\\?\s*$`,
+  String.raw`homey-app`,
+  String.raw`homey-node`,
 ];
 
-function q(s: string) { return `'${String(s).replace(/'/g, `'''`)}'`; }
+// 안전 싱글쿼트: ' -> '\'' 로 치환
+function q(s: string) { return "'" + String(s).replace(/'/g, `'\\''`) + "'"; }

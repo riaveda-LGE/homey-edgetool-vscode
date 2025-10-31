@@ -9,6 +9,7 @@ import { LOG_LEVEL_DEFAULT, RAW_DIR_NAME } from '../shared/const.js';
 import { PerfMonitorPanel } from './editors/PerfMonitorPanel.js';
 import { EdgePanelProvider, registerEdgePanelCommands } from './panels/extensionPanel.js';
 import { ensureParserConfigExists } from './setup/parserConfigSeeder.js';
+import { ensureUserConfigExists } from './setup/userConfigSeeder.js';
 import { checkLatestVersion } from './update/updater.js';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -83,6 +84,8 @@ export async function activate(context: vscode.ExtensionContext) {
       }
       // 1-2) 파서 설정 보장(.config/custom_log_parser.json 없으면 템플릿으로 시드; README도 함께 생성)
       await ensureParserConfigExists(context, context.extensionUri);
+      // 1-3) 사용자 Homey 서비스 구성 보장(.config/custom_user_config.json)
+      await ensureUserConfigExists(context, context.extensionUri);
 
       // 2) 버전/업데이트 체크 및 패널 등록
       const version = String((context.extension as any).packageJSON?.version ?? '0.0.0');

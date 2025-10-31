@@ -31,10 +31,11 @@ export class HomeyController {
   }
 
   @measure()
-  async mount(modes: Array<'pro'|'core'|'sdk'|'bridge'> = ['pro']) {
+  async mount() {
+    // ✅ 정책: homey-app + homey-node 둘 다 삽입
     log.debug('[debug] HomeyController mount: start');
     await this.ensureConnected();
-    const runner = new MountTaskRunner(modes);
+    const runner = new MountTaskRunner(); // default ['pro','core']
     await runner.run();
     log.debug('[debug] HomeyController mount: end');
   }

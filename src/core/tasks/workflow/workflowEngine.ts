@@ -43,6 +43,9 @@ export class WorkflowEngine {
             await sleep(1000 * Math.min(iter, 3)); // 가벼운 backoff
             continue;
           }
+         if (r === 'fail') {
+           throw new Error(`step returned fail: ${s.name}`);
+         }
           const nxt = s.next?.(r, ctx);
           if (typeof nxt === 'string') {
             const j = index.get(nxt);

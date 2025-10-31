@@ -17,7 +17,8 @@ export class RestartTaskRunner {
       name: 'RESTART_SERVICE',
       run: async () => {
         await svc.restart();
-        const ok = await this.guard.waitForUnitActive(unit, 30_000, 1500);
+        // edge-go: 첫 재시작 직후 서브상태 settling을 감안해 여유를 조금 준다
+        const ok = await this.guard.waitForUnitActive(unit, 35_000, 1500);
         return ok ? 'ok' : 'retry';
       },
       maxIterations: 3,

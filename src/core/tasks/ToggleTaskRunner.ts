@@ -12,8 +12,9 @@ export class ToggleTaskRunner {
   private line: string;
 
   constructor(private varName: 'HOMEY_APP_LOG' | 'HOMEY_DEV_TOKEN', private enable: boolean) {
+    // ✅ 토글 존재 체크/삭제는 "중간 문구" 기준(값/백슬래시 등은 무시)
     this.line = `-e ${varName}=1`;
-    this.rx = String.raw`^\s*-e\s+${varName}=1\s*\\?\s*$`;
+    this.rx = varName; // grep -E 로 중간 포함 매칭
   }
 
   async run() {
@@ -26,8 +27,12 @@ export class ToggleTaskRunner {
     steps.push({
       name: 'READ_SERVICE_FILE',
       run: async (ctx: any) => {
-        ctx.bag.svcPath = await svc.resolveServicePath();
-        ctx.bag.exists = await svc.contains(ctx.bag.svcPath, this.rx);
+        const p = await svc.resolveServicePath();
+        ctx.bag.svcPath = p;
+        ctx.bag.workPath = await svc.stageToWorkCopy(p);
+        this.log.info(`[toggle ${this.varName}] unit=${unit} file=${ctx.bag.svcPath}`);
+        ctx.bag.exists = await svc.contains(ctx.bag.workPath, this.rx);
+        ctx.bag.hashBefore = await svc.computeHash(p);
         return 'ok';
       },
     });
@@ -41,19 +46,34 @@ export class ToggleTaskRunner {
       },
     });
 
-    steps.push({ name: 'BACKUP', run: async (ctx: any) => { ctx.bag.backup = await svc.backup(ctx.bag.svcPath); return 'ok'; } });
+    steps.push({
+      name: 'BACKUP',
+      run: async (ctx: any) => {
+        // edge-go: 변경 전 루트 RW 리마운트
+        await this.guard.ensureFsRemountRW('/');
+        ctx.bag.backup = await svc.backup(ctx.bag.svcPath);
+        return 'ok';
+      }
+    });
 
     steps.push({
       name: 'APPLY_PATCH',
       run: async (ctx: any) => {
         const path = ctx.bag.svcPath as string;
+        const work = ctx.bag.workPath as string;
         if (this.enable) {
-          if (!ctx.bag.exists) await svc.insertAfterExecStart(path, this.line);
+          if (!ctx.bag.exists) await svc.insertAfterExecStart(work, this.line);
         } else {
-          await svc.deleteByRegexPatterns(path, [this.rx]);
+          await svc.deleteByRegexPatterns(work, [this.rx]); // varName 토큰 포함 줄 삭제
         }
-        await this.guard.waitForServiceFileChange(path, 8000, 500);
-        return 'ok';
+         await this.guard.ensureFsRemountRW('/');
+        await svc.replaceOriginalWith(path, work);
+        const changed = await this.guard.waitForServiceFileChange(path, 8000, 500, ctx.bag.hashBefore);
+         if (!changed) {
+           this.log.error(`[toggle ${this.varName}] service file did not change: ${path}`);
+           throw new Error('patch not applied (no file change detected)');
+         }
+         return 'ok';
       },
     });
 
@@ -72,10 +92,17 @@ export class ToggleTaskRunner {
       name: 'POST_VERIFY',
       run: async (ctx: any) => {
         const path = ctx.bag.svcPath as string;
-        const now = await svc.contains(path, this.rx);
-        return (this.enable ? now : !now) ? 'ok' : 'fail';
+        const now = await svc.contains(path, this.rx); // 중간 문구 존재 여부
+        const ok = this.enable ? now : !now;
+         if (!ok) {
+           this.log.error(`[toggle ${this.varName}] verification failed`);
+           throw new Error('verification failed (env toggle mismatch)');
+         }
+         return 'ok';
       },
     });
+
+    steps.push({ name: 'CLEANUP', run: async () => { await svc.cleanupWorkdir(); return 'ok'; } });
 
     const wf = new WorkflowEngine(steps);
     await wf.runAll(`toggle-${this.varName}-${Date.now()}`);

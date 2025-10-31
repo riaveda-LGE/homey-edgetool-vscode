@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import { HomeyController } from '../../core/controller/HomeyController.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import type { Mode } from '../../core/tasks/MountTaskRunner.js';
 import { discoverHomeyServiceName } from '../../core/service/serviceDiscovery.js';
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { USERCFG_REL } from '../../shared/const.js';
@@ -28,21 +27,11 @@ export class CommandHandlersHomey {
 
   @measure()
   async homeyMount() {
+    // ✅ 정책 변경: QuickPick 없이 바로 두 볼륨(pro/core) 삽입
     log.debug('[debug] CommandHandlersHomey homeyMount: start');
     try {
-      const pick = await vscode.window.showQuickPick(
-        [
-          { label: 'pro', picked: true },
-          { label: 'core' },
-          { label: 'sdk' },
-          { label: 'bridge' },
-        ],
-        { title: '마운트할 대상(복수 선택 가능)', canPickMany: true, ignoreFocusOut: true },
-      );
-      if (!pick || pick.length === 0) return;
-      const modes = pick.map((p) => p.label as Mode);
       const controller = new HomeyController();
-      await controller.mount(modes);
+      await controller.mount(); // default: homey-app + homey-node
       log.debug('[debug] CommandHandlersHomey homeyMount: end');
     } catch (e) {
       log.error('homeyMount failed', e as any);
@@ -110,7 +99,6 @@ export class CommandHandlersHomey {
   @measure()
   async homeyEditServiceConfig() {
     try {
-      // 현재 워크스페이스의 사용자 구성 파일 열기
       const ctx = (vscode as any).extensions?.extensionContext as vscode.ExtensionContext | undefined;
       if (!ctx) { vscode.window.showErrorMessage('Extension context가 필요합니다.'); return; }
       const info = await resolveWorkspaceInfo(ctx);

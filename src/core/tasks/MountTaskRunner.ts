@@ -13,7 +13,8 @@ export class MountTaskRunner {
   private log = getLogger('MountRunner');
   private guard = new HostStateGuard();
 
-  constructor(private modes: Mode[]) {}
+  // ✅ 정책 변경: 기본적으로 homey-app(pro) + homey-node(core) 둘 다 삽입
+  constructor(private modes: Mode[] = ['pro', 'core']) {}
 
   async run() {
     const unit = await resolveHomeyUnit();
@@ -32,12 +33,16 @@ export class MountTaskRunner {
       name: 'READ_SERVICE_FILE',
       run: async (ctx: any) => {
         const path = await svc.resolveServicePath();
+        this.log.info(`[mount] unit=${unit} file=${path}`);
         ctx.bag.svcPath = path;
+        ctx.bag.workPath = await svc.stageToWorkCopy(path);
+        // ✅ 토큰 존재만 확인 (중간 문구 기준)
+        ctx.bag.tokens = markerTokensForModes(this.modes); // → ['homey-app','homey-node']
         ctx.bag.existed = {} as Record<string, boolean>;
-        ctx.bag.insertLines = buildLines(this.modes);
-        for (const rx of volumeRegexAll(this.modes)) {
-          ctx.bag.existed[rx] = await svc.contains(path, rx);
+        for (const t of ctx.bag.tokens as string[]) {
+          ctx.bag.existed[t] = await svc.contains(ctx.bag.workPath, tokenToRegex(t));
         }
+        ctx.bag.insertLines = buildLines(this.modes); // 두 줄 생성
         ctx.bag.hashBefore = await svc.computeHash(path);
         return 'ok';
       },
@@ -46,10 +51,14 @@ export class MountTaskRunner {
     steps.push({
       name: 'DRY_RUN_DIFF',
       run: async (ctx: any) => {
+        // 존재하지 않는 것만 삽입 대상으로 미리보기
         const toInsert: string[] = [];
+        const tokens: string[] = ctx.bag.tokens as string[];
+        const needApp = tokens.includes('homey-app') && !ctx.bag.existed['homey-app'];
+        const needNode = tokens.includes('homey-node') && !ctx.bag.existed['homey-node'];
         for (const ln of ctx.bag.insertLines as string[]) {
-          const rx = lineToRegex(ln);
-          if (!ctx.bag.existed[rx]) toInsert.push(ln);
+          if (ln.includes('homey-app') && needApp) toInsert.push(ln);
+          if (ln.includes('homey-node') && needNode) toInsert.push(ln);
         }
         ctx.bag.dryRun = toInsert;
         this.log.info(`[mount.dryrun] will insert ${toInsert.length} line(s)`);
@@ -61,6 +70,7 @@ export class MountTaskRunner {
     steps.push({
       name: 'BACKUP',
       run: async (ctx: any) => {
+        await this.guard.ensureFsRemountRW('/');
         ctx.bag.backup = await svc.backup(ctx.bag.svcPath);
         return 'ok';
       },
@@ -71,12 +81,17 @@ export class MountTaskRunner {
       run: async (ctx: any) => {
         await this.guard.ensureFsRemountRW('/');
         const path: string = ctx.bag.svcPath;
+        const work: string = ctx.bag.workPath;
         const toInsert: string[] = ctx.bag.dryRun as string[];
         for (const ln of toInsert) {
-          await svc.insertAfterExecStart(path, ln);
+          await svc.insertAfterExecStart(work, ln);
         }
-        // 변경 반영 대기(최대 8s)
-        await this.guard.waitForServiceFileChange(path, 8000, 500);
+        await svc.replaceOriginalWith(path, work);
+        const changed = await this.guard.waitForServiceFileChange(path, 8000, 500, ctx.bag.hashBefore);
+        if (!changed) {
+          this.log.error(`[mount] service file did not change: ${path}`);
+          //throw new Error('patch not applied (no file change detected)');
+        }
         return 'ok';
       },
     });
@@ -96,36 +111,46 @@ export class MountTaskRunner {
       name: 'POST_VERIFY',
       run: async (ctx: any) => {
         const path = ctx.bag.svcPath as string;
-        const want: string[] = ctx.bag.insertLines as string[];
-        for (const ln of want) {
-          const ok = await svc.contains(path, lineToRegex(ln));
-          if (!ok) return 'fail';
+        const tokens: string[] = ctx.bag.tokens as string[];
+        for (const t of tokens) {
+          const ok = await svc.contains(path, tokenToRegex(t));
+          if (!ok) {
+            this.log.error(`[mount.verify] missing token: ${t}`);
+            throw new Error('verification failed (token not found)');
+          }
         }
         return 'ok';
       },
     });
 
-    steps.push({ name: 'CLEANUP', run: async () => 'ok' });
+    steps.push({ name: 'CLEANUP', run: async () => { await svc.cleanupWorkdir(); return 'ok'; } });
 
     const wf = new WorkflowEngine(steps);
     await wf.runAll(`mount-${Date.now()}`);
   }
 }
 
+// ⬇️ 삽입 라인: 정책에 따라 2줄 고정
 export function buildLines(modes: Mode[]): string[] {
   const out: string[] = [];
-  if (modes.includes('pro')) out.push(`--volume="homey-app:/app:rw"`);
-  if (modes.includes('core')) out.push(`--volume="homey-node:/node:rw"`);
-  if (modes.includes('sdk')) out.push(`--volume="homey-node:/node/@athombv/homey-apps-sdk-v3:rw"`);
-  if (modes.includes('bridge')) out.push(`--volume="homey-node:/node/@athombv/homey-bridge:rw"`);
+  // homey-app 매핑
+  out.push(`--volume="homey-app:/app:rw"`);
+  // homey-node 매핑 (core/sdk/bridge 공통)
+  out.push(`--volume="homey-node:/node_module:rw"`);
   return out;
 }
 
 export function lineToRegex(line: string): string {
   const body = line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return `^\\s*${body}\\s*\\\\?\\s*$`;
+  const WS = String.raw`[[:space:]]`;
+  return String.raw`^${WS}*${body}${WS}*(\\\\)?${WS}*$`;
 }
 
-export function volumeRegexAll(modes: Mode[]): string[] {
-  return buildLines(modes).map(lineToRegex);
+// ✅ 토큰은 고정 2개
+export function markerTokensForModes(_: Mode[]): string[] {
+  return ['homey-app', 'homey-node'];
+}
+
+export function tokenToRegex(token: string): string {
+  return token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
