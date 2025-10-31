@@ -1,6 +1,6 @@
 // === src/extension/commands/edgepanel.buttons.ts ===
 import { measureBlock } from '../../core/logging/perf.js';
-import { UI_STR, UI_DESC } from '../../shared/const.js';
+import { UI_DESC, UI_STR } from '../../shared/const.js';
 
 export type ButtonContext = {
   updateAvailable?: boolean;
@@ -70,8 +70,10 @@ export function toSectionDTO(sections: SectionDef[], ctx: ButtonContext): Sectio
             // 3) 토글 버튼 상태별 비활성화 조건
             disabled: (() => {
               // busy/연결 우선
-              if ((BUSY_LOCK_BUTTON_IDS as readonly string[]).includes(b.id) && !!ctx.busyLock) return true;
-              if (!ctx.isConnected && (DEVICE_BUTTON_IDS as readonly string[]).includes(b.id)) return true;
+              if ((BUSY_LOCK_BUTTON_IDS as readonly string[]).includes(b.id) && !!ctx.busyLock)
+                return true;
+              if (!ctx.isConnected && (DEVICE_BUTTON_IDS as readonly string[]).includes(b.id))
+                return true;
 
               // 토글류는 추가 제약 없음(연결만 체크). 라벨은 아래에서 상태로 분기.
               return false;
@@ -80,7 +82,7 @@ export function toSectionDTO(sections: SectionDef[], ctx: ButtonContext): Sectio
         return { title: sec.title, items };
       })
       .filter((sec) => sec.items.length > 0);
- });
+  });
 }
 
 export function findButtonById(sections: SectionDef[], id: string): ButtonDef | undefined {
@@ -99,8 +101,16 @@ export function getSections(): SectionDef[] {
       id: 'panel',
       title: UI_STR.SECTION_PANEL_TITLE,
       items: [
-        { id: 'panel.toggleExplorer', label: UI_STR.BTN_PANEL_TOGGLE_EXPLORER, op: { kind: 'post', event: 'ui.toggleExplorer' } },
-        { id: 'panel.toggleLogs', label: UI_STR.BTN_PANEL_TOGGLE_LOGS, op: { kind: 'post', event: 'ui.toggleLogs' } },
+        {
+          id: 'panel.toggleExplorer',
+          label: UI_STR.BTN_PANEL_TOGGLE_EXPLORER,
+          op: { kind: 'post', event: 'ui.toggleExplorer' },
+        },
+        {
+          id: 'panel.toggleLogs',
+          label: UI_STR.BTN_PANEL_TOGGLE_LOGS,
+          op: { kind: 'post', event: 'ui.toggleLogs' },
+        },
         {
           id: 'panel.updateNow',
           label: UI_STR.BTN_UPDATE_NOW,
@@ -115,16 +125,58 @@ export function getSections(): SectionDef[] {
       id: 'device',
       title: UI_STR.SECTION_DEVICE_TITLE,
       items: [
-        { id: 'cmd.connectDevice', label: UI_STR.BTN_CONNECT_DEVICE, op: { kind: 'handler', name: 'connectDevice' } },
-        { id: 'cmd.openHostShell', label: UI_STR.BTN_OPEN_HOST_SHELL, desc: UI_DESC.OPEN_HOST_SHELL, op: { kind: 'handler', name: 'openHostShell' } },
-        { id: 'cmd.gitFlow', label: UI_STR.BTN_GIT_FLOW, desc: UI_DESC.GIT_FLOW, op: { kind: 'handler', name: 'gitFlow' } },
-        { id: 'cmd.homeyLoggingLive', label: UI_STR.BTN_LOGGING_LIVE, desc: UI_DESC.LOGGING_LIVE, op: { kind: 'handler', name: 'homeyLoggingLive' } },
-        { id: 'cmd.homeyLoggingFile', label: UI_STR.BTN_LOGGING_FILE, desc: UI_DESC.LOGGING_FILE, op: { kind: 'handler', name: 'homeyLoggingFile' } },
-        { id: 'cmd.homeyRestart', label: UI_STR.BTN_HOMEY_RESTART, op: { kind: 'handler', name: 'homeyRestart' } },
+        {
+          id: 'cmd.connectDevice',
+          label: UI_STR.BTN_CONNECT_DEVICE,
+          op: { kind: 'handler', name: 'connectDevice' },
+        },
+        {
+          id: 'cmd.openHostShell',
+          label: UI_STR.BTN_OPEN_HOST_SHELL,
+          desc: UI_DESC.OPEN_HOST_SHELL,
+          op: { kind: 'handler', name: 'openHostShell' },
+        },
+        {
+          id: 'cmd.gitFlow',
+          label: UI_STR.BTN_GIT_FLOW,
+          desc: UI_DESC.GIT_FLOW,
+          op: { kind: 'handler', name: 'gitFlow' },
+        },
+        {
+          id: 'cmd.homeyLoggingLive',
+          label: UI_STR.BTN_LOGGING_LIVE,
+          desc: UI_DESC.LOGGING_LIVE,
+          op: { kind: 'handler', name: 'homeyLoggingLive' },
+        },
+        {
+          id: 'cmd.homeyLoggingFile',
+          label: UI_STR.BTN_LOGGING_FILE,
+          desc: UI_DESC.LOGGING_FILE,
+          op: { kind: 'handler', name: 'homeyLoggingFile' },
+        },
+        {
+          id: 'cmd.homeyRestart',
+          label: UI_STR.BTN_HOMEY_RESTART,
+          op: { kind: 'handler', name: 'homeyRestart' },
+        },
         // ⬇️ 토글류는 기본(초기) 라벨만 배치 — 실제 표시 라벨은 Router에서 상태로 결정
-        { id: 'cmd.volumeToggle',  label: UI_STR.BTN_VOLUME_MOUNT, op: { kind: 'handler', name: 'homeyVolumeToggle' } },
-        { id: 'cmd.appLogToggle',  label: UI_STR.BTN_APPLOG_ENABLE,  desc: UI_DESC.APPLOG,  op: { kind: 'handler', name: 'homeyAppLogToggle' } },
-        { id: 'cmd.devTokenToggle',label: UI_STR.BTN_DEVTOKEN_ENABLE, desc: UI_DESC.DEVTOKEN, op: { kind: 'handler', name: 'homeyDevTokenToggle' } },
+        {
+          id: 'cmd.volumeToggle',
+          label: UI_STR.BTN_VOLUME_MOUNT,
+          op: { kind: 'handler', name: 'homeyVolumeToggle' },
+        },
+        {
+          id: 'cmd.appLogToggle',
+          label: UI_STR.BTN_APPLOG_ENABLE,
+          desc: UI_DESC.APPLOG,
+          op: { kind: 'handler', name: 'homeyAppLogToggle' },
+        },
+        {
+          id: 'cmd.devTokenToggle',
+          label: UI_STR.BTN_DEVTOKEN_ENABLE,
+          desc: UI_DESC.DEVTOKEN,
+          op: { kind: 'handler', name: 'homeyDevTokenToggle' },
+        },
       ],
     },
 
@@ -132,10 +184,30 @@ export function getSections(): SectionDef[] {
       id: 'workspace',
       title: UI_STR.SECTION_WORKSPACE_TITLE,
       items: [
-        { id: 'cmd.changeWorkspace', label: UI_STR.BTN_WORKSPACE_CHANGE, desc: UI_DESC.WORKSPACE_CHANGE, op: { kind: 'handler', name: 'changeWorkspaceQuick' } },
-        { id: 'cmd.openWorkspace', label: UI_STR.BTN_OPEN_WORKSPACE, desc: UI_DESC.OPEN_WORKSPACE, op: { kind: 'handler', name: 'openWorkspace' } },
-        { id: 'cmd.openWorkspaceShell', label: UI_STR.BTN_OPEN_WORKSPACE_SHELL, desc: UI_DESC.OPEN_WORKSPACE_SHELL, op: { kind: 'handler', name: 'openWorkspaceShell' } },
-        { id: 'cmd.initWorkspace', label: UI_STR.BTN_INIT_WORKSPACE, desc: UI_DESC.INIT_WORKSPACE, op: { kind: 'handler', name: 'initWorkspace' } },
+        {
+          id: 'cmd.changeWorkspace',
+          label: UI_STR.BTN_WORKSPACE_CHANGE,
+          desc: UI_DESC.WORKSPACE_CHANGE,
+          op: { kind: 'handler', name: 'changeWorkspaceQuick' },
+        },
+        {
+          id: 'cmd.openWorkspace',
+          label: UI_STR.BTN_OPEN_WORKSPACE,
+          desc: UI_DESC.OPEN_WORKSPACE,
+          op: { kind: 'handler', name: 'openWorkspace' },
+        },
+        {
+          id: 'cmd.openWorkspaceShell',
+          label: UI_STR.BTN_OPEN_WORKSPACE_SHELL,
+          desc: UI_DESC.OPEN_WORKSPACE_SHELL,
+          op: { kind: 'handler', name: 'openWorkspaceShell' },
+        },
+        {
+          id: 'cmd.initWorkspace',
+          label: UI_STR.BTN_INIT_WORKSPACE,
+          desc: UI_DESC.INIT_WORKSPACE,
+          op: { kind: 'handler', name: 'initWorkspace' },
+        },
       ],
     },
 
@@ -143,8 +215,18 @@ export function getSections(): SectionDef[] {
       id: 'help',
       title: UI_STR.SECTION_HELP_TITLE,
       items: [
-        { id: 'cmd.performanceMonitor', label: UI_STR.BTN_PERF_MONITOR, desc: 'Performance Monitor 토글', op: { kind: 'handler', name: 'togglePerformanceMonitoring' } },
-        { id: 'panel.reload', label: UI_STR.BTN_RELOAD_VSCODE, desc: UI_DESC.RELOAD, op: { kind: 'vscode', command: 'workbench.action.reloadWindow' } },
+        {
+          id: 'cmd.performanceMonitor',
+          label: UI_STR.BTN_PERF_MONITOR,
+          desc: 'Performance Monitor 토글',
+          op: { kind: 'handler', name: 'togglePerformanceMonitoring' },
+        },
+        {
+          id: 'panel.reload',
+          label: UI_STR.BTN_RELOAD_VSCODE,
+          desc: UI_DESC.RELOAD,
+          op: { kind: 'vscode', command: 'workbench.action.reloadWindow' },
+        },
         { id: 'cmd.help', label: UI_STR.BTN_HELP, op: { kind: 'handler', name: 'openHelp' } },
       ],
     },
@@ -157,8 +239,7 @@ export const BUSY_LOCK_BUTTON_IDS = [
   'cmd.appLogToggle',
   'cmd.devTokenToggle',
 ] as const;
-export type BusyLockButtonId = typeof BUSY_LOCK_BUTTON_IDS[number];
-
+export type BusyLockButtonId = (typeof BUSY_LOCK_BUTTON_IDS)[number];
 
 // 🔌 연결이 없을 때 비활성화할 Device 섹션 버튼(“기기 연결” 제외)
 export const DEVICE_BUTTON_IDS = [

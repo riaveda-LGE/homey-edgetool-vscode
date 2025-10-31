@@ -1,4 +1,3 @@
-/// <reference path="../../../types/vscode-webview.d.ts" />
 import type { H2W } from '@ipc/messages';
 
 import { createUiLog, createUiMeasure, wrapAllUiMethods } from '../../shared/utils.js';

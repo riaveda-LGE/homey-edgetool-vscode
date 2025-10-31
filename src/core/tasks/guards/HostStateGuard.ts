@@ -38,8 +38,7 @@ export class HostStateGuard {
     };
 
     const deadline = Date.now() + timeoutMs;
-   const showCmd =
-      `SYSTEMD_PAGER= systemctl show -p ActiveState -p SubState -p ExecMainPID ${q(unit)} 2>/dev/null`;
+    const showCmd = `SYSTEMD_PAGER= systemctl show -p ActiveState -p SubState -p ExecMainPID ${q(unit)} 2>/dev/null`;
     log.debug(`waitForUnitActive: showCmd=${showCmd}`);
 
     while (Date.now() < deadline) {
@@ -58,20 +57,20 @@ export class HostStateGuard {
       const pid = Number((map['ExecMainPID'] ?? '').trim() || '0');
       log.debug(`waitForUnitActive: active=${active} sub=${sub} pid=${pid}`);
       if (active === 'active') {
-          const subOk =
-            sub === 'running' ||
-            (o.acceptExited && sub === 'exited') ||
-            (o.acceptListening && sub === 'listening');
+        const subOk =
+          sub === 'running' ||
+          (o.acceptExited && sub === 'exited') ||
+          (o.acceptListening && sub === 'listening');
 
-          // sub 상태가 허용되고, 필요 시 PID 조건까지 만족하면 성공
-          if (subOk && (!o.requirePid || pid > 0)) {
-            return true;
-          }
+        // sub 상태가 허용되고, 필요 시 PID 조건까지 만족하면 성공
+        if (subOk && (!o.requirePid || pid > 0)) {
+          return true;
+        }
 
-          // 일부 Type=simple 등은 sub가 running이더라도 pid만 의미가 있을 수 있어 보조 허용
-          if (!o.requirePid && pid > 0) {
-            return true;
-          }
+        // 일부 Type=simple 등은 sub가 running이더라도 pid만 의미가 있을 수 있어 보조 허용
+        if (!o.requirePid && pid > 0) {
+          return true;
+        }
       }
 
       // 2) 폴백: is-active (항상 안전망으로 확인)
@@ -91,8 +90,7 @@ export class HostStateGuard {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       // 인자를 $1로 받아 grep에 전달 — 따옴표 충돌/이스케이프 제거
-      const script =
-        'docker ps -a --format "{{.Names}}" | grep -E "$1" 2>/dev/null || true';
+      const script = 'docker ps -a --format "{{.Names}}" | grep -E "$1" 2>/dev/null || true';
       const { stdout } = await this.runShArgs(script, match);
       if (!String(stdout || '').trim()) return true;
       await sleep(pollMs);
@@ -158,9 +156,7 @@ export class HostStateGuard {
     for (let i = 0; i < tries; i++) {
       // 개별 삭제 시도 (존재하지 않으면 무시)
       for (const v of vols) {
-        await connectionManager.run(
-          `sh -lc 'docker volume rm ${q(v)} >/dev/null 2>&1 || true'`,
-        );
+        await connectionManager.run(`sh -lc 'docker volume rm ${q(v)} >/dev/null 2>&1 || true'`);
       }
       const ok = await this.waitForVolumesGone(vols, backoffMs, 400);
       if (ok) return true;

@@ -1,13 +1,21 @@
 import * as vscode from 'vscode';
+
+import {
+  readUserHomeyConfig,
+  readUserHomeyConfigLoose,
+  resolveServiceFilePath,
+} from '../config/userconfig.js';
 import { connectionManager } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
-import { readUserHomeyConfig, readUserHomeyConfigLoose, resolveServiceFilePath } from '../config/userconfig.js';
 
 const log = getLogger('SvcPatcher');
 
 export class ServiceFilePatcher {
   private workdir?: string;
-  constructor(private unit: string, private svcPathGuess = '/lib/systemd/system/homey-pro@.service') {}
+  constructor(
+    private unit: string,
+    private svcPathGuess = '/lib/systemd/system/homey-pro@.service',
+  ) {}
 
   /**
    * 서비스 파일(단위파일) 실제 경로 해상 순서(강제):
@@ -22,7 +30,9 @@ export class ServiceFilePatcher {
     // 1) 사용자 설정 우선 (edge-go 호환): workspace의 SSOT를 무조건 먼저 본다.
     try {
       // (1) ctx가 있는 경우
-      const ctx = (vscode as any)?.extensions?.extensionContext as vscode.ExtensionContext | undefined;
+      const ctx = (vscode as any)?.extensions?.extensionContext as
+        | vscode.ExtensionContext
+        | undefined;
       if (ctx) {
         const userCfg = await readUserHomeyConfig(ctx);
         if (userCfg?.homey_service_file_path || userCfg?.homey_service_file_name) {
@@ -39,7 +49,9 @@ export class ServiceFilePatcher {
         return p;
       }
     } catch (e) {
-      log.warn(`[SvcPatcher] user config read failed, will try FragmentPath: ${e instanceof Error ? e.message : String(e)}`);
+      log.warn(
+        `[SvcPatcher] user config read failed, will try FragmentPath: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
 
     // 2) systemctl FragmentPath 조회
@@ -89,12 +101,15 @@ export class ServiceFilePatcher {
     // 루트가 RO일 수 있어 미리 RW 리마운트는 러너에서 수행
     try {
       const beforeHash = await this.computeHash(origFile).catch(() => '');
-      const workHash   = await this.computeHash(workFile).catch(() => '');
+      const workHash = await this.computeHash(workFile).catch(() => '');
       await connectionManager.run(`sh -lc 'mv -f ${q(workFile)} ${q(origFile)}'`);
-      const afterHash  = await this.computeHash(origFile).catch(() => '');
-      log.debug(`[SvcPatcher] replace: hash before=${beforeHash} work=${workHash} after=${afterHash}`);
+      const afterHash = await this.computeHash(origFile).catch(() => '');
+      log.debug(
+        `[SvcPatcher] replace: hash before=${beforeHash} work=${workHash} after=${afterHash}`,
+      );
     } catch (e) {
       // 마지막 수단: mv 재시도 성공 시에는 오류를 전파하지 않는다.
+      // eslint-disable-next-line no-useless-catch
       try {
         await connectionManager.run(`sh -lc 'mv -f ${q(workFile)} ${q(origFile)}'`);
         log.warn(
@@ -143,7 +158,9 @@ export class ServiceFilePatcher {
         return;
       }
     } catch (e) {
-      log.warn(`[SvcPatcher] pre-check failed (continue insert): ${e instanceof Error ? e.message : String(e)}`);
+      log.warn(
+        `[SvcPatcher] pre-check failed (continue insert): ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
     const tmp = `${file}.tmp`;
     const sedScript = `${file}.sed.${Date.now()}`;
@@ -161,17 +178,17 @@ export class ServiceFilePatcher {
     const sedContent = `${sed1}\n${sedA}\n${appendLine}\n`;
 
     // 작은 유틸: ADB 단일 커맨드 실행 + 로그
-const run = async (label: string, cmd: string) => {
-  log.debug(`[SvcPatcher] ${label}: ${cmd}`);
-  // 더블쿼트 안심 래핑: ", $, `, \ 를 이스케이프
-  const escaped = cmd.replace(/(["$`\\])/g, '\\$1');
-  const res = await connectionManager.run(`sh -lc "${escaped}"`);
-  log.debug(`[SvcPatcher] ${label}: exit=${res.code}`);
-  if (res.stdout) log.debug(`[SvcPatcher] ${label}[stdout]\n${String(res.stdout)}`);
-  if (res.stderr) log.debug(`[SvcPatcher] ${label}[stderr]\n${String(res.stderr)}`);
-  if ((res.code ?? 0) !== 0) throw new Error(`${label} failed (code=${res.code})`);
-  return res;
-};
+    const run = async (label: string, cmd: string) => {
+      log.debug(`[SvcPatcher] ${label}: ${cmd}`);
+      // 더블쿼트 안심 래핑: ", $, `, \ 를 이스케이프
+      const escaped = cmd.replace(/(["$`\\])/g, '\\$1');
+      const res = await connectionManager.run(`sh -lc "${escaped}"`);
+      log.debug(`[SvcPatcher] ${label}: exit=${res.code}`);
+      if (res.stdout) log.debug(`[SvcPatcher] ${label}[stdout]\n${String(res.stdout)}`);
+      if (res.stderr) log.debug(`[SvcPatcher] ${label}[stderr]\n${String(res.stderr)}`);
+      if ((res.code ?? 0) !== 0) throw new Error(`${label} failed (code=${res.code})`);
+      return res;
+    };
 
     // 1) sed 스크립트 파일 작성
     await run('write-sed', `printf %s ${q(sedContent)} > ${q(sedScript)}`);
@@ -187,7 +204,10 @@ const run = async (label: string, cmd: string) => {
       await run('fix-eol-bslash', `sed -E -i 's/\\\\[[:space:]]*$/\\\\/' ${q(tmp)}`);
 
       // 4) 결과 최소 검증
-      await run('check-tmp', `[ -s ${q(tmp)} ] || { echo "[SvcPatcher][ERROR] tmp empty" >&2; exit 31; }`);
+      await run(
+        'check-tmp',
+        `[ -s ${q(tmp)} ] || { echo "[SvcPatcher][ERROR] tmp empty" >&2; exit 31; }`,
+      );
       // ExecStart= 라인과 그 다음 2줄까지 미리보기(삽입 라인 가시성)
       await run('grep-after', `grep -nA2 '^[[:space:]]*ExecStart=' ${q(tmp)} 2>&1 || true`);
 
@@ -206,7 +226,9 @@ const run = async (label: string, cmd: string) => {
       // }
     } finally {
       // 7) 청소 (임시 파일 제거)
-      await connectionManager.run(`sh -lc ${q(`rm -f ${sedScript} ${tmp} 2>/dev/null || true`)}`).catch(() => {});
+      await connectionManager
+        .run(`sh -lc ${q(`rm -f ${sedScript} ${tmp} 2>/dev/null || true`)}`)
+        .catch(() => {});
     }
   }
 
@@ -218,23 +240,27 @@ const run = async (label: string, cmd: string) => {
     await connectionManager.run(`sh -lc ${q(cmd)}`);
   }
 
-  async daemonReload() { await connectionManager.run(`sh -lc 'systemctl daemon-reload'`); }
+  async daemonReload() {
+    await connectionManager.run(`sh -lc 'systemctl daemon-reload'`);
+  }
   async restart() {
     await connectionManager.run(
       `sh -lc 'SYSTEMD_PAGER= systemctl restart --no-pager --no-ask-password ${q(this.unit)}'`,
     );
   }
 
-async contains(file: string, markerRe: string): Promise<boolean> {
-  // $1: 정규식, $2: 파일경로 — 중첩 싱글쿼트 문제 회피
-  const cmd = `sh -lc 'grep -E "$1" "$2" >/dev/null 2>&1' _ ${q(markerRe)} ${q(file)}`;
-  log.debug(`contains: cmd=${cmd}`);
-  const { code } = await connectionManager.run(cmd);
-  return (code ?? 1) === 0;
-}
+  async contains(file: string, markerRe: string): Promise<boolean> {
+    // $1: 정규식, $2: 파일경로 — 중첩 싱글쿼트 문제 회피
+    const cmd = `sh -lc 'grep -E "$1" "$2" >/dev/null 2>&1' _ ${q(markerRe)} ${q(file)}`;
+    log.debug(`contains: cmd=${cmd}`);
+    const { code } = await connectionManager.run(cmd);
+    return (code ?? 1) === 0;
+  }
 
   // alias
-  async exists(file: string, markerRe: string): Promise<boolean> { return this.contains(file, markerRe); }
+  async exists(file: string, markerRe: string): Promise<boolean> {
+    return this.contains(file, markerRe);
+  }
 
   async computeHash(file: string): Promise<string> {
     const { stdout } = await connectionManager.run(
@@ -249,8 +275,12 @@ async contains(file: string, markerRe: string): Promise<boolean> {
 // 따옴표를 \\" 로 남기면 실제 유닛 파일에 백슬래시가 기록되어
 // systemd가 "Ignoring unknown escape sequences: "\" " 경고를 낸다.
 // 여기서는 sed 스크립트 안전성만 위해 역슬래시(\)만 2배 처리한다.
-function esc(s: string) { return String(s).replace(/\\/g, '\\\\'); }
-function q(s: string) { return "'" + String(s).replace(/'/g, `'\\''`) + "'"; }
+function esc(s: string) {
+  return String(s).replace(/\\/g, '\\\\');
+}
+function q(s: string) {
+  return "'" + String(s).replace(/'/g, `'\\''`) + "'";
+}
 
 // 삽입 라인 존재 검증용 정규식 생성기
 // 예: line='--volume="homey-app:/app:rw"' → ^[[:space:]]*--volume\="homey\-app:\/app:rw"[[:space:]]*\\?[[:space:]]*$
@@ -269,7 +299,6 @@ function regexQuote(s: string): string {
   // 대괄호/역슬래시 포함 전체 이스케이프
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/"/g, '\\"');
 }
-
 
 // ✅ 사전 존재 검사용 정규식: 역슬래시(라인-컨티뉴) 유/무 모두 허용
 //   mount/toggle 어디서 오든 동일한 기준으로 "이미 있음"을 판정한다.

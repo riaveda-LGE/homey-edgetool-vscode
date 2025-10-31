@@ -3,9 +3,9 @@ import { connectionManager } from '../connection/ConnectionManager.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { MountTaskRunner } from '../tasks/MountTaskRunner.js';
-import { UnmountTaskRunner } from '../tasks/UnmountTaskRunner.js';
-import { ToggleTaskRunner } from '../tasks/ToggleTaskRunner.js';
 import { RestartTaskRunner } from '../tasks/RestartTaskRunner.js';
+import { ToggleTaskRunner } from '../tasks/ToggleTaskRunner.js';
+import { UnmountTaskRunner } from '../tasks/UnmountTaskRunner.js';
 
 const log = getLogger('HomeyController');
 

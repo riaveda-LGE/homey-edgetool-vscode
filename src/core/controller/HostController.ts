@@ -53,7 +53,7 @@ export class HostController {
     const rp = absPath;
     const script =
       `if [ -d "${rp}" ]; then echo DIR; ` +
-     `elif [ -f "${rp}" ] || [ -L "${rp}" ] || [ -h "${rp}" ] || [ -c "${rp}" ] || [ -b "${rp}" ] || [ -p "${rp}" ] || [ -S "${rp}" ]; then echo FILE; ` +
+      `elif [ -f "${rp}" ] || [ -L "${rp}" ] || [ -h "${rp}" ] || [ -c "${rp}" ] || [ -b "${rp}" ] || [ -p "${rp}" ] || [ -S "${rp}" ]; then echo FILE; ` +
       `else echo NONE; fi`;
     const wrapped = this.wrap(script);
     log.debug('[debug] statType: request', {
@@ -64,7 +64,8 @@ export class HostController {
     });
     const { stdout, stderr } = await this.cm.run(wrapped);
     const out = String(stdout || '').trim();
-    const kind: 'FILE' | 'DIR' | 'NONE' = (out === 'FILE' || out === 'DIR' || out === 'NONE') ? (out as any) : 'NONE';
+    const kind: 'FILE' | 'DIR' | 'NONE' =
+      out === 'FILE' || out === 'DIR' || out === 'NONE' ? (out as any) : 'NONE';
     log.debug('[debug] statType: response', { stdout: out, stderr, kind });
     return kind;
   }
@@ -83,7 +84,10 @@ export class HostController {
     const wrapped = this.wrap(`docker info -f "{{.DockerRootDir}}" 2>/dev/null || true`);
     log.debug('[debug] getDockerRoot: request', { wrapped });
     const { stdout } = await this.cm.run(wrapped);
-    const t = String(stdout || '').split(/\r?\n/).map(s => s.trim()).find(Boolean);
+    const t = String(stdout || '')
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .find(Boolean);
     if (t && t !== 'null') root = t;
     log.debug('[debug] getDockerRoot: resolved', { root });
     return root;

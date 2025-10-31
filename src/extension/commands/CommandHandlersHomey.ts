@@ -1,9 +1,10 @@
 // === src/extension/commands/CommandHandlersHomey.ts ===
+import * as vscode from 'vscode';
+
 import { HomeyController } from '../../core/controller/HomeyController.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { getMountState, getEnvToggleEnabled } from '../../core/state/DeviceState.js';
-import * as vscode from 'vscode';
+import { getEnvToggleEnabled, getMountState } from '../../core/state/DeviceState.js';
 
 const log = getLogger('cmd.homey');
 

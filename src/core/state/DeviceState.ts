@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { getLogger } from '../logging/extension-logger.js';
+
 import { connectionManager } from '../connection/ConnectionManager.js';
-import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { getLogger } from '../logging/extension-logger.js';
 import { resolveHomeyUnit } from '../service/serviceDiscovery.js';
+import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
 
 const log = getLogger('DeviceState');
 
@@ -41,15 +42,12 @@ export async function getMountState(_ctx?: vscode.ExtensionContext): Promise<Mou
       )}`,
     );
 
-    return anyExist ? 'mounted' as const : 'unmounted' as const;
+    return anyExist ? ('mounted' as const) : ('unmounted' as const);
   } catch (e) {
-    log.warn(
-      `[DeviceState] getMountState failed: ${e instanceof Error ? e.message : String(e)}`,
-    );
+    log.warn(`[DeviceState] getMountState failed: ${e instanceof Error ? e.message : String(e)}`);
     return 'unknown';
   }
 }
-
 
 /**
  * 서비스 유닛 파일에서 토글 변수 존재 여부로 활성 상태를 판정한다.
@@ -68,7 +66,9 @@ export async function getEnvToggleEnabled(
     log.debug(`[DeviceState] ${varName} enabled=${on}`);
     return !!on;
   } catch (e) {
-    log.warn(`[DeviceState] getEnvToggleEnabled(${varName}) failed: ${e instanceof Error ? e.message : String(e)}`);
+    log.warn(
+      `[DeviceState] getEnvToggleEnabled(${varName}) failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
     return false;
   }
 }

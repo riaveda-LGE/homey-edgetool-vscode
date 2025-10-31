@@ -1,8 +1,8 @@
 // === src/core/tasks/RestartTaskRunner.ts ===
-import { WorkflowEngine } from './workflow/workflowEngine.js';
-import { HostStateGuard } from './guards/HostStateGuard.js';
-import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
 import { resolveHomeyUnit } from '../service/serviceDiscovery.js';
+import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { HostStateGuard } from './guards/HostStateGuard.js';
+import { WorkflowEngine } from './workflow/workflowEngine.js';
 
 export class RestartTaskRunner {
   private guard = new HostStateGuard();

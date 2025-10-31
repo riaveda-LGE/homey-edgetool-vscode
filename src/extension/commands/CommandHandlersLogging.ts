@@ -41,7 +41,9 @@ export class CommandHandlersLogging {
       await this.provider.handleHomeyLoggingCommand();
 
       // 2) 폴더 선택 다이얼로그 표시
-      const picked = await (await import('vscode')).window.showOpenDialog({
+      const picked = await (
+        await import('vscode')
+      ).window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
         canSelectMany: false,

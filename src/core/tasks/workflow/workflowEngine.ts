@@ -43,9 +43,9 @@ export class WorkflowEngine {
             await sleep(1000 * Math.min(iter, 3)); // 가벼운 backoff
             continue;
           }
-         if (r === 'fail') {
-           throw new Error(`step returned fail: ${s.name}`);
-         }
+          if (r === 'fail') {
+            throw new Error(`step returned fail: ${s.name}`);
+          }
           const nxt = s.next?.(r, ctx);
           if (typeof nxt === 'string') {
             const j = index.get(nxt);
@@ -53,7 +53,9 @@ export class WorkflowEngine {
           }
           break;
         } catch (e) {
-          this.log.error(`[wf:${runId}] step=${s.name} failed: ${e instanceof Error ? e.message : String(e)}`);
+          this.log.error(
+            `[wf:${runId}] step=${s.name} failed: ${e instanceof Error ? e.message : String(e)}`,
+          );
           if (s.onErrorPolicy !== 'continue') throw e;
           break;
         }
@@ -63,7 +65,9 @@ export class WorkflowEngine {
   }
 }
 
-function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 async function withTimeout<T>(p: Promise<T>, t?: number): Promise<T> {
   if (!t || t <= 0) return p;
   return await Promise.race([

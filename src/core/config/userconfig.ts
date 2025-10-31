@@ -1,6 +1,7 @@
 // === src/core/config/userconfig.ts ===
 import * as path from 'path';
 import * as vscode from 'vscode';
+
 import { USERCFG_REL } from '../../shared/const.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measureBlock } from '../logging/perf.js';
@@ -11,12 +12,10 @@ const log = getLogger('userconfig');
 export type HomeyUserConfig = {
   homey_service_file_path?: string; // 기본 /lib/systemd/system/
   homey_service_file_name?: string; // 기본 homey-pro@.service
-  homey_service_name?: string;      // 탐지된 유닛명 저장(선택)
+  homey_service_name?: string; // 탐지된 유닛명 저장(선택)
 };
 
-export async function readUserHomeyConfig(
-  ctx: vscode.ExtensionContext,
-): Promise<HomeyUserConfig> {
+export async function readUserHomeyConfig(ctx: vscode.ExtensionContext): Promise<HomeyUserConfig> {
   return measureBlock('usercfg.read', async () => {
     const info = await resolveWorkspaceInfo(ctx);
     const cfgUri = vscode.Uri.joinPath(info.wsDirUri, ...USERCFG_REL.split('/'));
@@ -49,7 +48,7 @@ export async function readUserHomeyConfigLoose(): Promise<HomeyUserConfig> {
     }
   });
 }
-  
+
 export async function writeUserHomeyConfig(
   ctx: vscode.ExtensionContext,
   patch: Partial<HomeyUserConfig>,

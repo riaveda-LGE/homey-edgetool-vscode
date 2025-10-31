@@ -1,5 +1,5 @@
 {
-    "homey_service_file_path": "/lib/systemd/system/",
-    "homey_service_file_name": "homey-pro@.service",
-    "homey_service_name": ""
+  "homey_service_file_path": "/lib/systemd/system/",
+  "homey_service_file_name": "homey-pro@.service",
+  "homey_service_name": ""
 }

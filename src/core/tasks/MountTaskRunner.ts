@@ -1,11 +1,11 @@
 // === src/core/tasks/MountTaskRunner.ts ===
 
-import { getLogger } from '../logging/extension-logger.js';
-import { WorkflowEngine } from './workflow/workflowEngine.js';
-import { HostStateGuard } from './guards/HostStateGuard.js';
 import { connectionManager } from '../connection/ConnectionManager.js';
-import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { getLogger } from '../logging/extension-logger.js';
 import { resolveHomeyUnit } from '../service/serviceDiscovery.js';
+import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { HostStateGuard } from './guards/HostStateGuard.js';
+import { WorkflowEngine } from './workflow/workflowEngine.js';
 
 export type Mode = 'pro' | 'core' | 'sdk' | 'bridge';
 
@@ -87,7 +87,12 @@ export class MountTaskRunner {
           await svc.insertAfterExecStart(work, ln);
         }
         await svc.replaceOriginalWith(path, work);
-        const changed = await this.guard.waitForServiceFileChange(path, 8000, 500, ctx.bag.hashBefore);
+        const changed = await this.guard.waitForServiceFileChange(
+          path,
+          8000,
+          500,
+          ctx.bag.hashBefore,
+        );
         if (!changed) {
           this.log.error(`[mount] service file did not change: ${path}`);
           //throw new Error('patch not applied (no file change detected)');
@@ -96,7 +101,13 @@ export class MountTaskRunner {
       },
     });
 
-    steps.push({ name: 'DAEMON_RELOAD', run: async () => { await svc.daemonReload(); return 'ok'; } });
+    steps.push({
+      name: 'DAEMON_RELOAD',
+      run: async () => {
+        await svc.daemonReload();
+        return 'ok';
+      },
+    });
 
     steps.push({
       name: 'RESTART_SERVICE',
@@ -123,7 +134,13 @@ export class MountTaskRunner {
       },
     });
 
-    steps.push({ name: 'CLEANUP', run: async () => { await svc.cleanupWorkdir(); return 'ok'; } });
+    steps.push({
+      name: 'CLEANUP',
+      run: async () => {
+        await svc.cleanupWorkdir();
+        return 'ok';
+      },
+    });
 
     const wf = new WorkflowEngine(steps);
     await wf.runAll(`mount-${Date.now()}`);

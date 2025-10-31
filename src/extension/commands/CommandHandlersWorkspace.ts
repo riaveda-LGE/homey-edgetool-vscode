@@ -8,20 +8,17 @@ import { changeWorkspaceBaseDir, resolveWorkspaceInfo } from '../../core/config/
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
 import {
-  RAW_DIR_NAME,
+  GITIGNORE_TEMPLATE_REL,
   PARSER_CONFIG_REL,
   PARSER_README_REL,
   PARSER_README_TEMPLATE_REL,
   PARSER_TEMPLATE_REL,
-  GITIGNORE_TEMPLATE_REL,
+  RAW_DIR_NAME,
 } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
 import { PerfMonitorPanel } from '../editors/PerfMonitorPanel.js';
 import { migrateParserConfigIfNeeded } from '../setup/parserConfigSeeder.js';
-import {
-  ensureUserConfigExists,
-  migrateUserConfigIfNeeded,
-} from '../setup/userConfigSeeder.js';
+import { ensureUserConfigExists, migrateUserConfigIfNeeded } from '../setup/userConfigSeeder.js';
 
 const log = getLogger('cmd.workspace');
 const execFile = promisify(execFileCb);
@@ -234,7 +231,7 @@ export class CommandHandlersWorkspace {
     log.debug('[debug] CommandHandlersWorkspace togglePerformanceMonitoring: end');
   }
 
-    @measure()
+  @measure()
   async initWorkspace() {
     log.debug('[debug] CommandHandlersWorkspace initWorkspace: start');
     if (!this.context) return log.error('[error] internal: no extension context');

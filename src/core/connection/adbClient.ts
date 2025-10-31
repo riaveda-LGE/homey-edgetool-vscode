@@ -1,8 +1,9 @@
 // === src/core/connection/adbClient.ts ===
+import adbkitPkg from '@devicefarmer/adbkit';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
-import adbkitPkg from '@devicefarmer/adbkit';
+
 import { getLogger } from '../logging/extension-logger.js';
 import { measureBlock } from '../logging/perf.js';
 
@@ -25,16 +26,13 @@ type ADBClient = {
   listDevices(): Promise<Array<{ id: string; type?: string; state?: string }>>;
   getDevice(serial: string): ADBDevice;
 };
-const adbkit: { createClient: () => ADBClient } =
-  ((adbkitPkg as any).default ?? (adbkitPkg as any));
+const adbkit: { createClient: () => ADBClient } = (adbkitPkg as any).default ?? (adbkitPkg as any);
 
 // 모든 데이터를 버퍼로 읽기
 function readAll(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
-    stream.on('data', (b: Buffer | string) =>
-      chunks.push(Buffer.isBuffer(b) ? b : Buffer.from(b)),
-    );
+    stream.on('data', (b: Buffer | string) => chunks.push(Buffer.isBuffer(b) ? b : Buffer.from(b)));
     stream.on('error', reject);
     stream.on('end', () => resolve(Buffer.concat(chunks)));
   });
@@ -118,11 +116,7 @@ export async function adbShell(
   });
 }
 
-export async function adbStream(
-  cmd: string,
-  opts: AdbOptions,
-  onLine: (line: string) => void,
-) {
+export async function adbStream(cmd: string, opts: AdbOptions, onLine: (line: string) => void) {
   return measureBlock('adb.adbStream', async () => {
     log.debug('[debug] adbStream(adbkit): start');
     const serial = await resolveSerial(opts);
@@ -209,5 +203,8 @@ export async function adbListFilesRec(remoteDir: string, opts: AdbOptions): Prom
     `find "${remoteDir}" -type f -print0 2>/dev/null | sed -z 's#^${remoteDir}/##'`,
     opts,
   );
-  return stdout.split('\0').map((s) => s.trim()).filter(Boolean);
+  return stdout
+    .split('\0')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }

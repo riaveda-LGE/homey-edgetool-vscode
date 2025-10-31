@@ -1,11 +1,11 @@
 // === src/core/tasks/UnmountTaskRunner.ts ===
 
-import { getLogger } from '../logging/extension-logger.js';
-import { WorkflowEngine } from './workflow/workflowEngine.js';
-import { HostStateGuard } from './guards/HostStateGuard.js';
 import { connectionManager } from '../connection/ConnectionManager.js';
-import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { getLogger } from '../logging/extension-logger.js';
 import { resolveHomeyUnit } from '../service/serviceDiscovery.js';
+import { ServiceFilePatcher } from '../service/ServiceFilePatcher.js';
+import { HostStateGuard } from './guards/HostStateGuard.js';
+import { WorkflowEngine } from './workflow/workflowEngine.js';
 
 export class UnmountTaskRunner {
   private log = getLogger('UnmountRunner');
@@ -17,7 +17,13 @@ export class UnmountTaskRunner {
     const svc = new ServiceFilePatcher(unit);
     const steps: any[] = [];
 
-    steps.push({ name: 'INIT', run: async () => { await connectionManager.run(`sh -lc 'id >/dev/null'`); return 'ok'; } });
+    steps.push({
+      name: 'INIT',
+      run: async () => {
+        await connectionManager.run(`sh -lc 'id >/dev/null'`);
+        return 'ok';
+      },
+    });
 
     steps.push({
       name: 'READ_SERVICE_FILE',
@@ -39,10 +45,11 @@ export class UnmountTaskRunner {
         // BusyBox 호환: nl/sed 조합 대신 grep -nE 로 미리보기
         const path = ctx.bag.workPath as string;
         const patterns = this.deletePatterns;
-        const cmd =
-          `sh -lc 'grep -nE ${patterns.map((p) => `-e ${q(p)}`).join(' ')} -- ${q(path)} 2>/dev/null || true'`;
+        const cmd = `sh -lc 'grep -nE ${patterns.map((p) => `-e ${q(p)}`).join(' ')} -- ${q(path)} 2>/dev/null || true'`;
         const { stdout } = await connectionManager.run(cmd);
-        const lines = String(stdout || '').split(/\r?\n/).filter(Boolean);
+        const lines = String(stdout || '')
+          .split(/\r?\n/)
+          .filter(Boolean);
         lines.forEach((ln) => this.log.info('[unmount.dryrun] ' + ln));
         ctx.bag.dryRunCount = lines.length;
         return 'ok';
@@ -55,7 +62,7 @@ export class UnmountTaskRunner {
         await this.guard.ensureFsRemountRW('/');
         ctx.bag.backup = await svc.backup(ctx.bag.svcPath);
         return 'ok';
-      }
+      },
     });
 
     steps.push({
@@ -74,7 +81,12 @@ export class UnmountTaskRunner {
         await this.guard.ensureFsRemountRW('/');
         await svc.deleteByRegexPatterns(ctx.bag.workPath, this.deletePatterns);
         await svc.replaceOriginalWith(ctx.bag.svcPath, ctx.bag.workPath);
-        const changed = await this.guard.waitForServiceFileChange(ctx.bag.svcPath, 8000, 500, ctx.bag.hashBefore);
+        const changed = await this.guard.waitForServiceFileChange(
+          ctx.bag.svcPath,
+          8000,
+          500,
+          ctx.bag.hashBefore,
+        );
         if (!changed) {
           this.log.error(`[unmount] service file did not change: ${ctx.bag.svcPath}`);
           //throw new Error('patch not applied (no file change detected)');
@@ -94,7 +106,13 @@ export class UnmountTaskRunner {
       maxIterations: 2,
     });
 
-    steps.push({ name: 'DAEMON_RELOAD', run: async () => { await svc.daemonReload(); return 'ok'; } });
+    steps.push({
+      name: 'DAEMON_RELOAD',
+      run: async () => {
+        await svc.daemonReload();
+        return 'ok';
+      },
+    });
 
     steps.push({
       name: 'RESTART_SERVICE',
@@ -121,7 +139,13 @@ export class UnmountTaskRunner {
       },
     });
 
-    steps.push({ name: 'CLEANUP', run: async () => { await svc.cleanupWorkdir(); return 'ok'; } });
+    steps.push({
+      name: 'CLEANUP',
+      run: async () => {
+        await svc.cleanupWorkdir();
+        return 'ok';
+      },
+    });
 
     const wf = new WorkflowEngine(steps);
     await wf.runAll(`unmount-${Date.now()}`);
@@ -129,10 +153,9 @@ export class UnmountTaskRunner {
 }
 
 // ✅ 삭제 패턴은 mount 대상 2개만: env 토글(-e ...)은 여기서 건드리지 않음
-const DEFAULT_PATTERNS = [
-  String.raw`homey-app`,
-  String.raw`homey-node`,
-];
+const DEFAULT_PATTERNS = [String.raw`homey-app`, String.raw`homey-node`];
 
 // 안전 싱글쿼트: ' -> '\'' 로 치환
-function q(s: string) { return "'" + String(s).replace(/'/g, `'\\''`) + "'"; }
+function q(s: string) {
+  return "'" + String(s).replace(/'/g, `'\\''`) + "'";
+}

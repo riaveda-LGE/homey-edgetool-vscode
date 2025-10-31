@@ -66,8 +66,12 @@
 }
 
 /* 10초 간격 세그먼트별 글자색 (의미 없는 중립색 2가지) */
-.log-line.seg0 { color: #e6e6e6; } /* 아주 연한 회색 */
-.log-line.seg1 { color: #a8b2d1; } /* 푸른 기운의 회색(시각적 구분) */
+.log-line.seg0 {
+  color: #e6e6e6;
+} /* 아주 연한 회색 */
+.log-line.seg1 {
+  color: #a8b2d1;
+} /* 푸른 기운의 회색(시각적 구분) */
 
 /* ── Explorer ─────────────────────────────────────────────────────────── */
 #explorer {
@@ -92,7 +96,10 @@
   border-bottom: 1px solid var(--border);
   z-index: 1;
 }
-#explorerTitle { font-weight: 700; opacity: 0.9; }
+#explorerTitle {
+  font-weight: 700;
+  opacity: 0.9;
+}
 #explorerActions {
   margin-left: auto;
   display: inline-flex;
@@ -147,9 +154,13 @@
     center/contain no-repeat;
 }
 #explorerRefresh:hover,
-#gitStatus:hover { background: rgba(255, 255, 255, 0.06); }
+#gitStatus:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 #explorerRefresh:active,
-#gitStatus:active { transform: translateY(1px); }
+#gitStatus:active {
+  transform: translateY(1px);
+}
 #explorerRefresh:disabled {
   opacity: 0.5;
   cursor: default;
@@ -165,8 +176,15 @@
   opacity: 0;
   transform: scale(0.9);
 }
-#explorerBusy.spinning { opacity: 1; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+#explorerBusy.spinning {
+  opacity: 1;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 #explorerPath {
   color: var(--muted);
@@ -178,8 +196,14 @@
   display: inline-flex; /* crumb 정렬 */
   align-items: center;
 }
-#explorerPath .crumb { color: var(--link); cursor: pointer; }
-#explorerPath .sep { opacity: 0.6; margin: 0 6px; }
+#explorerPath .crumb {
+  color: var(--link);
+  cursor: pointer;
+}
+#explorerPath .sep {
+  opacity: 0.6;
+  margin: 0 6px;
+}
 
 #explorerTree {
   padding: 6px 8px 12px 6px;
@@ -189,10 +213,18 @@
 
 /* ── Git Lite Panel ─────────────────────────────────────────── */
 /* 요약 패널은 요구에 따라 숨김 */
-#gitLite, .git-lite { display: none !important; }
+#gitLite,
+.git-lite {
+  display: none !important;
+}
 
 /* 트리 라인 */
-.tree-node { position: relative; border-radius: 6px; padding: 0; margin: 0; }
+.tree-node {
+  position: relative;
+  border-radius: 6px;
+  padding: 0;
+  margin: 0;
+}
 .tree-node .tn-line {
   position: relative;
   display: flex;
@@ -203,10 +235,24 @@
   user-select: none;
   transition: background-color 0.12s ease;
 }
-.tree-node .tn-line:hover { background: var(--row-hover); }
-.tree-node.selected > .tn-line { background: var(--row-selected); color: var(--row-selected-fg); }
-.tn-icon { width: 18px; text-align: center; opacity: 0.85; }
-.tn-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tree-node .tn-line:hover {
+  background: var(--row-hover);
+}
+.tree-node.selected > .tn-line {
+  background: var(--row-selected);
+  color: var(--row-selected-fg);
+}
+.tn-icon {
+  width: 18px;
+  text-align: center;
+  opacity: 0.85;
+}
+.tn-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* 파일 상태 우측 배지 영역 */
 .tn-right {
@@ -228,22 +274,48 @@
 }
 
 /* 라벨 색상: VS Code 테마의 gitDecoration 컬러 사용 */
-.tn-label.git-A { color: var(--git-added); }
-.tn-label.git-M { color: var(--git-modified); }
-.tn-label.git-D { color: var(--git-deleted); }
-.tn-label.git-R { color: var(--git-renamed); }
-.tn-label.git-C { color: var(--git-copied); }
-.tn-label.git-U { color: var(--git-untracked); }
+.tn-label.git-A {
+  color: var(--git-added);
+}
+.tn-label.git-M {
+  color: var(--git-modified);
+}
+.tn-label.git-D {
+  color: var(--git-deleted);
+}
+.tn-label.git-R {
+  color: var(--git-renamed);
+}
+.tn-label.git-C {
+  color: var(--git-copied);
+}
+.tn-label.git-U {
+  color: var(--git-untracked);
+}
 
-.git-badge.git-A { color: var(--git-added); }
-.git-badge.git-M { color: var(--git-modified); }
-.git-badge.git-D { color: var(--git-deleted); }
-.git-badge.git-R { color: var(--git-renamed); }
-.git-badge.git-C { color: var(--git-copied); }
-.git-badge.git-U { color: var(--git-untracked); }
+.git-badge.git-A {
+  color: var(--git-added);
+}
+.git-badge.git-M {
+  color: var(--git-modified);
+}
+.git-badge.git-D {
+  color: var(--git-deleted);
+}
+.git-badge.git-R {
+  color: var(--git-renamed);
+}
+.git-badge.git-C {
+  color: var(--git-copied);
+}
+.git-badge.git-U {
+  color: var(--git-untracked);
+}
 
 /* ✅ 스테이징(S) 배지 — 파란색 계열로 명확히 구분 */
-.git-badge.git-stage { color: var(--git-staged); }
+.git-badge.git-stage {
+  color: var(--git-staged);
+}
 
 /* === VS Code Explorer 느낌의 꺾쇠 아이콘 ============================== */
 :root {
@@ -291,10 +363,15 @@
   mask-image: var(--chev-mask-down);
 }
 /* 자식 없음이면 감추기 */
-.tn-chevron.tn-empty::before { display: none; }
+.tn-chevron.tn-empty::before {
+  display: none;
+}
 
 /* 가지 라인 */
-.tn-children { margin-left: var(--indent); position: relative; }
+.tn-children {
+  margin-left: var(--indent);
+  position: relative;
+}
 .tn-children::before {
   content: '';
   position: absolute;
@@ -329,7 +406,9 @@
   padding: 6px;
   z-index: 9999;
 }
-#ctxMenu[hidden] { display: none; }
+#ctxMenu[hidden] {
+  display: none;
+}
 #ctxMenu .menu-item {
   width: 100%;
   text-align: left;
@@ -340,10 +419,23 @@
   border-radius: 6px;
   cursor: pointer;
 }
-#ctxMenu .menu-item:hover { background: rgba(255, 255, 255, 0.08); }
-#ctxMenu hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
-#ctxMenu .menu-form, #ctxMenu .menu-confirm { padding: 6px 4px 4px 4px; }
-#ctxMenu .menu-form-title { font-size: 12px; opacity: 0.9; margin-bottom: 6px; }
+#ctxMenu .menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+#ctxMenu hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 6px 0;
+}
+#ctxMenu .menu-form,
+#ctxMenu .menu-confirm {
+  padding: 6px 4px 4px 4px;
+}
+#ctxMenu .menu-form-title {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
 #ctxMenu input#ctxInput {
   width: 100%;
   background: var(--bg);
@@ -354,6 +446,18 @@
   font: inherit;
   outline: none;
 }
-#ctxMenu input#ctxInput:focus { border-color: var(--focus); }
-#ctxMenu .menu-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
-#ctxMenu .menu-confirm-text { white-space: pre-wrap; line-height: 1.35; font-size: 12px; opacity: 0.95; }
+#ctxMenu input#ctxInput:focus {
+  border-color: var(--focus);
+}
+#ctxMenu .menu-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+#ctxMenu .menu-confirm-text {
+  white-space: pre-wrap;
+  line-height: 1.35;
+  font-size: 12px;
+  opacity: 0.95;
+}

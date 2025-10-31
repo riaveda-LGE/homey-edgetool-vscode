@@ -1,19 +1,19 @@
 // === src/extension/panels/explorerBridge.ts ===
-import * as vscode from 'vscode';
 import { exec as execCb } from 'child_process';
 import { promisify } from 'util';
+import * as vscode from 'vscode';
 
 import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
-import { measure } from '../../core/logging/perf.js';
-import { parentDir, relFromBase } from '../../shared/utils.js';
 import { getStatusLiteFromDir } from '../../core/controller/GitController.js';
+import { measure } from '../../core/logging/perf.js';
 import {
+  GITIGNORE_TEMPLATE_REL,
   PARSER_CONFIG_REL,
   PARSER_README_REL,
-  PARSER_TEMPLATE_REL,
   PARSER_README_TEMPLATE_REL,
-  GITIGNORE_TEMPLATE_REL,
+  PARSER_TEMPLATE_REL,
 } from '../../shared/const.js';
+import { parentDir, relFromBase } from '../../shared/utils.js';
 const exec = promisify(execCb);
 
 export type ExplorerBridge = {
@@ -308,7 +308,7 @@ class ExplorerUI {
     const segs = relTarget.split('/').filter(Boolean);
     const target = vscode.Uri.joinPath(ws, ...segs);
 
-     if (await this.exists(target)) return false; // 이미 있으면 스킵
+    if (await this.exists(target)) return false; // 이미 있으면 스킵
 
     // 부모 디렉터리 보장
     if (segs.length > 1) {

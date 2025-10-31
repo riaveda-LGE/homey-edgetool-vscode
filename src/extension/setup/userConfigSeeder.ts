@@ -1,9 +1,10 @@
 // === src/extension/setup/userConfigSeeder.ts ===
 import * as vscode from 'vscode';
-import { USERCFG_REL, USERCFG_TEMPLATE_REL } from '../../shared/const.js';
+
+import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measureBlock } from '../../core/logging/perf.js';
-import { resolveWorkspaceInfo } from '../../core/config/userdata.js';
+import { USERCFG_REL, USERCFG_TEMPLATE_REL } from '../../shared/const.js';
 
 const log = getLogger('setup.usercfg');
 
@@ -17,9 +18,14 @@ export async function ensureUserConfigExists(
     const cfgDir = vscode.Uri.joinPath(info.wsDirUri, '.config');
 
     let exists = false;
-    try { await vscode.workspace.fs.stat(cfgUri); exists = true; } catch {}
+    try {
+      await vscode.workspace.fs.stat(cfgUri);
+      exists = true;
+    } catch {}
 
-    try { await vscode.workspace.fs.createDirectory(cfgDir); } catch {}
+    try {
+      await vscode.workspace.fs.createDirectory(cfgDir);
+    } catch {}
 
     if (!exists) {
       const tpl = vscode.Uri.joinPath(extensionUri, ...USERCFG_TEMPLATE_REL.split('/'));
@@ -42,7 +48,10 @@ export async function migrateUserConfigIfNeeded(
     const newCfg = vscode.Uri.joinPath(newWsUri, ...USERCFG_REL.split('/'));
 
     let newExists = false;
-    try { await vscode.workspace.fs.stat(newCfg); newExists = true; } catch {}
+    try {
+      await vscode.workspace.fs.stat(newCfg);
+      newExists = true;
+    } catch {}
 
     if (!newExists) {
       try {

@@ -27,7 +27,9 @@ export class AdbPtyTerminal implements vscode.Pseudoterminal {
       // 입력 인코딩 명시
       this.proc.stdin.setDefaultEncoding('utf8');
     } catch (e) {
-      this.writeEmitter.fire(`\r\n[ADB] spawn 실패: ${e instanceof Error ? e.message : String(e)}\r\n`);
+      this.writeEmitter.fire(
+        `\r\n[ADB] spawn 실패: ${e instanceof Error ? e.message : String(e)}\r\n`,
+      );
       this.close();
       return;
     }

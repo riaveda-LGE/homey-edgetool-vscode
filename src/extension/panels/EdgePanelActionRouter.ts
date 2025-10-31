@@ -1,23 +1,23 @@
 // === src/extension/panels/EdgePanelActionRouter.ts ===
 import * as vscode from 'vscode';
 
+import { connectionManager } from '../../core/connection/ConnectionManager.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { connectionManager } from '../../core/connection/ConnectionManager.js';
+import { getEnvToggleEnabled, getMountState } from '../../core/state/DeviceState.js';
+import { UI_STR } from '../../shared/const.js';
 import { createCommandHandlers } from '../commands/commandHandlers.js';
 import {
   buildButtonContext,
+  BUSY_LOCK_BUTTON_IDS,
   type ButtonDef,
   findButtonById,
   getSections,
   toSectionDTO,
-  BUSY_LOCK_BUTTON_IDS,
 } from '../commands/edgepanel.buttons.js';
 import type { PerfMonitor } from '../editors/PerfMonitorEditorProvider.js';
 import type { ExplorerBridge } from './explorerBridge.js';
 import type { EdgePanelProvider } from './extensionPanel.js';
-import { getMountState, getEnvToggleEnabled } from '../../core/state/DeviceState.js';
-import { UI_STR } from '../../shared/const.js';
 
 const log = getLogger('EdgePanelActionRouter');
 
@@ -88,7 +88,8 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
       ...sec,
       items: sec.items.map((b) => {
         if (b.id === 'cmd.volumeToggle') {
-          const label = mountState === 'mounted' ? UI_STR.BTN_VOLUME_UNMOUNT : UI_STR.BTN_VOLUME_MOUNT;
+          const label =
+            mountState === 'mounted' ? UI_STR.BTN_VOLUME_UNMOUNT : UI_STR.BTN_VOLUME_MOUNT;
           return { ...b, label };
         }
         if (b.id === 'cmd.appLogToggle') {
@@ -96,7 +97,9 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
           return { ...b, label };
         }
         if (b.id === 'cmd.devTokenToggle') {
-          const label = ctx.devTokenEnabled ? UI_STR.BTN_DEVTOKEN_DISABLE : UI_STR.BTN_DEVTOKEN_ENABLE;
+          const label = ctx.devTokenEnabled
+            ? UI_STR.BTN_DEVTOKEN_DISABLE
+            : UI_STR.BTN_DEVTOKEN_ENABLE;
           return { ...b, label };
         }
         return b;
@@ -110,7 +113,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
   @measure()
   async dispatchButton(id: string) {
     const btn = findButtonById(this._buttonSections, id);
-     if (!btn) return;
+    if (!btn) return;
     // 바쁜 동안에는 잠금 대상 버튼 클릭 무시
     const isLockTarget = (BUSY_LOCK_BUTTON_IDS as readonly string[]).includes(id);
     if (isLockTarget && this._busyLock) {
@@ -124,7 +127,7 @@ export class EdgePanelActionRouter implements IEdgePanelActionRouter {
     const invoke = async () => {
       const op = btn.op;
       if (op.kind === 'handler') {
-        await this._handlers!.route(op.name);       // ← 반드시 await
+        await this._handlers!.route(op.name); // ← 반드시 await
       } else if (op.kind === 'vscode') {
         await vscode.commands.executeCommand(op.command, ...(op.args ?? []));
       } else if (op.kind === 'post') {

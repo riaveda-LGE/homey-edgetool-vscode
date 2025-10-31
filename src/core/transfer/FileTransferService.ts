@@ -1,20 +1,21 @@
 import * as fsp from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
+
 import { DEFAULT_TRANSFER_TIMEOUT_MS } from '../../shared/const.js';
 import { ErrorCategory, XError } from '../../shared/errors.js';
+// ✅ ADB 전송 경로에서 사용하는 헬퍼들 가져오기
+import {
+  adbListFilesRec,
+  adbMkdirP,
+  type AdbOptions,
+  adbPullFile,
+  adbPushFile,
+} from '../connection/adbClient.js';
 import type { IConnectionManager } from '../connection/ConnectionManager.js';
 import { runCommandLine } from '../connection/ExecRunner.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
-// ✅ ADB 전송 경로에서 사용하는 헬퍼들 가져오기
-import {
-  type AdbOptions,
-  adbListFilesRec,
-  adbMkdirP,
-  adbPullFile,
-  adbPushFile,
-} from '../connection/adbClient.js';
 
 export type TransferOptions = {
   timeoutMs?: number;
@@ -216,7 +217,9 @@ export class FileTransferService implements IFileTransferService {
       const expanded: string[] = [];
       for (const rel of safe) {
         const rp = `${remoteDir.replace(/\/+$/, '')}/${rel}`;
-        const { stdout } = await this.cm.run(this.wrap(`[ -d "${rp}" ] && echo DIR || { [ -f "${rp}" ] && echo FILE || echo NONE; }`));
+        const { stdout } = await this.cm.run(
+          this.wrap(`[ -d "${rp}" ] && echo DIR || { [ -f "${rp}" ] && echo FILE || echo NONE; }`),
+        );
         const kind = (stdout || '').trim();
         if (kind === 'FILE') expanded.push(rel);
         else if (kind === 'DIR') {
@@ -257,7 +260,10 @@ export class FileTransferService implements IFileTransferService {
       const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'edge-up-'));
       const tarPath = path.join(tmpDir, 'payload.tar');
       try {
-        await runCommandLine(`tar -C "${localDir}" -cf "${tarPath}" ${list}`, { timeoutMs, signal: opts?.signal });
+        await runCommandLine(`tar -C "${localDir}" -cf "${tarPath}" ${list}`, {
+          timeoutMs,
+          signal: opts?.signal,
+        });
         const buf = await fsp.readFile(tarPath);
         const b64 = buf.toString('base64');
         const chunks = this.chunkString(b64, 48 * 1024);
@@ -272,10 +278,14 @@ export class FileTransferService implements IFileTransferService {
           await this.remoteRun(this.printfAppendCmd(remoteTmp, ch));
         }
         // 3) decode & extract
-        await this.remoteRun(`base64 -d '${this.sq(remoteTmp)}' | tar -C '${this.sq(remoteDir)}' -xpf - && rm -f '${this.sq(remoteTmp)}'`);
+        await this.remoteRun(
+          `base64 -d '${this.sq(remoteTmp)}' | tar -C '${this.sq(remoteDir)}' -xpf - && rm -f '${this.sq(remoteTmp)}'`,
+        );
         this.log.info(`upload: ${localDir} -> ${remoteDir} (${safeList.join(', ') || '.'})`);
       } finally {
-        try { await fsp.rm(tmpDir, { recursive: true, force: true }); } catch {}
+        try {
+          await fsp.rm(tmpDir, { recursive: true, force: true });
+        } catch {}
       }
       this.log.debug('[debug] FileTransferService uploadViaTarBase64: end');
     } catch (e) {
@@ -325,10 +335,15 @@ export class FileTransferService implements IFileTransferService {
       try {
         await fsp.writeFile(tarPath, Buffer.from(b64, 'base64'));
         await fsp.mkdir(localDir, { recursive: true });
-        await runCommandLine(`tar -C "${localDir}" -xpf "${tarPath}"`, { timeoutMs, signal: opts?.signal });
+        await runCommandLine(`tar -C "${localDir}" -xpf "${tarPath}"`, {
+          timeoutMs,
+          signal: opts?.signal,
+        });
         this.log.info(`[download] ${remoteDir} -> ${localDir} (${safeList.join(', ') || '.'})`);
       } finally {
-        try { await fsp.rm(tmpDir, { recursive: true, force: true }); } catch {}
+        try {
+          await fsp.rm(tmpDir, { recursive: true, force: true });
+        } catch {}
       }
       this.log.debug('[debug] FileTransferService downloadViaTarBase64: end');
     } catch (e) {

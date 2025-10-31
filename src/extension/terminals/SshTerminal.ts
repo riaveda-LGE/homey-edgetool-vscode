@@ -1,6 +1,6 @@
 // === src/extension/terminals/SshTerminal.ts ===
-import * as vscode from 'vscode';
 import { Client } from 'ssh2';
+import * as vscode from 'vscode';
 
 import { connectionManager } from '../../core/connection/ConnectionManager.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
@@ -38,12 +38,7 @@ export class SshPtyTerminal implements vscode.Pseudoterminal {
     stderr?: { on(event: 'data', listener: (data: Buffer) => void): any };
     on(event: 'data', listener: (data: Buffer) => void): any;
     on(event: 'close', listener: () => void): any;
-    setWindow?(
-      rows: number,
-      cols: number,
-      height: number,
-      width: number,
-    ): void;
+    setWindow?(rows: number, cols: number, height: number, width: number): void;
   };
   private disposed = false;
   private dims?: { cols: number; rows: number };
@@ -80,7 +75,9 @@ export class SshPtyTerminal implements vscode.Pseudoterminal {
           this.chan = stream as typeof this.chan;
 
           // welcome line
-          this.writeLine(`[SSH] Connected: ${details.user}@${details.host}${details.port ? ':' + details.port : ''}\r\n`);
+          this.writeLine(
+            `[SSH] Connected: ${details.user}@${details.host}${details.port ? ':' + details.port : ''}\r\n`,
+          );
 
           stream.on('close', () => {
             this.close();
@@ -136,7 +133,12 @@ export class SshPtyTerminal implements vscode.Pseudoterminal {
     try {
       if (this.chan && typeof (this.chan as any).setWindow === 'function') {
         // rows, cols, height, width
-        (this.chan as any).setWindow(this.dims.rows, this.dims.cols, this.dims.rows, this.dims.cols);
+        (this.chan as any).setWindow(
+          this.dims.rows,
+          this.dims.cols,
+          this.dims.rows,
+          this.dims.cols,
+        );
       }
     } catch {}
   }

@@ -4,8 +4,8 @@ import * as vscode from 'vscode';
 import { connectionManager } from '../../core/connection/ConnectionManager.js';
 import { getLogger } from '../../core/logging/extension-logger.js';
 import { measure } from '../../core/logging/perf.js';
-import { createSshTerminal } from '../terminals/SshTerminal.js';
 import { createAdbTerminal } from '../terminals/AdbTerminal.js';
+import { createSshTerminal } from '../terminals/SshTerminal.js';
 
 const log = getLogger('cmd.host');
 

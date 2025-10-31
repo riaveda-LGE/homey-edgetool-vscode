@@ -4,10 +4,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 
+import type { GitLite, GitLiteItem } from '../../shared/ipc/messages.js';
 import { getLogger } from '../logging/extension-logger.js';
 import { measure } from '../logging/perf.js';
 import { HostController } from './HostController.js';
-import type { GitLite, GitLiteItem } from '../../shared/ipc/messages.js';
 
 const exec = promisify(execCb);
 const log = getLogger('GitController');
@@ -60,7 +60,11 @@ export class GitController {
       if (kind === 'FILE') await this.host.pullFile(remoteBase, localBase);
       else if (kind === 'DIR') await this.host.pullDir(remoteBase, localBase);
       else {
-        log.error('[error] pull:path-not-found', { target, remoteBase, note: 'statType returned NONE' });
+        log.error('[error] pull:path-not-found', {
+          target,
+          remoteBase,
+          note: 'statType returned NONE',
+        });
         throw new Error(`path not found on host: ${remoteBase} (statType returned NONE)`);
       }
     } else {
@@ -84,7 +88,10 @@ export class GitController {
 
   @measure()
   async push(arg?: string, opts?: PushOptions) {
-    log.debug('[debug] push:start', { arg: typeof arg === 'undefined' ? '(undefined)' : arg, opts });
+    log.debug('[debug] push:start', {
+      arg: typeof arg === 'undefined' ? '(undefined)' : arg,
+      opts,
+    });
     // ESC/취소 안전망:
     // - 입력창에서 ESC를 누르면 showInputBox가 undefined를 반환한다.
     // - 기존 코드는 !arg 분기로 전체 push가 되어 사고가 발생했다.
@@ -313,13 +320,15 @@ export async function getStatusLiteFromDir(workspaceFs: string): Promise<GitLite
 
       if (X !== ' ' && X !== '?') {
         // 인덱스(스테이지드)
-        const code: GitLiteItem['code'] = (X as any) in { A: 1, M: 1, D: 1, R: 1, C: 1 } ? (X as any) : 'M';
+        const code: GitLiteItem['code'] =
+          (X as any) in { A: 1, M: 1, D: 1, R: 1, C: 1 } ? (X as any) : 'M';
         push(result.staged, code);
       } else if (X === '?' && Y === '?') {
         push(result.untracked, '??');
       } else if (Y !== ' ' && Y !== '?') {
         // 작업 트리(언스테이지드)
-        const code: GitLiteItem['code'] = (Y as any) in { A: 1, M: 1, D: 1, R: 1, C: 1 } ? (Y as any) : 'M';
+        const code: GitLiteItem['code'] =
+          (Y as any) in { A: 1, M: 1, D: 1, R: 1, C: 1 } ? (Y as any) : 'M';
         push(result.modified, code);
       }
     }
